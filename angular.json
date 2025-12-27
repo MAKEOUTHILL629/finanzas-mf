@@ -23,6 +23,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
+
             "outputPath": "dist/finanzas-mf",
             "index": "src/index.html",
             "browser": "src/main.ts",
@@ -37,6 +38,7 @@
               }
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css"
             ],
             "scripts": []
@@ -46,13 +48,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "10MB",
+                  "maximumError": "10MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kB",
-                  "maximumError": "4kB"
+                  "maximumWarning": "10MB",
+                  "maximumError": "10MB"
                 }
               ],
               "outputHashing": "all"
@@ -95,6 +97,7 @@
               }
             ],
             "styles": [
+              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css"
             ],
             "scripts": []

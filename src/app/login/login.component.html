@@ -1,0 +1,71 @@
+<div class="login-container">
+  <div class="login-box">
+    <div class="login-header">
+      <h2 class="title">Bienvenido de Nuevo</h2>
+      <p class="subtitle">Ingresa a tu cuenta de finanzas</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Correo Electrónico</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': email?.invalid && (email?.dirty || email?.touched) }"
+          placeholder="tu@email.com"
+          aria-describedby="emailHelp"
+          required
+        >
+        <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
+          <div *ngIf="email?.errors?.['required']">El correo es requerido.</div>
+          <div *ngIf="email?.errors?.['email']">Ingresa un correo válido.</div>
+        </div>
+         <small id="emailHelp" class="form-text text-muted">Nunca compartiremos tu correo.</small>
+      </div>
+
+      <div class="form-group password-group">
+        <label for="password" class="form-label">Contraseña</label>
+        <div class="password-input-wrapper">
+          <input
+            [type]="isPasswordVisible ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            class="form-control password-input"
+            [ngClass]="{ 'is-invalid': password?.invalid && (password?.dirty || password?.touched) }"
+            placeholder="Tu contraseña"
+            required
+          >
+          <button type="button" class="btn-show-hide" (click)="togglePasswordVisibility()" aria-label="Mostrar u ocultar contraseña">
+            <i class="icon" [ngClass]="isPasswordVisible ? 'icon-eye-off' : 'icon-eye'"></i> </button>
+        </div>
+
+        <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="invalid-feedback">
+          <div *ngIf="password?.errors?.['required']">La contraseña es requerida.</div>
+          <div *ngIf="password?.errors?.['minlength']">Debe tener al menos 8 caracteres.</div>
+        </div>
+      </div>
+
+      <div class="forgot-password-link">
+        <a routerLink="/auth/forgot-password">¿Olvidaste tu contraseña?</a> </div>
+
+      <button type="submit" class="btn btn-primary btn-login" [disabled]="loginForm.invalid || isLoading">
+        <span *ngIf="!isLoading">Iniciar Sesión</span>
+        <span *ngIf="isLoading">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Ingresando...
+        </span>
+      </button>
+
+      <div class="register-link">
+        ¿No tienes cuenta? <a routerLink="/auth/register">Regístrate aquí</a> </div>
+
+    </form>
+  </div>
+</div>

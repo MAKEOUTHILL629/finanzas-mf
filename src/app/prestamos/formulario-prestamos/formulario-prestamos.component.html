@@ -1,0 +1,54 @@
+<form [formGroup]="loanForm" (ngSubmit)="onSubmit()" class="loan-form">
+  <div class="form-group">
+    <label for="valorPrestado">Valor Prestado:</label>
+    <input type="number" id="valorPrestado" formControlName="valorPrestado" placeholder="Ingrese el valor prestado">
+    <div *ngIf="loanForm.get('valorPrestado')?.invalid && loanForm.get('valorPrestado')?.touched" class="error-message">
+      Valor prestado es requerido y debe ser mayor a 0.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="concepto">Concepto:</label>
+    <input type="text" id="concepto" formControlName="concepto" placeholder="Ingrese el concepto del préstamo">
+    <div *ngIf="loanForm.get('concepto')?.invalid && loanForm.get('concepto')?.touched" class="error-message">
+      Concepto es requerido.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="fechaCobro">Fecha de Cobro:</label>
+    <input type="date" id="fechaCobro" formControlName="fechaCobro">
+    <div *ngIf="loanForm.get('fechaCobro')?.invalid && loanForm.get('fechaCobro')?.touched" class="error-message">
+      Fecha de cobro es requerida.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="responsable">Responsable:</label>
+    <select id="responsable" formControlName="responsablePersona">
+      <option value="">Seleccione un responsable</option>
+      <option *ngFor="let persona of personas" [value]="persona.id">{{ persona.nombre }}</option>
+    </select>
+    <div *ngIf="loanForm.get('responsablePersona')?.invalid && loanForm.get('responsablePersona')?.touched" class="error-message">
+      Responsable es requerido.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="estado">Estado:</label>
+    <select id="estado" formControlName="estado">
+      <option value="">Seleccione un estado</option>
+      <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
+    </select>
+    <div *ngIf="loanForm.get('estado')?.invalid && loanForm.get('estado')?.touched" class="error-message">
+      Estado es requerido.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="comentarios">Comentarios:</label>
+    <textarea id="comentarios" formControlName="comentarios" rows="3" placeholder="Ingrese comentarios adicionales"></textarea>
+  </div>
+
+  <button type="submit" [disabled]="loanForm.invalid">Guardar Préstamo</button>
+</form>

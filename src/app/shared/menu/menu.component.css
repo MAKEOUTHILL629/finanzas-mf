@@ -1,0 +1,273 @@
+/* Estilos para MenuComponent - Refactorizado */
+
+/* Variables CSS para consistencia (opcional, pero recomendado) */
+:host {
+  --menu-bg-color: #0d1a2e; /* Azul oscuro casi negro */
+  --menu-header-bg-color: #06111f; /* Un poco más oscuro para cabecera */
+  --menu-text-color: #e0e0e0; /* Texto principal (blanco no puro) */
+  --menu-icon-color: #a0a0a0; /* Iconos un poco más tenues */
+  --menu-hover-bg-color: #1a2b44; /* Azul más claro para hover */
+  --menu-active-bg-color: #2c3f5e; /* Azul intermedio para activo */
+  --menu-active-text-color: #ffffff; /* Texto blanco puro para activo */
+  --menu-width: 260px; /* Ancho del menú */
+  --menu-transition-speed: 0.3s;
+  --menu-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+  --font-family-base: 'Roboto', 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; /* Fuente limpia */
+
+  display: block; /* Necesario para algunos contextos de layout */
+  font-family: var(--font-family-base);
+}
+
+/* Contenedor principal del menú */
+.finance-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh; /* Ocupa toda la altura */
+  width: var(--menu-width);
+  background-color: var(--menu-bg-color);
+  color: var(--menu-text-color);
+  transition: transform var(--menu-transition-speed) ease;
+  overflow-y: auto; /* Scroll si el contenido es muy largo */
+  overflow-x: hidden; /* Evitar scroll horizontal */
+  z-index: 1000; /* Asegurar que esté por encima de otro contenido */
+  box-shadow: var(--menu-shadow);
+  display: flex; /* Usar flex para estructura interna */
+  flex-direction: column; /* Alinear header, items, footer verticalmente */
+}
+
+/* Cabecera del Menú */
+.menu-header {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px; /* Ajuste de padding */
+  background-color: var(--menu-header-bg-color);
+  flex-shrink: 0; /* Evitar que la cabecera se encoja */
+}
+
+.menu-header .logo {
+  width: 35px; /* Tamaño ajustado */
+  height: 35px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.menu-header h1 {
+  font-size: 18px; /* Tamaño ajustado */
+  font-weight: 600; /* Peso de fuente */
+  margin: 0;
+  white-space: nowrap; /* Evitar que el texto se parta */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Añadir '...' si el texto es muy largo */
+}
+
+/* Lista de Items */
+.menu-items {
+  list-style-type: none;
+  padding: 10px 0; /* Espacio vertical alrededor de los items */
+  margin: 0;
+  flex-grow: 1; /* Ocupa el espacio restante */
+  overflow-y: auto; /* Scroll si hay muchos items */
+}
+
+.menu-items li {
+  display: flex;
+  padding: 10px;
+  align-items: center;
+  /* Usamos padding en el 'a' o 'button' interno para mejor área de click */
+  cursor: pointer;
+  color: var(--menu-text-color);
+  /* Quitar padding de li, ponerlo en 'a' o 'button' */
+}
+
+/* Estilo para enlaces y botones dentro de los items */
+.menu-items li a,
+.menu-items li button {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px; /* Padding para el área de click */
+  width: 100%;
+  text-decoration: none;
+  color: inherit; /* Heredar color del li */
+  background: none; /* Quitar fondo por defecto de button */
+  border: none; /* Quitar borde por defecto de button */
+  font: inherit; /* Heredar fuente */
+  cursor: pointer;
+  text-align: left; /* Alinear texto a la izquierda */
+  transition: background-color var(--menu-transition-speed) ease, color var(--menu-transition-speed) ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Estado Hover para items */
+.menu-items li:hover,
+.menu-items li:hover > button {
+  background-color: var(--menu-hover-bg-color);
+  color: var(--menu-active-text-color); /* Texto más claro en hover */
+}
+.menu-items li:hover > a .material-icons,
+.menu-items li:hover > button .material-icons {
+  color: var(--menu-active-text-color); /* Icono más claro en hover */
+}
+
+
+/* Estado Activo (ruta actual) */
+/* Aplicado al 'li' por routerLinkActive */
+.menu-items li.active > a,
+.menu-items li.active > button {
+  background-color: var(--menu-active-bg-color);
+  color: var(--menu-active-text-color); /* Texto blanco en activo */
+  font-weight: 500; /* Ligeramente más grueso */
+}
+.menu-items li.active > a .material-icons,
+.menu-items li.active > button .material-icons {
+  color: var(--menu-active-text-color); /* Icono blanco en activo */
+}
+
+/* Estilo para Iconos (asumiendo Material Icons) */
+.menu-items li .material-icons {
+  margin-right: 16px; /* Espacio entre icono y texto */
+  vertical-align: middle; /* Mejor alineación vertical */
+  font-size: 20px; /* Tamaño del icono */
+  color: var(--menu-icon-color); /* Color por defecto del icono */
+  transition: color var(--menu-transition-speed) ease;
+}
+
+/* Estilo para el texto del menú */
+.menu-items li .menu-label {
+  vertical-align: middle;
+  font-size: 14px; /* Tamaño de fuente de items */
+}
+
+/* Estilo específico para el botón de Logout */
+.menu-item-logout {
+  margin-top: auto; /* Empujar al final si es posible con flex */
+  padding-top: 10px; /* Espacio antes del logout */
+  border-top: 1px solid var(--menu-hover-bg-color); /* Separador sutil */
+}
+
+.menu-item-logout button {
+  /* Hereda la mayoría de estilos de 'li button' */
+  color: var(--menu-icon-color); /* Color un poco más tenue por defecto */
+}
+
+.menu-item-logout button:hover {
+  color: var(--menu-active-text-color); /* Blanco en hover */
+  background-color: var(--menu-hover-bg-color);
+}
+.menu-item-logout button:hover .material-icons {
+   color: var(--menu-active-text-color); /* Icono blanco en hover */
+}
+
+
+/* Botón para abrir/cerrar (Toggle) */
+.menu-toggle {
+  position: fixed;
+  top: 15px; /* Ajustar posición */
+  left: 15px;
+  z-index: 1001; /* Por encima del menú */
+  background-color: var(--menu-bg-color);
+  color: var(--menu-text-color);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: none; /* Oculto por defecto, se muestra en media query */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: background-color var(--menu-transition-speed) ease, left var(--menu-transition-speed) ease; /* Añadir transición para 'left' */
+}
+
+.menu-toggle:hover {
+  background-color: var(--menu-hover-bg-color);
+}
+
+/* Fondo oscuro para menú móvil */
+.menu-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Detrás del menú pero encima del contenido */
+}
+
+
+/* --- Media Queries para Responsividad --- */
+
+/* Estilos para Móvil (pantallas pequeñas) */
+@media (max-width: 767px) {
+  .finance-menu {
+    transform: translateX(calc(-1 * var(--menu-width))); /* Oculto fuera de pantalla */
+    /* Opcional: Podrías hacer el ancho 100% o un % menor en móvil */
+    /* width: 80%; */
+    /* max-width: 300px; */
+  }
+
+  .finance-menu.open {
+    transform: translateX(0); /* Visible */
+  }
+
+  .menu-toggle {
+    display: flex; /* Mostrar el botón toggle en móvil */
+  }
+
+  .menu-backdrop.visible {
+    display: block; /* Mostrar el fondo oscuro en móvil cuando está abierto */
+  }
+
+  /* Si el contenido principal necesita ajuste en móvil cuando el menú está abierto */
+  /* Esto es más complejo y depende de tu layout general */
+  /* body.menu-mobile-open { overflow: hidden; } */
+}
+
+/* Estilos para Desktop (pantallas grandes) */
+@media (min-width: 768px) {
+  .menu-toggle {
+     /* Mostrar el toggle en desktop si queremos menú colapsable */
+     /* Comenta la siguiente línea si NO quieres el botón en desktop */
+     display: flex;
+  }
+
+  /* Comportamiento si el menú NO está abierto en desktop */
+  .finance-menu:not(.open) {
+     transform: translateX(calc(-1 * var(--menu-width))); /* Oculto */
+  }
+
+  /* Ajuste de posición del toggle cuando el menú está cerrado en desktop */
+  /* (Si el botón siempre está visible) */
+  .menu-toggle {
+      left: 15px; /* Posición cuando menú está cerrado */
+      /* transición ya definida arriba */
+  }
+  /* Cuando el menú está abierto en desktop, mover el botón */
+  .finance-menu.open + .menu-toggle {
+     left: calc(var(--menu-width) + 15px);
+  }
+
+  /* --- Ajuste del Contenido Principal (Ejemplo) --- */
+  /* IMPORTANTE: La mejor manera de ajustar el contenido principal es
+     usualmente aplicando una clase al <body> o a un contenedor principal
+     desde el AppComponent o un servicio de layout, NO usando :host-context
+     que puede ser frágil. Este CSS es solo un ejemplo conceptual. */
+
+  /* Asume que tienes un contenedor <div class="main-content"> alrededor
+     de tu <router-outlet> */
+  .main-content {
+    padding-left: var(--menu-width); /* Espacio por defecto para el menú */
+    transition: padding-left var(--menu-transition-speed) ease;
+  }
+
+  /* Cuando el menú está cerrado (necesitarías una clase en el wrapper),
+     quitar el padding */
+  .main-content.menu-closed {
+     padding-left: 0;
+  }
+  /* --------------------------------------------------- */
+
+}

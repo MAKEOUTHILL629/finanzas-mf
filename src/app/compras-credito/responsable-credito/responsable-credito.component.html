@@ -1,0 +1,58 @@
+<div class="responsables-credito-container">
+  <section class="responsables-list">
+    <h3 class="section-title">Responsables del Crédito</h3>
+
+    <div class="table-responsive">
+      <table class="responsables-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>% Pago</th>
+            <th>Cantidad</th>
+            <th>Cuotas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let responsable of responsables">
+            <td data-label="Nombre">{{ getPersonaNombre(responsable.persona || 0) }}</td>
+            <td data-label="% Pago">{{ responsable.porcentajePago }}%</td>
+            <td data-label="Cantidad">{{ responsable.cantidadPago | currency }}</td>
+            <td data-label="Cuotas">{{ responsable.cantidadCuotas }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="add-responsable" *ngIf="porcentajeRestante > 0">
+    <h4 class="section-title">Añadir Nuevo Responsable ({{ porcentajeRestante }}% disponible)</h4>
+    <form [formGroup]="responsableForm" (ngSubmit)="onSubmit()" class="responsable-form">
+      <div class="form-group">
+        <label for="personaId">Persona</label>
+        <select id="personaId" formControlName="personaId">
+          <option value="">Seleccione una persona</option>
+          <option *ngFor="let persona of personasDisponibles" [value]="persona.id">{{ persona.nombre }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="porcentajePago">Porcentaje de Pago</label>
+        <input type="number" id="porcentajePago" formControlName="porcentajePago" [max]="porcentajeRestante">
+        <span class="error" *ngIf="responsableForm.get('porcentajePago')?.errors">
+          El porcentaje máximo es {{ porcentajeRestante }}%
+        </span>
+      </div>
+      <div class="form-group">
+        <label for="cantidadPago">Cantidad de Pago</label>
+        <input type="number" id="cantidadPago" formControlName="cantidadPago" [max]="(compra.valorCompra ||0) * (porcentajeRestante / 100)">
+      </div>
+      <div class="form-group">
+        <label for="cantidadCuotas">Cantidad de Cuotas</label>
+        <input type="number" id="cantidadCuotas" formControlName="cantidadCuotas" [max]="compra.numeroCuotas || 0">
+        <span class="error" *ngIf="responsableForm.get('cantidadCuotas')?.errors">
+          El máximo de cuotas es {{ compra.numeroCuotas }}
+        </span>
+      </div>
+      <button type="submit" [disabled]="!responsableForm.valid" class="btn-submit">Añadir Responsable</button>
+    </form>
+  </section>
+</div>

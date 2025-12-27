@@ -1,0 +1,168 @@
+<div class="container">
+  <h1>Listado de pagos</h1>
+   <!-- Título y subtítulo para el nombre de la persona y fecha de pago -->
+   <div class="info-pago">
+    <h2>Nombre de la persona: {{ persona?.nombre }}</h2>
+    <!-- Usamos el pipe date nativo de Angular para formatear la fecha -->
+    <h3>Fecha de pago: {{ fechaPago | formatoFecha}}</h3>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <!--
+          Utilizamos (click)="onSort('persona')" para ordenar por esa columna.
+          También agregamos directivas [class.sorted-asc] y [class.sorted-desc]
+          para manejar el ícono/cambio visual cuando esté ordenado.
+        -->
+        <!-- <th
+          (click)="onSort('persona')"
+          [class.sorted-asc]="sortColumn === 'persona' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'persona' && sortDirection === 'desc'"
+        >
+          Persona
+        </th>
+
+        <th
+          (click)="onSort('compraCredito')"
+          [class.sorted-asc]="sortColumn === 'compraCredito' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'compraCredito' && sortDirection === 'desc'"
+        >
+          Compra Crédito
+        </th> -->
+
+        <th
+          (click)="onSort('concepto')"
+          [class.sorted-asc]="sortColumn === 'concepto' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'concepto' && sortDirection === 'desc'"
+        >
+          Concepto
+        </th>
+
+        <th
+          (click)="onSort('porcentaje')"
+          [class.sorted-asc]="sortColumn === 'porcentaje' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'porcentaje' && sortDirection === 'desc'"
+        >
+          %
+        </th>
+
+        <th
+        >
+          Cuotas
+        </th>
+
+
+        <!-- <th
+          (click)="onSort('fechaPago')"
+          [class.sorted-asc]="sortColumn === 'fechaPago' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'fechaPago' && sortDirection === 'desc'"
+        >
+          Fecha Pago
+        </th> -->
+
+        <th
+          (click)="onSort('valorPagoCuota')"
+          [class.sorted-asc]="sortColumn === 'valorPagoCuota' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'valorPagoCuota' && sortDirection === 'desc'"
+        >
+          Valor Cuota
+        </th>
+
+        <th
+          (click)="onSort('valorPagoResponsable')"
+          [class.sorted-asc]="sortColumn === 'valorPagoResponsable' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'valorPagoResponsable' && sortDirection === 'desc'"
+        >
+          Valor Responsable
+        </th>
+
+        <th
+          (click)="onSort('tarjeta')"
+          [class.sorted-asc]="sortColumn === 'tarjeta' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'tarjeta' && sortDirection === 'desc'"
+        >
+          Tarjeta
+        </th>
+
+        <th
+          (click)="onSort('estado')"
+          [class.sorted-asc]="sortColumn === 'estado' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'estado' && sortDirection === 'desc'"
+        >
+          Estado
+        </th>
+
+        <th
+          (click)="onSort('interesPagado')"
+          [class.sorted-asc]="sortColumn === 'interesPagado' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'interesPagado' && sortDirection === 'desc'"
+        >
+          Interés Pagado
+        </th>
+
+        <th
+          (click)="onSort('aporteCapital')"
+          [class.sorted-asc]="sortColumn === 'aporteCapital' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'aporteCapital' && sortDirection === 'desc'"
+        >
+          Aporte Capital
+        </th>
+
+        <th
+          (click)="onSort('saldoRestante')"
+          [class.sorted-asc]="sortColumn === 'saldoRestante' && sortDirection === 'asc'"
+          [class.sorted-desc]="sortColumn === 'saldoRestante' && sortDirection === 'desc'"
+        >
+          Saldo Restante
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!--
+        Recorremos la lista "sortedData", que es el arreglo
+        ya filtrado/ordenado dependiendo de la selección actual.
+      -->
+      <tr *ngFor="let item of sortedData">
+        <!-- <td>{{ item.persona }}</td>
+        <td>{{ item.compraCredito }}</td> -->
+        <td (click)="irDetalleCompra(item.compraCredito)">{{ item.concepto }}</td>
+        <td>{{ item.porcentaje }} %</td>
+        <td>{{ item.numeroCuota }}/{{ item.cantidadCuotaTotal }}</td>
+        <!-- <td>{{ item.fechaPago | formatoFecha }}</td> -->
+        <td>{{ item.valorPagoCuota | currency }}</td>
+        <td>{{ item.valorPagoResponsable | currency }}</td>
+        <td>{{ item.tarjeta | formatoTarjeta }}</td>
+        <td>{{ item.estado }}</td>
+        <td>{{ item.interesPagado | currency}}</td>
+        <td>{{ item.aporteCapital | currency }}</td>
+        <td>{{ item.saldoRestante | currency }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <h2>Resumen de Totales</h2>
+  <!-- Sección de Resumen de Totales -->
+  <div class="summary-section">
+
+
+    <!-- Recuadros por tarjeta -->
+    <div class="summary-card" *ngFor="let resumen of resumenPorTarjeta">
+      <h3>Tarjeta: {{ resumen.tarjeta | formatoTarjeta }}</h3>
+      <p><strong>Total a pagar responsable:</strong> {{ resumen.totalResponsable | currency}}</p>
+      <p><strong>Interés pagado:</strong> {{ resumen.totalInteres | currency }}</p>
+      <p><strong>Aporte capital:</strong> {{ resumen.totalCapital | currency }}</p>
+      <p><strong>Saldo restante:</strong> {{ resumen.totalSaldo | currency }}</p>
+    </div>
+
+    <!-- Recuadro para el total general (todas las tarjetas) -->
+    <div class="summary-card total">
+      <h3>Total General</h3>
+      <p><strong>Total a pagar responsable:</strong> {{ resumenGeneral.totalResponsable| currency }}</p>
+      <p><strong>Interés pagado:</strong> {{ resumenGeneral.totalInteres | currency }}</p>
+      <p><strong>Aporte capital:</strong> {{ resumenGeneral.totalCapital | currency }}</p>
+      <p><strong>Saldo restante:</strong> {{ resumenGeneral.totalSaldo | currency }}</p>
+    </div>
+  </div>
+
+</div>
+

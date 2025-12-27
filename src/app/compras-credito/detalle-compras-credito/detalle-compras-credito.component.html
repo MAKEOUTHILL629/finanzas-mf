@@ -1,0 +1,70 @@
+
+<div class="purchase-detail">
+  <h2>Detalle de la Compra</h2>
+
+  <section class="purchase-info">
+    <div class="info-group">
+      <h3>Información General</h3>
+      <p><strong>Concepto:</strong> {{ compraCredito?.concepto }}</p>
+      <p><strong>Descripción:</strong> {{ compraCredito?.descripcion }}</p>
+      <p><strong>Estado:</strong> {{ compraCredito?.estado }}</p>
+    </div>
+
+    <div class="info-group">
+      <h3>Detalles Financieros</h3>
+      <p><strong>Valor de Compra:</strong> {{ compraCredito?.valorCompra | currency:'USD':'symbol':'1.2-2' }}</p>
+      <p><strong>Fecha de Compra:</strong> {{ compraCredito?.fechaCompra | formatoFecha}}</p>
+      <p><strong>Número de Cuotas:</strong> {{ compraCredito?.numeroCuotas }}</p>
+      <p><strong>Pago Mensual:</strong> {{ compraCredito?.pagoMensual | currency:'USD':'symbol':'1.2-2' }}</p>
+      <p><strong>Interés:</strong> {{ compraCredito?.interes }}%</p>
+      <p><strong>Fecha Última Cuota:</strong> {{ compraCredito?.fechaUltimaCuota | formatoFecha }}</p>
+    </div>
+
+    <div class="info-group">
+      <h3>Información de Pago</h3>
+      <p><strong>Tarjeta:</strong> {{ compraCredito?.tarjeta || 1 | formatoTarjeta }}</p>
+    </div>
+  </section>
+
+
+
+  <section class="installments" *ngIf="cuotaDetalles && cuotaDetalles.length > 0">
+    <h3>Detalle de Cuotas</h3>
+    <table class="installments-table">
+      <thead>
+        <tr>
+          <th>Número de Cuota</th>
+          <th>Fecha de Pago</th>
+          <th>Saldo Restante</th>
+          <th>Interés Pagado</th>
+          <th>Aporte a Capital</th>
+          <th>Pago Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let installment of cuotaDetalles">
+          <td>{{ installment.numeroCuota }}</td>
+          <td>{{ installment.fechaPago | formatoFecha }}</td>
+          <td>{{ installment.saldoRestante | currency:'USD':'symbol':'1.2-2' }}</td>
+          <td>{{ installment.interesPagado | currency:'USD':'symbol':'1.2-2' }}</td>
+          <td>{{ installment.aporteCapital | currency:'USD':'symbol':'1.2-2' }}</td>
+          <td>{{ installment.pagoTotal | currency:'USD':'symbol':'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="total">Total pagado en intereses: {{ obtenerTotalPagadoInteres() | currency:'USD':'symbol':'1.2-2' }}</p>
+    <p class="total">Total pagado: {{ obtenerTotalPagado() | currency:'USD':'symbol':'1.2-2' }}</p>
+
+    <canvas
+    baseChart
+    [data]="lineChartData"
+    [options]="lineChartOptions"
+    [type]="lineChartType"
+  ></canvas>
+  </section>
+
+ <button class="btn-recalcular-cuotas" (click)="recalcularCuotas()">Recalcular cuotas</button>
+
+  <app-responsable-credito [compra]="compraCredito || {}"></app-responsable-credito>
+</div>

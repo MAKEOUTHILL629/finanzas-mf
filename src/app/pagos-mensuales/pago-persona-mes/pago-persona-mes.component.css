@@ -1,0 +1,74 @@
+.contenedor {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.tarjeta-persona {
+  border: 1px solid #ddd;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.encabezado-persona {
+  color: #fff;
+  padding: 15px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.encabezado-persona h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.icono-toggle {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.lista-pagos {
+  padding: 10px 15px;
+  background-color: #f9f9f9;
+}
+
+.item-pago {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.item-pago:last-child {
+  border-bottom: none;
+}
+
+.mes-actual {
+  background-color: #cce5ff;
+}
+
+.mes {
+  font-weight: bold;
+}
+
+.monto {
+  color: #28a745;
+}
+
+@media (max-width: 600px) {
+  .encabezado-persona h2 {
+    font-size: 18px;
+  }
+
+  .icono-toggle {
+    font-size: 20px;
+  }
+
+  .contenedor {
+    padding: 5px;
+  }
+}

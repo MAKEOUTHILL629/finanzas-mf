@@ -1,0 +1,65 @@
+<!-- Título principal -->
+<h2 class="table-title">Estado de Pagos</h2>
+
+<!-- Subtítulos con información adicional (tarjeta, fecha de pago, total a pagar) -->
+<div class="info-subtitles">
+  <p>
+    <strong>Tarjeta:</strong>
+    {{ idTarjeta | formatoTarjeta }}
+  </p>
+  <p>
+    <strong>Fecha de Pago:</strong>
+    {{ fechaPago | formatoFecha}}
+  </p>
+  <p>
+    <strong>Total a Pagar:</strong>
+    {{ totalPagoTotal | currency}}
+  </p>
+</div>
+
+<div class="table-container">
+
+  <table>
+    <thead>
+      <tr>
+        <th (click)="sortData('compra')">Compra</th>
+        <th (click)="sortData('numeroCuota')">Cuota</th>
+        <th (click)="sortData('saldoRestante')">Saldo Restante</th>
+        <th (click)="sortData('interesPagado')">Interés Pagado</th>
+        <th (click)="sortData('aporteCapital')">Aporte Capital</th>
+        <th (click)="sortData('pagoTotal')">Pago Total</th>
+
+        <th (click)="sortData('estado')">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Mostramos la data ya ordenada (sortedData) -->
+      <tr *ngFor="let item of sortedData">
+        <td  (click)="irDetalleCompra(item.compra)">{{ item.concepto }}</td>
+        <td>{{ item.numeroCuota }}/{{ item.numeroCuotasTotal}}</td>
+        <!-- Pipe number para formatear decimales -->
+        <td>{{ item.saldoRestante | currency}}</td>
+        <td>{{ item.interesPagado | currency}}</td>
+        <td>{{ item.aporteCapital | currency}}</td>
+        <td>{{ item.pagoTotal | currency}}</td>
+
+        <td>{{ item.estado }}</td>
+      </tr>
+    </tbody>
+
+    <!-- Fila con los totales de interes, aporte capital, pago total y saldo restante -->
+    <tfoot>
+      <tr>
+        <td><strong>Totales:</strong></td>
+        <td></td>
+        <td><strong>{{ totalSaldoRestante | currency}}</strong></td>
+        <td><strong>{{ totalInteresPagado | currency}}</strong></td>
+        <td><strong>{{ totalAporteCapital | currency}}</strong></td>
+        <td><strong>{{ totalPagoTotal | currency}}</strong></td>
+        <td></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+</div>

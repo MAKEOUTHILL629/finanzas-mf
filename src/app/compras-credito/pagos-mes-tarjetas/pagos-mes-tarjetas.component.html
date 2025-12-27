@@ -1,0 +1,24 @@
+<h1 class="title">Pagos del Mes</h1>
+
+<div class="table-container">
+  <table class="elegant-table">
+    <thead>
+      <tr>
+        <th>Mes Pago</th>
+        <th>Valor Pago</th>
+        <th>Tarjeta Crédito</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let mesPago of mesPagoTarjetas"
+        [ngClass]="{'highlight': esPagoActual(mesPago.fechaPago)}"
+        (click)="detallePagosMesTarjeta(mesPago.tarjeta  || 1, mesPago.fechaPago)"
+      >
+        <td>{{ mesPago.fechaPago | formatoFecha }}</td>
+        <td>{{ mesPago.valorPago | currency }}</td>
+        <td>{{ obtenerTarjeta(mesPago.tarjeta ? mesPago.tarjeta : 0) }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,1 +1,20 @@
-/* You can add global styles to this file, and also import other style files */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+.app-container {
+  transition: padding-left 0.3s ease;
+}
+
+.main-content {
+  padding: 20px;
+}
+
+@media (min-width: 768px) {
+  .app-container:not(.menu-closed) {
+    padding-left: 250px;
+  }
+}

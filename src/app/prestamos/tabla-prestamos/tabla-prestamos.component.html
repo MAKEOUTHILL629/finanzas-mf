@@ -1,0 +1,64 @@
+<div class="loan-table-container">
+  <form [formGroup]="filterForm" class="filters">
+    <div class="filter-group">
+      <label for="conceptoBusqueda">Buscar por Concepto:</label>
+      <input type="text" id="conceptoBusqueda" formControlName="conceptoBusqueda" placeholder="Buscar concepto...">
+    </div>
+    <div class="filter-group">
+      <label for="fechaInicial">Fecha Inicial:</label>
+      <input type="date" id="fechaInicial" formControlName="fechaInicial">
+    </div>
+    <div class="filter-group">
+      <label for="fechaFinal">Fecha Final:</label>
+      <input type="date" id="fechaFinal" formControlName="fechaFinal">
+    </div>
+    <div class="filter-group">
+      <label for="responsable">Responsable:</label>
+      <select id="responsable" formControlName="responsable">
+        <option value="">Todos</option>
+        <option *ngFor="let persona of personas" [value]="persona.id">{{ persona.nombre }}</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="estado">Estado:</label>
+      <select id="estado" formControlName="estado">
+        <option value="">Todos</option>
+        <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
+      </select>
+    </div>
+    <button type="button" (click)="resetFilters()">Reiniciar Filtros</button>
+  </form>
+
+  <table class="loan-table">
+    <thead>
+      <tr>
+
+        <th>Valor Prestado</th>
+        <th>Concepto</th>
+        <th>Fecha de Cobro</th>
+        <th>Responsable</th>
+        <th>Estado</th>
+        <th>Comentarios</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let prestamo of filteredPrestamos">
+
+        <td data-label="Valor Prestado">{{ prestamo.valorPrestado | currency }}</td>
+        <td data-label="Concepto">{{ prestamo.concepto }}</td>
+        <td data-label="Fecha de Cobro">{{ prestamo.fechaCobro | date:'dd/MM/yyyy' }}</td>
+        <td data-label="Responsable">{{ getPersonaNombre(prestamo.responsable || 0) }}</td>
+        <td data-label="Estado">{{ prestamo.estado }}</td>
+        <td data-label="Comentarios">{{ prestamo.comentarios }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<button class="floating-button" (click)="openCreditForm()">
+  <i class="material-icons">add</i>
+</button>
+
+<app-modal>
+  <app-formulario-prestamos></app-formulario-prestamos>
+</app-modal>

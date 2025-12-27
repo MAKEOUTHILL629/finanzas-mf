@@ -1,0 +1,25 @@
+<div class="contenedor">
+  <div *ngFor="let persona of personasConPagos" class="tarjeta-persona">
+    <div
+      class="encabezado-persona"
+      (click)="toggleExpandir(persona)"
+      [style.backgroundColor]="persona.colorRepresentativo || '#007bff'"
+    >
+      <h2>{{ persona.nombre }}</h2>
+      <span class="icono-toggle">{{ persona.expandido ? '-' : '+' }}</span>
+    </div>
+    <div class="lista-pagos" *ngIf="persona.expandido">
+      <div
+        *ngFor="let pago of persona.pagos"
+        [ngClass]="{ 'mes-actual': esMesActual(pago.fecha) }"
+        class="item-pago"
+        (click)="detallePagosMesPersona(persona.id || 1, pago.fecha)"
+      >
+        <span class="mes">
+          {{ pago.fecha | formatoFecha }}:
+        </span>
+        <span class="monto">{{ pago.valorPago | currency: 'USD' }}</span>
+      </div>
+    </div>
+  </div>
+</div>

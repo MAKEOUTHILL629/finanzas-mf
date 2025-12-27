@@ -1,0 +1,124 @@
+
+
+<div class="purchase-table-container">
+  <!-- Sección de filtros -->
+  <div class="filter-container">
+    <form [formGroup]="filterForm" class="filter-form">
+
+      <div class="filter-group">
+        <label for="concepto">Concepto:</label>
+        <input type="text" id="concepto" formControlName="concepto">
+
+      </div>
+      <div class="filter-group">
+        <label for="tarjeta">Tarjeta:</label>
+        <select id="tarjeta" formControlName="tarjeta">
+          <option value="">Todas</option>
+          <option *ngFor="let tarjeta of tarjetas" value="{{tarjeta.id}}">{{tarjeta.franquicia}}</option>
+          <!-- Más opciones aquí -->
+        </select>
+      </div>
+
+
+      <div class="filter-group">
+        <label for="estado">Estado:</label>
+        <select id="estado" formControlName="estado">
+          <option value="">Todos</option>
+          <option *ngFor="let estado of estados" value="{{estado}}">{{estado}}</option>
+          <!-- Más opciones aquí -->
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="numeroCuotas">Número de Cuotas:</label>
+        <input type="number" id="numeroCuotas" formControlName="numeroCuotas">
+      </div>
+
+      <div class="filter-group date-range">
+        <div>
+          <label for="fechaCompraInicio">Fecha de Compra Desde:</label>
+          <input type="date" id="fechaCompraInicio" formControlName="fechaCompraInicio">
+        </div>
+        <div>
+          <label for="fechaCompraFin">Hasta:</label>
+          <input type="date" id="fechaCompraFin" formControlName="fechaCompraFin">
+        </div>
+      </div>
+
+      <div class="filter-group date-range">
+        <div>
+          <label for="fechaUltimaCuotaInicio">Fecha Última Cuota Desde:</label>
+          <input type="date" id="fechaUltimaCuotaInicio" formControlName="fechaUltimaCuotaInicio">
+        </div>
+        <div>
+          <label for="fechaUltimaCuotaFin">Hasta:</label>
+          <input type="date" id="fechaUltimaCuotaFin" formControlName="fechaUltimaCuotaFin">
+        </div>
+      </div>
+
+      <div class="filter-buttons">
+        <button type="button" class="filter-button reset" (click)="resetFilters()">Restablecer</button>
+        <button type="button" class="filter-button" (click)="applyFilters()">Aplicar Filtros</button>
+      </div>
+    </form>
+  </div>
+  <!-- Tabla de datos -->
+  <div class="table-responsive">
+    <table class="purchase-table">
+      <thead>
+        <tr>
+          <th *ngFor="let column of sortableColumns" (click)="sortData(column.columna)">
+            {{ column.titulo }}
+            <span *ngIf="sortColumn === column.columna">
+              {{ sortDirection === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let purchase of filteredPurchases" (click)="irDetalleCompra(purchase)">
+          <td >{{ purchase.concepto }}</td>
+          <td>{{ purchase.valorCompra | currency }}</td>
+          <td>{{ purchase.fechaCompra | formatoFecha }}</td>
+          <td>{{ purchase.numeroCuotas }}</td>
+          <td>{{  purchase.fechaUltimaCuota | formatoFecha }}</td>
+          <td>{{ purchase.pagoMensual | currency}}</td>
+          <td>{{ purchase.interes}}%</td>
+          <td>
+
+            <ul class="group-responsables">
+              <li *ngFor="let reponsable of cargarResponsables(purchase.responsables || '')" class="item-responsable"  style="background-color: {{ reponsable.color }}">
+                {{ reponsable.iniciales }}
+              </li>
+            </ul>
+            {{ purchase.porcentajePago }}%
+          </td>
+          <td>{{ purchase.estado }}</td>
+          <td>{{ obtenerTarjeta(purchase.tarjeta ? purchase.tarjeta  : 0) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mensaje si no hay datos -->
+  <div *ngIf="filteredPurchases.length === 0" class="no-data-message">
+    No se encontraron compras que coincidan con los filtros aplicados.
+  </div>
+</div>
+
+
+<div class="floating-group">
+  <button class="floating-button" (click)="openCreditForm()">
+    <i class="material-icons">add</i>
+  </button>
+
+  <button class="floating-button" (click)="pagarProductosTarjetaCredito()">
+    <i class="material-icons">paid</i>
+  </button>
+
+</div>
+
+
+<app-modal>
+  <app-formulario-compras-credito></app-formulario-compras-credito>
+</app-modal>

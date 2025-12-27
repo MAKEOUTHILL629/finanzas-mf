@@ -1,0 +1,155 @@
+/* Contenedor general */
+.container {
+  width: 95%;
+  max-width: 85vw;
+  margin: 0 auto;
+  overflow-x: auto; /* scroll horizontal en pantallas pequeñas */
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Título principal */
+h1 {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+h2 {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Información de pago (persona y fecha) */
+.info-pago {
+  margin-bottom: 20px;
+  text-align: center;
+}
+.info-pago h2 {
+  font-size: 20px;
+  margin: 0 0 10px 0;
+  color: #555;
+}
+.info-pago h3 {
+  font-size: 16px;
+  color: #777;
+  margin: 0;
+  font-weight: normal;
+}
+
+/* Tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  min-width: 800px;
+}
+
+thead {
+  background-color: #3f51b5;
+  color: #fff;
+}
+
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Indica que el th se puede clicar */
+th {
+  cursor: pointer;
+  position: relative; /* para flechas de orden */
+}
+
+/* Filas alternadas */
+tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* Hover en fila */
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Flecha por defecto (abajo) */
+th::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-top-color: #fff;
+  opacity: 0.7;
+}
+
+/* Flecha arriba para "asc" */
+th.sorted-asc::after {
+  border-bottom-color: #fff;
+  border-top-color: transparent;
+}
+
+/* Sección de resumen */
+.summary-section {
+  margin-top: 30px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+.summary-section h2 {
+  text-align: center;
+  margin-bottom: 20px;
+
+}
+
+/* Tarjetas de resumen */
+.summary-card {
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  border-radius: 8px;
+  padding: 40px;
+  margin: 20px;
+  background-color: #fdfdfd;
+}
+.summary-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #444;
+}
+.summary-card p {
+  margin: 6px 0;
+}
+
+/* Recuadro del total general, con estilo ligeramente distinto */
+.summary-card.total {
+  background-color: #eef2f7; /* color claro */
+  font-weight: bold;
+}
+
+/* Responsive para pantallas muy pequeñas */
+@media (max-width: 600px) {
+  th, td {
+    padding: 8px;
+    font-size: 14px;
+  }
+  h1 {
+    font-size: 20px;
+  }
+  .info-pago h2 {
+    font-size: 18px;
+  }
+  .info-pago h3 {
+    font-size: 14px;
+  }
+  .summary-card h3 {
+    font-size: 16px;
+  }
+}

@@ -1,0 +1,117 @@
+/* Estilo del Título */
+.title {
+  text-align: center;
+  font-size: 26px;
+  margin-bottom: 20px;
+  color: #34495e;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+}
+
+/* Contenedor de la Tabla */
+.table-container {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0 auto;
+  padding: 10px 15px;
+  background-color: #f4f7fa;
+  border-radius: 8px;
+}
+
+/* Estilo de la Tabla */
+.elegant-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 16px;
+  text-align: left;
+  min-width: 600px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Encabezados de la Tabla */
+.elegant-table thead {
+  background-color: #2c3e50;
+  color: #ffffff;
+}
+
+.elegant-table th {
+  padding: 12px 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+/* Filas de la Tabla */
+.elegant-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.elegant-table tbody tr:nth-of-type(even) {
+  background-color: #f8f9fa;
+}
+
+.elegant-table tbody tr:hover {
+  background-color: #e8eaf6;
+}
+
+/* Celdas de la Tabla */
+.elegant-table td {
+  padding: 12px 15px;
+  color: #2c3e50;
+}
+
+/* Resaltado Condicional */
+.elegant-table tbody tr.highlight {
+  background-color: #008B8B;
+  color: #ffffff;
+}
+
+.elegant-table tbody tr.highlight td{
+  color: #ffffff;
+}
+
+/* Estilos Responsivos */
+@media screen and (max-width: 768px) {
+  .elegant-table thead {
+    display: none;
+  }
+
+  .elegant-table tbody tr {
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  .elegant-table tbody tr td {
+    display: block;
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .elegant-table tbody tr td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-left: 15px;
+    font-weight: 600;
+    text-align: left;
+    color: #2c3e50;
+    text-transform: uppercase;
+  }
+
+  .elegant-table tbody tr td:last-child {
+    border-bottom: none;
+  }
+
+  .elegant-table tbody tr.highlight {
+    background-color: #008B8B;
+    color: #ffffff;
+  }
+}

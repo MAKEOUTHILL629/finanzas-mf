@@ -1,0 +1,160 @@
+/* Estilos generales */
+.purchase-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+h2, h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+/* Estilos para la información de la compra */
+.purchase-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.info-group {
+  flex: 1 1 300px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-group h3 {
+  font-size: 1.2em;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+
+.info-group p {
+  margin: 10px 0;
+}
+
+.info-group strong {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Estilos para la tabla de cuotas */
+.installments {
+  overflow-x: auto;
+}
+
+.installments-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.installments-table th,
+.installments-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.installments-table th {
+  background-color: #3498db;
+  color: white;
+  font-weight: 600;
+}
+
+.installments-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.installments-table tr:hover {
+  background-color: #e8f4f8;
+}
+
+/* Estilos responsivos */
+@media screen and (max-width: 768px) {
+  .purchase-detail {
+    padding: 15px;
+  }
+
+  .info-group {
+    flex: 1 1 100%;
+  }
+
+  .installments-table {
+    font-size: 14px;
+  }
+
+  .installments-table th,
+  .installments-table td {
+    padding: 8px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .purchase-detail {
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.5em;
+  }
+
+  h3 {
+    font-size: 1.2em;
+  }
+
+  .info-group {
+    padding: 15px;
+  }
+
+  .installments-table {
+    font-size: 12px;
+  }
+
+  /* Hacer la tabla scrollable horizontalmente en móviles */
+  .installments {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .installments-table {
+    min-width: 500px; /* Asegura que la tabla no se comprima demasiado */
+  }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* Estilos de impresión */
+@media print {
+  .purchase-detail {
+    max-width: none;
+    padding: 0;
+  }
+
+  .info-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+
+  .installments-table {
+    page-break-inside: auto;
+  }
+
+  .installments-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}

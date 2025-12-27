@@ -1,0 +1,44 @@
+<div class="menu-toggle" (click)="toggleMenu()" *ngIf="isMobile"> <i class="material-icons">{{ isMenuOpen ? 'menu_open' : 'menu' }}</i>
+</div>
+
+<nav class="finance-menu" [class.open]="isMenuOpen">
+
+  <div class="menu-header">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40" class="logo">
+      <circle cx="50" cy="50" r="45" fill="#1976d2" />
+      <path d="M50 25v50M25 50h50" stroke="white" stroke-width="8" stroke-linecap="round" />
+      <path d="M35 35l30 30M35 65l30-30" stroke="white" stroke-width="6" stroke-linecap="round" />
+    </svg>
+    <h1>Finanzas Make</h1>
+  </div>
+
+  <ul class="menu-items">
+
+    <ng-container *ngIf="isUserLoggedIn$ | async">
+      <li *ngFor="let item of loggedInMenuItems"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          (click)="isMobile && toggleMenu()"
+          [title]="item.label"> <i class="material-icons" *ngIf="item.icon">{{item.icon}}</i> <span class="menu-label">{{item.label}}</span>
+      </li>
+    </ng-container>
+
+    <li *ngIf="!(isUserLoggedIn$ | async)"
+        routerLink="/login"
+        routerLinkActive="active"
+        (click)="isMobile && toggleMenu()"
+        title="Iniciar Sesión">
+      <i class="material-icons">login</i> <span class="menu-label">Iniciar Sesión</span>
+    </li>
+
+    <li *ngIf="isUserLoggedIn$ | async" class="menu-item-logout" title="Cerrar Sesión">
+      <button type="button" (click)="logout()">
+        <i class="material-icons">logout</i> <span class="menu-label">Cerrar Sesión</span>
+      </button>
+    </li>
+
+  </ul>
+
+  </nav>
+
+<div class="menu-backdrop" [class.visible]="isMenuOpen && isMobile" (click)="toggleMenu()"></div>
