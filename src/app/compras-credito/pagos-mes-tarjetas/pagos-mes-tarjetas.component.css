@@ -1,117 +1,744 @@
-/* Estilo del Título */
-.title {
-  text-align: center;
-  font-size: 26px;
-  margin-bottom: 20px;
-  color: #34495e;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
+/* ============================================
+   PAGOS MES TARJETAS - LIQUID TRUST DESIGN
+   Basado en STYLE_APP.txt
+   ============================================ */
+
+/* === TOKENS LOCALES === */
+:host {
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  --blue-brand: #0071E3;
+  --green-success: #34C759;
+  --red-danger: #FF3B30;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --bg-surface: rgba(21, 26, 33, 0.65);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --specular-light: rgba(255, 255, 255, 0.1);
 }
 
-/* Contenedor de la Tabla */
-.table-container {
+/* === ESTRUCTURA BASE === */
+.section-container {
+  margin-bottom: var(--space-4);
+  background: var(--bg-surface);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card),
+              inset 0 1px 0 var(--specular-light);
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.section-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.section-icon {
+  font-size: 24px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.toggle-icon {
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-icon.rotated {
+  transform: rotate(-90deg);
+}
+
+.section-content {
+  padding: 0 var(--space-4) var(--space-4) var(--space-4);
+  max-height: 5000px;
+  opacity: 1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-content.collapsed {
+  max-height: 0;
+  padding: 0 var(--space-4);
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* ============================================
+   VISTA RÁPIDA - 3 MESES CLAVE
+   ============================================ */
+.key-months-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-3);
+}
+
+.month-card {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.03) 0%, rgba(0, 82, 204, 0.01) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.month-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -4px rgba(0, 113, 227, 0.15);
+}
+
+.month-card.month-current {
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.08) 0%, rgba(5, 150, 105, 0.03) 100%);
+  border: 2px solid var(--green-success);
+  position: relative;
+}
+
+.month-card.month-current::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--green-success), #059669);
+}
+
+.month-header {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-glass);
+  background: rgba(0, 113, 227, 0.03);
+}
+
+.month-card.month-current .month-header {
+  background: rgba(52, 199, 89, 0.08);
+}
+
+.month-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: var(--blue-brand);
+  color: white;
+  margin-bottom: var(--space-1);
+}
+
+.month-badge.current {
+  background: linear-gradient(135deg, var(--green-success) 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.month-title {
+  margin: var(--space-1) 0 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.month-body {
+  padding: var(--space-3);
+}
+
+.cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: var(--space-2);
+}
+
+.card-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(0, 113, 227, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-item.clickable {
+  cursor: pointer;
+}
+
+.card-item.clickable:hover {
+  background: rgba(0, 113, 227, 0.1);
+  border-color: var(--blue-brand);
+  transform: translateX(6px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15),
+              0 0 0 1px rgba(0, 113, 227, 0.2);
+}
+
+.card-item.clickable:active {
+  transform: translateX(3px) scale(0.99);
+}
+
+.month-card.month-current .card-item {
+  background: rgba(52, 199, 89, 0.06);
+}
+
+.month-card.month-current .card-item.clickable:hover {
+  background: rgba(52, 199, 89, 0.12);
+  border-color: var(--green-success);
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.2),
+              0 0 0 1px rgba(52, 199, 89, 0.3);
+}
+
+.card-icon {
+  font-size: 20px;
+}
+
+.card-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.card-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+
+.no-data {
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.month-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  margin-top: var(--space-2);
+  background: linear-gradient(135deg, var(--blue-brand) 0%, #0052CC 100%);
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px -2px rgba(0, 113, 227, 0.3);
+}
+
+.month-total.highlight {
+  background: linear-gradient(135deg, var(--green-success) 0%, #059669 100%);
+  box-shadow: 0 4px 12px -2px rgba(52, 199, 89, 0.4);
+}
+
+.total-amount {
+  font-size: 20px;
+  font-weight: 700;
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+/* ============================================
+   BUSCADOR INTELIGENTE
+   ============================================ */
+.search-container {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--specular-light);
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: 200px 1fr auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.search-field-wide {
+  grid-column: span 1;
+}
+
+.search-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.label-icon {
+  font-size: 14px;
+}
+
+.label-text {
+  font-size: 12px;
+}
+
+/* Glass Inputs */
+.input-glass {
+  height: 48px;
+  padding: 0 var(--space-3);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-glass:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.input-glass:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--blue-brand);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+}
+
+.input-glass option {
+  background: #0B0E14;
+  color: var(--text-primary);
+}
+
+.search-input {
+  font-feature-settings: "tnum";
+}
+
+.search-hint {
+  font-size: 11px;
+  color: rgba(156, 163, 175, 0.6);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Pill Buttons */
+.btn-pill {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  outline: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  color: var(--red-danger);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 59, 48, 0.15);
+  border-color: var(--red-danger);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.2);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-icon {
+  font-size: 14px;
+}
+
+.results-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(0, 113, 227, 0.08);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--blue-brand);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue-brand);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.badge-text {
+  font-feature-settings: "tnum";
+}
+
+/* ============================================
+   TABLA FINANCIERA - STICKY HEADER
+   ============================================ */
+.table-wrapper {
   max-width: 100%;
   overflow-x: auto;
-  margin: 0 auto;
-  padding: 10px 15px;
-  background-color: #f4f7fa;
-  border-radius: 8px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
 }
 
-/* Estilo de la Tabla */
-.elegant-table {
+.financial-table {
   width: 100%;
-  border-collapse: collapse;
-  margin: 20px 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0;
   font-size: 16px;
   text-align: left;
   min-width: 600px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Encabezados de la Tabla */
-.elegant-table thead {
-  background-color: #2c3e50;
-  color: #ffffff;
+/* STICKY HEADER con Glass Effect */
+.table-head-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, var(--blue-brand) 0%, #0052CC 100%);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.elegant-table th {
-  padding: 12px 15px;
+.table-head-sticky th {
+  padding: var(--space-3) var(--space-4);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 2px solid #e0e0e0;
+  letter-spacing: 0.5px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.2s ease;
 }
 
-/* Filas de la Tabla */
-.elegant-table tbody tr {
-  border-bottom: 1px solid #e0e0e0;
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
 }
 
-.elegant-table tbody tr:nth-of-type(even) {
-  background-color: #f8f9fa;
+.th-sortable:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.elegant-table tbody tr:hover {
-  background-color: #e8eaf6;
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
-/* Celdas de la Tabla */
-.elegant-table td {
-  padding: 12px 15px;
-  color: #2c3e50;
+.th-number {
+  text-align: right;
 }
 
-/* Resaltado Condicional */
-.elegant-table tbody tr.highlight {
-  background-color: #008B8B;
-  color: #ffffff;
+.th-number .th-content {
+  justify-content: flex-end;
 }
 
-.elegant-table tbody tr.highlight td{
-  color: #ffffff;
+.sort-indicator {
+  font-size: 12px;
+  color: white;
+  animation: fadeIn 0.2s ease;
 }
 
-/* Estilos Responsivos */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Filas con Hover Interactivo */
+.table-body .table-row {
+  border-bottom: 1px solid var(--border-glass);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.table-body .table-row:hover {
+  background: rgba(0, 113, 227, 0.08);
+  transform: translateX(6px);
+  box-shadow: inset 3px 0 0 var(--blue-brand),
+              0 2px 8px rgba(0, 113, 227, 0.1);
+}
+
+.table-body .table-row:active {
+  transform: translateX(3px);
+}
+
+/* Fila Actual con Glow Effect */
+.table-row.row-current {
+  background: linear-gradient(90deg,
+    rgba(52, 199, 89, 0.15) 0%,
+    rgba(52, 199, 89, 0.05) 100%);
+  border-left: 4px solid var(--green-success);
+  border-right: 3px solid rgba(52, 199, 89, 0.3);
+  box-shadow: 0 0 20px rgba(52, 199, 89, 0.15),
+              inset 0 1px 0 rgba(52, 199, 89, 0.2);
+  position: relative;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.table-row.row-current:hover {
+  background: linear-gradient(90deg,
+    rgba(52, 199, 89, 0.2) 0%,
+    rgba(52, 199, 89, 0.08) 100%);
+  box-shadow: inset 4px 0 0 var(--green-success),
+              0 4px 16px rgba(52, 199, 89, 0.2);
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(52, 199, 89, 0.15),
+                inset 0 1px 0 rgba(52, 199, 89, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(52, 199, 89, 0.25),
+                inset 0 1px 0 rgba(52, 199, 89, 0.3);
+  }
+}
+
+/* Celdas con Números Tabulares */
+.table-body td {
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-primary);
+}
+
+.td-date {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.current-indicator {
+  color: var(--green-success);
+  font-size: 12px;
+  animation: pulse-indicator 2s ease-in-out infinite;
+}
+
+@keyframes pulse-indicator {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.2); }
+}
+
+.date-text {
+  font-feature-settings: "tnum";
+}
+
+.td-amount {
+  text-align: right;
+}
+
+.financial-num {
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.td-card {
+  color: var(--text-secondary);
+}
+
+.card-label {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(0, 113, 227, 0.1);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Empty State */
+.empty-state-row {
+  background: transparent !important;
+  cursor: default !important;
+}
+
+.empty-state-row:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-3);
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ============================================
+   RESPONSIVE - MOBILE FIRST
+   ============================================ */
 @media screen and (max-width: 768px) {
-  .elegant-table thead {
+  /* Buscador Stack Vertical */
+  .search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-field-wide {
+    grid-column: span 1;
+  }
+
+  .search-actions {
+    justify-content: stretch;
+  }
+
+  .btn-pill {
+    width: 100%;
+  }
+
+  /* Meses Grid a Stack */
+  .key-months-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Tabla a Cards en Mobile */
+  .financial-table {
+    min-width: 100%;
+  }
+
+  .table-head-sticky {
     display: none;
   }
 
-  .elegant-table tbody tr {
+  .table-body .table-row {
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: var(--space-3);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    transform: none !important;
   }
 
-  .elegant-table tbody tr td {
+  .table-body .table-row:hover {
+    box-shadow: 0 4px 16px rgba(0, 113, 227, 0.15);
+  }
+
+  .table-body td {
     display: block;
-    text-align: right;
-    padding-left: 50%;
-    position: relative;
-    border-bottom: 1px solid #e0e0e0;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-glass);
   }
 
-  .elegant-table tbody tr td:before {
-    content: attr(data-label);
-    position: absolute;
-    left: 0;
-    width: 50%;
-    padding-left: 15px;
-    font-weight: 600;
-    text-align: left;
-    color: #2c3e50;
-    text-transform: uppercase;
-  }
-
-  .elegant-table tbody tr td:last-child {
+  .table-body td:last-child {
     border-bottom: none;
   }
 
-  .elegant-table tbody tr.highlight {
-    background-color: #008B8B;
-    color: #ffffff;
+  .table-body td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .td-date {
+    display: block;
+  }
+
+  .td-amount {
+    text-align: left;
+  }
+}
+
+@media screen and (max-width: 968px) {
+  .key-months-grid {
+    grid-template-columns: 1fr;
   }
 }

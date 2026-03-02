@@ -1,273 +1,677 @@
-/* Estilos para MenuComponent - Refactorizado */
+/* ============================================
+   MENU COMPONENT - LIQUID TRUST DESIGN
+   Filosofía: Precisión Suiza + Cristal Líquido
+   ============================================ */
 
-/* Variables CSS para consistencia (opcional, pero recomendado) */
 :host {
-  --menu-bg-color: #0d1a2e; /* Azul oscuro casi negro */
-  --menu-header-bg-color: #06111f; /* Un poco más oscuro para cabecera */
-  --menu-text-color: #e0e0e0; /* Texto principal (blanco no puro) */
-  --menu-icon-color: #a0a0a0; /* Iconos un poco más tenues */
-  --menu-hover-bg-color: #1a2b44; /* Azul más claro para hover */
-  --menu-active-bg-color: #2c3f5e; /* Azul intermedio para activo */
-  --menu-active-text-color: #ffffff; /* Texto blanco puro para activo */
-  --menu-width: 260px; /* Ancho del menú */
-  --menu-transition-speed: 0.3s;
-  --menu-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Sombra sutil */
-  --font-family-base: 'Roboto', 'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; /* Fuente limpia */
+  /* === TOKENS LOCALES === */
+  --menu-width-desktop: 280px;
+  --menu-height-mobile: 80px;
+  --menu-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 
-  display: block; /* Necesario para algunos contextos de layout */
-  font-family: var(--font-family-base);
+  /* === PALETA LIQUID TRUST === */
+  --blue-brand: #0071E3;
+  --green-success: #34C759;
+  --red-danger: #FF3B30;
+  --slate-900: #0B0E14;
+  --slate-800: #151A21;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --bg-surface: rgba(21, 26, 33, 0.65);
+  --specular-light: rgba(255, 255, 255, 0.1);
+  --glow-brand: rgba(0, 113, 227, 0.4);
+
+  /* === ESPACIADO 8PT GRID === */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  /* === BORDER RADIUS === */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 
-/* Contenedor principal del menú */
-.finance-menu {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100vh; /* Ocupa toda la altura */
-  width: var(--menu-width);
-  background-color: var(--menu-bg-color);
-  color: var(--menu-text-color);
-  transition: transform var(--menu-transition-speed) ease;
-  overflow-y: auto; /* Scroll si el contenido es muy largo */
-  overflow-x: hidden; /* Evitar scroll horizontal */
-  z-index: 1000; /* Asegurar que esté por encima de otro contenido */
-  box-shadow: var(--menu-shadow);
-  display: flex; /* Usar flex para estructura interna */
-  flex-direction: column; /* Alinear header, items, footer verticalmente */
-}
-
-/* Cabecera del Menú */
-.menu-header {
-  display: flex;
-  align-items: center;
-  padding: 18px 20px; /* Ajuste de padding */
-  background-color: var(--menu-header-bg-color);
-  flex-shrink: 0; /* Evitar que la cabecera se encoja */
-}
-
-.menu-header .logo {
-  width: 35px; /* Tamaño ajustado */
-  height: 35px;
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
-.menu-header h1 {
-  font-size: 18px; /* Tamaño ajustado */
-  font-weight: 600; /* Peso de fuente */
-  margin: 0;
-  white-space: nowrap; /* Evitar que el texto se parta */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Añadir '...' si el texto es muy largo */
-}
-
-/* Lista de Items */
-.menu-items {
-  list-style-type: none;
-  padding: 10px 0; /* Espacio vertical alrededor de los items */
-  margin: 0;
-  flex-grow: 1; /* Ocupa el espacio restante */
-  overflow-y: auto; /* Scroll si hay muchos items */
-}
-
-.menu-items li {
-  display: flex;
-  padding: 10px;
-  align-items: center;
-  /* Usamos padding en el 'a' o 'button' interno para mejor área de click */
-  cursor: pointer;
-  color: var(--menu-text-color);
-  /* Quitar padding de li, ponerlo en 'a' o 'button' */
-}
-
-/* Estilo para enlaces y botones dentro de los items */
-.menu-items li a,
-.menu-items li button {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px; /* Padding para el área de click */
-  width: 100%;
-  text-decoration: none;
-  color: inherit; /* Heredar color del li */
-  background: none; /* Quitar fondo por defecto de button */
-  border: none; /* Quitar borde por defecto de button */
-  font: inherit; /* Heredar fuente */
-  cursor: pointer;
-  text-align: left; /* Alinear texto a la izquierda */
-  transition: background-color var(--menu-transition-speed) ease, color var(--menu-transition-speed) ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Estado Hover para items */
-.menu-items li:hover,
-.menu-items li:hover > button {
-  background-color: var(--menu-hover-bg-color);
-  color: var(--menu-active-text-color); /* Texto más claro en hover */
-}
-.menu-items li:hover > a .material-icons,
-.menu-items li:hover > button .material-icons {
-  color: var(--menu-active-text-color); /* Icono más claro en hover */
-}
-
-
-/* Estado Activo (ruta actual) */
-/* Aplicado al 'li' por routerLinkActive */
-.menu-items li.active > a,
-.menu-items li.active > button {
-  background-color: var(--menu-active-bg-color);
-  color: var(--menu-active-text-color); /* Texto blanco en activo */
-  font-weight: 500; /* Ligeramente más grueso */
-}
-.menu-items li.active > a .material-icons,
-.menu-items li.active > button .material-icons {
-  color: var(--menu-active-text-color); /* Icono blanco en activo */
-}
-
-/* Estilo para Iconos (asumiendo Material Icons) */
-.menu-items li .material-icons {
-  margin-right: 16px; /* Espacio entre icono y texto */
-  vertical-align: middle; /* Mejor alineación vertical */
-  font-size: 20px; /* Tamaño del icono */
-  color: var(--menu-icon-color); /* Color por defecto del icono */
-  transition: color var(--menu-transition-speed) ease;
-}
-
-/* Estilo para el texto del menú */
-.menu-items li .menu-label {
-  vertical-align: middle;
-  font-size: 14px; /* Tamaño de fuente de items */
-}
-
-/* Estilo específico para el botón de Logout */
-.menu-item-logout {
-  margin-top: auto; /* Empujar al final si es posible con flex */
-  padding-top: 10px; /* Espacio antes del logout */
-  border-top: 1px solid var(--menu-hover-bg-color); /* Separador sutil */
-}
-
-.menu-item-logout button {
-  /* Hereda la mayoría de estilos de 'li button' */
-  color: var(--menu-icon-color); /* Color un poco más tenue por defecto */
-}
-
-.menu-item-logout button:hover {
-  color: var(--menu-active-text-color); /* Blanco en hover */
-  background-color: var(--menu-hover-bg-color);
-}
-.menu-item-logout button:hover .material-icons {
-   color: var(--menu-active-text-color); /* Icono blanco en hover */
-}
-
-
-/* Botón para abrir/cerrar (Toggle) */
-.menu-toggle {
-  position: fixed;
-  top: 15px; /* Ajustar posición */
-  left: 15px;
-  z-index: 1001; /* Por encima del menú */
-  background-color: var(--menu-bg-color);
-  color: var(--menu-text-color);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: none; /* Oculto por defecto, se muestra en media query */
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: background-color var(--menu-transition-speed) ease, left var(--menu-transition-speed) ease; /* Añadir transición para 'left' */
-}
-
-.menu-toggle:hover {
-  background-color: var(--menu-hover-bg-color);
-}
-
-/* Fondo oscuro para menú móvil */
-.menu-backdrop {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999; /* Detrás del menú pero encima del contenido */
-}
-
-
-/* --- Media Queries para Responsividad --- */
-
-/* Estilos para Móvil (pantallas pequeñas) */
+/* ============================================
+   MOBILE: BOTTOM TAB BAR (< 768px)
+   ============================================ */
 @media (max-width: 767px) {
+  /* === TOGGLE BUTTON FLOTANTE === */
+  .menu-toggle-floating {
+    position: fixed;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 1001;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--bg-surface);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow:
+      0 8px 24px -4px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 var(--specular-light);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu-toggle-floating:hover,
+  .menu-toggle-floating:active {
+    background: rgba(0, 113, 227, 0.15);
+    border-color: var(--blue-brand);
+    transform: scale(0.96);
+    box-shadow:
+      0 12px 32px -4px rgba(0, 113, 227, 0.4),
+      inset 0 1px 0 var(--specular-light);
+  }
+
+  .menu-toggle-floating .material-icons {
+    font-size: 28px;
+  }
+
+  /* Toggle integrado en header - Oculto en mobile */
+  .menu-toggle-integrated {
+    display: none;
+  }
+
+  /* Menu Header - Oculto en mobile */
+  .menu-header {
+    display: none;
+  }
+
+  /* === BOTTOM TAB BAR CONTAINER === */
   .finance-menu {
-    transform: translateX(calc(-1 * var(--menu-width))); /* Oculto fuera de pantalla */
-    /* Opcional: Podrías hacer el ancho 100% o un % menor en móvil */
-    /* width: 80%; */
-    /* max-width: 300px; */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--menu-height-mobile);
+    width: 100%;
+
+    background: var(--bg-surface);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+    border-top: 1px solid var(--border-glass);
+    box-shadow:
+      0 -8px 32px -4px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 var(--specular-light);
+
+    z-index: 1000;
+    overflow: visible;
+    transform: translateY(0);
+    transition: transform var(--menu-transition);
   }
 
-  .finance-menu.open {
-    transform: translateX(0); /* Visible */
+  /* === ITEMS HORIZONTALES === */
+  .menu-items {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    height: 100%;
+    padding: 0 var(--space-1);
+    margin: 0;
+    list-style: none;
+    gap: 4px;
   }
 
-  .menu-toggle {
-    display: flex; /* Mostrar el botón toggle en móvil */
+  .menu-items li {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    position: relative;
   }
 
-  .menu-backdrop.visible {
-    display: block; /* Mostrar el fondo oscuro en móvil cuando está abierto */
+  .menu-items li a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    padding: var(--space-1);
+    text-decoration: none;
+    color: var(--text-secondary);
+    background: transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Si el contenido principal necesita ajuste en móvil cuando el menú está abierto */
-  /* Esto es más complejo y depende de tu layout general */
-  /* body.menu-mobile-open { overflow: hidden; } */
+  .menu-items li .material-icons {
+    font-size: 28px;
+    color: var(--text-secondary);
+    margin: 0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu-items li .menu-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* === ESTADO ACTIVO === */
+  .menu-items li.active a {
+    background: rgba(0, 113, 227, 0.12);
+  }
+
+  .menu-items li.active .material-icons {
+    color: var(--blue-brand);
+    transform: translateY(-3px) scale(1.1);
+    filter: drop-shadow(0 4px 12px var(--glow-brand));
+  }
+
+  .menu-items li.active .menu-label {
+    color: var(--blue-brand);
+    font-weight: 700;
+  }
+
+  .menu-items li.active::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--blue-brand);
+    box-shadow: 0 0 12px var(--glow-brand), 0 0 4px var(--blue-brand);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  /* === HOVER === */
+  .menu-items li:hover a {
+    background: rgba(0, 113, 227, 0.08);
+  }
+
+  .menu-items li:hover .material-icons {
+    transform: scale(1.15);
+    color: var(--text-primary);
+  }
+
+  .menu-items li:hover .menu-label {
+    color: var(--text-primary);
+  }
+
+  /* === FOOTER CON LOGOUT === */
+  .menu-footer {
+    display: none;
+  }
+
+  .menu-backdrop {
+    display: none;
+  }
 }
 
-/* Estilos para Desktop (pantallas grandes) */
+/* ============================================
+   DESKTOP: SIDEBAR VERTICAL (>= 768px)
+   ============================================ */
 @media (min-width: 768px) {
-  .menu-toggle {
-     /* Mostrar el toggle en desktop si queremos menú colapsable */
-     /* Comenta la siguiente línea si NO quieres el botón en desktop */
-     display: flex;
+  /* === TOGGLE BUTTON FLOTANTE (Solo cuando el menú está cerrado) === */
+  .menu-toggle-floating {
+    position: fixed;
+    top: var(--space-3);
+    left: var(--space-3);
+    z-index: 1001;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--bg-surface);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow:
+      0 8px 24px -4px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 var(--specular-light);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Comportamiento si el menú NO está abierto en desktop */
+  .menu-toggle-floating:hover {
+    background: rgba(0, 113, 227, 0.15);
+    border-color: var(--blue-brand);
+    transform: translateY(-3px);
+    box-shadow:
+      0 12px 32px -4px rgba(0, 113, 227, 0.4),
+      inset 0 1px 0 var(--specular-light);
+  }
+
+  .menu-toggle-floating:active {
+    transform: translateY(0) scale(0.96);
+  }
+
+  .menu-toggle-floating .material-icons {
+    font-size: 28px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu-toggle-floating:hover .material-icons {
+    transform: rotate(90deg);
+  }
+
+  /* === SIDEBAR CONTAINER === */
+  .finance-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--menu-width-desktop);
+
+    background: var(--bg-surface);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+    border-right: 1px solid var(--border-glass);
+    box-shadow:
+      4px 0 32px -2px rgba(0, 0, 0, 0.4),
+      inset -1px 0 0 var(--specular-light);
+
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden; /* FIX: Evita scroll horizontal */
+    transform: translateX(0);
+    transition: transform var(--menu-transition);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Menú cerrado */
   .finance-menu:not(.open) {
-     transform: translateX(calc(-1 * var(--menu-width))); /* Oculto */
+    transform: translateX(calc(-1 * var(--menu-width-desktop)));
   }
 
-  /* Ajuste de posición del toggle cuando el menú está cerrado en desktop */
-  /* (Si el botón siempre está visible) */
-  .menu-toggle {
-      left: 15px; /* Posición cuando menú está cerrado */
-      /* transición ya definida arriba */
-  }
-  /* Cuando el menú está abierto en desktop, mover el botón */
-  .finance-menu.open + .menu-toggle {
-     left: calc(var(--menu-width) + 15px);
-  }
-
-  /* --- Ajuste del Contenido Principal (Ejemplo) --- */
-  /* IMPORTANTE: La mejor manera de ajustar el contenido principal es
-     usualmente aplicando una clase al <body> o a un contenedor principal
-     desde el AppComponent o un servicio de layout, NO usando :host-context
-     que puede ser frágil. Este CSS es solo un ejemplo conceptual. */
-
-  /* Asume que tienes un contenedor <div class="main-content"> alrededor
-     de tu <router-outlet> */
-  .main-content {
-    padding-left: var(--menu-width); /* Espacio por defecto para el menú */
-    transition: padding-left var(--menu-transition-speed) ease;
+  /* === HEADER CON LOGO Y TOGGLE INTEGRADO === */
+  .menu-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-3);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 113, 227, 0.12) 0%,
+      rgba(0, 82, 204, 0.04) 100%
+    );
+    border-bottom: 1px solid var(--border-glass);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
   }
 
-  /* Cuando el menú está cerrado (necesitarías una clase en el wrapper),
-     quitar el padding */
-  .main-content.menu-closed {
-     padding-left: 0;
+  .menu-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle at center,
+      rgba(0, 113, 227, 0.08) 0%,
+      transparent 70%
+    );
+    animation: rotateGlow 8s linear infinite;
   }
-  /* --------------------------------------------------- */
 
+  .menu-header .logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 12px rgba(0, 113, 227, 0.4));
+    position: relative;
+    z-index: 1;
+  }
+
+  .menu-header h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    position: relative;
+    z-index: 1;
+    flex-grow: 1; /* Toma el espacio disponible */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* === TOGGLE INTEGRADO EN HEADER === */
+  .menu-toggle-integrated {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+  }
+
+  .menu-toggle-integrated:hover {
+    background: rgba(0, 113, 227, 0.15);
+    border-color: var(--blue-brand);
+    color: var(--blue-brand);
+    transform: rotate(90deg);
+  }
+
+  .menu-toggle-integrated:active {
+    transform: rotate(90deg) scale(0.95);
+  }
+
+  .menu-toggle-integrated .material-icons {
+    font-size: 22px;
+  }
+
+  /* === ITEMS LIST === */
+  .menu-items {
+    list-style: none;
+    padding: var(--space-3) 0;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden; /* FIX: Evita scroll horizontal */
+  }
+
+  .menu-items li {
+    display: block;
+    margin: 6px var(--space-2); /* Reducido para evitar overflow */
+  }
+
+  .menu-items li a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2); /* Reducido a 16px para evitar overflow */
+    padding: 12px var(--space-2);
+    width: 100%;
+    max-width: 100%; /* FIX: Previene overflow */
+    text-decoration: none;
+    color: var(--text-secondary);
+    background: transparent;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-sizing: border-box; /* FIX: Incluye padding en el ancho total */
+  }
+
+  .menu-items li .material-icons {
+    font-size: 22px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu-items li .menu-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap; /* FIX: Evita wrap */
+    overflow: hidden; /* FIX: Oculta overflow */
+    text-overflow: ellipsis; /* FIX: Muestra ... si es muy largo */
+    flex: 1;
+    min-width: 0; /* FIX: Permite que flexbox calcule correctamente */
+  }
+
+  /* === HOVER STATE === */
+  .menu-items li:hover a {
+    background: rgba(0, 113, 227, 0.1);
+    color: var(--text-primary);
+    transform: translateX(4px); /* Reducido para evitar overflow */
+  }
+
+  .menu-items li:hover .material-icons {
+    color: var(--blue-brand);
+    transform: scale(1.08);
+    filter: drop-shadow(0 4px 8px var(--glow-brand));
+  }
+
+  .menu-items li:hover .menu-label {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* === ESTADO ACTIVO === */
+  .menu-items li.active a {
+    background: linear-gradient(
+      90deg,
+      rgba(0, 113, 227, 0.18) 0%,
+      rgba(0, 113, 227, 0.06) 100%
+    );
+    border-left: 3px solid var(--blue-brand);
+    color: var(--text-primary);
+    font-weight: 600;
+    padding-left: calc(var(--space-2) - 3px); /* Compensar border */
+    box-shadow:
+      inset 3px 0 0 var(--blue-brand),
+      0 4px 16px rgba(0, 113, 227, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .menu-items li.active .material-icons {
+    color: var(--blue-brand);
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px var(--glow-brand));
+  }
+
+  .menu-items li.active .menu-label {
+    color: var(--blue-brand);
+    font-weight: 700;
+  }
+
+  .menu-items li.active::after {
+    content: '';
+    position: absolute;
+    right: var(--space-2);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--blue-brand);
+    box-shadow: 0 0 12px var(--glow-brand);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  /* === FOOTER CON LOGOUT === */
+  .menu-footer {
+    margin-top: auto;
+    padding: var(--space-3) var(--space-2);
+    border-top: 1px solid var(--border-glass);
+    flex-shrink: 0;
+  }
+
+  .menu-item-logout {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 12px var(--space-2);
+    width: 100%;
+    max-width: 100%; /* FIX: Previene overflow */
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: rgba(255, 59, 48, 0.85);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-sizing: border-box; /* FIX: Incluye padding en el ancho total */
+  }
+
+  .menu-item-logout .material-icons {
+    font-size: 22px;
+    color: rgba(255, 59, 48, 0.85);
+    flex-shrink: 0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menu-item-logout .menu-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(255, 59, 48, 0.85);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap; /* FIX: Evita wrap */
+    overflow: hidden; /* FIX: Oculta overflow */
+    text-overflow: ellipsis; /* FIX: Muestra ... si es muy largo */
+    flex: 1;
+    min-width: 0; /* FIX: Permite que flexbox calcule correctamente */
+  }
+
+  .menu-item-logout:hover {
+    background: rgba(255, 59, 48, 0.12);
+    color: var(--red-danger);
+    transform: translateX(4px);
+  }
+
+  .menu-item-logout:hover .material-icons {
+    color: var(--red-danger);
+    transform: scale(1.08);
+    filter: drop-shadow(0 4px 12px rgba(255, 59, 48, 0.4));
+  }
+
+  .menu-item-logout:hover .menu-label {
+    color: var(--red-danger);
+    font-weight: 600;
+  }
+
+  .menu-backdrop {
+    display: none;
+  }
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+@media (min-width: 768px) {
+  .finance-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .finance-menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 3px;
+  }
+
+  .finance-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .finance-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 113, 227, 0.3);
+  }
+
+  .menu-items::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .menu-items::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .menu-items::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+  }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.2); }
+}
+
+@keyframes rotateGlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.finance-menu.open {
+  animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+.menu-items li a:focus-visible,
+.menu-item-logout:focus-visible {
+  outline: 2px solid var(--blue-brand);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.2);
+}
+
+.menu-toggle-floating:focus-visible,
+.menu-toggle-integrated:focus-visible {
+  outline: 2px solid var(--blue-brand);
+  outline-offset: 3px;
+  box-shadow:
+    0 12px 32px -4px rgba(0, 113, 227, 0.4),
+    0 0 0 4px rgba(0, 113, 227, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

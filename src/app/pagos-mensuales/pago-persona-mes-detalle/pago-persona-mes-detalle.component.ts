@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { PagoMensualPersonaDetalle } from '../../modelos/pagos';
 import { ApiServicesService } from '../../servicios/api-services.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -17,7 +18,15 @@ export interface ResumenTarjeta {
 @Component({
   selector: 'app-pago-persona-mes-detalle',
   templateUrl: './pago-persona-mes-detalle.component.html',
-  styleUrl: './pago-persona-mes-detalle.component.css'
+  styleUrl: './pago-persona-mes-detalle.component.css',
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('400ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
+  ]
 })
 export class PagoPersonaMesDetalleComponent  implements OnInit {
   pagosMensualesPersonaDetalle: PagoMensualPersonaDetalle[] = [];

@@ -1,246 +1,329 @@
-<!-- <form [formGroup]="purchaseForm" (ngSubmit)="onSubmit()">
-  <div class="form-group">
-    <label for="concept">Concepto:</label>
-    <input type="text" id="concept" formControlName="concept" [matAutocomplete]="auto">
-    <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
-      <mat-option *ngFor="let option of filteredConcepts | async" [value]="option">
-        {{option}}
-      </mat-option>
-    </mat-autocomplete>
-    <small *ngIf="isNewConcept">Nuevo concepto será creado</small>
-  </div>
+<div class="form-container">
+  <form [formGroup]="purchaseForm" (ngSubmit)="onSubmit()" novalidate>
+    <h2 class="form-title">Registrar Nueva Compra a Crédito</h2>
 
-  <div class="form-group">
-    <label for="purchaseValue">Valor de la compra:</label>
-    <input type="number" id="purchaseValue" formControlName="purchaseValue" step="0.01" required>
-  </div>
-
-  <div class="form-group">
-    <label for="purchaseDate">Fecha de la compra:</label>
-    <input type="date" id="purchaseDate" formControlName="purchaseDate" required>
-  </div>
-
-  <div class="form-group">
-    <label for="installments">Cantidad de cuotas:</label>
-    <input type="number" id="installments" formControlName="installments" min="1" required>
-  </div>
-
-  <div class="form-group">
-    <label for="interest">Interés (%):</label>
-    <input type="number" id="interest" formControlName="interest" step="0.01" min="0" placeholder="0.00" required>
-  </div>
-
-  <div class="form-group">
-    <label for="description">Descripción:</label>
-    <textarea id="description" formControlName="description" rows="3"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="status">Estado:</label>
-    <select id="status" formControlName="status" required>
-      <option value="">Seleccione un estado</option>
-      <option value="pendiente">Pendiente</option>
-      <option value="pagado">Pagado</option>
-      <option value="cancelado">Cancelado</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="card">Tarjeta de compra:</label>
-    <select id="card" formControlName="cardId" required>
-      <option value="">Seleccione una tarjeta</option>
-      <option *ngFor="let card of creditCards" [value]="card.id">
-        {{card.franquicia}}
-      </option>
-    </select>
-  </div>
-
-  <button type="submit" [disabled]="!purchaseForm.valid">Guardar Compra</button>
-</form>
-
- -->
-
- <form [formGroup]="purchaseForm" (ngSubmit)="onSubmit()" novalidate>
-  <h2 class="form-title">Registrar Nueva Compra a Crédito</h2>
-
-  <div class="form-group">
-    <label for="concept">Concepto <span class="required-indicator">*</span></label>
-    <input
-      type="text"
-      id="concept"
-      formControlName="concept"
-      placeholder="Buscar o escribir concepto..."
-      [matAutocomplete]="autoConcept"
-      #autoConceptTrigger="matAutocompleteTrigger" (blur)="closeAutocompletePanel()"         class="form-control"
-      [ngClass]="{ 'is-invalid': concept?.invalid && (concept?.dirty || concept?.touched) }"
-      aria-describedby="concept-errors concept-hint"
-    >
-    <mat-autocomplete #autoConcept="matAutocomplete" [displayWith]="displayFn">
-      <mat-option *ngIf="isLoadingConcepts" disabled>
-          <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px; vertical-align: middle;"></mat-spinner> Cargando...
-      </mat-option>
-      <ng-container *ngIf="!isLoadingConcepts">
-        <mat-option *ngFor="let option of filteredConcepts | async" [value]="option">
-          {{ option }}
+    <!-- Concepto -->
+    <div class="form-group">
+      <label for="concept">Concepto <span class="required-indicator">*</span></label>
+      <input
+        type="text"
+        id="concept"
+        formControlName="concept"
+        placeholder="Buscar o escribir concepto..."
+        [matAutocomplete]="autoConcept"
+        #autoConceptTrigger="matAutocompleteTrigger"
+        (blur)="closeAutocompletePanel()"
+        class="form-control"
+        [ngClass]="{ 'is-invalid': concept?.invalid && (concept?.dirty || concept?.touched) }"
+        aria-describedby="concept-errors concept-hint"
+      >
+      <mat-autocomplete #autoConcept="matAutocomplete" [displayWith]="displayFn">
+        <mat-option *ngIf="isLoadingConcepts" disabled>
+          <mat-spinner diameter="20"></mat-spinner> Cargando...
         </mat-option>
-        <mat-option *ngIf="!(filteredConcepts | async)?.length && purchaseForm.get('concept')?.value && !isLoadingConcepts" disabled>
-          No se encontraron conceptos existentes.
-        </mat-option>
-      </ng-container>
-    </mat-autocomplete>
-    <small id="concept-hint" *ngIf="isNewConcept && !isLoadingConcepts" class="hint-new">
-      <i class="material-icons hint-icon">add_circle_outline</i> Se creará como un nuevo concepto.
-    </small>
-    <div id="concept-errors" class="invalid-feedback" *ngIf="concept?.invalid && (concept?.dirty || concept?.touched)">
-      <div *ngIf="concept?.errors?.['required']">El concepto es requerido.</div>
+        <ng-container *ngIf="!isLoadingConcepts">
+          <mat-option *ngFor="let option of filteredConcepts | async" [value]="option">
+            {{ option }}
+          </mat-option>
+          <mat-option *ngIf="!(filteredConcepts | async)?.length && purchaseForm.get('concept')?.value && !isLoadingConcepts" disabled>
+            No se encontraron resultados
+          </mat-option>
+        </ng-container>
+      </mat-autocomplete>
+      <small id="concept-hint" *ngIf="isNewConcept && !isLoadingConcepts" class="hint-new">
+        ✨ Se creará como un nuevo concepto
+      </small>
+      <div id="concept-errors" class="invalid-feedback" *ngIf="concept?.invalid && (concept?.dirty || concept?.touched)">
+        <div *ngIf="concept?.errors?.['required']">El concepto es requerido.</div>
+      </div>
     </div>
-  </div>
 
-  <div class="form-row">
-    <div class="form-group form-group-value">
-      <label for="purchaseValue">Valor Compra (COP) <span class="required-indicator">*</span></label>
-      <div class="input-group">
-         <span class="input-group-text">$</span>
-         <input
+    <!-- Valor y Fecha -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="purchaseValue">Valor Compra (COP) <span class="required-indicator">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text">$</span>
+          <input
             type="text"
             id="purchaseValue"
             formControlName="purchaseValue"
+            placeholder="0"
+            (input)="handleCurrencyInput($event)"
             class="form-control text-right"
             [ngClass]="{ 'is-invalid': purchaseValue?.invalid && (purchaseValue?.dirty || purchaseValue?.touched) }"
-            placeholder="0"
-            inputmode="decimal"
             aria-describedby="purchaseValue-errors"
             required
-            appCurrencyFormatter >
-      </div>
-      <div id="purchaseValue-errors" class="invalid-feedback" *ngIf="purchaseValue?.invalid && (purchaseValue?.dirty || purchaseValue?.touched)">
-        <div *ngIf="purchaseValue?.errors?.['required']">El valor es requerido.</div>
-        <div *ngIf="purchaseValue?.errors?.['min']">El valor debe ser positivo.</div>
+          >
         </div>
-    </div>
-
-    <div class="form-group form-group-date">
-      <label for="purchaseDate">Fecha Compra <span class="required-indicator">*</span></label>
-      <input
-        type="date"
-        id="purchaseDate"
-        formControlName="purchaseDate"
-        class="form-control"
-        [ngClass]="{ 'is-invalid': purchaseDate?.invalid && (purchaseDate?.dirty || purchaseDate?.touched) }"
-        aria-describedby="purchaseDate-errors"
-        required
-      >
-      <div id="purchaseDate-errors" class="invalid-feedback" *ngIf="purchaseDate?.invalid && (purchaseDate?.dirty || purchaseDate?.touched)">
-        <div *ngIf="purchaseDate?.errors?.['required']">La fecha es requerida.</div>
+        <div id="purchaseValue-errors" class="invalid-feedback" *ngIf="purchaseValue?.invalid && (purchaseValue?.dirty || purchaseValue?.touched)">
+          <div *ngIf="purchaseValue?.errors?.['required']">El valor es requerido.</div>
+          <div *ngIf="purchaseValue?.errors?.['min']">El valor debe ser positivo.</div>
+        </div>
       </div>
-    </div>
-  </div> <div class="form-row">
-    <div class="form-group form-group-installments">
-      <label for="installments">Nº Cuotas <span class="required-indicator">*</span></label>
-      <input
-        type="number"
-        id="installments"
-        formControlName="installments"
-        class="form-control text-right"
-        [ngClass]="{ 'is-invalid': installments?.invalid && (installments?.dirty || installments?.touched) }"
-        min="1"
-        placeholder="1"
-        inputmode="numeric"
-        aria-describedby="installments-errors"
-        required
-      >
-      <div id="installments-errors" class="invalid-feedback" *ngIf="installments?.invalid && (installments?.dirty || installments?.touched)">
-        <div *ngIf="installments?.errors?.['required']">El nº de cuotas es requerido.</div>
-        <div *ngIf="installments?.errors?.['min']">Debe ser al menos 1 cuota.</div>
-         <div *ngIf="installments?.errors?.['pattern']">Debe ser un número entero positivo.</div>
+
+      <div class="form-group">
+        <label for="purchaseDate">Fecha Compra <span class="required-indicator">*</span></label>
+        <input
+          type="date"
+          id="purchaseDate"
+          formControlName="purchaseDate"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': purchaseDate?.invalid && (purchaseDate?.dirty || purchaseDate?.touched) }"
+          aria-describedby="purchaseDate-errors"
+          required
+        >
+        <div id="purchaseDate-errors" class="invalid-feedback" *ngIf="purchaseDate?.invalid && (purchaseDate?.dirty || purchaseDate?.touched)">
+          <div *ngIf="purchaseDate?.errors?.['required']">La fecha es requerida.</div>
+        </div>
       </div>
     </div>
 
-    <div class="form-group form-group-interest">
-      <label for="interest">Interés <span class="required-indicator">*</span></label>
-       <div class="input-group">
+    <!-- Cuotas e Interés -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="installments">Nº Cuotas <span class="required-indicator">*</span></label>
+        <input
+          type="number"
+          id="installments"
+          formControlName="installments"
+          class="form-control text-right"
+          [ngClass]="{ 'is-invalid': installments?.invalid && (installments?.dirty || installments?.touched) }"
+          min="1"
+          placeholder="1"
+          inputmode="numeric"
+          aria-describedby="installments-errors"
+          required
+        >
+        <div id="installments-errors" class="invalid-feedback" *ngIf="installments?.invalid && (installments?.dirty || installments?.touched)">
+          <div *ngIf="installments?.errors?.['required']">El nº de cuotas es requerido.</div>
+          <div *ngIf="installments?.errors?.['min']">Debe ser al menos 1 cuota.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="interest">Interés (%) <span class="required-indicator">*</span></label>
+        <div class="input-group">
           <input
-            type="number"
+            type="text"
             id="interest"
             formControlName="interest"
+            placeholder="0.00"
+            (input)="handleInterestInput($event)"
             class="form-control text-right"
             [ngClass]="{ 'is-invalid': interest?.invalid && (interest?.dirty || interest?.touched) }"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            inputmode="decimal"
             aria-describedby="interest-errors"
             required
-            (input)="handleInterestInput($event)" >
+          >
           <span class="input-group-text">%</span>
-      </div>
-      <div id="interest-errors" class="invalid-feedback" *ngIf="interest?.invalid && (interest?.dirty || interest?.touched)">
-        <div *ngIf="interest?.errors?.['required']">El interés es requerido (puede ser 0).</div>
-        <div *ngIf="interest?.errors?.['min']">El interés no puede ser negativo.</div>
-      </div>
-    </div>
-  </div> <div class="form-group">
-    <label for="description">Descripción (Opcional)</label>
-    <textarea
-      id="description"
-      formControlName="description"
-      rows="3"
-      placeholder="Añade detalles adicionales sobre la compra..."
-      class="form-control"
-    ></textarea>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group form-group-status">
-      <label for="status">Estado <span class="required-indicator">*</span></label>
-      <select
-        id="status"
-        formControlName="status"
-        class="form-control"
-        [ngClass]="{ 'is-invalid': status?.invalid && (status?.dirty || status?.touched) }"
-        aria-describedby="status-errors"
-        required
-      >
-        <option value="pendiente">Pendiente</option>
-        <option value="pagado">Pagado</option>
-        <option value="cancelado">Cancelado</option>
-      </select>
-      <div id="status-errors" class="invalid-feedback" *ngIf="status?.invalid && (status?.dirty || status?.touched)">
-        <div *ngIf="status?.errors?.['required']">El estado es requerido.</div>
+        </div>
+        <div id="interest-errors" class="invalid-feedback" *ngIf="interest?.invalid && (interest?.dirty || interest?.touched)">
+          <div *ngIf="interest?.errors?.['required']">El interés es requerido (puede ser 0).</div>
+          <div *ngIf="interest?.errors?.['min']">El interés no puede ser negativo.</div>
+        </div>
       </div>
     </div>
 
-    <div class="form-group form-group-card">
-      <label for="card">Tarjeta Asociada <span class="required-indicator">*</span></label>
-      <select
-        id="card"
-        formControlName="cardId"
+    <!-- Descripción -->
+    <div class="form-group">
+      <label for="description">Descripción (Opcional)</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        rows="3"
+        placeholder="Añade detalles adicionales sobre la compra..."
         class="form-control"
-        [ngClass]="{ 'is-invalid': cardId?.invalid && (cardId?.dirty || cardId?.touched) }"
-        aria-describedby="card-errors"
-        required
-      >
-        <option value="" disabled>
-            {{ isLoadingCards ? 'Cargando tarjetas...' : 'Seleccione una tarjeta' }}
-        </option>
-        <option *ngFor="let card of creditCards" [value]="card.id">
-          {{ card.franquicia   }}
-        </option>
-      </select>
-       <div id="card-errors" class="invalid-feedback" *ngIf="cardId?.invalid && (cardId?.dirty || cardId?.touched)">
-        <div *ngIf="cardId?.errors?.['required']">La tarjeta es requerida.</div>
+      ></textarea>
+    </div>
+
+    <!-- Estado y Tarjeta -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="status">Estado <span class="required-indicator">*</span></label>
+        <select
+          id="status"
+          formControlName="status"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': status?.invalid && (status?.dirty || status?.touched) }"
+          aria-describedby="status-errors"
+          required
+        >
+          <option value="" disabled>Seleccione un estado</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="pagado">Pagado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+        <div id="status-errors" class="invalid-feedback" *ngIf="status?.invalid && (status?.dirty || status?.touched)">
+          <div *ngIf="status?.errors?.['required']">El estado es requerido.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="card">Tarjeta Asociada <span class="required-indicator">*</span></label>
+        <select
+          id="card"
+          formControlName="cardId"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': cardId?.invalid && (cardId?.dirty || cardId?.touched) }"
+          aria-describedby="card-errors"
+          required
+        >
+          <option value="" disabled>Seleccione una tarjeta</option>
+          <option *ngFor="let card of creditCards" [value]="card.id">
+            {{ card.franquicia }}
+          </option>
+        </select>
+        <div id="card-errors" class="invalid-feedback" *ngIf="cardId?.invalid && (cardId?.dirty || cardId?.touched)">
+          <div *ngIf="cardId?.errors?.['required']">La tarjeta es requerida.</div>
+        </div>
       </div>
     </div>
-  </div> <div class="form-actions">
-    <button type="submit" class="btn btn-primary" [disabled]="purchaseForm.invalid || isSubmitting">
-      <span *ngIf="!isSubmitting">
-        <i class="material-icons button-icon">save</i> Guardar Compra
-      </span>
-      <span *ngIf="isSubmitting">
-        <mat-spinner diameter="20" color="accent" style="display: inline-block; margin-right: 8px; vertical-align: middle;"></mat-spinner>
-        Guardando...
-      </span>
+
+    <!-- Botón Guardar -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="purchaseForm.invalid || isSubmitting">
+        <span *ngIf="!isSubmitting">
+          💾 Guardar Compra
+        </span>
+        <span *ngIf="isSubmitting">
+          <mat-spinner diameter="20"></mat-spinner>
+          Guardando...
+        </span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Sección de Responsables (Opcional) -->
+  <div class="mt-3">
+    <button type="button" class="btn btn-toggle" (click)="toggleResponsablesSection()">
+      {{ showResponsablesSection ? '🔽' : '▶️' }}
+      {{ showResponsablesSection ? 'Ocultar' : 'Agregar' }} Responsables de la Compra (Opcional)
     </button>
-  </div>
 
-</form>
+    <div class="responsables-section" *ngIf="showResponsablesSection">
+      <h3 class="section-title">
+        <span class="section-title-icon">👥</span>
+        Gestión de Responsables
+      </h3>
+
+      <!-- Lista de Responsables -->
+      <div class="responsables-list" *ngIf="responsables.length > 0">
+        <div class="table-responsive">
+          <table class="responsables-table">
+            <thead>
+              <tr>
+                <th>Persona</th>
+                <th>% Responsabilidad</th>
+                <th>Monto</th>
+                <th>Cuotas</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let responsable of responsables; let i = index">
+                <td data-label="Persona">{{ getPersonaNombre(responsable.persona || 0) }}</td>
+                <td data-label="% Responsabilidad">
+                  <span class="percentage-badge">{{ responsable.porcentajePago }}%</span>
+                </td>
+                <td data-label="Monto">{{ responsable.cantidadPago | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                <td data-label="Cuotas">{{ responsable.cantidadCuotas }}</td>
+                <td data-label="Acciones">
+                  <button type="button" class="btn btn-danger" (click)="removeResponsable(i)">
+                    🗑️ Eliminar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Estado vacío -->
+      <div class="empty-state" *ngIf="responsables.length === 0">
+        <div class="empty-state-icon">👤</div>
+        <p>No hay responsables asignados aún</p>
+      </div>
+
+      <!-- Formulario para agregar responsable -->
+      <div *ngIf="porcentajeRestante > 0 && personasDisponibles.length > 0">
+        <div class="percentage-remaining">
+          <strong>📊 Porcentaje disponible:</strong>
+          <span class="percentage-badge">{{ porcentajeRestante }}%</span>
+        </div>
+
+        <form [formGroup]="responsableForm" (ngSubmit)="addResponsable()" class="responsables-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="personaId">Persona <span class="required-indicator">*</span></label>
+              <select id="personaId" formControlName="personaId" class="form-control">
+                <option value="" disabled>Seleccione una persona</option>
+                <option *ngFor="let persona of personasDisponibles" [value]="persona.id">
+                  {{ persona.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="porcentajePago">% Pago <span class="required-indicator">*</span></label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  id="porcentajePago"
+                  formControlName="porcentajePago"
+                  [max]="porcentajeRestante"
+                  class="form-control text-right"
+                  placeholder="0"
+                >
+                <span class="input-group-text">%</span>
+              </div>
+              <small class="invalid-feedback" *ngIf="responsableForm.get('porcentajePago')?.errors">
+                Máximo: {{ porcentajeRestante }}%
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="cantidadPago">Monto <span class="required-indicator">*</span></label>
+              <input
+                type="number"
+                id="cantidadPago"
+                formControlName="cantidadPago"
+                class="form-control text-right"
+                placeholder="0"
+                readonly
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="cantidadCuotas">Cuotas <span class="required-indicator">*</span></label>
+              <input
+                type="number"
+                id="cantidadCuotas"
+                formControlName="cantidadCuotas"
+                [max]="installments?.value || 1"
+                class="form-control text-right"
+                placeholder="1"
+              >
+              <small class="invalid-feedback" *ngIf="responsableForm.get('cantidadCuotas')?.errors">
+                Máximo: {{ installments?.value || 1 }}
+              </small>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success" [disabled]="!responsableForm.valid || porcentajeRestante <= 0">
+              ➕ Agregar Responsable
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Mensaje cuando no hay más porcentaje o personas disponibles -->
+      <div class="info-text text-center mt-3" *ngIf="porcentajeRestante === 0">
+        ✅ Se ha asignado el 100% de responsabilidad
+      </div>
+      <div class="info-text text-center mt-3" *ngIf="personasDisponibles.length === 0 && porcentajeRestante > 0">
+        ⚠️ No hay más personas disponibles para asignar
+      </div>
+    </div>
+  </div>
+</div>

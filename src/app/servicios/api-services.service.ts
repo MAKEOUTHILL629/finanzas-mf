@@ -3,13 +3,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-//import { environment } from '../environments/environment';
+import { environment } from '../../environments/environment';
+
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiServicesService {
-  private apiUrl = "/api"; // environment.apiUrl;
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -102,5 +104,17 @@ export class ApiServicesService {
     }
 
     return this.http.post<T>(`${this.apiUrl}/${endpoint}`, formData);
+  }
+
+  /**
+   * Sube un archivo FormData y recibe un archivo como respuesta
+   * @param endpoint El endpoint de la API
+   * @param formData El FormData con el archivo
+   * @returns Observable con el Blob de respuesta
+   */
+  postFile(endpoint: string, formData: FormData): Observable<Blob> {
+    return this.http.post(`${this.apiUrl}/${endpoint}`, formData, {
+      responseType: 'blob'
+    });
   }
 }

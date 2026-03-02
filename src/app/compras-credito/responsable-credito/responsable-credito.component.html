@@ -1,58 +1,333 @@
-<div class="responsables-credito-container">
-  <section class="responsables-list">
-    <h3 class="section-title">Responsables del Crédito</h3>
+<div class="responsables-container">
+  <!-- Header con indicador de progreso -->
+  <div class="responsables-header surface-glass">
+    <div class="header-content">
+      <div class="header-title">
+        <i class="material-icons">groups</i>
+        <h3>Responsables del Crédito</h3>
+      </div>
+      <div class="progress-indicator">
+        <div class="progress-label">Asignado</div>
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar" [style.width.%]="100 - porcentajeRestante"></div>
+        </div>
+        <div class="progress-value financial-num">{{ 100 - porcentajeRestante }}%</div>
+      </div>
+    </div>
+  </div>
 
-    <div class="table-responsive">
-      <table class="responsables-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>% Pago</th>
-            <th>Cantidad</th>
-            <th>Cuotas</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let responsable of responsables">
-            <td data-label="Nombre">{{ getPersonaNombre(responsable.persona || 0) }}</td>
-            <td data-label="% Pago">{{ responsable.porcentajePago }}%</td>
-            <td data-label="Cantidad">{{ responsable.cantidadPago | currency }}</td>
-            <td data-label="Cuotas">{{ responsable.cantidadCuotas }}</td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Lista de Responsables -->
+  <section class="responsables-list surface-glass" *ngIf="responsables.length > 0">
+    <div class="table-wrapper">
+      <div class="table-responsive">
+        <table class="responsables-table">
+          <thead>
+            <tr>
+              <th>Persona</th>
+              <th class="text-right">% Responsabilidad</th>
+              <th class="text-right">Monto</th>
+              <th class="text-right">Cuotas</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let responsable of responsables">
+              <td
+                class="editable-cell"
+                (dblclick)="activarEdicionResponsable(responsable, 'persona')"
+                [class.editing]="estaEditando(responsable, 'persona')"
+              >
+                <div class="persona-cell" *ngIf="!estaEditando(responsable, 'persona')">
+                  <div class="persona-avatar">
+                    <i class="material-icons">person</i>
+                  </div>
+                  <span class="persona-name">{{ getPersonaNombre(responsable.persona || 0) }}</span>
+                  <i class="material-icons edit-hint-table">edit</i>
+                </div>
+                <select
+                  *ngIf="estaEditando(responsable, 'persona')"
+                  class="edit-input-table"
+                  [(ngModel)]="responsableEditando[responsable.id || 0].persona"
+                  (blur)="guardarEdicionResponsable(responsable, 'persona')"
+                  (keydown.enter)="guardarEdicionResponsable(responsable, 'persona')"
+                  (keydown.escape)="cancelarEdicionResponsable(responsable, 'persona')"
+                  autofocus
+                >
+                  <option *ngFor="let persona of personas" [value]="persona.id">
+                    {{ persona.nombre }}
+                  </option>
+                </select>
+              </td>
+              <td
+                class="text-right editable-cell"
+                (dblclick)="activarEdicionResponsable(responsable, 'porcentajePago')"
+                [class.editing]="estaEditando(responsable, 'porcentajePago')"
+              >
+                <span class="percentage-badge" *ngIf="!estaEditando(responsable, 'porcentajePago')">
+                  {{ responsable.porcentajePago }}%
+                  <i class="material-icons edit-hint-table">edit</i>
+                </span>
+                <div class="input-group-inline" *ngIf="estaEditando(responsable, 'porcentajePago')">
+                  <input
+                    type="number"
+                    class="edit-input-table financial-input"
+                    [(ngModel)]="responsableEditando[responsable.id || 0].porcentajePago"
+                    (blur)="guardarEdicionResponsable(responsable, 'porcentajePago')"
+                    (keydown.enter)="guardarEdicionResponsable(responsable, 'porcentajePago')"
+                    (keydown.escape)="cancelarEdicionResponsable(responsable, 'porcentajePago')"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    autofocus
+                  />
+                  <span class="percent-symbol">%</span>
+                </div>
+              </td>
+              <td
+                class="text-right financial-num editable-cell"
+                (dblclick)="activarEdicionResponsable(responsable, 'cantidadPago')"
+                [class.editing]="estaEditando(responsable, 'cantidadPago')"
+              >
+                <span *ngIf="!estaEditando(responsable, 'cantidadPago')">
+                  {{ responsable.cantidadPago | currency:'COP':'symbol-narrow':'1.0-0' }}
+                  <i class="material-icons edit-hint-table">edit</i>
+                </span>
+                <div class="input-group-inline" *ngIf="estaEditando(responsable, 'cantidadPago')">
+                  <span class="currency-symbol">$</span>
+                  <input
+                    type="number"
+                    class="edit-input-table financial-input"
+                    [(ngModel)]="responsableEditando[responsable.id || 0].cantidadPago"
+                    (blur)="guardarEdicionResponsable(responsable, 'cantidadPago')"
+                    (keydown.enter)="guardarEdicionResponsable(responsable, 'cantidadPago')"
+                    (keydown.escape)="cancelarEdicionResponsable(responsable, 'cantidadPago')"
+                    step="1"
+                    min="0"
+                    autofocus
+                  />
+                </div>
+              </td>
+              <td
+                class="text-right financial-num editable-cell"
+                (dblclick)="activarEdicionResponsable(responsable, 'cantidadCuotas')"
+                [class.editing]="estaEditando(responsable, 'cantidadCuotas')"
+              >
+                <span *ngIf="!estaEditando(responsable, 'cantidadCuotas')">
+                  {{ responsable.cantidadCuotas }}
+                  <i class="material-icons edit-hint-table">edit</i>
+                </span>
+                <input
+                  *ngIf="estaEditando(responsable, 'cantidadCuotas')"
+                  type="number"
+                  class="edit-input-table financial-input text-center"
+                  [(ngModel)]="responsableEditando[responsable.id || 0].cantidadCuotas"
+                  (blur)="guardarEdicionResponsable(responsable, 'cantidadCuotas')"
+                  (keydown.enter)="guardarEdicionResponsable(responsable, 'cantidadCuotas')"
+                  (keydown.escape)="cancelarEdicionResponsable(responsable, 'cantidadCuotas')"
+                  min="1"
+                  [max]="compra.numeroCuotas || 0"
+                  autofocus
+                />
+              </td>
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="btn-action btn-delete"
+                  (click)="confirmarEliminacion(responsable)"
+                  title="Eliminar responsable"
+                >
+                  <i class="material-icons">delete</i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
-  <section class="add-responsable" *ngIf="porcentajeRestante > 0">
-    <h4 class="section-title">Añadir Nuevo Responsable ({{ porcentajeRestante }}% disponible)</h4>
+  <!-- Estado vacío -->
+  <div class="empty-state surface-glass" *ngIf="responsables.length === 0">
+    <div class="empty-icon">
+      <i class="material-icons">person_add</i>
+    </div>
+    <p class="empty-text">No hay responsables asignados aún</p>
+    <p class="empty-hint">Agrega responsables para distribuir el pago de esta compra</p>
+  </div>
+
+  <!-- Formulario para añadir responsable -->
+  <section class="add-responsable-section surface-glass" *ngIf="porcentajeRestante > 0">
+    <div class="section-header">
+      <div class="section-title">
+        <i class="material-icons">person_add</i>
+        <h4>Añadir Responsable</h4>
+      </div>
+      <div class="availability-badge">
+        <span class="badge-label">Disponible</span>
+        <span class="badge-value financial-num">{{ porcentajeRestante }}%</span>
+      </div>
+    </div>
+
     <form [formGroup]="responsableForm" (ngSubmit)="onSubmit()" class="responsable-form">
-      <div class="form-group">
-        <label for="personaId">Persona</label>
-        <select id="personaId" formControlName="personaId">
-          <option value="">Seleccione una persona</option>
-          <option *ngFor="let persona of personasDisponibles" [value]="persona.id">{{ persona.nombre }}</option>
-        </select>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="personaId">Persona <span class="required">*</span></label>
+          <select
+            id="personaId"
+            formControlName="personaId"
+            class="form-control"
+            [class.is-invalid]="responsableForm.get('personaId')?.invalid && responsableForm.get('personaId')?.touched"
+          >
+            <option value="">Seleccione una persona</option>
+            <option *ngFor="let persona of personasDisponibles" [value]="persona.id">
+              {{ persona.nombre }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="responsableForm.get('personaId')?.invalid && responsableForm.get('personaId')?.touched">
+            Debe seleccionar una persona
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cantidadCuotas">Número de Cuotas <span class="required">*</span></label>
+          <input
+            type="number"
+            id="cantidadCuotas"
+            formControlName="cantidadCuotas"
+            class="form-control text-right financial-input"
+            [class.is-invalid]="responsableForm.get('cantidadCuotas')?.invalid && responsableForm.get('cantidadCuotas')?.touched"
+            [max]="compra.numeroCuotas || 0"
+            min="1"
+            placeholder="1"
+          >
+          <div class="invalid-feedback" *ngIf="responsableForm.get('cantidadCuotas')?.invalid && responsableForm.get('cantidadCuotas')?.touched">
+            Máximo {{ compra.numeroCuotas }} cuotas
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="porcentajePago">Porcentaje de Pago</label>
-        <input type="number" id="porcentajePago" formControlName="porcentajePago" [max]="porcentajeRestante">
-        <span class="error" *ngIf="responsableForm.get('porcentajePago')?.errors">
-          El porcentaje máximo es {{ porcentajeRestante }}%
-        </span>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="porcentajePago">
+            Porcentaje de Responsabilidad <span class="required">*</span>
+            <span class="hint">(Máx: {{ porcentajeRestante }}%)</span>
+          </label>
+          <div class="input-with-icon">
+            <input
+              type="number"
+              id="porcentajePago"
+              formControlName="porcentajePago"
+              class="form-control text-right financial-input"
+              [class.is-invalid]="responsableForm.get('porcentajePago')?.invalid && responsableForm.get('porcentajePago')?.touched"
+              [max]="porcentajeRestante"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            >
+            <span class="input-icon">%</span>
+          </div>
+          <div class="invalid-feedback" *ngIf="responsableForm.get('porcentajePago')?.invalid && responsableForm.get('porcentajePago')?.touched">
+            El porcentaje debe estar entre 0 y {{ porcentajeRestante }}%
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cantidadPago">
+            Monto a Pagar <span class="required">*</span>
+            <span class="hint">(Máx: {{ (compra.valorCompra || 0) * (porcentajeRestante / 100) | currency:'COP':'symbol-narrow':'1.0-0' }})</span>
+          </label>
+          <div class="input-with-icon">
+            <span class="input-icon-prefix">$</span>
+            <input
+              type="number"
+              id="cantidadPago"
+              formControlName="cantidadPago"
+              class="form-control text-right financial-input with-prefix"
+              [class.is-invalid]="responsableForm.get('cantidadPago')?.invalid && responsableForm.get('cantidadPago')?.touched"
+              [max]="(compra.valorCompra || 0) * (porcentajeRestante / 100)"
+              min="0"
+              step="1"
+              placeholder="0"
+            >
+          </div>
+          <div class="invalid-feedback" *ngIf="responsableForm.get('cantidadPago')?.invalid && responsableForm.get('cantidadPago')?.touched">
+            El monto no puede superar el porcentaje disponible
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="cantidadPago">Cantidad de Pago</label>
-        <input type="number" id="cantidadPago" formControlName="cantidadPago" [max]="(compra.valorCompra ||0) * (porcentajeRestante / 100)">
+
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="!responsableForm.valid"
+        >
+          <i class="material-icons">add_circle</i>
+          <span>Añadir Responsable</span>
+        </button>
       </div>
-      <div class="form-group">
-        <label for="cantidadCuotas">Cantidad de Cuotas</label>
-        <input type="number" id="cantidadCuotas" formControlName="cantidadCuotas" [max]="compra.numeroCuotas || 0">
-        <span class="error" *ngIf="responsableForm.get('cantidadCuotas')?.errors">
-          El máximo de cuotas es {{ compra.numeroCuotas }}
-        </span>
-      </div>
-      <button type="submit" [disabled]="!responsableForm.valid" class="btn-submit">Añadir Responsable</button>
     </form>
   </section>
+
+  <!-- Mensaje cuando no hay porcentaje disponible -->
+  <div class="info-message surface-glass" *ngIf="porcentajeRestante === 0">
+    <div class="info-icon">
+      <i class="material-icons">check_circle</i>
+    </div>
+    <div class="info-content">
+      <h4>Responsabilidad 100% Asignada</h4>
+      <p>Se ha distribuido completamente el pago de esta compra entre los responsables.</p>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Eliminación -->
+  <div class="modal-overlay" *ngIf="mostrarModalEliminacion" (click)="cancelarEliminacion()">
+    <div class="modal-content modal-delete" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-icon modal-icon-danger">
+          <i class="material-icons">warning</i>
+        </div>
+        <h3 class="modal-title">Eliminar Responsable</h3>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-message">¿Estás seguro de que deseas eliminar este responsable?</p>
+        <div class="delete-info" *ngIf="responsableAEliminar">
+          <div class="info-item">
+            <span class="info-label">Persona:</span>
+            <span class="info-value">{{ getPersonaNombre(responsableAEliminar.persona || 0) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">% Responsabilidad:</span>
+            <span class="info-value financial-num">{{ responsableAEliminar.porcentajePago }}%</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Monto:</span>
+            <span class="info-value financial-num">{{ responsableAEliminar.cantidadPago | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+        <p class="modal-warning">Esta acción no se puede deshacer. El porcentaje se redistribuirá.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-modal btn-cancel"
+          (click)="cancelarEliminacion()"
+          [disabled]="eliminando"
+        >
+          <span>Cancelar</span>
+        </button>
+        <button
+          type="button"
+          class="btn-modal btn-danger"
+          (click)="eliminarResponsable()"
+          [disabled]="eliminando"
+        >
+          <i class="material-icons" *ngIf="!eliminando">delete_forever</i>
+          <span>{{ eliminando ? 'Eliminando...' : 'Eliminar' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

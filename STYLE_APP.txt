@@ -1,0 +1,175 @@
+# SISTEMA DE DISEÑO FINANCIERO: "LIQUID TRUST" & "SWISS GLASS"
+# CONTEXTO: Single Page Application (SPA) Angular + CSS Nativo
+# FUENTE: Guías de Estilo Visual Financiero Moderno (2025-2026)
+
+La propuesta establece una filosofía de diseño denominada "Liquid Trust" (o "Swiss Glass"), la cual fusiona la precisión matemática del Estilo Suizo con una evolución sofisticada del glassmorphism que utiliza capas de desenfoque, saturación y bordes especulares para crear profundidad semántica y jerarquía en el eje Z. A nivel visual, se rechaza el diseño plano absoluto y los negros puros (#000000), optando por un sistema cromático "Deep Ocean & Ceramic" (grises azulados profundos y blancos hueso) que reduce la fatiga visual en pantallas OLED, complementado por una tipografía funcional (Inter) configurada obligatoriamente con Tabular Figures (tnum) para garantizar la alineación vertical perfecta de los datos financieros. El objetivo es evocar un "lujo silencioso" similar al de Apple, donde la interfaz se siente sólida como una bóveda en su estructura de navegación (textura "concreto") pero fluida como el mercado en sus paneles de datos (vidrio).
+
+En cuanto a la Experiencia de Usuario (UX) y arquitectura, el sistema se basa en un "Bento Grid" adaptativo que trasciende el diseño responsivo tradicional: se comporta como una pila vertical eficiente en móviles y se expande modularmente en monitores ultra-wide (21:9) para aprovechar la visión periférica con paneles de utilidad sin estirar el contenido. La interacción se rige por la "física intuitiva", implementando micro-interacciones táctiles (botones que se hunden al clic), validación de formularios en tiempo real y patrones de rendimiento críticos como el Virtual Scrolling para manejar tablas con miles de transacciones sin bloquear el DOM. Finalmente, la confianza se diseña mediante funcionalidades éticas, como un "Modo Privacidad" global que desenfoca saldos sensibles y animaciones funcionales que confirman operaciones para liberar dopamina y reducir la ansiedad financiera del usuario
+
+==============================================================================
+1. FILOSOFÍA Y PRINCIPIOS (DIRECTIVAS PARA IA Y DISEÑO)
+==============================================================================
+El diseño NO es "Flat" ni "Minimalismo Vacío". Es una fusión de "Precisión Suiza" (Estructura)
+y "Cristal Líquido" (Materialidad).
+
+PRINCIPIOS RECTORES:
+1.  Claridad sobre Reducción: No eliminar datos necesarios. Usar jerarquía tipográfica para manejar densidad.
+2.  Materialidad Semántica (Eje Z):
+    - Fondo (Canvas) = Estático.
+    - Vidrio (Paneles) = Flotante. Lo que está "más cerca" del cristal es más interactivo.
+3.  Fluidez Responsiva (Bento Grid):
+    - Móvil: Stack Vertical.
+    - Desktop: Grid de 3 columnas.
+    - Ultra-Wide (21:9): NO ESTIRAR. Usar "Zonificación de Productividad" (Paneles periféricos auxiliares).
+
+==============================================================================
+2. IMPLEMENTACIÓN CSS: TOKENS MAESTROS (:root)
+==============================================================================
+Copiar y pegar en `styles.css` o el archivo de estilos global de Angular.
+
+:root {
+  /* --- PALETA ESTRUCTURAL (Deep Ocean & Ceramic) --- */
+  /* Neutros Oscuros (Evitar Negro Puro #000000) */
+  --slate-900: #0B0E14; /* Deep Obsidian (Fondo Dark) */
+  --slate-800: #151A21; /* Superficie Dark */
+  --slate-50:  #F9FAFB; /* Texto Dark Principal */
+
+  /* Neutros Claros (Evitar Blanco Puro #FFFFFF en fondos generales) */
+  --gray-bg:   #F5F5F7; /* System Gray 6 (Fondo Light) */
+  --white:     #FFFFFF; /* Solo para tarjetas en Light Mode */
+
+  /* --- SEMÁNTICA FINANCIERA (Indicadores de Estado) --- */
+  --brand-blue:    #0071E3; /* Electric Blue (Acción Primaria) */
+  --green-success: #34C759; /* Mint Neon (Ganancia/Bull) - No usar verde bosque */
+  --red-danger:    #FF3B30; /* Apple Red (Pérdida/Bear/Error) */
+  --gold-premium:  #D4AF37; /* Metallic Gold (Cuentas VIP/Gradientes) */
+
+  /* --- TIPOGRAFÍA (Precisión Suiza) --- */
+  /* Prioridad: Nativa Apple -> Inter (Google Fonts) -> Sans Generico */
+  --font-main: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --font-mono: 'SF Mono', 'Roboto Mono', monospace;
+
+  /* --- ESPACIADO (Sistema Grid de 8 Puntos) --- */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+
+  /* --- BORDER RADIUS (Curvatura Moderna) --- */
+  --radius-sm: 8px;
+  --radius-md: 16px; /* Inputs, Tarjetas internas */
+  --radius-lg: 24px; /* Contenedores principales, Modales */
+  --radius-pill: 9999px; /* Botones globales */
+}
+
+/* --- TEMA CLARO (Ceramic Air) --- */
+[data-theme="light"] {
+  --bg-app:        var(--gray-bg);
+  --bg-surface:    rgba(255, 255, 255, 0.75); /* Translucidez CLAVE */
+  --text-primary:  #111827;
+  --text-secondary:#6B7280;
+  --border-glass:  rgba(255, 255, 255, 0.5);
+  --shadow-card:   0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  --input-bg:      #F3F4F6;
+  --specular-light: rgba(255, 255, 255, 0.4);
+}
+
+/* --- TEMA OSCURO (Obsidian Slate) --- */
+[data-theme="dark"] {
+  --bg-app:        var(--slate-900);
+  --bg-surface:    rgba(21, 26, 33, 0.65); /* Slate 800 + Transparencia */
+  --text-primary:  #FFFFFF;
+  --text-secondary:#9CA3AF;
+  --border-glass:  rgba(255, 255, 255, 0.12);
+  --shadow-card:   0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --input-bg:      rgba(255, 255, 255, 0.05);
+  --specular-light: rgba(255, 255, 255, 0.1);
+}
+
+==============================================================================
+3. MATERIALIDAD: EL EFECTO "LIQUID GLASS"
+==============================================================================
+REGLA: No usar fondos sólidos planos. Usar esta clase para paneles y tarjetas.
+Se compone de 4 capas: Blur + Tinte + Saturación + Borde Especular.
+
+.surface-glass {
+  position: relative;
+  background: var(--bg-surface);
+  /* Núcleo del efecto: Blur alto + Saturación para 'Vibrancy' */
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+  /* Borde sutil y Luz Cenital (Inset shadow superior) */
+  border: 1px solid var(--border-glass);
+  box-shadow:
+    0 4px 24px -1px rgba(0, 0, 0, 0.1), /* Sombra elevación */
+    inset 0 1px 0 var(--specular-light); /* Luz superior */
+
+  border-radius: var(--radius-lg);
+}
+
+==============================================================================
+4. TIPOGRAFÍA FINANCIERA (CRÍTICO)
+==============================================================================
+REGLA: Todos los números financieros (saldos, precios, porcentajes) DEBEN usar OpenType.
+Esto evita que los números "bailen" cuando cambian en tiempo real.
+
+.financial-num {
+  font-family: var(--font-main);
+  /* 'tnum': Tabular Figures (Ancho fijo igual para todos los números) */
+  /* 'zero': Slashed Zero (Cero con barra para distinguir de la letra O) */
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  text-align: right; /* Estándar contable */
+  letter-spacing: -0.01em;
+}
+
+ESCALA DE TEXTO (Responsive Clamp):
+- Hero Balance: 36px (Mobile) -> 56px (Desktop) | Peso: Bold (700)
+- H1 Page Title: 28px (Mobile) -> 36px (Desktop) | Peso: SemiBold (600)
+- Body: 16px (Minimo estricto para Inputs en Mobile para evitar zoom) | Peso: Regular (400)
+- Caption: 12px | Peso: Medium (500)
+
+==============================================================================
+5. COMPONENTES Y COMPORTAMIENTO (UX)
+==============================================================================
+
+[BOTONES]
+- Primario: Forma "Pill" (redonda). Fondo gradiente sutil. Sombra de color (Glow).
+- Interacción: Hover = Elevación (translateY -2px). Click = Hundimiento (scale 0.98).
+- Secundario: Fondo transparente. Borde 1px color marca.
+
+[INPUTS / FORMULARIOS]
+- Altura: 48px (Touch friendly).
+- Focus State: NUNCA usar borde azul default del navegador.
+  Usar "Ring": box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+- Validación: Feedback inmediato (no esperar al submit). Error = Vibración + Borde Rojo.
+
+[TABLAS DE DATOS]
+- Header: Sticky (fijo arriba) con backdrop-filter (blur) al hacer scroll.
+- Celdas: Números alineados a la derecha (.financial-num). Texto a la izquierda.
+- Acciones:
+  - Desktop: Hover sobre la fila revela acciones.
+  - Mobile: Transformar fila en "Card" individual (NO mostrar tabla ancha).
+
+[PRIVACIDAD (MODO OJO)]
+- Funcionalidad requerida: Botón global que aplica `filter: blur(6px)` a todos los elementos con la clase `.financial-num`.
+
+==============================================================================
+6. LAYOUT: ESTRATEGIA RESPONSIVA
+==============================================================================
+
+A. MOBILE (<768px):
+   - Estructura: Stack Vertical (Columna única).
+   - Navegación: Bottom Tab Bar (Glass).
+   - Modales: Bottom Sheets (Salen de abajo, ocupan 80%).
+
+B. DESKTOP (1024px - 1440px):
+   - Estructura: Grid Bento (Dashboard modular).
+   - Sidebar: Izquierda fija (Glass vertical).
+   - Grid CSS: `grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));`
+
+C. ULTRA-WIDE (>1440px / 21:9):
+   - REGLA: Contenido principal (Main Stage) max-width: 1600px centrado.
+   - Zonas Periféricas: Usar el espacio sobrante a izquierda/derecha para Paneles de Utilidad (Noticias, Chat, Calculadora rápida).

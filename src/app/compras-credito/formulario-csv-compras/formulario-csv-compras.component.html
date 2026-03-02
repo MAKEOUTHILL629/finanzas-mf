@@ -1,0 +1,276 @@
+<div class="csv-container">
+  <div class="csv-header">
+    <h2 class="form-title">
+      <i class="material-icons">upload_file</i>
+      Carga Masiva de Compras (CSV)
+    </h2>
+    <button type="button" class="btn-close" (click)="closeModal()" aria-label="Cerrar">
+      <i class="material-icons">close</i>
+    </button>
+  </div>
+
+  <!-- Sección de carga de archivo -->
+  <div class="upload-section" *ngIf="showUploadSection">
+    <div class="upload-options">
+      <div class="upload-zone" [class.has-file]="selectedFile">
+        <input
+          type="file"
+          id="csvFile"
+          accept=".csv"
+          (change)="onFileSelected($event)"
+          class="file-input"
+        >
+        <label for="csvFile" class="upload-label">
+          <i class="material-icons upload-icon">cloud_upload</i>
+          <span class="upload-text" *ngIf="!selectedFile">
+            Arrastra tu archivo CSV o haz clic para seleccionar
+          </span>
+          <span class="upload-text success" *ngIf="selectedFile">
+            <i class="material-icons">check_circle</i>
+            {{ selectedFile.name }}
+          </span>
+          <span class="upload-hint">
+            Formatos soportados: CSV con comas (,) o punto y coma (;)
+          </span>
+        </label>
+      </div>
+
+      <div class="divider-or">
+        <span>o</span>
+      </div>
+
+      <button type="button" class="btn-create-scratch" (click)="startFromScratch()">
+        <i class="material-icons">add_circle</i>
+        <span>Crear Desde Cero</span>
+        <small>Agregar registros manualmente</small>
+      </button>
+    </div>
+
+    <!-- Información del formato -->
+    <div class="format-info">
+      <h3 class="info-title">
+        <i class="material-icons">info</i>
+        Formato del CSV
+      </h3>
+      <div class="format-example">
+        <code>Fecha Compra,Concepto,Valor,Cuotas,Tarjeta,Interes,Descripcion,Estado</code>
+      </div>
+      <ul class="format-tips">
+        <li><strong>Fecha Compra:</strong> DD/MM/YYYY, DD-MM-YYYY, DD,MM,YYYY o YYYY-MM-DD</li>
+        <li><strong>Tarjeta:</strong> ID numérico o nombre de la franquicia</li>
+        <li><strong>Interes:</strong> Porcentaje sin el símbolo % (ej: 2.5)</li>
+        <li><strong>Estado:</strong> Pendiente, Pagado o Cancelado (opcional)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tabla de datos parseados -->
+  <div class="csv-table-section" *ngIf="csvRecords.length > 0">
+    <div class="table-header">
+      <div class="stats">
+        <span class="stat-badge total">
+          <i class="material-icons">list_alt</i>
+          {{ totalRecords }} registros
+        </span>
+        <span class="stat-badge success" *ngIf="showResults && successCount > 0">
+          <i class="material-icons">check_circle</i>
+          {{ successCount }} exitosos
+        </span>
+        <span class="stat-badge error" *ngIf="showResults && errorCount > 0">
+          <i class="material-icons">error</i>
+          {{ errorCount }} errores
+        </span>
+      </div>
+      <div class="table-actions">
+        <button type="button" class="btn btn-success btn-add" (click)="addNewRecord()" *ngIf="!showResults">
+          <i class="material-icons">add</i>
+          Agregar Fila
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="reset()">
+          <i class="material-icons">upload_file</i>
+          Cargar Otro Archivo
+        </button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="csv-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha Compra</th>
+            <th>Concepto</th>
+            <th>Valor</th>
+            <th>Cuotas</th>
+            <th>Tarjeta</th>
+            <th>Interés</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th *ngIf="showResults">Resultado</th>
+            <th *ngIf="!showResults">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of csvRecords; let i = index"
+              [class.row-success]="record.isSuccess"
+              [class.row-error]="record.isError">
+            <td class="row-number">{{ i + 1 }}</td>
+
+            <!-- Fecha Compra -->
+            <td>
+              <input *ngIf="!showResults; else showFecha"
+                type="text"
+                [(ngModel)]="record.fechaCompra"
+                class="cell-input"
+                placeholder="DD/MM/YYYY"
+              >
+              <ng-template #showFecha>{{ record.fechaCompra }}</ng-template>
+            </td>
+
+            <!-- Concepto -->
+            <td>
+              <input *ngIf="!showResults; else showConcepto"
+                type="text"
+                [(ngModel)]="record.concepto"
+                class="cell-input"
+                placeholder="Descripción de la compra"
+              >
+              <ng-template #showConcepto>{{ record.concepto }}</ng-template>
+            </td>
+
+            <!-- Valor -->
+            <td class="text-right">
+              <input *ngIf="!showResults; else showValor"
+                type="text"
+                [(ngModel)]="record.valor"
+                class="cell-input text-right"
+                placeholder="1500000"
+              >
+              <ng-template #showValor><span class="financial-num">{{ formatCurrency(record.valor) }}</span></ng-template>
+            </td>
+
+            <!-- Cuotas -->
+            <td class="text-right">
+              <input *ngIf="!showResults; else showCuotas"
+                type="number"
+                [(ngModel)]="record.cuotas"
+                class="cell-input text-right"
+                min="1"
+                placeholder="12"
+              >
+              <ng-template #showCuotas>{{ record.cuotas }}</ng-template>
+            </td>
+
+            <!-- Tarjeta -->
+            <td>
+              <input *ngIf="!showResults; else showTarjeta"
+                type="text"
+                [(ngModel)]="record.tarjeta"
+                class="cell-input"
+                placeholder="1 o Visa"
+              >
+              <ng-template #showTarjeta>{{ record.tarjeta }}</ng-template>
+            </td>
+
+            <!-- Interés -->
+            <td class="text-right">
+              <input *ngIf="!showResults; else showInteres"
+                type="text"
+                [(ngModel)]="record.interes"
+                class="cell-input text-right"
+                placeholder="2.5"
+              >
+              <ng-template #showInteres>{{ record.interes }}%</ng-template>
+            </td>
+
+            <!-- Descripción -->
+            <td>
+              <input *ngIf="!showResults; else showDescripcion"
+                type="text"
+                [(ngModel)]="record.descripcion"
+                class="cell-input"
+                placeholder="Detalles adicionales"
+              >
+              <ng-template #showDescripcion>{{ record.descripcion || '-' }}</ng-template>
+            </td>
+
+            <!-- Estado -->
+            <td>
+              <select *ngIf="!showResults; else showEstado"
+                [(ngModel)]="record.estado"
+                class="cell-input"
+              >
+                <option value="Pendiente">Pendiente</option>
+                <option value="Pagado">Pagado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+              <ng-template #showEstado>
+                <span class="status-badge" [class]="record.estado.toLowerCase()">
+                  {{ record.estado || 'Pendiente' }}
+                </span>
+              </ng-template>
+            </td>
+            <td *ngIf="showResults">
+              <div class="result-cell">
+                <i class="material-icons" *ngIf="record.isSuccess">check_circle</i>
+                <i class="material-icons" *ngIf="record.isError">error</i>
+                <span [class.success-text]="record.isSuccess" [class.error-text]="record.isError">
+                  {{ record.resultado }}
+                </span>
+              </div>
+            </td>
+            <td *ngIf="!showResults" class="actions-cell">
+              <button
+                type="button"
+                class="btn-icon btn-danger-icon"
+                (click)="removeRecord(i)"
+                title="Eliminar registro"
+              >
+                <i class="material-icons">delete</i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Botones de acción -->
+  <div class="form-actions">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      (click)="closeModal()"
+    >
+      <i class="material-icons">close</i>
+      {{ showResults ? 'Cerrar' : 'Cancelar' }}
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-success"
+      *ngIf="showResults"
+      (click)="downloadResults()"
+    >
+      <i class="material-icons">download</i>
+      Descargar Resultados
+    </button>
+
+    <button
+      type="button"
+      class="btn btn-primary"
+      *ngIf="!showResults && csvRecords.length > 0"
+      [disabled]="isProcessing"
+      (click)="uploadCSV()"
+    >
+      <i class="material-icons" *ngIf="!isProcessing">cloud_upload</i>
+      <span *ngIf="!isProcessing">
+        Procesar {{ totalRecords }} Compras
+      </span>
+      <span *ngIf="isProcessing">
+        <i class="material-icons spinning">sync</i>
+        Procesando...
+      </span>
+    </button>
+  </div>
+</div>

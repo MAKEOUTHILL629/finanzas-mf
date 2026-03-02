@@ -1,37 +1,75 @@
 
 
-<div class="purchase-table-container">
+<div class="purchase-table-container" (click)="closeDropdowns()">
   <!-- Sección de filtros -->
   <div class="filter-container">
     <form [formGroup]="filterForm" class="filter-form">
 
       <div class="filter-group">
         <label for="concepto">Concepto:</label>
-        <input type="text" id="concepto" formControlName="concepto">
-
-      </div>
-      <div class="filter-group">
-        <label for="tarjeta">Tarjeta:</label>
-        <select id="tarjeta" formControlName="tarjeta">
-          <option value="">Todas</option>
-          <option *ngFor="let tarjeta of tarjetas" value="{{tarjeta.id}}">{{tarjeta.franquicia}}</option>
-          <!-- Más opciones aquí -->
-        </select>
+        <input type="text" id="concepto" formControlName="concepto" placeholder="Buscar por concepto...">
       </div>
 
-
+      <!-- Multiselect de Tarjetas -->
       <div class="filter-group">
-        <label for="estado">Estado:</label>
-        <select id="estado" formControlName="estado">
-          <option value="">Todos</option>
-          <option *ngFor="let estado of estados" value="{{estado}}">{{estado}}</option>
-          <!-- Más opciones aquí -->
-        </select>
+        <label>Tarjetas:</label>
+        <div class="multiselect-container">
+          <button type="button" class="multiselect-button" (click)="toggleTarjetasDropdown($event)">
+            {{ getSelectedTarjetasText() }}
+            <i class="material-icons">arrow_drop_down</i>
+          </button>
+          <div class="multiselect-dropdown" *ngIf="showTarjetasDropdown" (click)="$event.stopPropagation()">
+            <label class="multiselect-option" *ngFor="let tarjeta of tarjetas">
+              <input
+                type="checkbox"
+                [checked]="isTarjetaSelected(tarjeta.id!)"
+                (change)="toggleTarjeta(tarjeta.id!)"
+              >
+              <span>{{ tarjeta.franquicia }}</span>
+            </label>
+            <div class="multiselect-empty" *ngIf="tarjetas.length === 0">
+              No hay tarjetas disponibles
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multiselect de Estados -->
+      <div class="filter-group">
+        <label>Estado:</label>
+        <div class="multiselect-container">
+          <button type="button" class="multiselect-button" (click)="toggleEstadosDropdown($event)">
+            {{ getSelectedEstadosText() }}
+            <i class="material-icons">arrow_drop_down</i>
+          </button>
+          <div class="multiselect-dropdown" *ngIf="showEstadosDropdown" (click)="$event.stopPropagation()">
+            <label class="multiselect-option" *ngFor="let estado of estados">
+              <input
+                type="checkbox"
+                [checked]="isEstadoSelected(estado)"
+                (change)="toggleEstado(estado)"
+              >
+              <span>{{ estado }}</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="filter-group">
         <label for="numeroCuotas">Número de Cuotas:</label>
-        <input type="number" id="numeroCuotas" formControlName="numeroCuotas">
+        <input type="number" id="numeroCuotas" formControlName="numeroCuotas" placeholder="Ej: 12">
+      </div>
+
+      <!-- Filtro de responsables incompletos -->
+      <div class="filter-group filter-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="soloSinResponsablesCompletos">
+          <span class="checkbox-text">
+            <i class="material-icons">person_off</i>
+            Solo sin responsables completos
+          </span>
+        </label>
+        <small class="filter-hint">Compras con responsabilidad asignada menor al 100%</small>
       </div>
 
       <div class="filter-group date-range">
@@ -57,8 +95,10 @@
       </div>
 
       <div class="filter-buttons">
-        <button type="button" class="filter-button reset" (click)="resetFilters()">Restablecer</button>
-        <button type="button" class="filter-button" (click)="applyFilters()">Aplicar Filtros</button>
+        <button type="button" class="filter-button reset" (click)="resetFilters()">
+          <i class="material-icons">clear</i>
+          Limpiar Filtros
+        </button>
       </div>
     </form>
   </div>
@@ -85,13 +125,23 @@
           <td>{{ purchase.pagoMensual | currency}}</td>
           <td>{{ purchase.interes}}%</td>
           <td>
-
-            <ul class="group-responsables">
-              <li *ngFor="let reponsable of cargarResponsables(purchase.responsables || '')" class="item-responsable"  style="background-color: {{ reponsable.color }}">
-                {{ reponsable.iniciales }}
-              </li>
-            </ul>
-            {{ purchase.porcentajePago }}%
+            <div class="responsables-cell">
+              <ul class="group-responsables">
+                <li *ngFor="let reponsable of cargarResponsables(purchase.responsables || '')"
+                    class="item-responsable"
+                    style="background-color: {{ reponsable.color }}"
+                    [title]="reponsable.nombre">
+                  {{ reponsable.iniciales }}
+                </li>
+              </ul>
+              <span class="porcentaje-badge" [ngClass]="{
+                'completo': (purchase.porcentajePago || 0) === 100,
+                'parcial': (purchase.porcentajePago || 0) > 0 && (purchase.porcentajePago || 0) < 100,
+                'vacio': (purchase.porcentajePago || 0) === 0
+              }">
+                {{ purchase.porcentajePago || 0 }}%
+              </span>
+            </div>
           </td>
           <td>{{ purchase.estado }}</td>
           <td>{{ obtenerTarjeta(purchase.tarjeta ? purchase.tarjeta  : 0) }}</td>
@@ -107,18 +157,38 @@
 </div>
 
 
-<div class="floating-group">
-  <button class="floating-button" (click)="openCreditForm()">
+<!-- Floating Action Buttons (FAB) con Tooltips -->
+<div class="fab-container">
+  <button class="fab-button fab-primary" (click)="openCreditForm()" aria-label="Agregar nueva compra a crédito">
     <i class="material-icons">add</i>
+    <span class="fab-tooltip">Agregar Compra</span>
   </button>
 
-  <button class="floating-button" (click)="pagarProductosTarjetaCredito()">
+  <button class="fab-button fab-success" (click)="pagarProductosTarjetaCredito()" aria-label="Procesar pagos mensuales">
     <i class="material-icons">paid</i>
+    <span class="fab-tooltip">Procesar Pagos</span>
   </button>
 
+  <button class="fab-button fab-gold" (click)="openCSVUploadForm()" aria-label="Carga masiva por CSV">
+    <i class="material-icons">upload_file</i>
+    <span class="fab-tooltip">Carga Masiva CSV</span>
+  </button>
+
+  <button class="fab-button fab-secondary"
+          [class.pulse]="isRefreshing"
+          (click)="refreshCompras()"
+          [disabled]="isRefreshing"
+          aria-label="Refrescar compras">
+    <i class="material-icons" [class.spinning]="isRefreshing">{{ isRefreshing ? 'sync' : 'refresh' }}</i>
+    <span class="fab-tooltip">{{ isRefreshing ? 'Actualizando...' : 'Refrescar Lista' }}</span>
+  </button>
 </div>
 
 
 <app-modal>
   <app-formulario-compras-credito></app-formulario-compras-credito>
+</app-modal>
+
+<app-modal modalId="csv-upload-form">
+  <app-formulario-csv-compras></app-formulario-csv-compras>
 </app-modal>

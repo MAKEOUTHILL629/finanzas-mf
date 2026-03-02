@@ -1,155 +1,789 @@
-/* Contenedor general */
-.container {
-  width: 95%;
-  max-width: 85vw;
+/* ============================================
+   PAGO PERSONA MES DETALLE - LIQUID TRUST DESIGN
+   Sistema de Diseño: Glass Morphism + Financial Typography
+   Basado en STYLE_APP.txt
+   ============================================ */
+
+:host {
+  /* === TOKENS DE DISEÑO === */
+  --brand-blue: #0071E3;
+  --green-success: #34C759;
+  --red-danger: #FF3B30;
+  --gold-premium: #D4AF37;
+
+  /* === ESPACIADO (Sistema Grid 8pt) === */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  /* === BORDER RADIUS === */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   GLASS MORPHISM BASE (Materialidad Líquida)
+   ============================================ */
+.surface-glass {
+  position: relative;
+  background: var(--bg-surface);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 var(--specular-light);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.surface-glass:hover {
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.15),
+              inset 0 1px 0 var(--specular-light);
+}
+
+/* ============================================
+   TIPOGRAFÍA FINANCIERA (Números Tabulares)
+   ============================================ */
+.financial-num {
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+.page-container {
+  max-width: 1400px;
   margin: 0 auto;
-  overflow-x: auto; /* scroll horizontal en pantallas pequeñas */
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-/* Título principal */
-h1 {
-  text-align: center;
-  margin: 20px 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-}
-
-h2 {
-  text-align: center;
-  margin: 20px 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #333;
-}
-
-/* Información de pago (persona y fecha) */
-.info-pago {
-  margin-bottom: 20px;
-  text-align: center;
-}
-.info-pago h2 {
-  font-size: 20px;
-  margin: 0 0 10px 0;
-  color: #555;
-}
-.info-pago h3 {
-  font-size: 16px;
-  color: #777;
-  margin: 0;
-  font-weight: normal;
-}
-
-/* Tabla */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-  min-width: 800px;
-}
-
-thead {
-  background-color: #3f51b5;
-  color: #fff;
-}
-
-th, td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-}
-
-/* Indica que el th se puede clicar */
-th {
-  cursor: pointer;
-  position: relative; /* para flechas de orden */
-}
-
-/* Filas alternadas */
-tr:nth-child(even) {
-  background-color: #fafafa;
-}
-
-/* Hover en fila */
-tr:hover {
-  background-color: #f1f1f1;
-}
-
-/* Flecha por defecto (abajo) */
-th::after {
-  content: '';
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 6px solid transparent;
-  border-top-color: #fff;
-  opacity: 0.7;
-}
-
-/* Flecha arriba para "asc" */
-th.sorted-asc::after {
-  border-bottom-color: #fff;
-  border-top-color: transparent;
-}
-
-/* Sección de resumen */
-.summary-section {
-  margin-top: 30px;
-  padding: 15px;
+  padding: var(--space-4);
   display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ============================================
+   HEADER CON GLASS MORPHISM (Información de Persona)
+   ============================================ */
+.page-header {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
 }
-.summary-section h2 {
-  text-align: center;
-  margin-bottom: 20px;
 
+.persona-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-/* Tarjetas de resumen */
-.summary-card {
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-  border-radius: 8px;
-  padding: 40px;
-  margin: 20px;
-  background-color: #fdfdfd;
+.persona-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-blue), var(--green-success));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.3);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-.summary-card h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
+
+.persona-avatar:hover {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.4);
+}
+
+.avatar-emoji {
+  font-size: 36px;
+}
+
+.persona-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.persona-nombre {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.fecha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 113, 227, 0.1);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  width: fit-content;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fecha-badge:hover {
+  background: rgba(0, 113, 227, 0.15);
+  border-color: rgba(0, 113, 227, 0.3);
+}
+
+.badge-icon {
   font-size: 18px;
-  color: #444;
-}
-.summary-card p {
-  margin: 6px 0;
 }
 
-/* Recuadro del total general, con estilo ligeramente distinto */
-.summary-card.total {
-  background-color: #eef2f7; /* color claro */
+.badge-text {
+  font-weight: 600;
+}
+
+/* ============================================
+   SECCIÓN TABLA (Contenedor Principal)
+   ============================================ */
+.tabla-section {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--border-glass);
+}
+
+.section-icon {
+  font-size: 28px;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-title:hover .section-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+/* ============================================
+   TABLA DE DATOS (Estructura y Estilo)
+   ============================================ */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-glass);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(0, 113, 227, 0.02);
+  /* Scrollbar personalizado */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 113, 227, 0.3) rgba(0, 0, 0, 0.1);
+}
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 113, 227, 0.3);
+  border-radius: var(--radius-sm);
+  transition: background 200ms ease;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 113, 227, 0.5);
+}
+
+.tabla-datos {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+/* === THEAD: Sticky Header con Glass Effect === */
+.table-head-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.table-head-sticky th {
+  position: sticky;
+  top: 0;
+  background: rgba(0, 113, 227, 0.05);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  border-bottom: 2px solid var(--border-glass);
+  user-select: none;
+  white-space: nowrap;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.th-sortable {
+  cursor: pointer;
+}
+
+.th-sortable:hover {
+  background: rgba(0, 113, 227, 0.1);
+  transform: translateY(-1px);
+}
+
+.th-sortable:active {
+  transform: translateY(0);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.th-number {
+  text-align: right;
+}
+
+.th-number .th-content {
+  justify-content: flex-end;
+}
+
+.th-label {
+  font-weight: 700;
+}
+
+.sort-indicator {
+  font-size: 12px;
+  color: var(--brand-blue);
+  font-weight: bold;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* === TBODY: Filas con Hover Interactivo === */
+.table-body {
+  background: transparent;
+}
+
+.table-row {
+  border-bottom: 1px solid var(--border-glass);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.table-row:hover {
+  background: rgba(0, 113, 227, 0.05);
+  transform: translateX(4px);
+  box-shadow: inset 4px 0 0 var(--brand-blue);
+}
+
+.table-row:active {
+  transform: translateX(2px) scale(0.99);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* === CELDAS: Estilos Específicos === */
+.table-body td {
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+/* Concepto */
+.td-concepto {
+  font-weight: 500;
+  max-width: 250px;
+}
+
+.concepto-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Porcentaje */
+.td-porcentaje {
+  font-weight: 600;
+  color: var(--brand-blue);
+}
+
+/* Cuotas */
+.td-cuotas {
+  text-align: center;
+}
+
+.cuotas-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(0, 113, 227, 0.1);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Valores financieros */
+.td-valor,
+.td-valor-responsable,
+.td-interes,
+.td-capital,
+.td-saldo {
+  font-weight: 600;
+}
+
+.td-valor-responsable {
+  color: var(--brand-blue);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* Tarjeta */
+.td-tarjeta {
+  font-weight: 500;
+}
+
+.tarjeta-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(156, 163, 175, 0.1);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  transition: all 200ms ease;
+}
+
+.table-row:hover .tarjeta-label {
+  background: rgba(0, 113, 227, 0.15);
+  color: var(--brand-blue);
+}
+
+/* Estado */
+.td-estado {
+  text-align: center;
+}
+
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(156, 163, 175, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(156, 163, 175, 0.3);
+  transition: all 200ms ease;
+}
+
+.estado-badge.estado-pagado {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--green-success);
+  border-color: rgba(52, 199, 89, 0.3);
+}
+
+.estado-badge.estado-pagado::before {
+  content: '✓';
+  margin-right: 4px;
   font-weight: bold;
 }
 
-/* Responsive para pantallas muy pequeñas */
-@media (max-width: 600px) {
-  th, td {
-    padding: 8px;
-    font-size: 14px;
+/* ============================================
+   CARDS DE RESUMEN (Totales por Tarjeta)
+   ============================================ */
+.resumen-section {
+  margin-top: var(--space-2);
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.resumen-card {
+  padding: var(--space-3);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--border-glass);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.08),
+              0 2px 8px -1px rgba(0, 0, 0, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.resumen-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-blue), var(--green-success));
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.resumen-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -8px rgba(0, 113, 227, 0.2),
+              inset 0 1px 0 var(--specular-light);
+}
+
+.resumen-card:hover::before {
+  opacity: 1;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--border-glass);
+}
+
+.card-icon {
+  font-size: 28px;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.resumen-card:hover .card-icon {
+  transform: scale(1.15) rotate(10deg);
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.resumen-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-1) 0;
+  transition: all 200ms ease;
+}
+
+.resumen-item:hover {
+  padding-left: var(--space-1);
+}
+
+.resumen-item .label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.resumen-item .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+
+/* Card Total General (Destacado) */
+.total-general {
+  background: linear-gradient(135deg,
+    rgba(0, 113, 227, 0.08),
+    rgba(52, 199, 89, 0.08));
+  border: 2px solid rgba(0, 113, 227, 0.3);
+  position: relative;
+}
+
+.total-general::before {
+  background: linear-gradient(90deg, var(--gold-premium), var(--brand-blue));
+  opacity: 1;
+  height: 4px;
+}
+
+.total-general .card-header {
+  border-bottom-color: rgba(0, 113, 227, 0.3);
+}
+
+.total-general .card-icon {
+  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.3));
+}
+
+.total-general .resumen-item .value {
+  font-size: 20px;
+  color: var(--brand-blue);
+  font-weight: 800;
+}
+
+.total-general:hover {
+  border-color: rgba(0, 113, 227, 0.5);
+  box-shadow: 0 16px 48px -12px rgba(0, 113, 227, 0.3),
+              inset 0 1px 0 var(--specular-light);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN (Mobile First)
+   ============================================ */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .resumen-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
-  h1 {
+}
+
+/* Mobile (<768px) */
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .page-header,
+  .tabla-section {
+    padding: var(--space-3);
+  }
+
+  /* Header ajustado */
+  .persona-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .avatar-emoji {
+    font-size: 28px;
+  }
+
+  .persona-nombre {
     font-size: 20px;
   }
-  .info-pago h2 {
-    font-size: 18px;
+
+  .fecha-badge {
+    padding: 6px 12px;
+    font-size: 13px;
   }
-  .info-pago h3 {
-    font-size: 14px;
+
+  /* Tabla responsive - Convertir a cards */
+  .table-container {
+    margin: 0 calc(-1 * var(--space-3));
+    padding: 0 var(--space-3);
   }
-  .summary-card h3 {
+
+  .tabla-datos thead {
+    display: none;
+  }
+
+  .table-body .table-row {
+    display: block;
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+    background: rgba(0, 113, 227, 0.03);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+  }
+
+  .table-body .table-row:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(0, 113, 227, 0.15);
+  }
+
+  .table-body td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-1) 0;
+    border-bottom: 1px solid var(--border-glass);
+  }
+
+  .table-body td:last-child {
+    border-bottom: none;
+  }
+
+  .table-body td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Ajustar alineación en mobile */
+  .financial-num {
+    text-align: right;
+  }
+
+  .td-concepto {
+    max-width: 100%;
+  }
+
+  .concepto-text {
+    white-space: normal;
+  }
+
+  /* Resumen en mobile */
+  .resumen-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .resumen-card {
+    padding: var(--space-2);
+  }
+
+  .resumen-item .value {
     font-size: 16px;
   }
+
+  .total-general .resumen-item .value {
+    font-size: 18px;
+  }
+}
+
+/* Small Mobile (<480px) */
+@media (max-width: 480px) {
+  .persona-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .section-title h2 {
+    font-size: 18px;
+  }
+
+  .section-icon {
+    font-size: 24px;
+  }
+
+  .card-header h3 {
+    font-size: 16px;
+  }
+}
+
+/* ============================================
+   ACCESIBILIDAD Y PREFERENCIAS DE USUARIO
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Mejor contraste para texto seleccionado */
+::selection {
+  background: rgba(0, 113, 227, 0.3);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   ANIMACIONES Y MICROINTERACCIONES
+   ============================================ */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 113, 227, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(0, 113, 227, 0);
+  }
+}
+
+.resumen-card:active {
+  transform: scale(0.98);
+}
+
+.table-row:active {
+  background: rgba(0, 113, 227, 0.1);
+}
+
+/* Smooth scrolling para toda la página */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Estados de carga (opcional) */
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

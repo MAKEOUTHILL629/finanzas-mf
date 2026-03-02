@@ -1,0 +1,88 @@
+<div class="balance-container">
+  <!-- Encabezado con selector de fecha -->
+  <div class="balance-header">
+    <div class="header-title">
+      <h2 class="title">
+        <span class="title-icon">💳</span>
+        Balance de Deuda
+        <span class="badge-current" *ngIf="isCurrentMonth()">Mes Actual</span>
+      </h2>
+    </div>
+
+    <div class="date-selector">
+      <div class="selector-group">
+        <label for="month-select">Mes:</label>
+        <select
+          id="month-select"
+          [value]="selectedMonth"
+          (change)="onMonthChange($event)"
+          class="select-control"
+        >
+          <option *ngFor="let month of months; let i = index" [value]="i + 1">
+            {{ month }}
+          </option>
+        </select>
+      </div>
+
+      <div class="selector-group">
+        <label for="year-input">Año:</label>
+        <input
+          type="number"
+          id="year-input"
+          [value]="selectedYear"
+          (change)="onYearChange($event)"
+          class="input-control"
+          min="2000"
+          max="2100"
+        >
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando balance...</p>
+  </div>
+
+  <!-- Contenido Principal -->
+  <div class="balance-content" *ngIf="!isLoading">
+    <!-- Tarjetas de Balance -->
+    <div class="balance-grid" *ngIf="balances.length > 0">
+      <div class="balance-card" *ngFor="let balance of balances">
+        <div class="card-header">
+          <span class="card-icon">💳</span>
+          <h3 class="card-title">{{ balance.franquicia }}</h3>
+        </div>
+        <div class="card-body">
+          <div class="balance-amount">
+            <span class="currency">$</span>
+            <span class="amount">{{ balance.total_saldo_restante | number:'1.0-0' }}</span>
+          </div>
+          <div class="balance-label">Saldo Pendiente</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen Total -->
+    <div class="total-summary" *ngIf="balances.length > 0">
+      <div class="summary-content">
+        <div class="summary-label">
+          <span class="summary-icon">📊</span>
+          Total Deuda del Mes
+        </div>
+        <div class="summary-amount">
+          <span class="currency">$</span>
+          <span class="amount">{{ totalBalance | number:'1.0-0' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado Vacío -->
+    <div class="empty-state" *ngIf="balances.length === 0">
+      <div class="empty-icon">✅</div>
+      <h3>¡Sin deudas!</h3>
+      <p>No hay saldo pendiente para {{ getMonthName(selectedMonth) }} de {{ selectedYear }}</p>
+    </div>
+  </div>
+</div>

@@ -1,74 +1,441 @@
-.contenedor {
-  max-width: 800px;
+/* ============================================
+   PAGOS MENSUALES - LIQUID TRUST DESIGN
+   Sistema de Diseño: Glass Morphism + Financial Typography
+   ============================================ */
+
+:host {
+  --brand-blue: #0071E3;
+  --green-success: #34C759;
+  --red-danger: #FF3B30;
+  --gold-premium: #D4AF37;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+}
+
+/* ============================================
+   CONTAINER PRINCIPAL
+   ============================================ */
+.pagos-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 10px;
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.tarjeta-persona {
-  border: 1px solid #ddd;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+/* Glass Morphism Base */
+.surface-glass {
+  position: relative;
+  background: var(--bg-surface);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 var(--specular-light);
 }
 
-.encabezado-persona {
-  color: #fff;
-  padding: 15px;
-  cursor: pointer;
+/* ============================================
+   HEADER
+   ============================================ */
+.page-header {
+  padding: var(--space-4);
+}
+
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
-.encabezado-persona h2 {
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.header-title i {
+  font-size: 32px;
+  color: var(--brand-blue);
+}
+
+.header-title h1 {
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
+}
+
+.header-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: var(--space-2) var(--space-3);
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.15));
+  border: 1px solid rgba(0, 113, 227, 0.3);
+  border-radius: var(--radius-md);
+}
+
+.badge-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-value {
   font-size: 20px;
+  font-weight: 700;
+  color: var(--brand-blue);
+  font-variant-numeric: tabular-nums;
 }
 
-.icono-toggle {
-  font-size: 24px;
-  font-weight: bold;
+/* ============================================
+   GRID DE PERSONAS
+   ============================================ */
+.personas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-3);
 }
 
-.lista-pagos {
-  padding: 10px 15px;
-  background-color: #f9f9f9;
+/* ============================================
+   TARJETA DE PERSONA
+   ============================================ */
+.persona-card {
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.item-pago {
+.persona-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px -2px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   HEADER DE PERSONA
+   ============================================ */
+.persona-header {
+  padding: var(--space-3);
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid transparent;
 }
 
-.item-pago:last-child {
-  border-bottom: none;
+.persona-header:hover {
+  background: rgba(0, 113, 227, 0.05);
 }
 
-.mes-actual {
-  background-color: #cce5ff;
+.persona-header.expanded {
+  border-bottom-color: var(--border-glass);
 }
 
-.mes {
-  font-weight: bold;
+.persona-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
 }
 
-.monto {
-  color: #28a745;
+.persona-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-@media (max-width: 600px) {
-  .encabezado-persona h2 {
-    font-size: 18px;
+.persona-avatar i {
+  font-size: 28px;
+}
+
+.persona-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.persona-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.pagos-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-btn:hover {
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--brand-blue);
+}
+
+.toggle-btn i {
+  font-size: 24px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-btn.expanded i {
+  transform: rotate(180deg);
+}
+
+/* ============================================
+   LISTA DE PAGOS
+   ============================================ */
+.pagos-list {
+  border-top: 1px solid var(--border-glass);
+  overflow: hidden;
+}
+
+.pagos-wrapper {
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pago-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pago-item:hover {
+  background: rgba(0, 113, 227, 0.05);
+  border-color: var(--brand-blue);
+  transform: translateX(4px);
+}
+
+.pago-item.mes-actual {
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(52, 199, 89, 0.15));
+  border: 1px solid rgba(52, 199, 89, 0.3);
+}
+
+.pago-item.mes-actual:hover {
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(52, 199, 89, 0.2));
+  border-color: var(--green-success);
+}
+
+.pago-fecha {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pago-fecha i {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.fecha-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.badge-mes-actual {
+  padding: 2px 8px;
+  background: var(--green-success);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.5px;
+}
+
+.pago-monto {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.monto-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green-success);
+}
+
+.action-icon {
+  font-size: 20px;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pago-item:hover .action-icon {
+  opacity: 1;
+}
+
+/* Tipografía Financiera */
+.financial-num {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================
+   ESTADO VACÍO
+   ============================================ */
+.empty-state {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.05));
+  border: 2px dashed rgba(0, 113, 227, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon i {
+  font-size: 40px;
+  color: var(--brand-blue);
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 400px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  .pagos-container {
+    padding: var(--space-2);
   }
 
-  .icono-toggle {
-    font-size: 20px;
+  .personas-grid {
+    grid-template-columns: 1fr;
   }
 
-  .contenedor {
-    padding: 5px;
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
   }
+
+  .header-badge {
+    align-self: stretch;
+    align-items: center;
+  }
+
+  .persona-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .persona-avatar i {
+    font-size: 24px;
+  }
+
+  .persona-name {
+    font-size: 16px;
+  }
+
+  .pago-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .pago-monto {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Focus visible para navegación por teclado */
+.persona-header:focus-visible,
+.toggle-btn:focus-visible,
+.pago-item:focus-visible {
+  outline: 3px solid var(--brand-blue);
+  outline-offset: 2px;
 }

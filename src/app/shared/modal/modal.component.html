@@ -1,6 +1,10 @@
-<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <button class="close-button" (click)="closeModal()">&times;</button>
-    <ng-content></ng-content>
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()" [@fadeIn]>
+  <div class="modal-content surface-glass" (click)="$event.stopPropagation()" [@slideUp]>
+    <button class="close-button" (click)="closeModal()" aria-label="Cerrar modal">
+      <i class="material-icons">close</i>
+    </button>
+    <div class="modal-body">
+      <ng-content></ng-content>
+    </div>
   </div>
 </div>

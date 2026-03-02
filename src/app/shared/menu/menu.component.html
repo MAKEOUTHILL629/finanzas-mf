@@ -1,5 +1,7 @@
-<div class="menu-toggle" (click)="toggleMenu()" *ngIf="isMobile"> <i class="material-icons">{{ isMenuOpen ? 'menu_open' : 'menu' }}</i>
-</div>
+<!-- Toggle Button - Solo visible cuando el menú está cerrado -->
+<button class="menu-toggle-floating" *ngIf="!isMenuOpen" (click)="toggleMenu()" aria-label="Abrir menú">
+  <i class="material-icons">menu</i>
+</button>
 
 <nav class="finance-menu" [class.open]="isMenuOpen">
 
@@ -10,34 +12,45 @@
       <path d="M35 35l30 30M35 65l30-30" stroke="white" stroke-width="6" stroke-linecap="round" />
     </svg>
     <h1>Finanzas Make</h1>
+
+    <!-- Toggle integrado en el header cuando está abierto -->
+    <button class="menu-toggle-integrated" (click)="toggleMenu()" aria-label="Cerrar menú">
+      <i class="material-icons">close</i>
+    </button>
   </div>
 
   <ul class="menu-items">
-
+    <!-- Items de navegación -->
     <ng-container *ngIf="isUserLoggedIn$ | async">
       <li *ngFor="let item of loggedInMenuItems"
-          [routerLink]="item.route"
           routerLinkActive="active"
           (click)="isMobile && toggleMenu()"
-          [title]="item.label"> <i class="material-icons" *ngIf="item.icon">{{item.icon}}</i> <span class="menu-label">{{item.label}}</span>
+          [title]="item.label">
+        <a [routerLink]="item.route">
+          <i class="material-icons" *ngIf="item.icon">{{item.icon}}</i>
+          <span class="menu-label">{{item.label}}</span>
+        </a>
       </li>
     </ng-container>
 
     <li *ngIf="!(isUserLoggedIn$ | async)"
-        routerLink="/login"
         routerLinkActive="active"
         (click)="isMobile && toggleMenu()"
         title="Iniciar Sesión">
-      <i class="material-icons">login</i> <span class="menu-label">Iniciar Sesión</span>
+      <a routerLink="/login">
+        <i class="material-icons">login</i>
+        <span class="menu-label">Iniciar Sesión</span>
+      </a>
     </li>
-
-    <li *ngIf="isUserLoggedIn$ | async" class="menu-item-logout" title="Cerrar Sesión">
-      <button type="button" (click)="logout()">
-        <i class="material-icons">logout</i> <span class="menu-label">Cerrar Sesión</span>
-      </button>
-    </li>
-
   </ul>
+
+  <!-- Logout al final -->
+  <div class="menu-footer" *ngIf="isUserLoggedIn$ | async">
+    <button type="button" class="menu-item-logout" (click)="logout()" title="Cerrar Sesión">
+      <i class="material-icons">logout</i>
+      <span class="menu-label">Cerrar Sesión</span>
+    </button>
+  </div>
 
   </nav>
 

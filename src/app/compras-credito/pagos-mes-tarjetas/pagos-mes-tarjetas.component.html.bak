@@ -1,0 +1,245 @@
+<!-- ============================================
+     SECCIÓN 1: BALANCE DE DEUDA (Colapsable)
+     ============================================ -->
+<div class="section-container">
+  <div class="section-header" (click)="toggleSection('balance')">
+    <div class="section-title">
+      <span class="section-icon">💰</span>
+      <h2>Balance de Deuda</h2>
+    </div>
+    <span class="toggle-icon" [class.rotated]="!showBalance">▼</span>
+  </div>
+  <div class="section-content" [class.collapsed]="!showBalance">
+    <app-balance-mes></app-balance-mes>
+  </div>
+</div>
+
+<!-- ============================================
+     SECCIÓN 2: VISTA RÁPIDA - 3 MESES CLAVE (Colapsable)
+     ============================================ -->
+<div class="section-container">
+  <div class="section-header" (click)="toggleSection('keyMonths')">
+    <div class="section-title">
+      <span class="section-icon">⚡</span>
+      <h2>Vista Rápida - Últimos 3 Meses</h2>
+    </div>
+    <span class="toggle-icon" [class.rotated]="!showKeyMonths">▼</span>
+  </div>
+  <div class="section-content" [class.collapsed]="!showKeyMonths">
+    <div class="key-months-grid">
+
+      <!-- MES ANTERIOR -->
+      <div class="month-card month-previous">
+        <div class="month-header">
+          <span class="month-badge">Anterior</span>
+          <h3 class="month-title">{{ getNombreMes(-1) }}</h3>
+        </div>
+        <div class="month-body">
+          <div class="cards-list" *ngIf="mesAnteriorData.tarjetas.length > 0; else noData">
+            <div class="card-item clickable" 
+                 *ngFor="let tarjeta of mesAnteriorData.tarjetas"
+                 (click)="navegarDesdeTarjeta(tarjeta.id, tarjeta.fecha)">
+              <span class="card-icon">💳</span>
+              <span class="card-name">{{ tarjeta.nombre }}</span>
+              <span class="card-amount">{{ tarjeta.monto | currency }}</span>
+            </div>
+          </div>
+          <ng-template #noData>
+            <p class="no-data">Sin pagos registrados</p>
+          </ng-template>
+          <div class="month-total" *ngIf="mesAnteriorData.tarjetas.length > 0">
+            <span>Total</span>
+            <span class="total-amount">{{ mesAnteriorData.total | currency }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MES ACTUAL -->
+      <div class="month-card month-current">
+        <div class="month-header">
+          <span class="month-badge current">Actual</span>
+          <h3 class="month-title">{{ getNombreMes(0) }}</h3>
+        </div>
+        <div class="month-body">
+          <div class="cards-list" *ngIf="mesActualData.tarjetas.length > 0; else noDataCurrent">
+            <div class="card-item clickable" 
+                 *ngFor="let tarjeta of mesActualData.tarjetas"
+                 (click)="navegarDesdeTarjeta(tarjeta.id, tarjeta.fecha)">
+              <span class="card-icon">💳</span>
+              <span class="card-name">{{ tarjeta.nombre }}</span>
+              <span class="card-amount">{{ tarjeta.monto | currency }}</span>
+            </div>
+          </div>
+          <ng-template #noDataCurrent>
+            <p class="no-data">Sin pagos registrados</p>
+          </ng-template>
+          <div class="month-total highlight" *ngIf="mesActualData.tarjetas.length > 0">
+            <span>Total</span>
+            <span class="total-amount">{{ mesActualData.total | currency }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MES SIGUIENTE -->
+      <div class="month-card month-next">
+        <div class="month-header">
+          <span class="month-badge">Siguiente</span>
+          <h3 class="month-title">{{ getNombreMes(1) }}</h3>
+        </div>
+        <div class="month-body">
+          <div class="cards-list" *ngIf="mesSiguienteData.tarjetas.length > 0; else noDataNext">
+            <div class="card-item clickable" 
+                 *ngFor="let tarjeta of mesSiguienteData.tarjetas"
+                 (click)="navegarDesdeTarjeta(tarjeta.id, tarjeta.fecha)">
+              <span class="card-icon">💳</span>
+              <span class="card-name">{{ tarjeta.nombre }}</span>
+              <span class="card-amount">{{ tarjeta.monto | currency }}</span>
+            </div>
+          </div>
+          <ng-template #noDataNext>
+            <p class="no-data">Sin pagos registrados</p>
+          </ng-template>
+          <div class="month-total" *ngIf="mesSiguienteData.tarjetas.length > 0">
+            <span>Total</span>
+            <span class="total-amount">{{ mesSiguienteData.total | currency }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     SECCIÓN 3: TODOS LOS PAGOS (Colapsable)
+     ============================================ -->
+<div class="section-container">
+  <div class="section-header" (click)="toggleSection('allMonths')">
+    <div class="section-title">
+      <span class="section-icon">📊</span>
+      <h2>Historial Completo de Pagos</h2>
+    </div>
+    <span class="toggle-icon" [class.rotated]="!showAllMonths">▼</span>
+  </div>
+
+  <div class="section-content" [class.collapsed]="!showAllMonths">
+    
+    <!-- FILTROS Y CONTROLES -->
+    <div class="filters-container">
+      <div class="filters-row">
+        <!-- Filtro por Tarjeta -->
+        <div class="filter-group">
+          <label class="filter-label">
+            <span class="filter-icon">💳</span>
+            Tarjeta
+          </label>
+          <select class="filter-select" [(ngModel)]="tarjetaFiltro">
+            <option [value]="0">Todas las tarjetas</option>
+            <option *ngFor="let tarjeta of tarjetas" [value]="tarjeta.id">
+              {{ tarjeta.franquicia }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Filtro por Rango de Fechas -->
+        <div class="filter-group">
+          <label class="filter-label">
+            <span class="filter-icon">�</span>
+            Desde
+          </label>
+          <input 
+            type="month" 
+            class="filter-input" 
+            [(ngModel)]="fechaInicio"
+            placeholder="YYYY-MM">
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">
+            <span class="filter-icon">📅</span>
+            Hasta
+          </label>
+          <input 
+            type="month" 
+            class="filter-input" 
+            [(ngModel)]="fechaFin"
+            placeholder="YYYY-MM">
+        </div>
+
+        <!-- Botón Limpiar Filtros -->
+        <div class="filter-group filter-actions">
+          <button 
+            class="btn-filter btn-clear" 
+            (click)="limpiarFiltros()"
+            *ngIf="tarjetaFiltro !== 0 || fechaInicio || fechaFin">
+            <span class="btn-icon">🔄</span>
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      <!-- Info de Resultados -->
+      <div class="filter-info" *ngIf="mesPagoTarjetasFiltrados.length !== mesPagoTarjetas.length">
+        <span class="info-icon">ℹ️</span>
+        Mostrando {{ mesPagoTarjetasFiltrados.length }} de {{ mesPagoTarjetas.length }} pagos
+      </div>
+    </div>
+
+    <!-- TABLA FINANCIERA -->
+    <div class="table-wrapper">
+      <table class="financial-table">
+        <thead class="table-head-sticky">
+          <tr>
+            <th class="th-sortable" (click)="cambiarOrdenamiento('fecha')">
+              <div class="th-content">
+                <span class="th-label">Mes Pago</span>
+                <span class="sort-indicator" *ngIf="ordenarPor === 'fecha'">
+                  {{ ordenarDireccion === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="cambiarOrdenamiento('valor')">
+              <div class="th-content">
+                <span class="th-label">Valor Pago</span>
+                <span class="sort-indicator" *ngIf="ordenarPor === 'valor'">
+                  {{ ordenarDireccion === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th>Tarjeta Crédito</th>
+          </tr>
+        </thead>
+        <tbody class="table-body">
+          <tr
+            class="table-row"
+            *ngFor="let mesPago of mesPagoTarjetasFiltrados"
+            [class.row-current]="esPagoActual(mesPago.fechaPago)"
+            (click)="detallePagosMesTarjeta(mesPago.tarjeta || 1, mesPago.fechaPago)"
+          >
+            <td class="td-date" data-label="Mes Pago">
+              <span class="current-indicator" *ngIf="esPagoActual(mesPago.fechaPago)">●</span>
+              <span class="date-text">{{ mesPago.fechaPago | formatoFecha }}</span>
+            </td>
+            <td class="td-amount financial-num" data-label="Valor Pago">
+              {{ mesPago.valorPago | currency }}
+            </td>
+            <td class="td-card" data-label="Tarjeta">
+              <span class="card-label">{{ obtenerTarjeta(mesPago.tarjeta ? mesPago.tarjeta : 0) }}</span>
+            </td>
+          </tr>
+          <tr *ngIf="mesPagoTarjetasFiltrados.length === 0" class="empty-state-row">
+            <td colspan="3">
+              <div class="empty-state">
+                <span class="empty-icon">🔍</span>
+                <p class="empty-text">No se encontraron pagos</p>
+                <button class="btn-pill btn-secondary" (click)="limpiarFiltros()" *ngIf="tarjetaFiltro !== 0 || busquedaFecha">
+                  Limpiar filtros
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

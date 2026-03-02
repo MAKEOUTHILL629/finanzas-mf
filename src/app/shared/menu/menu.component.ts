@@ -18,14 +18,15 @@ export class MenuComponent implements OnInit {
   isMobile = false;  // Mantiene el estado si es vista móvil
   isUserLoggedIn$!: Observable<boolean>; // Observable para el estado de login
 
+  private readonly MENU_STATE_KEY = 'finanzas-menu-state'; // Key para localStorage
+
   // Mantenemos la estructura original de tus items principales que requieren login
   // La lógica de si se muestran o no, la haremos en el HTML con *ngIf
   loggedInMenuItems = [
-    { label: 'Compras Credito', icon: 'credit_card', route: '/compras-credito' }, // Icono sugerido
-    { label: 'Prestamo', icon: 'account_balance_wallet', route: '/prestamos' }, // Icono sugerido
-    { label: 'Pagos Mes', icon: 'calendar_today', route: '/pagos-mes' }, // Icono sugerido
-    { label: 'Pagos Mes Persona', icon: 'people', route: '/pagos-mes-personas' }, // Icono sugerido
-    // --- Puedes añadir más items que requieran login aquí ---
+    { label: 'Compras Crédito', icon: 'credit_card', route: '/compras-credito' },
+    { label: 'Préstamos', icon: 'account_balance_wallet', route: '/prestamos' },
+    { label: 'Pagos Mes', icon: 'calendar_today', route: '/pagos-mes' },
+    { label: 'Pagos Persona', icon: 'people', route: '/pagos-mes-personas' },
   ];
 
   constructor(
@@ -39,22 +40,51 @@ export class MenuComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadMenuState(); // Carga el estado persistido
     this.checkScreenSize(); // Comprueba el tamaño inicial
     // Asigna el observable del servicio para usarlo en la plantilla con async pipe
     this.isUserLoggedIn$ = this.authService.isLoggedIn$;
   }
 
-  // Lógica para abrir/cerrar el menú (sin cambios)
+  // Lógica para abrir/cerrar el menú con persistencia
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
+    this.saveMenuState();
   }
 
-  // Lógica para detectar tamaño de pantalla (sin cambios)
+  // Lógica para detectar tamaño de pantalla
   private checkScreenSize() {
-    this.isMobile = window.innerWidth < 768; // O el breakpoint que uses
-    // Comportamiento por defecto: cerrado en móvil, abierto en desktop
-    // (puedes ajustar esta lógica si prefieres otro comportamiento inicial)
-    this.isMenuOpen = !this.isMobile;
+    this.isMobile = window.innerWidth < 768;
+    // Si ya hay estado guardado, respetarlo; si no, usar comportamiento por defecto
+    if (!localStorage.getItem(this.MENU_STATE_KEY)) {
+      this.isMenuOpen = !this.isMobile;
+      this.saveMenuState();
+    }
+  }
+
+  // Guardar estado del menú en localStorage
+  private saveMenuState(): void {
+    try {
+      localStorage.setItem(this.MENU_STATE_KEY, JSON.stringify({
+        isOpen: this.isMenuOpen,
+        timestamp: new Date().getTime()
+      }));
+    } catch (error) {
+      console.warn('No se pudo guardar el estado del menú:', error);
+    }
+  }
+
+  // Cargar estado del menú desde localStorage
+  private loadMenuState(): void {
+    try {
+      const savedState = localStorage.getItem(this.MENU_STATE_KEY);
+      if (savedState) {
+        const { isOpen } = JSON.parse(savedState);
+        this.isMenuOpen = isOpen;
+      }
+    } catch (error) {
+      console.warn('No se pudo cargar el estado del menú:', error);
+    }
   }
 
   /**

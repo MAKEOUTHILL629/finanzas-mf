@@ -1,537 +1,800 @@
-/*
-body {
-  font-family: Arial, sans-serif;
-  line-height: 1.6;
-  color: #333;
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 20px;
-}
+/* ============================================
+   FORMULARIO COMPRAS CRÉDITO - LIQUID TRUST
+   Filosofía: Precisión Suiza + Cristal Líquido
+   Basado en STYLE_APP.txt
+   ============================================ */
 
-
-form {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select,
-textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-select {
-  appearance: none;
-  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-  background-repeat: no-repeat;
-  background-position-x: 98%;
-  background-position-y: 50%;
-}
-
-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-button {
-  background-color: #007bff;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  width: 100%;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-
-.mat-autocomplete-panel {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.mat-option {
-  padding: 10px;
-  font-size: 16px;
-}
-
-
-@media screen and (min-width: 768px) {
-  form {
-    padding: 30px;
-  }
-
-  .form-group {
-    display: flex;
-    align-items: center;
-  }
-
-  label {
-    flex: 0 0 30%;
-    margin-bottom: 0;
-    margin-right: 15px;
-  }
-
-  input[type="text"],
-  input[type="number"],
-  input[type="date"],
-  select,
-  textarea {
-    flex: 1;
-  }
-
-  button {
-    width: auto;
-    padding: 12px 30px;
-    float: right;
-  }
-}
-
-
-@media screen and (max-width: 767px) {
-  body {
-    padding: 10px;
-  }
-
-  form {
-    padding: 15px;
-  }
-
-  input[type="text"],
-  input[type="number"],
-  input[type="date"],
-  select,
-  textarea {
-    font-size: 16px;
-    padding: 12px 10px;
-  }
-
-  button {
-    padding: 15px 20px;
-    font-size: 18px;
-  }
-}
-
-
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 14px;
-  margin-top: 5px;
-}
-
-
-small {
-  display: block;
-  margin-top: 5px;
-  color: #28a745;
-  font-style: italic;
-}
-
- */
-/* Estilos para Formulario Compras Crédito - Refactorizado */
-
-/* Definición de variables para tema financiero elegante */
 :host {
-  --form-bg-color: #ffffff;
-  --form-text-color: #333; /* Texto principal oscuro */
-  --form-label-color: #555; /* Etiquetas un poco más suaves */
-  --form-border-color: #ccc; /* Bordes de inputs */
-  --form-focus-border-color: #0056b3; /* Azul oscuro para foco (ajustar a tu primario) */
-  --form-focus-shadow-color: rgba(0, 86, 179, 0.2); /* Sombra de foco */
-  --form-primary-button-bg: #0056b3; /* Azul primario oscuro */
-  --form-primary-button-hover-bg: #004085; /* Más oscuro en hover */
-  --form-primary-button-text: #ffffff;
-  --form-disabled-button-bg: #adb5bd; /* Gris para deshabilitado */
-  --form-disabled-button-text: #6c757d;
-  --form-error-color: #dc3545; /* Rojo para errores */
-  --form-hint-color: #28a745; /* Verde para hints (nuevo concepto) */
-  --form-required-indicator-color: var(--form-error-color); /* Rojo para asterisco */
-  --form-input-bg: #fff;
-  --form-input-group-bg: #e9ecef; /* Fondo para texto en input group */
-  --form-border-radius: 4px; /* Bordes redondeados sutiles */
-  --form-max-width: 700px; /* Ancho máximo del formulario en desktop */
-  --form-font-family: 'Roboto', 'Segoe UI', sans-serif; /* Fuente limpia */
-  --form-transition-speed: 0.2s;
+  /* === TOKENS LIQUID TRUST === */
+  --blue-brand: #0071E3;
+  --green-success: #34C759;
+  --red-danger: #FF3B30;
+  --gold-premium: #D4AF37;
+  --slate-900: #0B0E14;
+  --slate-800: #151A21;
+  --slate-50: #F9FAFB;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --bg-surface: rgba(21, 26, 33, 0.65);
+  --bg-section: rgba(21, 26, 33, 0.45);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-bg-hover: rgba(255, 255, 255, 0.08);
+  --specular-light: rgba(255, 255, 255, 0.1);
 
-  display: block; /* Asegurar que el host se comporte como bloque */
-  font-family: var(--form-font-family);
-  color: var(--form-text-color);
+  /* === ESPACIADO 8PT GRID === */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  /* === BORDER RADIUS === */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  color: var(--text-primary);
 }
 
-/* Estilos generales del formulario */
-form {
-  background-color: var(--form-bg-color);
-  padding: 20px;
-  border-radius: var(--form-border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Sombra más suave */
-  max-width: var(--form-max-width);
-  margin: 20px auto; /* Centrado y con margen superior/inferior */
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+.form-container {
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
 }
 
-.form-title {
-  text-align: center;
-  color: var(--form-primary-button-bg);
-  margin-bottom: 25px;
-  font-size: 1.5em;
-  font-weight: 500;
+/* ============================================
+   FORMULARIO
+   ============================================ */
+form {
+  width: 100%;
 }
 
-/* Grupos de formulario y Filas */
+/* ============================================
+   TÍTULO DEL FORMULARIO
+   ============================================ */
+.form-title {
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-4) 0;
+  text-align: center;
+}
+
+/* ============================================
+   TÍTULOS DE SECCIÓN
+   ============================================ */
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--blue-brand);
+  margin: var(--space-4) 0 var(--space-3) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 2px solid var(--blue-brand);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.section-title-icon {
+  font-size: 1.3em;
+}
+
+/* ============================================
+   GRUPOS DE FORMULARIO
+   ============================================ */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-3);
 }
 
 .form-row {
-  /* Por defecto los elementos se apilan */
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: 0;
 }
 
-/* Etiquetas */
+/* Desktop: 2 columnas */
+@media (min-width: 768px) {
+  .form-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-row-thirds {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .form-group-full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ============================================
+   ETIQUETAS (LABELS)
+   ============================================ */
 label {
   display: block;
-  margin-bottom: 6px;
-  font-weight: 500; /* Ligeramente más grueso */
-  font-size: 0.9em;
-  color: var(--form-label-color);
+  margin-bottom: var(--space-1);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
 }
 
 .required-indicator {
-  color: var(--form-required-indicator-color);
-  margin-left: 2px;
+  color: var(--red-danger);
+  margin-left: 3px;
   font-weight: bold;
 }
 
-/* Estilo base para inputs, selects, textareas */
+/* ============================================
+   INPUTS, SELECTS, TEXTAREA (CRISTAL)
+   ============================================ */
 .form-control {
   display: block;
   width: 100%;
-  padding: 10px 12px;
-  font-size: 1rem; /* Tamaño base */
+  min-height: 48px;
+  padding: 12px 16px;
+  font-size: 16px; /* Mínimo 16px para evitar zoom en mobile */
   font-family: inherit;
   line-height: 1.5;
-  color: var(--form-text-color);
-  background-color: var(--form-input-bg);
-  background-clip: padding-box;
-  border: 1px solid var(--form-border-color);
-  border-radius: var(--form-border-radius);
-  transition: border-color var(--form-transition-speed) ease-in-out, box-shadow var(--form-transition-speed) ease-in-out;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
 }
 
-/* Ocultar spinners en input number */
+.form-control:hover {
+  background: var(--input-bg-hover);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* FOCUS STATE - Ring Style según STYLE_APP.txt */
+.form-control:focus {
+  outline: none;
+  background: var(--input-bg-hover);
+  border-color: var(--blue-brand);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Input Numbers - Sin spinners */
 input[type="number"] {
+  appearance: textfield;
   -moz-appearance: textfield;
 }
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Estilo para selects */
+/* Select personalizado */
 select.form-control {
-  appearance: none; /* Quitar apariencia nativa */
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23555" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Icono flecha (color ajustado) */
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230071E3"><path d="M7 10l5 5 5-5z"/></svg>');
   background-repeat: no-repeat;
   background-position: right 12px center;
-  padding-right: 35px; /* Espacio para la flecha */
+  background-size: 20px;
+  padding-right: 40px;
+  cursor: pointer;
 }
-/* Estilo para options dentro del select */
+
+select.form-control option {
+  background: var(--slate-800);
+  color: var(--text-primary);
+  padding: 10px;
+}
+
 select.form-control option[disabled] {
-    color: #999;
+  color: var(--text-muted);
 }
 
 /* Textarea */
 textarea.form-control {
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
+  font-family: inherit;
+  padding: 14px 16px;
 }
 
-/* Input Groups (para $ y %) */
+/* ============================================
+   INPUT GROUPS ($ y %)
+   ============================================ */
 .input-group {
   display: flex;
-  align-items: stretch; /* Asegura misma altura */
+  align-items: stretch;
   width: 100%;
 }
 
-.input-group .input-group-text {
+.input-group-text {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--form-label-color);
-  text-align: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--blue-brand);
+  background: rgba(0, 113, 227, 0.1);
+  border: 1px solid var(--border-glass);
   white-space: nowrap;
-  background-color: var(--form-input-group-bg);
-  border: 1px solid var(--form-border-color);
-  border-radius: var(--form-border-radius);
 }
 
-/* Ajustar bordes redondeados cuando hay grupo */
-.input-group .form-control {
-  position: relative;
-  flex: 1 1 auto;
-  width: 1%; /* Evitar problemas de tamaño */
-  min-width: 0;
-}
 .input-group > .input-group-text:first-child {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-right: 0; /* Quitar borde derecho del texto */
+  border-right: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
+
 .input-group > .form-control:not(:first-child) {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  border-left: 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
+
 .input-group > .input-group-text:last-child {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-left: 0; /* Quitar borde izquierdo del texto */
+  border-left: 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
+
 .input-group > .form-control:not(:last-child) {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  border-right: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
 }
 
-/* Alineación derecha para números */
-.text-right {
+/* ============================================
+   NÚMEROS FINANCIEROS (TABULAR)
+   CRÍTICO: Usar tabular-nums para evitar "baile"
+   ============================================ */
+.text-right,
+.form-control[type="number"],
+.form-control[type="text"][id*="Value"],
+.form-control[id*="Price"],
+.form-control[id*="Amount"] {
   text-align: right;
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-/* Estado de Foco */
-.form-control:focus {
-  outline: none;
-  border-color: var(--form-focus-border-color);
-  box-shadow: 0 0 0 3px var(--form-focus-shadow-color);
-}
-
-/* Estado Inválido */
+/* ============================================
+   ESTADOS DE VALIDACIÓN
+   ============================================ */
 .form-control.is-invalid {
-  border-color: var(--form-error-color);
-}
-.form-control.is-invalid:focus {
-  border-color: var(--form-error-color);
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25); /* Sombra roja */
+  border-color: var(--red-danger);
+  background: rgba(255, 59, 48, 0.05);
 }
 
-/* Mensajes de error y hints */
-.invalid-feedback {
-  display: none; /* Oculto por defecto */
-  width: 100%;
-  margin-top: 5px;
-  font-size: 0.8em;
-  color: var(--form-error-color);
+.form-control.is-invalid:focus {
+  border-color: var(--red-danger);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.2);
 }
-/* Mostrar mensaje si el control asociado es inválido y tocado/modificado */
+
+.invalid-feedback {
+  display: none;
+  width: 100%;
+  margin-top: var(--space-1);
+  font-size: 14px;
+  color: var(--red-danger);
+  font-weight: 500;
+}
+
 .form-control.is-invalid + .invalid-feedback,
-.ng-invalid.ng-touched + .invalid-feedback, /* Para compatibilidad con ng-touched */
-.ng-invalid.ng-dirty + .invalid-feedback {  /* Para compatibilidad con ng-dirty */
+.is-invalid ~ .invalid-feedback {
   display: block;
 }
 
-/* Hint para nuevo concepto */
+/* ============================================
+   HINTS Y MENSAJES
+   ============================================ */
 .hint-new {
   display: flex;
   align-items: center;
-  margin-top: 5px;
-  color: var(--form-hint-color);
-  font-size: 0.8em;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  font-size: 14px;
+  color: var(--green-success);
   font-style: italic;
 }
-.hint-new .hint-icon {
-  font-size: 1.1em; /* Tamaño icono hint */
-  margin-right: 4px;
+
+.hint-icon {
+  font-size: 1.2em;
+}
+
+.info-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* ============================================
+   AUTOCOMPLETE DE MATERIAL
+   ============================================ */
+::ng-deep .mat-autocomplete-panel {
+  background: var(--slate-800);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  max-height: 300px;
+}
+
+::ng-deep .mat-option {
+  padding: 12px 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  transition: background-color 0.2s ease;
+}
+
+::ng-deep .mat-option:hover,
+::ng-deep .mat-option.mat-active {
+  background: rgba(0, 113, 227, 0.1);
+}
+
+::ng-deep .mat-option mat-spinner {
+  display: inline-block;
+  margin-right: 10px;
   vertical-align: middle;
 }
 
-/* Estilos para Autocomplete de Material (Ajustes básicos) */
-/* El panel que se despliega */
-::ng-deep .mat-autocomplete-panel {
-  border: 1px solid var(--form-border-color) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-  border-radius: var(--form-border-radius) !important;
-  background-color: var(--form-bg-color) !important;
-}
-/* Cada opción en el panel */
-::ng-deep .mat-option {
-  font-size: 0.95rem !important;
-  line-height: 1.5 !important;
-  height: auto !important; /* Altura automática */
-  padding: 8px 15px !important; /* Ajustar padding */
-  color: var(--form-text-color) !important;
-}
-/* Opción seleccionada o activa */
-::ng-deep .mat-option.mat-active,
-::ng-deep .mat-option:hover {
-  background-color: var(--form-input-group-bg) !important; /* Fondo suave al pasar cursor */
-}
-/* Spinner dentro de mat-option */
-::ng-deep .mat-option mat-spinner {
-  display: inline-block !important;
-  margin-right: 8px !important;
-  vertical-align: middle !important;
-}
-
-
-/* Botón de envío */
-.form-actions {
-  margin-top: 30px;
-  text-align: right; /* Alinear botón a la derecha en desktop */
-}
-
+/* ============================================
+   BOTONES (LIQUID TRUST)
+   ============================================ */
 .btn {
-  display: inline-flex; /* Para alinear icono y texto */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  border: none;
-  border-radius: var(--form-border-radius);
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 500;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
   text-align: center;
-  vertical-align: middle;
-  transition: background-color var(--form-transition-speed) ease-in-out, border-color var(--form-transition-speed) ease-in-out, box-shadow var(--form-transition-speed) ease-in-out;
-  user-select: none; /* Evitar selección de texto en botón */
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 }
 
+/* Botón Primario - Electric Blue */
 .btn-primary {
-  background-color: var(--form-primary-button-bg);
-  color: var(--form-primary-button-text);
+  background: var(--blue-brand);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--form-primary-button-hover-bg);
+  background: #0077ED;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
 }
 
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Botón Secundario - Transparente */
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Botón Success - Mint Neon */
+.btn-success {
+  background: var(--green-success);
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #30D158;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+}
+
+/* Botón Danger - Apple Red */
+.btn-danger {
+  background: var(--red-danger);
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  min-height: 40px;
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #FF453A;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+}
+
+/* Botón Toggle (Responsables) */
+.btn-toggle {
+  width: 100%;
+  margin-bottom: var(--space-3);
+  background: var(--bg-section);
+  color: var(--blue-brand);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn-toggle:hover:not(:disabled) {
+  background: rgba(0, 113, 227, 0.1);
+  border-color: var(--blue-brand);
+}
+
+/* Estado Disabled */
 .btn:disabled {
-  background-color: var(--form-disabled-button-bg);
-  color: var(--form-disabled-button-text);
+  opacity: 0.4;
   cursor: not-allowed;
-  opacity: 0.7;
+  transform: none !important;
 }
 
-.btn .button-icon {
-  margin-right: 8px;
-  font-size: 1.2em; /* Tamaño icono botón */
-  vertical-align: middle;
+.btn-icon {
+  font-size: 1.2em;
 }
 
 .btn mat-spinner {
-   display: inline-block !important;
-   margin-right: 8px !important;
-   vertical-align: middle !important;
+  display: inline-block;
+  margin-right: var(--space-1);
+  vertical-align: middle;
 }
 
-/* --- Responsividad --- */
+/* ============================================
+   FORM ACTIONS (BOTONES DE ACCIÓN)
+   ============================================ */
+.form-actions {
+  margin-top: var(--space-5);
+  text-align: center;
+}
 
-/* Estilos para Desktop (pantallas >= 768px) */
+/* ============================================
+   SECCIÓN DE RESPONSABLES (GLASS)
+   ============================================ */
+.responsables-section {
+  background: var(--bg-section);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-top: var(--space-4);
+  box-shadow:
+    0 4px 24px -1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 var(--specular-light);
+}
+
+.responsables-list {
+  margin-bottom: var(--space-4);
+}
+
+/* ============================================
+   TABLA RESPONSABLES (GLASS TABLE)
+   ============================================ */
+.table-responsive {
+  overflow-x: auto;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.responsables-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(11, 14, 20, 0.3);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.responsables-table th,
+.responsables-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.responsables-table th {
+  background: rgba(0, 113, 227, 0.15);
+  color: var(--blue-brand);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  /* Sticky header con blur */
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.responsables-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.responsables-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.responsables-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+.empty-state {
+  text-align: center;
+  padding: var(--space-5);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.empty-state-icon {
+  font-size: 3em;
+  opacity: 0.3;
+  margin-bottom: var(--space-2);
+}
+
+/* ============================================
+   BADGES Y INDICADORES
+   ============================================ */
+.percentage-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--blue-brand), #0077ED);
+  color: white;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  font-feature-settings: "tnum" on;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+}
+
+.percentage-remaining {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px 16px;
+  background: rgba(0, 113, 227, 0.1);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  margin-bottom: var(--space-3);
+}
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+.text-center {
+  text-align: center;
+}
+
+.mt-2 {
+  margin-top: var(--space-2);
+}
+
+.mt-3 {
+  margin-top: var(--space-3);
+}
+
+.mb-3 {
+  margin-bottom: var(--space-3);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* ============================================
+   RESPONSIVE - FORMULARIO RESPONSABLES
+   ============================================ */
 @media (min-width: 768px) {
-  form {
-    padding: 30px 40px; /* Más padding */
+  .responsables-form .form-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .responsables-table th,
+  .responsables-table td {
+    padding: 16px 20px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - MÓVIL (<768px)
+   ============================================ */
+@media (max-width: 767px) {
+  .form-title {
+    font-size: 24px;
+    margin-bottom: var(--space-3);
+  }
+
+  .section-title {
+    font-size: 16px;
   }
 
   .form-row {
-    display: flex;
-    gap: 20px; /* Espacio entre columnas */
-    align-items: flex-start; /* Alinear al inicio por si las alturas varían */
+    grid-template-columns: 1fr;
   }
-
-  .form-row .form-group {
-    flex: 1; /* Ocupar espacio equitativo */
-    min-width: 0; /* Necesario para flexbox */
-  }
-
-  /* Ajuste para etiqueta al lado en desktop (opcional) */
-  /*
-  .form-group {
-     display: flex;
-     align-items: baseline; // O center
-     gap: 15px;
-  }
-  label {
-     flex: 0 0 150px; // Ancho fijo para label
-     text-align: right;
-     margin-bottom: 0;
-     padding-right: 10px;
-  }
-  .input-wrapper { // Necesitarías un div extra alrededor de input/select/textarea y errores
-     flex: 1;
-     min-width: 0;
-  }
-  */
 
   .btn {
-    padding: 12px 30px; /* Botón más grande */
+    width: 100%;
+    padding: 14px 20px;
+  }
+
+  .btn-danger {
+    width: auto;
+    padding: 10px 16px;
+  }
+
+  /* Tabla responsiva - Card Style en móvil */
+  .responsables-table {
+    border: 0;
+  }
+
+  .responsables-table thead {
+    display: none;
+  }
+
+  .responsables-table tbody,
+  .responsables-table tr,
+  .responsables-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsables-table tr {
+    margin-bottom: var(--space-3);
+    background: rgba(11, 14, 20, 0.4);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+  }
+
+  .responsables-table td {
+    text-align: left !important;
+    padding: 10px 0;
+    border: 0;
+    position: relative;
+    padding-left: 50%;
+  }
+
+  .responsables-table td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 45%;
+    padding-right: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+
+  .responsables-table td:last-child {
+    padding-left: 0;
+    text-align: center !important;
+  }
+
+  .responsables-table td:last-child:before {
+    display: none;
+  }
+
+  .action-buttons {
+    justify-content: center;
+  }
+
+  .responsables-section {
+    padding: var(--space-3);
+  }
+
+  .percentage-remaining {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .responsables-form .form-row {
+    grid-template-columns: 1fr;
   }
 }
 
-/* Estilos para Móvil (pantallas < 768px) */
-@media (max-width: 767px) {
-  form {
-    padding: 15px;
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .form-control, select.form-control, textarea.form-control, .btn {
-    font-size: 16px; /* Asegurar buena legibilidad en móvil */
-  }
+.responsables-section {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  .btn {
-    width: 100%; /* Botón ocupa todo el ancho */
-  }
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
-  .form-actions {
-    text-align: center; /* Centrar botón */
+:focus-visible {
+  outline: 2px solid var(--blue-brand);
+  outline-offset: 2px;
+}
+
+/* Reducir movimiento para usuarios con preferencias de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--blue-brand);
 }

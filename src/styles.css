@@ -1,20 +1,44 @@
-
+/* === ESTILOS GLOBALES === */
 body {
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  background: #0B0E14;
+  color: #FFFFFF;
 }
 
+/* === LAYOUT PRINCIPAL === */
 .app-container {
-  transition: padding-left 0.3s ease;
+  position: relative;
+  min-height: 100vh;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* === MAIN CONTENT === */
 .main-content {
-  padding: 20px;
+  padding: 24px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* === RESPONSIVE LAYOUT === */
+/* Mobile: Bottom padding para el tab bar */
+@media (max-width: 767px) {
+  .main-content {
+    padding-bottom: 104px; /* 80px tab bar + 24px spacing */
+  }
+}
+
+/* Desktop: Left margin cuando el menú está abierto */
 @media (min-width: 768px) {
-  .app-container:not(.menu-closed) {
-    padding-left: 250px;
+  .app-container:not(.menu-closed) .main-content {
+    margin-left: 280px; /* Ancho del menú */
+  }
+
+  .app-container.menu-closed .main-content {
+    margin-left: 0;
+  }
+
+  .main-content {
+    padding: 32px;
   }
 }

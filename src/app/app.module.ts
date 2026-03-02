@@ -5,8 +5,9 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TablaComprasCreditoComponent } from './compras-credito/tabla-compras-credito/tabla-compras-credito.component';
 import { FormularioComprasCreditoComponent } from './compras-credito/formulario-compras-credito/formulario-compras-credito.component';
+import { FormularioCsvComprasComponent } from './compras-credito/formulario-csv-compras/formulario-csv-compras.component';
 
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
@@ -33,6 +34,7 @@ import { LoginComponent } from './login/login.component';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DecimalPipe } from '@angular/common';
+import { BalanceMesComponent } from './compras-credito/balance-mes/balance-mes.component';
 
 
 @NgModule({
@@ -40,6 +42,7 @@ import { DecimalPipe } from '@angular/common';
     AppComponent,
     TablaComprasCreditoComponent,
     FormularioComprasCreditoComponent,
+    FormularioCsvComprasComponent,
     FormatoFechaPipe,
     DetalleComprasCreditoComponent,
     ResponsableCreditoComponent,
@@ -54,6 +57,7 @@ import { DecimalPipe } from '@angular/common';
     FormatoPersonaPipe,
     PagosMesTarjetasDetalleComponent,
     LoginComponent,
+    BalanceMesComponent,
 
   ],
   imports: [
@@ -63,6 +67,7 @@ import { DecimalPipe } from '@angular/common';
     MatProgressSpinnerModule,
     MatInputModule,
     ReactiveFormsModule,
+    FormsModule,
     BaseChartDirective,
 
   ],

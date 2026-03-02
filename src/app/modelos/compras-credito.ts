@@ -54,6 +54,11 @@ export interface MesPagoTarjeta{
   fechaPago: Date;
 }
 
+export interface BalanceTarjeta {
+  tarjeta: number;
+  franquicia: string;
+  total_saldo_restante: number;
+}
 
 export const months = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',

@@ -1,39 +1,315 @@
+/* ============================================
+   MODAL COMPONENT - LIQUID TRUST DESIGN
+   Filosofía: Precisión Suiza + Cristal Líquido
+   Basado en STYLE_APP.txt
+   ============================================ */
+
+:host {
+  /* === TOKENS LIQUID TRUST === */
+  --blue-brand: #0071E3;
+  --red-danger: #FF3B30;
+  --slate-900: #0B0E14;
+  --slate-800: #151A21;
+  --text-primary: #FFFFFF;
+  --text-secondary: #9CA3AF;
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --bg-surface: rgba(21, 26, 33, 0.65);
+  --bg-overlay: rgba(11, 14, 20, 0.85);
+  --specular-light: rgba(255, 255, 255, 0.1);
+
+  /* === ESPACIADO 8PT GRID === */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+
+  /* === BORDER RADIUS === */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+}
+
+/* ============================================
+   OVERLAY (BACKDROP)
+   ============================================ */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
   display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  max-width: 90%;
-  max-height: 90%;
+  align-items: flex-end; /* Mobile: Bottom Sheet */
+  z-index: 2000;
   overflow-y: auto;
-  position: relative;
+  padding: 0;
 }
 
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
+/* ============================================
+   MOBILE: BOTTOM SHEET (< 768px)
+   ============================================ */
+@media (max-width: 767px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
 
-@media (min-width: 768px) {
   .modal-content {
-    max-width: 600px;
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh; /* Ocupa 85% de la pantalla */
+    min-height: 40vh;
+    margin: 0;
+
+    /* Glass Morphism Effect */
+    position: relative;
+    background: var(--bg-surface);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+    border: 1px solid var(--border-glass);
+    border-bottom: none; /* Sin borde inferior en mobile */
+    box-shadow:
+      0 -8px 40px -4px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 var(--specular-light);
+
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Handle visual para indicar que se puede arrastrar */
+  .modal-content::before {
+    content: '';
+    position: absolute;
+    top: var(--space-2);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--text-secondary);
+    border-radius: var(--radius-pill);
+    opacity: 0.4;
+    z-index: 1;
+  }
+
+  .close-button {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .close-button:hover,
+  .close-button:active {
+    background: rgba(255, 59, 48, 0.15);
+    border-color: var(--red-danger);
+    color: var(--red-danger);
+    transform: scale(0.95);
+  }
+
+  .close-button .material-icons {
+    font-size: 22px;
+  }
+
+  .modal-body {
+    padding: calc(var(--space-6) + var(--space-2)) var(--space-3) var(--space-3) var(--space-3);
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+}
+
+/* ============================================
+   DESKTOP: MODAL CENTRADO (>= 768px)
+   ============================================ */
+@media (min-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+    padding: var(--space-4);
+  }
+
+  .modal-content {
+    width: 90%;
+    max-width: min(95vw, 1400px); /* Responsivo: 95% viewport o máximo 1400px */
+    max-height: 85vh;
+    margin: auto;
+
+    /* Glass Morphism Effect */
+    position: relative;
+    background: var(--bg-surface);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+
+    border: 1px solid var(--border-glass);
+    box-shadow:
+      0 12px 48px -8px rgba(0, 0, 0, 0.6),
+      inset 0 1px 0 var(--specular-light);
+
+    border-radius: var(--radius-lg);
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* No handle en desktop */
+  .modal-content::before {
+    display: none;
+  }
+
+  .close-button {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .close-button:hover {
+    background: rgba(255, 59, 48, 0.15);
+    border-color: var(--red-danger);
+    color: var(--red-danger);
+    transform: translateY(-2px) rotate(90deg);
+    box-shadow: 0 8px 24px -4px rgba(255, 59, 48, 0.3);
+  }
+
+  .close-button:active {
+    transform: translateY(0) rotate(90deg) scale(0.95);
+  }
+
+  .close-button .material-icons {
+    font-size: 24px;
+  }
+
+  .modal-body {
+    padding: calc(var(--space-6) + var(--space-2)) var(--space-4) var(--space-4) var(--space-4);
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADO
+   ============================================ */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 113, 227, 0.3);
+}
+
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+.close-button:focus-visible {
+  outline: 2px solid var(--blue-brand);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.2);
+}
+
+/* Soporte para teclado (Escape) */
+.modal-overlay:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   ESTADOS Y ANIMACIONES
+   ============================================ */
+
+/* Overlay con blur progresivo */
+.modal-overlay {
+  animation: fadeInBackdrop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInBackdrop {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px) saturate(100%);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(8px) saturate(120%);
+  }
+}
+
+/* Efecto de elevación al cargar */
+.modal-content {
+  animation: modalEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 767px) {
+  @keyframes modalEnter {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

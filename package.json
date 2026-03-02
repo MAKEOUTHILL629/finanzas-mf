@@ -4,9 +4,10 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --proxy-config proxy.conf.json",
-     "build:prod": "ng build --configuration production",
+    "build:prod": "ng build --configuration production",
     "build:docker": "ng build --configuration docker",
     "build": "ng build",
+    "serve:prod": "http-server dist/finanzas-mf/browser -p 8080 -o",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

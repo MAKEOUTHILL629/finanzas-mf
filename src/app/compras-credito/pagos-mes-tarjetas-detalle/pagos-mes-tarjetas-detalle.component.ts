@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { PagoMensualTarjetaDetalle } from '../../modelos/pagos';
 import { ApiServicesService } from '../../servicios/api-services.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,7 +7,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 @Component({
   selector: 'app-pagos-mes-tarjetas-detalle',
   templateUrl: './pagos-mes-tarjetas-detalle.component.html',
-  styleUrl: './pagos-mes-tarjetas-detalle.component.css'
+  styleUrl: './pagos-mes-tarjetas-detalle.component.css',
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('400ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
+  ]
 })
 export class PagosMesTarjetasDetalleComponent implements OnInit {
   detallePagoMensual: PagoMensualTarjetaDetalle[] = [];

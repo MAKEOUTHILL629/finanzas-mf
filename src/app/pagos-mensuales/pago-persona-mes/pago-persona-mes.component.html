@@ -1,25 +1,74 @@
-<div class="contenedor">
-  <div *ngFor="let persona of personasConPagos" class="tarjeta-persona">
-    <div
-      class="encabezado-persona"
-      (click)="toggleExpandir(persona)"
-      [style.backgroundColor]="persona.colorRepresentativo || '#007bff'"
-    >
-      <h2>{{ persona.nombre }}</h2>
-      <span class="icono-toggle">{{ persona.expandido ? '-' : '+' }}</span>
-    </div>
-    <div class="lista-pagos" *ngIf="persona.expandido">
-      <div
-        *ngFor="let pago of persona.pagos"
-        [ngClass]="{ 'mes-actual': esMesActual(pago.fecha) }"
-        class="item-pago"
-        (click)="detallePagosMesPersona(persona.id || 1, pago.fecha)"
-      >
-        <span class="mes">
-          {{ pago.fecha | formatoFecha }}:
-        </span>
-        <span class="monto">{{ pago.valorPago | currency: 'USD' }}</span>
+<div class="pagos-container">
+  <!-- Header -->
+  <div class="page-header surface-glass">
+    <div class="header-content">
+      <div class="header-title">
+        <i class="material-icons">calendar_month</i>
+        <h1>Pagos Mensuales por Persona</h1>
+      </div>
+      <div class="header-badge">
+        <span class="badge-label">Período</span>
+        <span class="badge-value">{{ (mesActual + 1) | number:'2.0-0' }}/{{ yearActual }}</span>
       </div>
     </div>
+  </div>
+
+  <!-- Lista de Personas con Pagos -->
+  <div class="personas-grid">
+    <div *ngFor="let persona of personasConPagos" class="persona-card surface-glass">
+      <!-- Header de la persona -->
+      <div
+        class="persona-header"
+        (click)="toggleExpandir(persona)"
+        [class.expanded]="persona.expandido"
+      >
+        <div class="persona-info">
+          <div
+            class="persona-avatar"
+            [style.background]="'linear-gradient(135deg, ' + (persona.colorRepresentativo || '#0071E3') + ', ' + (persona.colorRepresentativo || '#0071E3') + 'dd)'"
+          >
+            <i class="material-icons">person</i>
+          </div>
+          <div class="persona-details">
+            <h2 class="persona-name">{{ persona.nombre }}</h2>
+            <span class="pagos-count">{{ persona.pagos.length }} pagos registrados</span>
+          </div>
+        </div>
+        <button class="toggle-btn" [class.expanded]="persona.expandido">
+          <i class="material-icons">{{ persona.expandido ? 'expand_less' : 'expand_more' }}</i>
+        </button>
+      </div>
+
+      <!-- Lista de pagos expandible -->
+      <div class="pagos-list" *ngIf="persona.expandido" [@slideDown]>
+        <div class="pagos-wrapper">
+          <div
+            *ngFor="let pago of persona.pagos"
+            class="pago-item"
+            [class.mes-actual]="esMesActual(pago.fecha)"
+            (click)="detallePagosMesPersona(persona.id || 1, pago.fecha)"
+          >
+            <div class="pago-fecha">
+              <i class="material-icons">event</i>
+              <span class="fecha-text">{{ pago.fecha | formatoFecha }}</span>
+              <span class="badge-mes-actual" *ngIf="esMesActual(pago.fecha)">Actual</span>
+            </div>
+            <div class="pago-monto">
+              <span class="monto-value financial-num">{{ pago.valorPago | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+              <i class="material-icons action-icon">arrow_forward</i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado vacío -->
+  <div class="empty-state surface-glass" *ngIf="personasConPagos.length === 0">
+    <div class="empty-icon">
+      <i class="material-icons">payments</i>
+    </div>
+    <h3 class="empty-title">No hay pagos registrados</h3>
+    <p class="empty-text">Los pagos mensuales aparecerán aquí cuando se registren.</p>
   </div>
 </div>

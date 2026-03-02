@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ComprasCreditoService } from '../../servicios/compras-credito.service';
 import {
   ColumnasCompraCredito,
@@ -14,23 +14,32 @@ import { ModalService } from '../../servicios/modal.service';
 import { Persona } from '../../modelos/persona';
 import { capitalize } from '../../shared/utils';
 import { SharedListasService } from '../../services/shared-listas.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-tabla-compras-credito',
   templateUrl: './tabla-compras-credito.component.html',
   styleUrl: './tabla-compras-credito.component.css',
 })
-export class TablaComprasCreditoComponent implements OnInit {
+export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   comprasCredito: ComprasCredito[] = [];
   isLoading = false;
+  isRefreshing = false;
   error: string | null = null;
+  private destroy$ = new Subject<void>();
 
   filteredPurchases: ComprasCredito[] = [];
   filterForm: FormGroup;
   sortColumn: SortableFields = 'fechaCompra';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortDirection: 'asc' | 'desc' = 'desc'; // Descendente por defecto (más reciente primero)
 
   estados: string[] = ['Pendiente', 'Pagado', 'Cancelado'];
+
+  // Multiselect states
+  selectedEstados: Set<string> = new Set();
+  selectedTarjetas: Set<number> = new Set();
+  showEstadosDropdown = false;
+  showTarjetasDropdown = false;
 
   sortableColumns: ColumnasCompraCredito[] = [
     { titulo: 'Concepto', columna: 'concepto' },
@@ -62,18 +71,34 @@ export class TablaComprasCreditoComponent implements OnInit {
       numeroCuotas: [''],
       fechaUltimaCuotaInicio: [''],
       fechaUltimaCuotaFin: [''],
-      tarjeta: [''],
       concepto: [''],
-      estado: [''],
+      soloSinResponsablesCompletos: [false], // Nuevo filtro
     });
   }
+
   ngOnInit(): void {
     this.loadTarjetas();
     this.loadPersonas();
     this.loadProducts();
 
-    this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+    // Suscribirse a cambios en el formulario
+    this.filterForm.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.applyFilters());
+
+    // Suscribirse a notificaciones de compras creadas
+    this.modalService.compraCreated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.refreshCompras();
+      });
+
     this.applyFilters();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadTarjetas(): void {
@@ -99,21 +124,30 @@ export class TablaComprasCreditoComponent implements OnInit {
     this.apiService.get<ComprasCredito[]>('compras-credito').subscribe({
       next: (data) => {
         this.comprasCredito = data;
-
-        this.filteredPurchases = [...this.comprasCredito].sort((a, b) => {
-          const aFecha = new Date(a.fechaCompra || 0);
-          const bFecha = new Date(b.fechaCompra || 0);
-          return bFecha.getTime() - aFecha.getTime();
-        });
-
-        this.estados = Array.from(new Set(  this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos')) ));
+        this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
         this.isLoading = false;
+        this.applyFilters();
       },
       error: (err) => {
-        this.error =
-          'Error al cargar los productos. Por favor, intente de nuevo.';
+        this.error = 'Error al cargar los productos. Por favor, intente de nuevo.';
         this.isLoading = false;
         console.error('Error fetching products:', err);
+      },
+    });
+  }
+
+  refreshCompras(): void {
+    this.isRefreshing = true;
+    this.apiService.get<ComprasCredito[]>('compras-credito').subscribe({
+      next: (data) => {
+        this.comprasCredito = data;
+        this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
+        this.isRefreshing = false;
+        this.applyFilters(); // Mantiene los filtros aplicados
+      },
+      error: (err) => {
+        this.isRefreshing = false;
+        console.error('Error refreshing products:', err);
       },
     });
   }
@@ -124,38 +158,45 @@ export class TablaComprasCreditoComponent implements OnInit {
     this.filteredPurchases = this.comprasCredito.filter((purchase) => {
       let matchesFilter = true;
 
+      // Filtro de fecha de compra inicio
       if (filters.fechaCompraInicio && purchase.fechaCompra) {
         const filterDate = new Date(filters.fechaCompraInicio);
         matchesFilter = matchesFilter && purchase.fechaCompra >= filterDate;
       }
 
+      // Filtro de fecha de compra fin
       if (filters.fechaCompraFin && purchase.fechaCompra) {
         const filterDate = new Date(filters.fechaCompraFin);
         matchesFilter = matchesFilter && purchase.fechaCompra <= filterDate;
       }
 
+      // Filtro de número de cuotas
       if (filters.numeroCuotas && purchase.numeroCuotas !== undefined) {
         matchesFilter =
           matchesFilter &&
           purchase.numeroCuotas === parseInt(filters.numeroCuotas, 10);
       }
 
+      // Filtro de fecha última cuota inicio
       if (filters.fechaUltimaCuotaInicio && purchase.fechaUltimaCuota) {
         const filterDate = new Date(filters.fechaUltimaCuotaInicio);
         matchesFilter =
           matchesFilter && purchase.fechaUltimaCuota >= filterDate;
       }
 
+      // Filtro de fecha última cuota fin
       if (filters.fechaUltimaCuotaFin && purchase.fechaUltimaCuota) {
         const filterDate = new Date(filters.fechaUltimaCuotaFin);
         matchesFilter =
           matchesFilter && purchase.fechaUltimaCuota <= filterDate;
       }
 
-      if (filters.tarjeta && purchase.tarjeta) {
-        matchesFilter = matchesFilter && purchase.tarjeta == filters.tarjeta;
+      // Filtro multiselect de tarjetas
+      if (this.selectedTarjetas.size > 0 && purchase.tarjeta) {
+        matchesFilter = matchesFilter && this.selectedTarjetas.has(purchase.tarjeta);
       }
 
+      // Filtro de concepto
       if (filters.concepto && purchase.concepto) {
         matchesFilter =
           matchesFilter &&
@@ -164,19 +205,36 @@ export class TablaComprasCreditoComponent implements OnInit {
             .includes(filters.concepto.toLowerCase());
       }
 
-
-      if (filters.estado && purchase.estado) {
+      // Filtro multiselect de estados
+      if (this.selectedEstados.size > 0 && purchase.estado) {
         matchesFilter =
           matchesFilter &&
-          purchase.estado
-            .toLowerCase()
-            .includes(filters.estado.toLowerCase());
+          Array.from(this.selectedEstados).some(estado =>
+            purchase.estado?.toLowerCase() === estado.toLowerCase()
+          );
+      }
+
+      // Filtro de responsables incompletos
+      if (filters.soloSinResponsablesCompletos) {
+        const porcentaje = purchase.porcentajePago || 0;
+        matchesFilter = matchesFilter && porcentaje < 100;
       }
 
       return matchesFilter;
     });
 
-    this.sortData(this.sortColumn);
+    // Ordenar automáticamente por fecha de compra más reciente
+    this.sortByMostRecent();
+  }
+
+  sortByMostRecent(): void {
+    this.filteredPurchases.sort((a, b) => {
+      const aFecha = new Date(a.fechaCompra || 0);
+      const bFecha = new Date(b.fechaCompra || 0);
+      return bFecha.getTime() - aFecha.getTime(); // Descendente (más reciente primero)
+    });
+    this.sortColumn = 'fechaCompra';
+    this.sortDirection = 'desc';
   }
 
   sortData(column: SortableFields) {
@@ -199,7 +257,69 @@ export class TablaComprasCreditoComponent implements OnInit {
 
   resetFilters() {
     this.filterForm.reset();
+    this.selectedEstados.clear();
+    this.selectedTarjetas.clear();
     this.loadProducts();
+  }
+
+  // Métodos para multiselect de estados
+  toggleEstadosDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showEstadosDropdown = !this.showEstadosDropdown;
+    this.showTarjetasDropdown = false;
+  }
+
+  toggleEstado(estado: string): void {
+    if (this.selectedEstados.has(estado)) {
+      this.selectedEstados.delete(estado);
+    } else {
+      this.selectedEstados.add(estado);
+    }
+    this.applyFilters();
+  }
+
+  isEstadoSelected(estado: string): boolean {
+    return this.selectedEstados.has(estado);
+  }
+
+  getSelectedEstadosText(): string {
+    if (this.selectedEstados.size === 0) return 'Todos los estados';
+    if (this.selectedEstados.size === 1) return Array.from(this.selectedEstados)[0];
+    return `${this.selectedEstados.size} estados seleccionados`;
+  }
+
+  // Métodos para multiselect de tarjetas
+  toggleTarjetasDropdown(event: Event): void {
+    event.stopPropagation();
+    this.showTarjetasDropdown = !this.showTarjetasDropdown;
+    this.showEstadosDropdown = false;
+  }
+
+  toggleTarjeta(tarjetaId: number): void {
+    if (this.selectedTarjetas.has(tarjetaId)) {
+      this.selectedTarjetas.delete(tarjetaId);
+    } else {
+      this.selectedTarjetas.add(tarjetaId);
+    }
+    this.applyFilters();
+  }
+
+  isTarjetaSelected(tarjetaId: number): boolean {
+    return this.selectedTarjetas.has(tarjetaId);
+  }
+
+  getSelectedTarjetasText(): string {
+    if (this.selectedTarjetas.size === 0) return 'Todas las tarjetas';
+    if (this.selectedTarjetas.size === 1) {
+      const tarjetaId = Array.from(this.selectedTarjetas)[0];
+      return this.obtenerTarjeta(tarjetaId);
+    }
+    return `${this.selectedTarjetas.size} tarjetas seleccionadas`;
+  }
+
+  closeDropdowns(): void {
+    this.showEstadosDropdown = false;
+    this.showTarjetasDropdown = false;
   }
 
   getPropertyValue(purchase: ComprasCredito, property: SortableFields): any {
@@ -236,6 +356,10 @@ export class TablaComprasCreditoComponent implements OnInit {
   openCreditForm() {
     // Aquí irá la lógica para abrir tu formulario de crédito
     this.modalService.open('compra-credito-form');
+  }
+
+  openCSVUploadForm() {
+    this.modalService.open('csv-upload-form');
   }
 
   pagarProductosTarjetaCredito() {

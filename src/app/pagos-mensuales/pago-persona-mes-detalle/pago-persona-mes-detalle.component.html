@@ -1,168 +1,235 @@
-<div class="container">
-  <h1>Listado de pagos</h1>
-   <!-- Título y subtítulo para el nombre de la persona y fecha de pago -->
-   <div class="info-pago">
-    <h2>Nombre de la persona: {{ persona?.nombre }}</h2>
-    <!-- Usamos el pipe date nativo de Angular para formatear la fecha -->
-    <h3>Fecha de pago: {{ fechaPago | formatoFecha}}</h3>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <!--
-          Utilizamos (click)="onSort('persona')" para ordenar por esa columna.
-          También agregamos directivas [class.sorted-asc] y [class.sorted-desc]
-          para manejar el ícono/cambio visual cuando esté ordenado.
-        -->
-        <!-- <th
-          (click)="onSort('persona')"
-          [class.sorted-asc]="sortColumn === 'persona' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'persona' && sortDirection === 'desc'"
-        >
-          Persona
-        </th>
+<!-- ============================================
+     PAGO PERSONA MES DETALLE - LIQUID TRUST DESIGN
+     ============================================ -->
+<div class="page-container" [@fadeIn]>
+  <!-- ============================================
+       HEADER: Información de Persona y Fecha
+       ============================================ -->
+  <header class="page-header surface-glass">
+    <div class="header-content">
+      <div class="persona-info">
+        <div class="persona-avatar">
+          <span class="avatar-emoji">👤</span>
+        </div>
+        <div class="persona-details">
+          <h1 class="persona-nombre">{{ persona?.nombre }}</h1>
+          <div class="fecha-badge">
+            <span class="badge-icon">📅</span>
+            <span class="badge-text">{{ fechaPago | formatoFecha }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
-        <th
-          (click)="onSort('compraCredito')"
-          [class.sorted-asc]="sortColumn === 'compraCredito' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'compraCredito' && sortDirection === 'desc'"
-        >
-          Compra Crédito
-        </th> -->
-
-        <th
-          (click)="onSort('concepto')"
-          [class.sorted-asc]="sortColumn === 'concepto' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'concepto' && sortDirection === 'desc'"
-        >
-          Concepto
-        </th>
-
-        <th
-          (click)="onSort('porcentaje')"
-          [class.sorted-asc]="sortColumn === 'porcentaje' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'porcentaje' && sortDirection === 'desc'"
-        >
-          %
-        </th>
-
-        <th
-        >
-          Cuotas
-        </th>
-
-
-        <!-- <th
-          (click)="onSort('fechaPago')"
-          [class.sorted-asc]="sortColumn === 'fechaPago' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'fechaPago' && sortDirection === 'desc'"
-        >
-          Fecha Pago
-        </th> -->
-
-        <th
-          (click)="onSort('valorPagoCuota')"
-          [class.sorted-asc]="sortColumn === 'valorPagoCuota' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'valorPagoCuota' && sortDirection === 'desc'"
-        >
-          Valor Cuota
-        </th>
-
-        <th
-          (click)="onSort('valorPagoResponsable')"
-          [class.sorted-asc]="sortColumn === 'valorPagoResponsable' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'valorPagoResponsable' && sortDirection === 'desc'"
-        >
-          Valor Responsable
-        </th>
-
-        <th
-          (click)="onSort('tarjeta')"
-          [class.sorted-asc]="sortColumn === 'tarjeta' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'tarjeta' && sortDirection === 'desc'"
-        >
-          Tarjeta
-        </th>
-
-        <th
-          (click)="onSort('estado')"
-          [class.sorted-asc]="sortColumn === 'estado' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'estado' && sortDirection === 'desc'"
-        >
-          Estado
-        </th>
-
-        <th
-          (click)="onSort('interesPagado')"
-          [class.sorted-asc]="sortColumn === 'interesPagado' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'interesPagado' && sortDirection === 'desc'"
-        >
-          Interés Pagado
-        </th>
-
-        <th
-          (click)="onSort('aporteCapital')"
-          [class.sorted-asc]="sortColumn === 'aporteCapital' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'aporteCapital' && sortDirection === 'desc'"
-        >
-          Aporte Capital
-        </th>
-
-        <th
-          (click)="onSort('saldoRestante')"
-          [class.sorted-asc]="sortColumn === 'saldoRestante' && sortDirection === 'asc'"
-          [class.sorted-desc]="sortColumn === 'saldoRestante' && sortDirection === 'desc'"
-        >
-          Saldo Restante
-        </th>
-      </tr>
-    </thead>
-
-    <tbody>
-      <!--
-        Recorremos la lista "sortedData", que es el arreglo
-        ya filtrado/ordenado dependiendo de la selección actual.
-      -->
-      <tr *ngFor="let item of sortedData">
-        <!-- <td>{{ item.persona }}</td>
-        <td>{{ item.compraCredito }}</td> -->
-        <td (click)="irDetalleCompra(item.compraCredito)">{{ item.concepto }}</td>
-        <td>{{ item.porcentaje }} %</td>
-        <td>{{ item.numeroCuota }}/{{ item.cantidadCuotaTotal }}</td>
-        <!-- <td>{{ item.fechaPago | formatoFecha }}</td> -->
-        <td>{{ item.valorPagoCuota | currency }}</td>
-        <td>{{ item.valorPagoResponsable | currency }}</td>
-        <td>{{ item.tarjeta | formatoTarjeta }}</td>
-        <td>{{ item.estado }}</td>
-        <td>{{ item.interesPagado | currency}}</td>
-        <td>{{ item.aporteCapital | currency }}</td>
-        <td>{{ item.saldoRestante | currency }}</td>
-      </tr>
-    </tbody>
-  </table>
-  <h2>Resumen de Totales</h2>
-  <!-- Sección de Resumen de Totales -->
-  <div class="summary-section">
-
-
-    <!-- Recuadros por tarjeta -->
-    <div class="summary-card" *ngFor="let resumen of resumenPorTarjeta">
-      <h3>Tarjeta: {{ resumen.tarjeta | formatoTarjeta }}</h3>
-      <p><strong>Total a pagar responsable:</strong> {{ resumen.totalResponsable | currency}}</p>
-      <p><strong>Interés pagado:</strong> {{ resumen.totalInteres | currency }}</p>
-      <p><strong>Aporte capital:</strong> {{ resumen.totalCapital | currency }}</p>
-      <p><strong>Saldo restante:</strong> {{ resumen.totalSaldo | currency }}</p>
+  <!-- ============================================
+       SECCIÓN: Tabla de Pagos Detallados
+       ============================================ -->
+  <section class="tabla-section surface-glass">
+    <div class="section-title">
+      <span class="section-icon">📋</span>
+      <h2>Detalle de Pagos</h2>
     </div>
 
-    <!-- Recuadro para el total general (todas las tarjetas) -->
-    <div class="summary-card total">
-      <h3>Total General</h3>
-      <p><strong>Total a pagar responsable:</strong> {{ resumenGeneral.totalResponsable| currency }}</p>
-      <p><strong>Interés pagado:</strong> {{ resumenGeneral.totalInteres | currency }}</p>
-      <p><strong>Aporte capital:</strong> {{ resumenGeneral.totalCapital | currency }}</p>
-      <p><strong>Saldo restante:</strong> {{ resumenGeneral.totalSaldo | currency }}</p>
+    <div class="table-container">
+      <table class="tabla-datos">
+        <thead class="table-head-sticky">
+          <tr>
+            <th class="th-sortable" (click)="onSort('concepto')"
+                [class.sorted-asc]="sortColumn === 'concepto' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'concepto' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Concepto</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'concepto'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="onSort('porcentaje')"
+                [class.sorted-asc]="sortColumn === 'porcentaje' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'porcentaje' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">%</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'porcentaje'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="no-sort th-number">Cuotas</th>
+            <th class="th-sortable th-number" (click)="onSort('valorPagoCuota')"
+                [class.sorted-asc]="sortColumn === 'valorPagoCuota' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'valorPagoCuota' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Valor Cuota</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'valorPagoCuota'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="onSort('valorPagoResponsable')"
+                [class.sorted-asc]="sortColumn === 'valorPagoResponsable' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'valorPagoResponsable' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Valor Responsable</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'valorPagoResponsable'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable" (click)="onSort('tarjeta')"
+                [class.sorted-asc]="sortColumn === 'tarjeta' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'tarjeta' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Tarjeta</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'tarjeta'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable" (click)="onSort('estado')"
+                [class.sorted-asc]="sortColumn === 'estado' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'estado' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Estado</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'estado'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="onSort('interesPagado')"
+                [class.sorted-asc]="sortColumn === 'interesPagado' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'interesPagado' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Interés</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'interesPagado'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="onSort('aporteCapital')"
+                [class.sorted-asc]="sortColumn === 'aporteCapital' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'aporteCapital' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Capital</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'aporteCapital'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="onSort('saldoRestante')"
+                [class.sorted-asc]="sortColumn === 'saldoRestante' && sortDirection === 'asc'"
+                [class.sorted-desc]="sortColumn === 'saldoRestante' && sortDirection === 'desc'">
+              <div class="th-content">
+                <span class="th-label">Saldo</span>
+                <span class="sort-indicator" *ngIf="sortColumn === 'saldoRestante'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="table-body">
+          <tr *ngFor="let item of sortedData" class="table-row" (click)="irDetalleCompra(item.compraCredito)">
+            <td class="td-concepto" data-label="Concepto">
+              <span class="concepto-text">{{ item.concepto }}</span>
+            </td>
+            <td class="td-porcentaje financial-num" data-label="%">
+              {{ item.porcentaje }}%
+            </td>
+            <td class="td-cuotas" data-label="Cuotas">
+              <span class="cuotas-badge">{{ item.numeroCuota }}/{{ item.cantidadCuotaTotal }}</span>
+            </td>
+            <td class="td-valor financial-num" data-label="Valor Cuota">
+              {{ item.valorPagoCuota | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </td>
+            <td class="td-valor-responsable financial-num" data-label="Valor Responsable">
+              {{ item.valorPagoResponsable | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </td>
+            <td class="td-tarjeta" data-label="Tarjeta">
+              <span class="tarjeta-label">💳 {{ item.tarjeta | formatoTarjeta }}</span>
+            </td>
+            <td class="td-estado" data-label="Estado">
+              <span class="estado-badge" [class.estado-pagado]="item.estado === 'Pagado'">
+                {{ item.estado }}
+              </span>
+            </td>
+            <td class="td-interes financial-num" data-label="Interés">
+              {{ item.interesPagado | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </td>
+            <td class="td-capital financial-num" data-label="Capital">
+              {{ item.aporteCapital | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </td>
+            <td class="td-saldo financial-num" data-label="Saldo">
+              {{ item.saldoRestante | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+  </section>
 
+  <!-- ============================================
+       SECCIÓN: Resumen de Totales
+       ============================================ -->
+  <section class="resumen-section">
+    <div class="section-title">
+      <span class="section-icon">📊</span>
+      <h2>Resumen de Totales</h2>
+    </div>
+
+    <div class="resumen-grid">
+      <!-- Cards por tarjeta -->
+      <article class="resumen-card surface-glass" *ngFor="let resumen of resumenPorTarjeta">
+        <div class="card-header">
+          <span class="card-icon">💳</span>
+          <h3>{{ resumen.tarjeta | formatoTarjeta }}</h3>
+        </div>
+        <div class="card-body">
+          <div class="resumen-item">
+            <span class="label">Total Responsable</span>
+            <span class="financial-num value">{{ resumen.totalResponsable | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="label">Interés Pagado</span>
+            <span class="financial-num value">{{ resumen.totalInteres | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="label">Aporte Capital</span>
+            <span class="financial-num value">{{ resumen.totalCapital | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="label">Saldo Restante</span>
+            <span class="financial-num value">{{ resumen.totalSaldo | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card total general -->
+      <article class="resumen-card surface-glass total-general">
+        <div class="card-header">
+          <span class="card-icon">🏆</span>
+          <h3>Total General</h3>
+        </div>
+        <div class="card-body">
+          <div class="resumen-item">
+            <span class="label">Total Responsable</span>
+            <span class="financial-num value">{{ resumenGeneral.totalResponsable | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="label">Interés Pagado</span>
+            <span class="financial-num value">{{ resumenGeneral.totalInteres | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="label">Aporte Capital</span>
+            <span class="financial-num value">{{ resumenGeneral.totalCapital | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="label">Saldo Restante</span>
+            <span class="financial-num value">{{ resumenGeneral.totalSaldo | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
 </div>
 

@@ -1,65 +1,122 @@
-<!-- Título principal -->
-<h2 class="table-title">Estado de Pagos</h2>
+<!-- ============================================
+     PAGOS MES TARJETAS DETALLE - LIQUID TRUST DESIGN
+     ============================================ -->
+<div class="page-container">
+  <!-- ============================================
+       HEADER: Información de Tarjeta y Fecha
+       ============================================ -->
+  <header class="page-header surface-glass">
+    <div class="header-content">
+      <div class="tarjeta-info">
+        <div class="tarjeta-avatar">
+          <span class="avatar-emoji">💳</span>
+        </div>
+        <div class="tarjeta-details">
+          <h1 class="tarjeta-nombre">{{ idTarjeta | formatoTarjeta }}</h1>
+          <div class="info-badges">
+            <div class="fecha-badge">
+              <span class="badge-icon">📅</span>
+              <span class="badge-text">{{ fechaPago | formatoFecha }}</span>
+            </div>
+            <div class="total-badge">
+              <span class="badge-icon">💰</span>
+              <span class="badge-text financial-num">{{ totalPagoTotal | currency }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
-<!-- Subtítulos con información adicional (tarjeta, fecha de pago, total a pagar) -->
-<div class="info-subtitles">
-  <p>
-    <strong>Tarjeta:</strong>
-    {{ idTarjeta | formatoTarjeta }}
-  </p>
-  <p>
-    <strong>Fecha de Pago:</strong>
-    {{ fechaPago | formatoFecha}}
-  </p>
-  <p>
-    <strong>Total a Pagar:</strong>
-    {{ totalPagoTotal | currency}}
-  </p>
-</div>
+  <!-- ============================================
+       SECCIÓN: Tabla de Detalle de Pagos
+       ============================================ -->
+  <section class="tabla-section surface-glass">
+    <div class="section-title">
+      <span class="section-icon">📊</span>
+      <h2>Estado de Pagos</h2>
+    </div>
 
-<div class="table-container">
-
-  <table>
-    <thead>
-      <tr>
-        <th (click)="sortData('compra')">Compra</th>
-        <th (click)="sortData('numeroCuota')">Cuota</th>
-        <th (click)="sortData('saldoRestante')">Saldo Restante</th>
-        <th (click)="sortData('interesPagado')">Interés Pagado</th>
-        <th (click)="sortData('aporteCapital')">Aporte Capital</th>
-        <th (click)="sortData('pagoTotal')">Pago Total</th>
-
-        <th (click)="sortData('estado')">Estado</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Mostramos la data ya ordenada (sortedData) -->
-      <tr *ngFor="let item of sortedData">
-        <td  (click)="irDetalleCompra(item.compra)">{{ item.concepto }}</td>
-        <td>{{ item.numeroCuota }}/{{ item.numeroCuotasTotal}}</td>
-        <!-- Pipe number para formatear decimales -->
-        <td>{{ item.saldoRestante | currency}}</td>
-        <td>{{ item.interesPagado | currency}}</td>
-        <td>{{ item.aporteCapital | currency}}</td>
-        <td>{{ item.pagoTotal | currency}}</td>
-
-        <td>{{ item.estado }}</td>
-      </tr>
-    </tbody>
-
-    <!-- Fila con los totales de interes, aporte capital, pago total y saldo restante -->
-    <tfoot>
-      <tr>
-        <td><strong>Totales:</strong></td>
-        <td></td>
-        <td><strong>{{ totalSaldoRestante | currency}}</strong></td>
-        <td><strong>{{ totalInteresPagado | currency}}</strong></td>
-        <td><strong>{{ totalAporteCapital | currency}}</strong></td>
-        <td><strong>{{ totalPagoTotal | currency}}</strong></td>
-        <td></td>
-        <td></td>
-      </tr>
-    </tfoot>
-  </table>
-
+    <div class="table-container">
+      <table class="tabla-datos">
+        <thead class="table-head-sticky">
+          <tr>
+            <th class="th-sortable" (click)="sortData('compra')">
+              <div class="th-content">
+                <span class="th-label">Compra</span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="sortData('numeroCuota')">
+              <div class="th-content">
+                <span class="th-label">Cuota</span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="sortData('saldoRestante')">
+              <div class="th-content">
+                <span class="th-label">Saldo Restante</span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="sortData('interesPagado')">
+              <div class="th-content">
+                <span class="th-label">Interés Pagado</span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="sortData('aporteCapital')">
+              <div class="th-content">
+                <span class="th-label">Aporte Capital</span>
+              </div>
+            </th>
+            <th class="th-sortable th-number" (click)="sortData('pagoTotal')">
+              <div class="th-content">
+                <span class="th-label">Pago Total</span>
+              </div>
+            </th>
+            <th class="th-sortable" (click)="sortData('estado')">
+              <div class="th-content">
+                <span class="th-label">Estado</span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="table-body">
+          <tr *ngFor="let item of sortedData" class="table-row">
+            <td class="td-concepto" data-label="Compra" (click)="irDetalleCompra(item.compra)">
+              <span class="concepto-text">{{ item.concepto }}</span>
+            </td>
+            <td class="td-cuotas" data-label="Cuota">
+              <span class="cuotas-badge">{{ item.numeroCuota }}/{{ item.numeroCuotasTotal }}</span>
+            </td>
+            <td class="td-saldo financial-num" data-label="Saldo Restante">
+              {{ item.saldoRestante | currency }}
+            </td>
+            <td class="td-interes financial-num" data-label="Interés Pagado">
+              {{ item.interesPagado | currency }}
+            </td>
+            <td class="td-capital financial-num" data-label="Aporte Capital">
+              {{ item.aporteCapital | currency }}
+            </td>
+            <td class="td-pago-total financial-num" data-label="Pago Total">
+              {{ item.pagoTotal | currency }}
+            </td>
+            <td class="td-estado" data-label="Estado">
+              <span class="estado-badge" [class.estado-pagado]="item.estado === 'Pagado'">
+                {{ item.estado }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-footer">
+          <tr class="footer-row">
+            <td class="footer-label"><strong>Totales</strong></td>
+            <td></td>
+            <td class="financial-num footer-value"><strong>{{ totalSaldoRestante | currency }}</strong></td>
+            <td class="financial-num footer-value"><strong>{{ totalInteresPagado | currency }}</strong></td>
+            <td class="financial-num footer-value"><strong>{{ totalAporteCapital | currency }}</strong></td>
+            <td class="financial-num footer-value"><strong>{{ totalPagoTotal | currency }}</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
 </div>

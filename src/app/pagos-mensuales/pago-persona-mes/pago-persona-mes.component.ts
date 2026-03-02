@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { Persona } from '../../modelos/persona';
 import { ApiServicesService } from '../../servicios/api-services.service';
 import { PagoMensualPersona } from '../../modelos/pagos';
@@ -14,10 +15,23 @@ interface PersonaConPagos extends Persona {
   selector: 'app-pago-persona-mes',
   templateUrl: './pago-persona-mes.component.html',
   styleUrl: './pago-persona-mes.component.css',
+  animations: [
+    trigger('slideDown', [
+      transition(':enter', [
+        style({ height: '0', opacity: '0', overflow: 'hidden' }),
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: '1' }))
+      ]),
+      transition(':leave', [
+        style({ height: '*', opacity: '1', overflow: 'hidden' }),
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0', opacity: '0' }))
+      ])
+    ])
+  ]
 })
 export class PagoPersonaMesComponent implements OnInit {
   personasConPagos: PersonaConPagos[] = [];
   mesActual: number = 0;
+  yearActual: number = new Date().getFullYear();
 
   constructor(private apiService: ApiServicesService, private route: Router) {}
 
