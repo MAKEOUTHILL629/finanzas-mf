@@ -55,7 +55,7 @@ fechaPago = new Date();
           this.sortedData = this.detallePagoMensual.slice();
         },
         error => {
-          console.log(error);
+          void error;
         }
       );
     }

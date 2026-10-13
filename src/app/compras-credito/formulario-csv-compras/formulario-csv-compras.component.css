@@ -491,10 +491,28 @@
 select.cell-input {
   cursor: pointer;
   appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--bg-surface-solid);
+  color: var(--text-primary);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230071E3' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding-right: 30px;
+}
+
+select.cell-input:focus {
+  background-color: var(--bg-input-hover);
+}
+
+select.cell-input option {
+  background-color: var(--select-option-bg);
+  color: var(--select-option-text);
+}
+
+select.cell-input option:hover,
+select.cell-input option:checked {
+  background-color: var(--select-option-hover);
+  color: var(--select-option-text);
 }
 
 
@@ -687,9 +705,182 @@ select.cell-input {
   background: #0A84FF;
 }
 
+.stat-badge.selected {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.18));
+  color: var(--gold-premium);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  animation: fadeSlideIn 0.2s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ============================================
-   RESPONSIVE
+   BOTÓN ELIMINAR EN LOTE
    ============================================ */
+.btn-danger {
+  background: linear-gradient(135deg, var(--red-danger), #FF5347);
+  color: #FFFFFF;
+  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  box-shadow: 0 8px 24px rgba(255, 59, 48, 0.45);
+}
+
+.btn-delete-selected {
+  animation: fadeScaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================
+   CHECKBOX PERSONALIZADO (LIQUID TRUST)
+   ============================================ */
+.checkbox-cell {
+  width: 44px;
+  text-align: center;
+  padding: 0 8px !important;
+}
+
+.custom-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+.custom-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  cursor: pointer;
+}
+
+.custom-checkbox .checkmark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid rgba(0, 113, 227, 0.35);
+  background: rgba(0, 113, 227, 0.04);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.custom-checkbox input[type="checkbox"]:checked + .checkmark {
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+}
+
+.custom-checkbox .checkmark::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.custom-checkbox input[type="checkbox"]:checked + .checkmark::after {
+  opacity: 1;
+}
+
+.custom-checkbox:hover .checkmark {
+  border-color: var(--brand-blue);
+  background: rgba(0, 113, 227, 0.1);
+}
+
+/* Fila seleccionada */
+.csv-table tbody tr.row-selected {
+  background: rgba(0, 113, 227, 0.07) !important;
+  border-left: 3px solid var(--brand-blue);
+}
+
+.csv-table tbody tr.row-selected:hover {
+  background: rgba(0, 113, 227, 0.11) !important;
+}
+
+/* ============================================
+   DATE INPUT
+   ============================================ */
+.cell-input--date {
+  min-width: 140px;
+  color-scheme: dark;
+}
+
+/* Adecuar el color del calendario en tema oscuro */
+.cell-input--date::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) saturate(5) hue-rotate(185deg);
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.cell-input--date::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   INPUT NRÓMICO SIN FLECHAS
+   ============================================ */
+.cell-input[type="number"]::-webkit-inner-spin-button,
+.cell-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.cell-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ============================================
+   ESTADO VACÍO DE TABLA
+   ============================================ */
+.empty-table-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.empty-table-state i {
+  font-size: 48px;
+  color: rgba(0, 113, 227, 0.35);
+}
+
+.empty-table-state p {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.empty-table-state strong {
+  color: var(--brand-blue);
+}
+
+
 @media (max-width: 767px) {
   .csv-container {
     padding: var(--space-2);

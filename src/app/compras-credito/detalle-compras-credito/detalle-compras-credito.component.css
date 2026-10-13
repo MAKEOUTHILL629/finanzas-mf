@@ -43,7 +43,11 @@
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 var(--specular-light);
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
   padding: var(--space-4);
 }
 
@@ -216,14 +220,22 @@
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1), inset 0 1px 0 var(--specular-light);
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .info-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 32px -2px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 20px 50px -10px rgba(0, 0, 0, 0.55),
+    0 8px 20px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .card-header {
@@ -348,6 +360,37 @@
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  /* Fondo del select mismo */
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Opciones del desplegable — usan tokens del tema para soportar dark/light */
+select.edit-select option {
+  background: var(--select-option-bg);
+  color: var(--select-option-text);
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+select.edit-select option:hover,
+select.edit-select option:focus {
+  background: var(--select-option-hover);
+  color: var(--select-option-text);
+}
+
+select.edit-select option:checked {
+  background: #0071E3;
+  color: #FFFFFF;
+}
+
+[data-theme="light"] select.edit-select option {
+  background: #FFFFFF;
+  color: #111827;
+}
+
+[data-theme="light"] select.edit-select option:checked {
+  background: #0071E3;
+  color: #FFFFFF;
 }
 
 .financial-input {
@@ -484,7 +527,10 @@
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 
@@ -581,7 +627,10 @@
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   padding: var(--space-4);
 }
 

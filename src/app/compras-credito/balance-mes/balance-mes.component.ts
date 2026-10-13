@@ -48,7 +48,7 @@ export class BalanceMesComponent implements OnInit, OnDestroy {
         this.calculateTotalBalance();
       },
       error: (err) => {
-        console.error('Error cargando balance:', err);
+        void err;
         this.balances = [];
         this.totalBalance = 0;
       }

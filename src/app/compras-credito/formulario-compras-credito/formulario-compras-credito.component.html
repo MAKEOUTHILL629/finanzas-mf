@@ -12,7 +12,6 @@
         placeholder="Buscar o escribir concepto..."
         [matAutocomplete]="autoConcept"
         #autoConceptTrigger="matAutocompleteTrigger"
-        (blur)="closeAutocompletePanel()"
         class="form-control"
         [ngClass]="{ 'is-invalid': concept?.invalid && (concept?.dirty || concept?.touched) }"
         aria-describedby="concept-errors concept-hint"
@@ -121,6 +120,10 @@
           <div *ngIf="interest?.errors?.['required']">El interés es requerido (puede ser 0).</div>
           <div *ngIf="interest?.errors?.['min']">El interés no puede ser negativo.</div>
         </div>
+        <div class="hint-autofill" *ngIf="interestAutoFilled && selectedCard">
+          <i class="material-icons">auto_awesome</i>
+          Tasa importada de <strong>{{ selectedCard.franquicia }}</strong> ({{ selectedCard.tasaInteresCompra }}% E.M.)
+        </div>
       </div>
     </div>
 
@@ -170,7 +173,7 @@
         >
           <option value="" disabled>Seleccione una tarjeta</option>
           <option *ngFor="let card of creditCards" [value]="card.id">
-            {{ card.franquicia }}
+            {{ card.franquicia }}{{ card.tasaInteresCompra != null ? ' — ' + card.tasaInteresCompra + '% E.M.' : '' }}
           </option>
         </select>
         <div id="card-errors" class="invalid-feedback" *ngIf="cardId?.invalid && (cardId?.dirty || cardId?.touched)">

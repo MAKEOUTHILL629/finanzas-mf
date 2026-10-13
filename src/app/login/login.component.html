@@ -1,70 +1,105 @@
-<div class="login-container">
-  <div class="login-box">
+<div class="login-page">
+  <!-- Botón de tema flotante -->
+  <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'" aria-label="Cambiar tema">
+    <i class="material-icons">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
+  </button>
+
+  <!-- Orbes decorativos de fondo -->
+  <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--3" aria-hidden="true"></div>
+
+  <div class="login-card">
+    <!-- Cabecera -->
     <div class="login-header">
-      <h2 class="title">Bienvenido de Nuevo</h2>
-      <p class="subtitle">Ingresa a tu cuenta de finanzas</p>
+      <div class="brand-icon">
+        <i class="material-icons">account_balance_wallet</i>
+      </div>
+      <h1 class="login-title">Bienvenido</h1>
+      <p class="login-subtitle">Ingresa a tu cuenta de finanzas</p>
+    </div>
+
+    <!-- Alerta de error -->
+    <div *ngIf="errorMessage" class="alert-error" role="alert">
+      <i class="material-icons">error_outline</i>
+      <span>{{ errorMessage }}</span>
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
 
-      <div *ngIf="errorMessage" class="alert alert-danger">
-        {{ errorMessage }}
-      </div>
-
-      <div class="form-group">
-        <label for="email" class="form-label">Correo Electrónico</label>
-        <input
-          type="email"
-          id="email"
-          formControlName="email"
-          class="form-control"
-          [ngClass]="{ 'is-invalid': email?.invalid && (email?.dirty || email?.touched) }"
-          placeholder="tu@email.com"
-          aria-describedby="emailHelp"
-          required
-        >
-        <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback">
-          <div *ngIf="email?.errors?.['required']">El correo es requerido.</div>
-          <div *ngIf="email?.errors?.['email']">Ingresa un correo válido.</div>
+      <!-- Campo email -->
+      <div class="field-group">
+        <label for="email" class="field-label">Correo Electrónico</label>
+        <div class="input-wrapper">
+          <i class="material-icons input-icon-prefix">mail_outline</i>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="field-input"
+            [class.is-invalid]="email?.invalid && (email?.dirty || email?.touched)"
+            placeholder="tu@email.com"
+            autocomplete="email"
+            required
+          >
         </div>
-         <small id="emailHelp" class="form-text text-muted">Nunca compartiremos tu correo.</small>
+        <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="field-error">
+          <span *ngIf="email?.errors?.['required']">El correo es requerido.</span>
+          <span *ngIf="email?.errors?.['email']">Ingresa un correo válido.</span>
+        </div>
       </div>
 
-      <div class="form-group password-group">
-        <label for="password" class="form-label">Contraseña</label>
-        <div class="password-input-wrapper">
+      <!-- Campo contraseña -->
+      <div class="field-group">
+        <label for="password" class="field-label">Contraseña</label>
+        <div class="input-wrapper">
+          <i class="material-icons input-icon-prefix">lock_outline</i>
           <input
             [type]="isPasswordVisible ? 'text' : 'password'"
             id="password"
             formControlName="password"
-            class="form-control password-input"
-            [ngClass]="{ 'is-invalid': password?.invalid && (password?.dirty || password?.touched) }"
+            class="field-input field-input--password"
+            [class.is-invalid]="password?.invalid && (password?.dirty || password?.touched)"
             placeholder="Tu contraseña"
+            autocomplete="current-password"
             required
           >
-          <button type="button" class="btn-show-hide" (click)="togglePasswordVisibility()" aria-label="Mostrar u ocultar contraseña">
-            <i class="icon" [ngClass]="isPasswordVisible ? 'icon-eye-off' : 'icon-eye'"></i> </button>
+          <button
+            type="button"
+            class="btn-eye"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <i class="material-icons">{{ isPasswordVisible ? 'visibility_off' : 'visibility' }}</i>
+          </button>
         </div>
-
-        <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="invalid-feedback">
-          <div *ngIf="password?.errors?.['required']">La contraseña es requerida.</div>
-          <div *ngIf="password?.errors?.['minlength']">Debe tener al menos 8 caracteres.</div>
+        <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="field-error">
+          <span *ngIf="password?.errors?.['required']">La contraseña es requerida.</span>
+          <span *ngIf="password?.errors?.['minlength']">Debe tener al menos 8 caracteres.</span>
         </div>
       </div>
 
-      <div class="forgot-password-link">
-        <a routerLink="/auth/forgot-password">¿Olvidaste tu contraseña?</a> </div>
+      <!-- ¿Olvidaste contraseña? -->
+      <div class="forgot-row">
+        <a routerLink="/auth/forgot-password" class="forgot-link">¿Olvidaste tu contraseña?</a>
+      </div>
 
-      <button type="submit" class="btn btn-primary btn-login" [disabled]="loginForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Iniciar Sesión</span>
-        <span *ngIf="isLoading">
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          Ingresando...
-        </span>
+      <!-- Botón de acceso -->
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="loginForm.invalid || isLoading"
+      >
+        <span class="spinner" *ngIf="isLoading" aria-hidden="true"></span>
+        <i class="material-icons" *ngIf="!isLoading">login</i>
+        <span>{{ isLoading ? 'Ingresando...' : 'Iniciar Sesión' }}</span>
       </button>
 
-      <div class="register-link">
-        ¿No tienes cuenta? <a routerLink="/auth/register">Regístrate aquí</a> </div>
+      <!-- Registro -->
+      <p class="register-hint">
+        ¿No tienes cuenta?
+        <a routerLink="/auth/register" class="register-link">Regístrate aquí</a>
+      </p>
 
     </form>
   </div>

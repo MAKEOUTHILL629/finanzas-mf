@@ -65,7 +65,7 @@
   </div>
 
   <!-- Tabla de datos parseados -->
-  <div class="csv-table-section" *ngIf="csvRecords.length > 0">
+  <div class="csv-table-section" *ngIf="!showUploadSection">
     <div class="table-header">
       <div class="stats">
         <span class="stat-badge total">
@@ -80,8 +80,21 @@
           <i class="material-icons">error</i>
           {{ errorCount }} errores
         </span>
+        <span class="stat-badge selected" *ngIf="!showResults && selectedCount > 0">
+          <i class="material-icons">check_box</i>
+          {{ selectedCount }} seleccionados
+        </span>
       </div>
       <div class="table-actions">
+        <button
+          type="button"
+          class="btn btn-danger btn-delete-selected"
+          *ngIf="!showResults && selectedCount > 0"
+          (click)="deleteSelected()"
+        >
+          <i class="material-icons">delete_sweep</i>
+          Eliminar seleccionados ({{ selectedCount }})
+        </button>
         <button type="button" class="btn btn-success btn-add" (click)="addNewRecord()" *ngIf="!showResults">
           <i class="material-icons">add</i>
           Agregar Fila
@@ -94,9 +107,15 @@
     </div>
 
     <div class="table-responsive">
-      <table class="csv-table">
+      <table class="csv-table" *ngIf="csvRecords.length > 0; else emptyTable">
         <thead>
           <tr>
+            <th class="checkbox-cell" *ngIf="!showResults">
+              <label class="custom-checkbox" title="Seleccionar todos">
+                <input type="checkbox" [checked]="selectAll" (change)="toggleSelectAll()">
+                <span class="checkmark"></span>
+              </label>
+            </th>
             <th>#</th>
             <th>Fecha Compra</th>
             <th>Concepto</th>
@@ -113,16 +132,23 @@
         <tbody>
           <tr *ngFor="let record of csvRecords; let i = index"
               [class.row-success]="record.isSuccess"
-              [class.row-error]="record.isError">
+              [class.row-error]="record.isError"
+              [class.row-selected]="record.selected && !showResults">
+            <!-- Checkbox -->
+            <td class="checkbox-cell" *ngIf="!showResults">
+              <label class="custom-checkbox">
+                <input type="checkbox" [(ngModel)]="record.selected">
+                <span class="checkmark"></span>
+              </label>
+            </td>
             <td class="row-number">{{ i + 1 }}</td>
 
             <!-- Fecha Compra -->
             <td>
               <input *ngIf="!showResults; else showFecha"
-                type="text"
+                type="date"
                 [(ngModel)]="record.fechaCompra"
-                class="cell-input"
-                placeholder="DD/MM/YYYY"
+                class="cell-input cell-input--date"
               >
               <ng-template #showFecha>{{ record.fechaCompra }}</ng-template>
             </td>
@@ -142,9 +168,11 @@
             <td class="text-right">
               <input *ngIf="!showResults; else showValor"
                 type="text"
-                [(ngModel)]="record.valor"
+                [value]="getValorDisplay(record)"
+                (input)="onValorInput(record, $event)"
                 class="cell-input text-right"
-                placeholder="1500000"
+                placeholder="1.500.000"
+                inputmode="numeric"
               >
               <ng-template #showValor><span class="financial-num">{{ formatCurrency(record.valor) }}</span></ng-template>
             </td>
@@ -156,6 +184,7 @@
                 [(ngModel)]="record.cuotas"
                 class="cell-input text-right"
                 min="1"
+                step="1"
                 placeholder="12"
               >
               <ng-template #showCuotas>{{ record.cuotas }}</ng-template>
@@ -163,21 +192,29 @@
 
             <!-- Tarjeta -->
             <td>
-              <input *ngIf="!showResults; else showTarjeta"
-                type="text"
-                [(ngModel)]="record.tarjeta"
-                class="cell-input"
-                placeholder="1 o Visa"
-              >
-              <ng-template #showTarjeta>{{ record.tarjeta }}</ng-template>
+              <ng-container *ngIf="!showResults; else showTarjeta">
+                <select
+                  [(ngModel)]="record.tarjeta"
+                  (ngModelChange)="onTarjetaChange(record, $event)"
+                  class="cell-input"
+                >
+                  <option value="">-- Seleccionar --</option>
+                  <option *ngFor="let t of tarjetas" [value]="t.id">
+                    {{ t.franquicia }}{{ t.tasaInteresCompra != null ? ' (' + t.tasaInteresCompra + '% E.M.)' : '' }}
+                  </option>
+                </select>
+              </ng-container>
+              <ng-template #showTarjeta>{{ getTarjetaNombre(record.tarjeta) }}</ng-template>
             </td>
 
             <!-- Interés -->
             <td class="text-right">
               <input *ngIf="!showResults; else showInteres"
-                type="text"
+                type="number"
                 [(ngModel)]="record.interes"
                 class="cell-input text-right"
+                min="0"
+                step="0.0001"
                 placeholder="2.5"
               >
               <ng-template #showInteres>{{ record.interes }}%</ng-template>
@@ -232,6 +269,12 @@
           </tr>
         </tbody>
       </table>
+      <ng-template #emptyTable>
+        <div class="empty-table-state">
+          <i class="material-icons">inbox</i>
+          <p>No hay registros. Usa el botón <strong>+ Agregar Fila</strong> para comenzar.</p>
+        </div>
+      </ng-template>
     </div>
   </div>
 

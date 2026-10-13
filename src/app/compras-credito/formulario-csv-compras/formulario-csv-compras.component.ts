@@ -18,6 +18,7 @@ interface CSVRecord {
   isError?: boolean;
   isSuccess?: boolean;
   isEditing?: boolean;
+  selected?: boolean;
 }
 
 @Component({
@@ -34,6 +35,8 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
   showUploadSection = true;
   selectedFile: File | null = null;
   tarjetas: Tarjeta[] = [];
+  selectAll = false;
+  todayISO = '';
 
   // Estadísticas
   totalRecords = 0;
@@ -48,6 +51,7 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.todayISO = this.getTodayISO();
     this.loadTarjetas();
   }
 
@@ -63,7 +67,7 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
         next: (data) => {
           this.tarjetas = data;
         },
-        error: (err) => console.error('Error cargando tarjetas:', err)
+          error: (err) => { void err; }
       });
   }
 
@@ -101,17 +105,28 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
     for (let i = 1; i < lines.length; i++) {
       const values = this.parseCSVLine(lines[i], delimiter);
       if (values.length > 0) {
+        const rawFecha = this.getValueByHeader('fecha compra', values) || '';
+        const rawTarjeta = this.getValueByHeader('tarjeta', values) || '';
+        const resolvedTarjeta = this.resolveTarjetaId(rawTarjeta);
         const record: CSVRecord = {
-          fechaCompra: this.getValueByHeader('fecha compra', values) || '',
+          fechaCompra: this.normalizeDateToISO(rawFecha),
           concepto: this.getValueByHeader('concepto', values) || '',
-          valor: this.getValueByHeader('valor', values) || '',
+          valor: this.getValueByHeader('valor', values).replace(/[^0-9]/g, '') || '',
           cuotas: this.getValueByHeader('cuotas', values) || '',
-          tarjeta: this.getValueByHeader('tarjeta', values) || '',
+          tarjeta: resolvedTarjeta,
           interes: this.getValueByHeader('interes', values) || '',
           descripcion: this.getValueByHeader('descripcion', values) || '',
           estado: this.getValueByHeader('estado', values) || 'Pendiente',
-          isEditing: false
+          isEditing: false,
+          selected: false
         };
+        // Auto-rellenar interés si la tarjeta fue reconocida y no hay interés
+        if (resolvedTarjeta && !record.interes) {
+          const tarjeta = this.tarjetas.find(t => String(t.id) === resolvedTarjeta);
+          if (tarjeta?.tasaInteresCompra != null) {
+            record.interes = String(tarjeta.tasaInteresCompra);
+          }
+        }
         this.csvRecords.push(record);
       }
     }
@@ -154,9 +169,105 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
     return index >= 0 && index < values.length ? values[index] : '';
   }
 
+  // ============================================================
+  // HELPERS DE FECHA
+  // ============================================================
+
+  private getTodayISO(): string {
+    const d = new Date();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day   = String(d.getDate()).padStart(2, '0');
+    return `${d.getFullYear()}-${month}-${day}`;
+  }
+
+  private normalizeDateToISO(dateStr: string): string {
+    if (!dateStr) return '';
+    // Ya es ISO: YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // DD/MM/YYYY | DD-MM-YYYY | DD,MM,YYYY
+    const match = dateStr.match(/^(\d{1,2})[\/\-,](\d{1,2})[\/\-,](\d{4})$/);
+    if (match) {
+      const [, d, m, y] = match;
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return dateStr;
+  }
+
+  // ============================================================
+  // HELPERS DE VALOR (FORMATO MONEDA)
+  // ============================================================
+
+  getValorDisplay(record: CSVRecord): string {
+    const raw = record.valor.replace(/[^0-9]/g, '');
+    if (!raw) return '';
+    return new Intl.NumberFormat('es-CO').format(parseInt(raw, 10));
+  }
+
+  onValorInput(record: CSVRecord, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const raw   = input.value.replace(/[^0-9]/g, '');
+    record.valor = raw;
+    // Reformatea visualmente en el mismo input
+    input.value = raw ? new Intl.NumberFormat('es-CO').format(parseInt(raw, 10)) : '';
+  }
+
+  // ============================================================
+  // HELPERS DE TARJETA
+  // ============================================================
+
+  /** Resuelve un texto (ID o nombre) al ID de tarjeta como string */
+  private resolveTarjetaId(value: string): string {
+    if (!value) return '';
+    // Si ya es un número coincidente con algún ID
+    const byId = this.tarjetas.find(t => String(t.id) === value.trim());
+    if (byId) return String(byId.id);
+    // Por nombre de franquicia (case-insensitive)
+    const byName = this.tarjetas.find(
+      t => t.franquicia?.toLowerCase() === value.trim().toLowerCase()
+    );
+    return byName ? String(byName.id) : value;
+  }
+
+  onTarjetaChange(record: CSVRecord, tarjetaId: string): void {
+    record.tarjeta = tarjetaId;
+    const tarjeta = this.tarjetas.find(t => String(t.id) === tarjetaId);
+    if (tarjeta?.tasaInteresCompra != null) {
+      record.interes = String(tarjeta.tasaInteresCompra);
+    } else if (tarjetaId === '') {
+      record.interes = '';
+    }
+  }
+
+  getTarjetaNombre(tarjetaId: string): string {
+    const t = this.tarjetas.find(tt => String(tt.id) === tarjetaId);
+    return t?.franquicia ?? tarjetaId;
+  }
+
+  // ============================================================
+  // SELECCIÓN MÚLTIPLE
+  // ============================================================
+
+  get selectedCount(): number {
+    return this.csvRecords.filter(r => r.selected).length;
+  }
+
+  toggleSelectAll(): void {
+    this.selectAll = !this.selectAll;
+    this.csvRecords.forEach(r => (r.selected = this.selectAll));
+  }
+
+  deleteSelected(): void {
+    this.csvRecords = this.csvRecords.filter(r => !r.selected);
+    this.totalRecords = this.csvRecords.length;
+    this.selectAll = false;
+  }
+
+  // ============================================================
+  // FORMATO DE MONEDA (para vista de resultado)
+  // ============================================================
+
   formatCurrency(value: string): string {
-    // Eliminar caracteres no numéricos excepto punto y coma
-    const numValue = parseFloat(value.replace(/[^0-9.,]/g, '').replace(',', '.'));
+    const numValue = parseInt(value.replace(/[^0-9]/g, ''), 10);
     if (isNaN(numValue)) return value;
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
@@ -174,9 +285,9 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
     const rows = this.csvRecords.map(record => [
       record.fechaCompra,
       record.concepto,
-      record.valor,
+      record.valor.replace(/[^0-9]/g, ''), // asegurar valor sin formato
       record.cuotas,
-      record.tarjeta,
+      record.tarjeta, // ID de tarjeta
       record.interes,
       record.descripcion || '',
       record.estado || 'Pendiente'
@@ -200,15 +311,16 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
 
   addNewRecord(): void {
     const newRecord: CSVRecord = {
-      fechaCompra: '',
+      fechaCompra: this.todayISO,
       concepto: '',
       valor: '',
       cuotas: '1',
       tarjeta: '',
-      interes: '0',
+      interes: '',
       descripcion: '',
       estado: 'Pendiente',
-      isEditing: false
+      isEditing: false,
+      selected: false
     };
     this.csvRecords.push(newRecord);
     this.totalRecords = this.csvRecords.length;
@@ -262,7 +374,7 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
           this.processResponse(response);
         },
         error: (err) => {
-          console.error('Error al subir CSV:', err);
+          void err;
           alert('Error al procesar el archivo CSV');
         }
       });
@@ -370,6 +482,7 @@ export class FormularioCsvComprasComponent implements OnInit, OnDestroy {
     this.totalRecords = 0;
     this.successCount = 0;
     this.errorCount = 0;
+    this.selectAll = false;
   }
 
   closeModal(): void {

@@ -1,10 +1,283 @@
+/* ==============================================================
+   LIQUID TRUST — SISTEMA DE TOKENS MAESTROS
+   STYLE_APP.txt v2.0 — Angular 18 SPA
+   ============================================================== */
+
+/* ── TOKENS UNIVERSALES (NO cambian con el tema) ── */
+:root {
+  /* Paleta estructural */
+  --slate-900: #0B0E14;
+  --slate-800: #151A21;
+  --slate-700: #1E2530;
+  --slate-600: #2A3140;
+  --slate-500: #3B4559;
+  --slate-400: #6B7A90;
+  --slate-300: #9CA3AF;
+  --slate-200: #D1D5DB;
+  --slate-100: #E5E7EB;
+  --slate-50:  #F9FAFB;
+  --gray-bg:   #F5F5F7;
+  --gray-100:  #F3F4F6;
+  --gray-200:  #E5E7EB;
+  --white:     #FFFFFF;
+
+  /* Semántica financiera */
+  --brand-blue:         #0071E3;
+  --brand-blue-hover:   #005BB5;
+  --brand-blue-active:  #004A94;
+  --brand-blue-light:   rgba(0, 113, 227, 0.12);
+  --brand-blue-glow:    rgba(0, 113, 227, 0.30);
+  --green-success:      #34C759;
+  --green-success-bg:   rgba(52, 199, 89, 0.12);
+  --red-danger:         #FF3B30;
+  --red-danger-bg:      rgba(255, 59, 48, 0.12);
+  --gold-premium:       #D4AF37;
+  --gold-premium-bg:    rgba(212, 175, 55, 0.12);
+  --amber-warning:      #FFAB00;
+  --amber-warning-bg:   rgba(255, 171, 0, 0.12);
+  --info-blue:          #0052CC;
+  --info-blue-bg:       rgba(0, 82, 204, 0.12);
+
+  /* Data viz */
+  --chart-1: #0071E3;
+  --chart-2: #00A3BF;
+  --chart-3: #5243AA;
+  --chart-4: #FF5630;
+  --chart-5: #FFAB00;
+  --chart-6: #36B37E;
+
+  /* Tipografía */
+  --font-main: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Roboto Mono', 'Fira Code', monospace;
+  --text-hero:    clamp(2.25rem, 5vw, 3.5rem);
+  --text-h1:      clamp(1.75rem, 3.5vw, 2.25rem);
+  --text-h2:      clamp(1.375rem, 2.5vw, 1.75rem);
+  --text-h3:      clamp(1.125rem, 2vw, 1.375rem);
+  --text-body:    1rem;
+  --text-body-sm: 0.875rem;
+  --text-caption: 0.75rem;
+  --text-overline: 0.6875rem;
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Espaciado 8pt grid */
+  --space-0: 4px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+  --space-12: 96px;
+
+  /* Border radius */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   16px;
+  --radius-lg:   24px;
+  --radius-xl:   32px;
+  --radius-pill: 9999px;
+
+  /* Sombras */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.18);
+  --shadow-glow-brand:   0 4px 14px -2px var(--brand-blue-glow);
+  --shadow-glow-success: 0 4px 14px -2px rgba(52, 199, 89, 0.3);
+  --shadow-glow-danger:  0 4px 14px -2px rgba(255, 59, 48, 0.3);
+
+  /* Transiciones */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast:    150ms;
+  --duration-normal:  250ms;
+  --duration-slow:    400ms;
+
+  /* Z-index */
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-overlay:  300;
+  --z-modal:    400;
+  --z-popover:  500;
+  --z-toast:    600;
+  --z-command:  700;
+  --z-max:      9999;
+
+  /* Glass */
+  --glass-blur:     25px;
+  --glass-saturate: 180%;
+}
+
+/* ── TEMA OSCURO — DEFAULT "Obsidian Slate" ── */
+:root,
+[data-theme="dark"] {
+  --bg-app:               var(--slate-900);
+  --bg-surface:           rgba(21, 26, 33, 0.65);
+  --bg-surface-solid:     var(--slate-800);
+  --bg-surface-hover:     rgba(21, 26, 33, 0.82);
+  --bg-surface-elevated:  var(--slate-700);
+  --bg-sidebar:           rgba(11, 14, 20, 0.92);
+  --bg-input:             rgba(255, 255, 255, 0.05);
+  --bg-input-hover:       rgba(255, 255, 255, 0.08);
+  --bg-input-focus:       rgba(255, 255, 255, 0.10);
+  --text-primary:         #FFFFFF;
+  --text-secondary:       #9CA3AF;
+  --text-tertiary:        #6B7A90;
+  --text-disabled:        #3B4559;
+  --text-inverse:         #111827;
+  --text-link:            #4DA3FF;
+  --border-default:       rgba(255, 255, 255, 0.08);
+  --border-subtle:        rgba(255, 255, 255, 0.04);
+  --border-glass:         rgba(255, 255, 255, 0.12);
+  --border-focus:         #4DA3FF;
+  --border-error:         #FF6B6B;
+  --shadow-card:          0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --shadow-dropdown:      0 12px 28px -4px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-modal:         0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  --specular-light:       rgba(255, 255, 255, 0.10);
+  --overlay-bg:           rgba(0, 0, 0, 0.62);
+  --divider:              rgba(255, 255, 255, 0.06);
+  --scrollbar-thumb:      rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+  --table-header-bg:      rgba(21, 26, 33, 0.92);
+  --table-row-hover:      rgba(77, 163, 255, 0.06);
+  --table-row-stripe:     rgba(255, 255, 255, 0.02);
+  --table-border:         rgba(255, 255, 255, 0.04);
+  --select-option-bg:     #151A21;
+  --select-option-hover:  #1E2530;
+  --select-option-text:   #FFFFFF;
+}
+
+/* ── TEMA CLARO — "Ceramic Air" ── */
+[data-theme="light"] {
+  --bg-app:               var(--gray-bg);
+  --bg-surface:           rgba(255, 255, 255, 0.78);
+  --bg-surface-solid:     var(--white);
+  --bg-surface-hover:     rgba(255, 255, 255, 0.92);
+  --bg-surface-elevated:  var(--white);
+  --bg-sidebar:           rgba(245, 245, 247, 0.94);
+  --bg-input:             var(--gray-100);
+  --bg-input-hover:       var(--gray-200);
+  --bg-input-focus:       var(--white);
+  --text-primary:         #111827;
+  --text-secondary:       #6B7280;
+  --text-tertiary:        #9CA3AF;
+  --text-disabled:        #D1D5DB;
+  --text-inverse:         #FFFFFF;
+  --text-link:            var(--brand-blue);
+  --border-default:       #E5E7EB;
+  --border-subtle:        rgba(0, 0, 0, 0.06);
+  --border-glass:         rgba(255, 255, 255, 0.55);
+  --border-focus:         var(--brand-blue);
+  --border-error:         var(--red-danger);
+  --shadow-card:          0 10px 30px -5px rgba(0, 0, 0, 0.06);
+  --shadow-dropdown:      0 12px 28px -4px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-modal:         0 24px 48px -12px rgba(0, 0, 0, 0.20);
+  --specular-light:       rgba(255, 255, 255, 0.45);
+  --overlay-bg:           rgba(0, 0, 0, 0.32);
+  --divider:              rgba(0, 0, 0, 0.08);
+  --scrollbar-thumb:      rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
+  --table-header-bg:      rgba(249, 250, 251, 0.94);
+  --table-row-hover:      rgba(0, 113, 227, 0.04);
+  --table-row-stripe:     rgba(0, 0, 0, 0.02);
+  --table-border:         rgba(0, 0, 0, 0.06);
+  --select-option-bg:     #FFFFFF;
+  --select-option-hover:  #F3F4F6;
+  --select-option-text:   #111827;
+}
+
+/* ── TRANSICIÓN GLOBAL AL CAMBIAR TEMA ── */
+html {
+  transition:
+    background-color var(--duration-slow) var(--ease-in-out),
+    color var(--duration-slow) var(--ease-in-out);
+}
+
 /* === ESTILOS GLOBALES === */
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-  background: #0B0E14;
-  color: #FFFFFF;
+  font-family: var(--font-main);
+  background: var(--bg-app);
+  color: var(--text-primary);
+  transition:
+    background-color var(--duration-slow) var(--ease-in-out),
+    color var(--duration-slow) var(--ease-in-out);
+}
+
+/* ============================================================
+   ANGULAR MATERIAL 18 — AUTOCOMPLETE (LIQUID TRUST)
+   El panel se renderiza en cdk-overlay-container al nivel
+   del body, fuera del scope del componente. Los estilos DEBEN
+   estar aquí para que lleguen a ese elemento.
+   z-index: 3000 garantiza que quede por encima del modal (2000)
+   ============================================================ */
+.cdk-overlay-container {
+  z-index: 3000 !important;
+}
+
+.cdk-overlay-container .mat-mdc-autocomplete-panel {
+  background: var(--bg-surface-solid) !important;
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  box-shadow: var(--shadow-dropdown);
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 113, 227, 0.4) transparent;
+}
+
+.cdk-overlay-container .mat-mdc-autocomplete-panel::-webkit-scrollbar {
+  width: 6px;
+}
+.cdk-overlay-container .mat-mdc-autocomplete-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cdk-overlay-container .mat-mdc-autocomplete-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 113, 227, 0.4);
+  border-radius: 9999px;
+}
+
+.cdk-overlay-container .mat-mdc-option {
+  background: transparent;
+  color: var(--text-primary) !important;
+  font-family: var(--font-main);
+  font-size: 15px;
+  min-height: 48px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.cdk-overlay-container .mat-mdc-option .mdc-list-item__primary-text {
+  color: var(--text-primary) !important;
+}
+
+.cdk-overlay-container .mat-mdc-option:hover,
+.cdk-overlay-container .mat-mdc-option.mat-mdc-option-active,
+.cdk-overlay-container .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  background: rgba(0, 113, 227, 0.12) !important;
+}
+
+.cdk-overlay-container .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: var(--brand-blue) !important;
+}
+
+/* Spinner de carga dentro de option */
+.cdk-overlay-container .mat-mdc-option mat-spinner {
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle;
 }
 
 /* === LAYOUT PRINCIPAL === */

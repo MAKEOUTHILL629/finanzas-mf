@@ -108,7 +108,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
         this.sharedListasService.listaTarjetas = data;
       },
       error: (err) => {
-        console.error('Error fetching credit cards:', err);
+        void err;
       },
     });
   }
@@ -131,7 +131,6 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.error = 'Error al cargar los productos. Por favor, intente de nuevo.';
         this.isLoading = false;
-        console.error('Error fetching products:', err);
       },
     });
   }
@@ -146,8 +145,8 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
         this.applyFilters(); // Mantiene los filtros aplicados
       },
       error: (err) => {
+        void err;
         this.isRefreshing = false;
-        console.error('Error refreshing products:', err);
       },
     });
   }
@@ -343,8 +342,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     return value !== undefined ? value : defaultValue;
   }
 
-  imprimirCompra(compra: ComprasCredito): void {
-    console.log(compra);
+  imprimirCompra(_compra: ComprasCredito): void {
   }
 
   irDetalleCompra(compra: ComprasCredito): void {
@@ -367,11 +365,11 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       .post<string>('/compras-credito/pagar-productos', {})
       .subscribe({
         next: (data) => {
-          console.log('Productos pagados exitosamente', data);
+          void data;
           this.loadProducts();
         },
         error: (err) => {
-          console.error('Error pagando productos:', err);
+          void err;
         },
       });
   }
@@ -406,7 +404,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
         this.personas = personas;
         this.sharedListasService.listaPersonas = personas;
       },
-      (error) => console.error('Error cargando personas', error)
+      (error) => { void error; }
     );
   }
 }

@@ -29,7 +29,7 @@ export class PagosMesTarjetasComponent implements OnInit{
 
   // Ordenamiento
   ordenarPor: 'fecha' | 'valor' = 'fecha';
-  ordenarDireccion: 'asc' | 'desc' = 'asc';
+  ordenarDireccion: 'asc' | 'desc' = 'desc';
 
   constructor(private apiService: ApiServicesService, private route: Router) { }
 
@@ -51,14 +51,10 @@ export class PagosMesTarjetasComponent implements OnInit{
           }
           return 0;
         });
-        console.log('Pagos mes tarjetas:', this.mesPagoTarjetas);
-        console.log(this.mesPagoTarjetas);
-
-        // Calcular datos de los 3 meses clave
         this.calcularTresMesesClave();
       },
       error: (err) => {
-        console.error('Error fetching credit cards:', err);
+        void err;
       }
     });
   }
@@ -263,7 +259,7 @@ export class PagosMesTarjetasComponent implements OnInit{
         this.tarjetas = data;
       },
       error: (err) => {
-        console.error('Error fetching credit cards:', err);
+        void err;
       }
     });
   }

@@ -26,17 +26,11 @@ export const authGuard: CanActivateFn = (route, state): Observable<boolean | Url
    (
     take(1), // Tomamos solo el último valor emitido para que el Observable complete
     map(isLoggedIn => {
-      if (isLoggedIn) {
-        // Si el usuario está logueado, permitir el acceso
-        console.log('[AuthGuard] Acceso permitido.');
-        return true;
-      } else {
-        // Si el usuario NO está logueado:
-        console.log('[AuthGuard] Acceso denegado. Redirigiendo a /login...');
-        // Crear un UrlTree para redirigir a la página de login
-        // Asegúrate que '/login' sea la ruta correcta a tu componente de login
-        return router.createUrlTree(['/login']); // <-- Ajusta esta ruta si es diferente
-      }
-    })
+        if (isLoggedIn) {
+          return true;
+        } else {
+          return router.createUrlTree(['/login']);
+        }
+      })
   );
 };

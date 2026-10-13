@@ -156,6 +156,22 @@
   box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
 }
 
+/* Opciones del desplegable nativo — fondo oscuro explícito para evitar
+   texto blanco sobre fondo blanco en sistemas que no heredan el tema */
+.select-control option {
+  background: var(--select-option-bg);
+  color: var(--select-option-text);
+  font-family: var(--font-main);
+  font-size: 15px;
+  padding: 8px 12px;
+}
+
+.select-control option:checked,
+.select-control option:hover {
+  background: #0071E3;
+  color: #FFFFFF;
+}
+
 .input-control {
   width: 110px;
   text-align: center;

@@ -21,13 +21,9 @@
   --green-success: #34C759;
   --red-danger: #FF3B30;
 
-  --text-primary: #FFFFFF;
-  --text-secondary: #9CA3AF;
-  --bg-surface: rgba(21, 26, 33, 0.65);
-  --border-glass: rgba(255, 255, 255, 0.12);
+  /* --text-primary, --text-secondary, --bg-surface, --border-glass, --specular-light heredados de :root */
   --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-  --hover-bg: rgba(255, 255, 255, 0.05);
-  --specular-light: rgba(255, 255, 255, 0.1);
+  --hover-bg: var(--bg-input);
 }
 
 /* === ESTRUCTURA BASE === */
@@ -361,8 +357,8 @@
 }
 
 .input-glass option {
-  background: #0B0E14;
-  color: var(--text-primary);
+  background: var(--select-option-bg);
+  color: var(--select-option-text);
 }
 
 .search-input {
@@ -446,17 +442,44 @@
 }
 
 /* ============================================
-   TABLA FINANCIERA - STICKY HEADER
+   TABLA FINANCIERA - STICKY HEADER + SCROLL
    ============================================ */
 .table-wrapper {
   max-width: 100%;
-  overflow-x: auto;
+  overflow: auto;
+  max-height: min(620px, 65vh);
   background: var(--bg-surface);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
+  /* Scrollbar personalizada - Liquid Trust */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 113, 227, 0.4) transparent;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 113, 227, 0.35);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 113, 227, 0.65);
+}
+
+.table-wrapper::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .financial-table {
@@ -535,13 +558,14 @@
 
 .table-body .table-row:hover {
   background: rgba(0, 113, 227, 0.08);
-  transform: translateX(6px);
-  box-shadow: inset 3px 0 0 var(--blue-brand),
+  box-shadow: inset 4px 0 0 var(--blue-brand),
               0 2px 8px rgba(0, 113, 227, 0.1);
+  filter: brightness(1.06);
 }
 
 .table-body .table-row:active {
-  transform: translateX(3px);
+  background: rgba(0, 113, 227, 0.13);
+  filter: brightness(1.0);
 }
 
 /* Fila Actual con Glow Effect */

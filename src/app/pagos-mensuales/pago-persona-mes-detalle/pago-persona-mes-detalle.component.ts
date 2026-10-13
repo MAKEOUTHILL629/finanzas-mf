@@ -58,13 +58,11 @@ export class PagoPersonaMesDetalleComponent  implements OnInit {
 
     this.apiService.get<PagoMensualPersonaDetalle[]>(`pagos/personas/${this.idPersona}?mes=${this.mes}&year=${this.year}`).subscribe(
       (pagosProductosDetalleMes) => {
-        console.log("SE CARGARON LOS PAGOS DETALLE")
-        console.log(pagosProductosDetalleMes)
         this.pagosMensualesPersonaDetalle = pagosProductosDetalleMes;
         this.persona = this.sharedListas.listaPersonas.find(persona => persona.id === this.idPersona);
         this.fechaPago = pagosProductosDetalleMes[0].fechaPago;
       },
-      (error) => console.error('Error cargando pagos', error)
+      (error) => { void error; }
     );
   }
 

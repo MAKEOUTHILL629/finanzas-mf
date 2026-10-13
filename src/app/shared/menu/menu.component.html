@@ -46,9 +46,31 @@
 
   <!-- Logout al final -->
   <div class="menu-footer" *ngIf="isUserLoggedIn$ | async">
+    <button
+      type="button"
+      class="menu-item-theme"
+      (click)="toggleTheme()"
+      [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      <i class="material-icons">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
+      <span class="menu-label">{{ isDarkTheme ? 'Tema Claro' : 'Tema Oscuro' }}</span>
+    </button>
     <button type="button" class="menu-item-logout" (click)="logout()" title="Cerrar Sesión">
       <i class="material-icons">logout</i>
       <span class="menu-label">Cerrar Sesión</span>
+    </button>
+  </div>
+
+  <!-- Toggle de tema cuando NO está logueado (visible en pantalla de login) -->
+  <div class="menu-footer-guest" *ngIf="!(isUserLoggedIn$ | async)">
+    <button
+      type="button"
+      class="menu-item-theme"
+      (click)="toggleTheme()"
+      [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+    >
+      <i class="material-icons">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
+      <span class="menu-label">{{ isDarkTheme ? 'Tema Claro' : 'Tema Oscuro' }}</span>
     </button>
   </div>
 

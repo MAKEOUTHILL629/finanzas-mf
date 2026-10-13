@@ -46,7 +46,7 @@ export class TablaPrestamosComponent {
         this.filteredPrestamos = [...this.prestamos];
       },
       error: (err) => {
-        console.error('Error fetching loans:', err);
+        void err;
       }
     });
 
@@ -59,7 +59,7 @@ export class TablaPrestamosComponent {
         this.personas = data;
       },
       error: (err) => {
-        console.error('Error fetching people:', err);
+        void err;
       }
     }
     );

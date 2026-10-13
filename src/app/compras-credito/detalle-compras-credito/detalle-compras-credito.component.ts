@@ -1,4 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import {
   ComprasCredito,
   CuotaDetalle,
@@ -16,7 +18,9 @@ import { Tarjeta } from '../../modelos/tarjeta';
   templateUrl: './detalle-compras-credito.component.html',
   styleUrl: './detalle-compras-credito.component.css',
 })
-export class DetalleComprasCreditoComponent implements OnInit {
+export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private pendingNavigationState: ComprasCredito | null = null;
   compraCredito: ComprasCredito | undefined;
   compraOriginal: ComprasCredito | undefined; // Copia para comparación
   compraEditada: ComprasCredito = {}; // Valores editados temporalmente
@@ -124,34 +128,62 @@ export class DetalleComprasCreditoComponent implements OnInit {
   ngOnInit(): void {
     this.loadTarjetas();
 
+    // Capturar el estado de la navegación sincrónicamente antes de cualquier suscripción
     const navigation = this.router.getCurrentNavigation();
-    if (navigation?.extras.state) {
-      this.compraCredito = navigation.extras.state['compra'];
-    }else{
-     this.compraCredito = { id: Number(this.route.snapshot.paramMap.get('id')) };
-    }
+    this.pendingNavigationState = (navigation?.extras?.state?.['compra'] as ComprasCredito) ?? null;
 
-    if (!this.compraCredito?.concepto) {
+    // Suscribirse a cambios de param para soportar reutilización del componente
+    this.route.paramMap
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        const id = Number(params.get('id'));
+        this.resetearEstado();
 
-      console.log('No se encontro la compra en el estado, el id es:', this.compraCredito?.id);
-      this.apiService.get<ComprasCredito>(`compras-credito/detalle/${this.compraCredito?.id}`).subscribe({
-        next: (data) => {
-          this.compraCredito = data;
-          this.compraOriginal = { ...data };
-          this.compraEditada = { ...data };
-          console.log('Compra encontrada:', this.compraCredito);
+        // Usar estado de navegación solo en la primera carga
+        const navState = this.pendingNavigationState;
+        this.pendingNavigationState = null;
+
+        if (navState?.concepto && Number(navState.id) === id) {
+          this.compraCredito = navState;
+          this.compraOriginal = { ...navState };
+          this.compraEditada = { ...navState };
           this.loadCuotas();
-        },
-        error: (err) => {
-          console.error('Error fetching credit cards:', err);
-        },
+        } else {
+          this.apiService.get<ComprasCredito>(`compras-credito/detalle/${id}`).subscribe({
+            next: (data) => {
+              this.compraCredito = data;
+              this.compraOriginal = { ...data };
+              this.compraEditada = { ...data };
+              this.loadCuotas();
+            },
+            error: (err) => { /* error handler */ }
+          });
+        }
       });
-    }
-    if(this.compraCredito?.concepto){
-      this.compraOriginal = { ...this.compraCredito };
-      this.compraEditada = { ...this.compraCredito };
-      this.loadCuotas();
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private resetearEstado(): void {
+    this.compraCredito = undefined;
+    this.compraOriginal = undefined;
+    this.compraEditada = {};
+    this.cuotaDetalles = [];
+    this.camposEditando = {};
+    this.hayCambios = false;
+    this.hayCambiosResponsables = false;
+    this.cambiosResponsables = [];
+    this.responsablesModificados = [];
+    this.mostrarModalConfirmacion = false;
+    this.mostrarModalEliminacion = false;
+    // Limpiar datos del gráfico
+    this.lineChartData.datasets[0].data = [];
+    this.lineChartData.datasets[1].data = [];
+    this.lineChartData.datasets[2].data = [];
+    this.lineChartData.labels = [];
   }
   loadCuotas(): void {
     this.apiService
@@ -159,7 +191,6 @@ export class DetalleComprasCreditoComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.cuotaDetalles = data;
-          console.log('Cuotas encontradas:', this.cuotaDetalles);
           this.cuotaDetalles.sort(
             (a, b) => (a.numeroCuota || 0) - (b.numeroCuota || 0)
           );
@@ -167,7 +198,7 @@ export class DetalleComprasCreditoComponent implements OnInit {
           this.configurarCampos();
         },
         error: (err) => {
-          console.error('Error fetching credit cards:', err);
+          void err;
         },
       });
   }
@@ -186,8 +217,6 @@ export class DetalleComprasCreditoComponent implements OnInit {
   }
 
   recalcularCuotas(): void {
-    console.log('Recalculando cuotas ');
-
     const compraFormateada = {
       id: this.compraCredito?.id,
       fechaCompra: formatDate(
@@ -203,8 +232,6 @@ export class DetalleComprasCreditoComponent implements OnInit {
       estado: this.compraCredito?.estado,
       tarjeta: this.compraCredito?.tarjeta,
     };
-
-    console.log(compraFormateada);
     this.apiService
       .post<CuotaDetalle[]>(`recalcular-compra-credito`, compraFormateada)
       .subscribe({
@@ -215,7 +242,7 @@ export class DetalleComprasCreditoComponent implements OnInit {
 
         },
         error: (err) => {
-          console.error('Error fetching credit cards:', err);
+          void err;
         },
       });
   }
@@ -224,6 +251,7 @@ export class DetalleComprasCreditoComponent implements OnInit {
     this.lineChartData.datasets[0].data = [];
     this.lineChartData.datasets[1].data = [];
     this.lineChartData.datasets[2].data = [];
+    this.lineChartData.labels = []; // Reset labels para evitar acumulación
 
      this.cuotaDetalles.forEach(
       (cuota) =>{
@@ -274,20 +302,18 @@ export class DetalleComprasCreditoComponent implements OnInit {
     }
 
     this.eliminando = true;
-    console.log('Eliminando compra con ID:', this.compraCredito.id);
 
     this.apiService
       .delete(`compras-credito/${this.compraCredito.id}`)
       .subscribe({
         next: () => {
-          console.log('Compra eliminada exitosamente');
           this.eliminando = false;
           this.mostrarModalEliminacion = false;
           // Navegar al componente de tabla
           this.router.navigate(['/compras-credito']);
         },
         error: (err) => {
-          console.error('Error al eliminar la compra:', err);
+          void err;
           this.eliminando = false;
           alert('Error al eliminar la compra. Por favor, intente nuevamente.');
         },
@@ -297,16 +323,26 @@ export class DetalleComprasCreditoComponent implements OnInit {
   // ==================== EDICIÓN DE COMPRA ====================
 
   activarEdicion(campo: string): void {
-  this.camposEditando[campo] = true;
-  const key = campo as keyof ComprasCredito;
-  // Copiar el valor actual a compraEditada si no existe
-  if (!this.compraEditada[key]) {
-    this.compraEditada = {
-      ...this.compraEditada,
-      [key]: this.compraCredito?.[key]
-    } as Partial<ComprasCredito>;
+    this.camposEditando[campo] = true;
+    const key = campo as keyof ComprasCredito;
+    // Pre-rellenar siempre con el valor actual si no fue editado aún
+    if (this.compraEditada[key] === undefined || this.compraEditada[key] === null) {
+      this.compraEditada = {
+        ...this.compraEditada,
+        [key]: this.compraCredito?.[key]
+      };
+    }
   }
-}
+
+  /** Formatea una fecha (ISO o string) al formato yyyy-MM-dd requerido por <input type="date"> */
+  getDateForInput(value: any): string {
+    if (!value) return '';
+    try {
+      return formatDate(value, 'yyyy-MM-dd', 'en-US');
+    } catch {
+      return String(value).substring(0, 10);
+    }
+  }
 
   desactivarEdicion(campo: string): void {
     setTimeout(() => {
@@ -430,7 +466,6 @@ export class DetalleComprasCreditoComponent implements OnInit {
     }
 
     this.actualizando = true;
-    console.log('Iniciando actualización...');
 
     // Determinar qué actualizar
     const campos = ['concepto', 'valorCompra', 'fechaCompra', 'numeroCuotas', 'interes', 'descripcion', 'estado', 'tarjeta'];
@@ -449,7 +484,6 @@ export class DetalleComprasCreditoComponent implements OnInit {
 
     // Actualizar compra si hay cambios
     if (hayCambiosCompra) {
-      console.log('Actualizando compra...');
       const datosActualizacion: ComprasCredito = {
         id: this.compraCredito?.id,
         concepto: this.compraEditada.concepto,
@@ -477,39 +511,38 @@ export class DetalleComprasCreditoComponent implements OnInit {
 
     // Actualizar responsables si hay cambios
     if (this.hayCambiosResponsables && this.responsableComponent) {
-      console.log('Actualizando responsables...');
       promesas.push(this.responsableComponent.actualizarResponsables(this.responsablesModificados));
     }
 
     // Ejecutar todas las actualizaciones
     Promise.all(promesas)
       .then(() => {
-        console.log('Actualización exitosa');
         this.actualizando = false;
         this.mostrarModalConfirmacion = false;
 
-        // Recargar datos
+        // Recargar datos usando el endpoint detalle para obtener todos los campos calculados
         const id = this.compraCredito?.id;
         if (id) {
-          this.apiService.get<ComprasCredito>(`compras-credito/id/${id}`).subscribe({
+          this.apiService.get<ComprasCredito>(`compras-credito/detalle/${id}`).subscribe({
             next: (data) => {
               this.compraCredito = data;
               this.compraOriginal = { ...data };
               this.compraEditada = { ...data };
               this.hayCambios = false;
-              this.camposEditando = {};
               this.hayCambiosResponsables = false;
               this.cambiosResponsables = [];
               this.responsablesModificados = [];
+              this.camposEditando = {};
+              this.mostrarModalConfirmacion = false;
               this.loadCuotas();
               alert('Actualización exitosa');
             },
-            error: (err) => console.error('Error recargando:', err)
+            error: (err) => { void err; }
           });
         }
       })
       .catch((err) => {
-        console.error('Error actualizando:', err);
+        void err;
         alert('Error al actualizar. Por favor intente nuevamente.');
         this.actualizando = false;
       });
@@ -600,7 +633,7 @@ export class DetalleComprasCreditoComponent implements OnInit {
         this.tarjetas = data;
       },
       error: (err) => {
-        console.error('Error cargando tarjetas:', err);
+        void err;
       },
     });
   }

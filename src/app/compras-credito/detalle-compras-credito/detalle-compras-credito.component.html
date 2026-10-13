@@ -141,7 +141,7 @@
             *ngIf="camposEditando['fechaCompra']"
             type="date"
             class="edit-input"
-            [value]="compraEditada.fechaCompra || compraCredito?.fechaCompra"
+            [value]="getDateForInput(compraEditada.fechaCompra || compraCredito?.fechaCompra)"
             (change)="actualizarCampo('fechaCompra', $any($event.target).value)"
             (blur)="desactivarEdicion('fechaCompra')"
             autofocus

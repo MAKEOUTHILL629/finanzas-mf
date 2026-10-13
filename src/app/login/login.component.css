@@ -1,9 +1,452 @@
-/* login.component.css */
+/* ============================================
+   LOGIN - LIQUID TRUST DESIGN
+   Swiss Glass + Deep Ocean & Ceramic
+   ============================================ */
 
-/* Variables (valores de ejemplo) */
-:root {
-  --primary-color: #0052cc; /* Azul corporativo */
-  --secondary-color: #f4f5f7; /* Gris claro para fondos */
+/* ============================================
+   PÁGINA: FONDO Y COMPOSICIÓN
+   ============================================ */
+.login-page {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg-app);
+  overflow: hidden;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+}
+
+/* Botón flotante de tema (esquina superior derecha) */
+.theme-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 50%;
+  color: var(--gold-premium, #D4AF37);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--specular-light);
+}
+
+.theme-toggle-btn .material-icons {
+  font-size: 22px;
+  color: var(--gold-premium, #D4AF37);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.4);
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 0 16px rgba(212, 175, 55, 0.25);
+}
+
+.theme-toggle-btn:hover .material-icons {
+  transform: rotate(30deg) scale(1.1);
+}
+
+/* Orbes de color de fondo — profundidad ambiental */
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.22;
+  animation: orbFloat 12s ease-in-out infinite alternate;
+}
+
+.bg-orb--1 {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #0071E3, transparent 70%);
+  top: -120px;
+  left: -140px;
+  animation-delay: 0s;
+}
+
+.bg-orb--2 {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, #5243AA, transparent 70%);
+  bottom: -80px;
+  right: -100px;
+  animation-delay: -4s;
+  opacity: 0.16;
+}
+
+.bg-orb--3 {
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle, #34C759, transparent 70%);
+  bottom: 30%;
+  left: 15%;
+  animation-delay: -8s;
+  opacity: 0.10;
+}
+
+@keyframes orbFloat {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(30px, 20px) scale(1.06); }
+}
+
+/* ============================================
+   TARJETA GLASS
+   ============================================ */
+.login-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: 28px;
+  padding: 48px 40px 40px;
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.70),
+    0 8px 24px rgba(0, 0, 0, 0.40),
+    inset 0 1px 0 var(--specular-light),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.10);
+  z-index: 1;
+}
+
+/* ============================================
+   CABECERA
+   ============================================ */
+.login-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #0071E3, #0A84FF);
+  border-radius: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.40);
+}
+
+.brand-icon .material-icons {
+  font-size: 36px;
+  color: #FFFFFF;
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: #9CA3AF; /* slate-300 */
+  margin: 0;
+}
+
+/* ============================================
+   ALERTA DE ERROR
+   ============================================ */
+.alert-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 59, 48, 0.12);
+  border: 1px solid rgba(255, 59, 48, 0.30);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #FF6B6B;
+  line-height: 1.5;
+}
+
+.alert-error .material-icons {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   FORMULARIO
+   ============================================ */
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9CA3AF;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* INPUT WRAPPER — icono + campo */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 20px;
+  color: #6B7A90;
+  pointer-events: none;
+  z-index: 1;
+  transition: color 0.18s ease;
+}
+
+.input-wrapper:focus-within .input-icon-prefix {
+  color: #4DA3FF;
+}
+
+.field-input {
+  width: 100%;
+  height: 50px;
+  padding: 0 16px 0 46px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  font-size: 15px;
+  color: #FFFFFF;
+  font-family: inherit;
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+  box-sizing: border-box;
+}
+
+.field-input::placeholder {
+  color: #3B4559;
+}
+
+.field-input:hover:not(:focus) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.field-input:focus {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: #4DA3FF;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.18),
+    0 0 0 3px rgba(0, 113, 227, 0.22);
+}
+
+.field-input.is-invalid {
+  border-color: rgba(255, 107, 107, 0.60);
+}
+
+.field-input.is-invalid:focus {
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.18),
+    0 0 0 3px rgba(255, 59, 48, 0.20);
+}
+
+/* Campo con botón de ojo a la derecha */
+.field-input--password {
+  padding-right: 50px;
+}
+
+/* Botón mostrar contraseña */
+.btn-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #6B7A90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.18s ease, background 0.18s ease;
+  outline: none;
+}
+
+.btn-eye:hover {
+  color: #4DA3FF;
+  background: rgba(77, 163, 255, 0.10);
+}
+
+.btn-eye:focus-visible {
+  outline: 2px solid #4DA3FF;
+  outline-offset: 2px;
+}
+
+.btn-eye .material-icons {
+  font-size: 20px;
+}
+
+/* Mensaje de error inline */
+.field-error {
+  font-size: 12px;
+  color: #FF6B6B;
+  padding-left: 4px;
+}
+
+/* ============================================
+   ¿OLVIDASTE TU CONTRASEÑA?
+   ============================================ */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 28px;
+  margin-top: -8px;
+}
+
+.forgot-link {
+  font-size: 13px;
+  color: #4DA3FF;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.forgot-link:hover {
+  color: #80BFFF;
+}
+
+/* ============================================
+   BOTÓN PRINCIPAL
+   ============================================ */
+.btn-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 52px;
+  padding: 0 24px;
+  background: linear-gradient(135deg, #0071E3, #0A84FF);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.40);
+  transition:
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.18s ease;
+  margin-bottom: 28px;
+}
+
+.btn-login:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 113, 227, 0.55);
+}
+
+.btn-login:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.35);
+}
+
+.btn-login:disabled {
+  opacity: 0.50;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-login .material-icons {
+  font-size: 20px;
+}
+
+/* Spinner del botón */
+.spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   PIE: ENLACE A REGISTRO
+   ============================================ */
+.register-hint {
+  text-align: center;
+  font-size: 14px;
+  color: #6B7A90;
+  margin: 0;
+}
+
+.register-link {
+  color: #4DA3FF;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.register-link:hover {
+  color: #80BFFF;
+}
+
+/* ============================================
+   RESPONSIVIDAD
+   ============================================ */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 36px 24px 32px;
+    border-radius: 20px;
+  }
+
+  .login-title {
+    font-size: 24px;
+  }
+
+  .bg-orb--1 { width: 300px; height: 300px; }
+  .bg-orb--2 { width: 200px; height: 200px; }
+}
+
+/* Reducir animación para usuarios que lo prefieren */
+@media (prefers-reduced-motion: reduce) {
+  .bg-orb { animation: none; }
+  .spinner { animation-duration: 1.5s; }
+  .btn-login { transition: none; }
+}
+
   --text-color: #172b4d;
   --text-muted: #5e6c84;
   --danger-color: #de350b;

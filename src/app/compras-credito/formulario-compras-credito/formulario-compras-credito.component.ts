@@ -43,6 +43,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   showResponsablesSection = false;
   porcentajeRestante = 100;
+  interestAutoFilled = false;  // true cuando la tasa se importó automáticamente de la tarjeta
 
   private destroy$ = new Subject<void>();
 
@@ -59,6 +60,8 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     this.setupConceptAutocomplete();
     this.listenToConceptChanges();
     this.setupResponsableFormListeners();
+    this.listenToModalClose();
+    this.listenToCardChanges();
   }
 
   ngOnDestroy(): void {
@@ -68,15 +71,23 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
   // ==================== INICIALIZACIÓN ====================
 
+  private getTodayDate(): string {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   private initializeForm(): void {
     this.purchaseForm = this.fb.group({
       concept: ['', Validators.required],
       purchaseValue: ['', [Validators.required, Validators.min(0.01)]],
-      purchaseDate: ['', Validators.required],
+      purchaseDate: [this.getTodayDate(), Validators.required],
       installments: [1, [Validators.required, Validators.min(1)]],
       interest: [0, [Validators.required, Validators.min(0)]],
       description: [''],
-      status: ['', Validators.required],
+      status: ['pendiente', Validators.required],
       cardId: ['', Validators.required]
     });
   }
@@ -118,7 +129,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
             }
           });
         },
-        error: err => console.error('Error cargando conceptos:', err)
+        error: err => { void err; }
       });
   }
 
@@ -130,9 +141,53 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
         finalize(() => this.isLoadingCards = false)
       )
       .subscribe({
-        next: cards => this.creditCards = cards,
-        error: err => console.error('Error cargando tarjetas:', err)
+        next: cards => {
+          this.creditCards = cards;
+          // Si ya hay una tarjeta seleccionada (rara vez en init), aplicar la tasa
+          const currentCardId = this.purchaseForm.get('cardId')?.value;
+          if (currentCardId) {
+            this.applyCardInterestRate(Number(currentCardId));
+          }
+        },
+        error: err => { void err; }
       });
+  }
+
+  /** Escucha cambios en la tarjeta seleccionada y auto-rellena el campo de interés */
+  private listenToCardChanges(): void {
+    this.purchaseForm.get('cardId')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(cardId => {
+        if (cardId) {
+          this.applyCardInterestRate(Number(cardId));
+        } else {
+          this.interestAutoFilled = false;
+        }
+      });
+
+    // Si el usuario edita el interés manualmente, el hint desaparece
+    // (setValue con emitEvent:false no dispara este listener)
+    this.purchaseForm.get('interest')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (this.interestAutoFilled) {
+          this.interestAutoFilled = false;
+        }
+      });
+  }
+
+  /** Aplica la tasa de interés de compra de la tarjeta al campo de interés.
+   *  Siempre se aplica al cambiar de tarjeta; el usuario puede sobrescribir después. */
+  private applyCardInterestRate(cardId: number): void {
+    const card = this.creditCards.find(c => c.id === cardId);
+    const interestControl = this.purchaseForm.get('interest');
+    if (card && card.tasaInteresCompra != null) {
+      interestControl?.setValue(card.tasaInteresCompra, { emitEvent: false });
+      interestControl?.markAsPristine();
+      this.interestAutoFilled = true;
+    } else {
+      this.interestAutoFilled = false;
+    }
   }
 
   private loadPersonas(): void {
@@ -147,11 +202,21 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
           this.personas = personas;
           this.updatePersonasDisponibles();
         },
-        error: err => console.error('Error cargando personas:', err)
+        error: err => { void err; }
       });
   }
 
   // ==================== AUTOCOMPLETADO ====================
+
+  private listenToModalClose(): void {
+    this.modalService.modalState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(state => {
+        if (state === null && this.autocompleteTrigger?.panelOpen) {
+          this.autocompleteTrigger.closePanel();
+        }
+      });
+  }
 
   private setupConceptAutocomplete(): void {
     const conceptControl = this.purchaseForm.get('concept');
@@ -188,9 +253,11 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
         if (currentConcept && this.concepts.length > 0 && !this.isLoadingConcepts) {
           this.isNewConcept = !this.concepts.some(c => c.toLowerCase() === currentConcept.toLowerCase());
 
-          // Autocompletado inteligente
+          // Autocompletado inteligente (búsqueda case-insensitive)
           if (!this.isNewConcept) {
-            const compraExistente = this.conceptsMap.get(currentConcept);
+            const conceptKey = Array.from(this.conceptsMap.keys())
+              .find(k => k.toLowerCase() === currentConcept.toLowerCase());
+            const compraExistente = conceptKey ? this.conceptsMap.get(conceptKey) : undefined;
             if (compraExistente) {
               this.autoFillFromConcept(compraExistente);
             }
@@ -230,7 +297,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       if (this.autocompleteTrigger && this.autocompleteTrigger.panelOpen) {
         this.autocompleteTrigger.closePanel();
       }
-    }, 150);
+    }, 300);
   }
 
   // ==================== FORMATEO DE CAMPOS ====================
@@ -399,7 +466,6 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     }
 
     if (this.purchaseForm.invalid) {
-      console.warn('Formulario inválido. Por favor revise los campos marcados.');
       return;
     }
 
@@ -407,7 +473,6 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     const formValue = this.purchaseForm.getRawValue();
     const purchaseData = this.preparePurchaseData(formValue);
 
-    console.log('Preparado para guardar:', purchaseData);
     this.savePurchase(purchaseData);
   }
 
@@ -438,7 +503,6 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: response => {
-          console.log('Compra guardada exitosamente:', response);
 
           if (this.responsables.length > 0 && response.id) {
             this.saveResponsables(response.id);
@@ -448,7 +512,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
             this.modalService.notifyCompraCreated(); // Notificar que se creó la compra
           }
         },
-        error: err => console.error('Error guardando compra:', err)
+        error: err => { void err; }
       });
   }
 
@@ -464,23 +528,37 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
     Promise.all(saveOperations)
       .then(() => {
-        console.log('Responsables guardados exitosamente');
-        this.resetForm();        this.modalService.close();
-        this.modalService.notifyCompraCreated(); // Notificar que se creó la compra      })
+        this.resetForm();
+        this.modalService.close();
+        this.modalService.notifyCompraCreated();
       })
-        .catch(err => {
-        console.error('Error guardando responsables:', err);
+      .catch(err => {
+        void err;
         this.resetForm();
       });
   }
 
   private resetForm(): void {
-    this.purchaseForm.reset();
+    // Restaurar valores por defecto en lugar de dejar nulls
+    this.purchaseForm.reset({
+      concept: '',
+      purchaseValue: '',
+      purchaseDate: this.getTodayDate(),
+      installments: 1,
+      interest: 0,
+      description: '',
+      status: 'pendiente',
+      cardId: ''
+    });
     this.responsableForm.reset();
     this.responsables = [];
     this.porcentajeRestante = 100;
     this.isNewConcept = false;
+    this.interestAutoFilled = false;
     this.showResponsablesSection = false;
+    // Recalcular validadores de porcentajePago (Validators.max se queda con
+    // el valor de la compra anterior si no se resetea explícitamente)
+    this.calcularPorcentajeRestante();
     this.updatePersonasDisponibles();
     this.loadConcepts();
   }
@@ -495,4 +573,10 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   get description(): AbstractControl | null { return this.purchaseForm.get('description'); }
   get status(): AbstractControl | null { return this.purchaseForm.get('status'); }
   get cardId(): AbstractControl | null { return this.purchaseForm.get('cardId'); }
+
+  /** Devuelve la tarjeta actualmente seleccionada */
+  get selectedCard(): Tarjeta | undefined {
+    const id = Number(this.purchaseForm.get('cardId')?.value);
+    return id ? this.creditCards.find(c => c.id === id) : undefined;
+  }
 }

@@ -1,8 +1,9 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
-// Usa el nombre exacto de tu servicio de autenticación
 import { AuthServiceService } from '../../services/auth-service.service';
+import { ThemeService } from '../../services/theme.service';
 
 // Ya no necesitamos la interfaz MenuItem aquí, manejaremos la lógica en el template
 // interface MenuItem { ... }
@@ -12,13 +13,14 @@ import { AuthServiceService } from '../../services/auth-service.service';
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.css'] // o .scss si lo cambiaste
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, OnDestroy {
 
-  isMenuOpen = true; // Mantiene el estado de apertura/cierre
-  isMobile = false;  // Mantiene el estado si es vista móvil
-  isUserLoggedIn$!: Observable<boolean>; // Observable para el estado de login
+  isMenuOpen = true;
+  isMobile = false;
+  isUserLoggedIn$!: Observable<boolean>;
 
-  private readonly MENU_STATE_KEY = 'finanzas-menu-state'; // Key para localStorage
+  private readonly MENU_STATE_KEY = 'finanzas-menu-state';
+  private destroy$ = new Subject<void>();
 
   // Mantenemos la estructura original de tus items principales que requieren login
   // La lógica de si se muestran o no, la haremos en el HTML con *ngIf
@@ -30,23 +32,41 @@ export class MenuComponent implements OnInit {
   ];
 
   constructor(
-    private authService: AuthServiceService // Inyecta tu servicio de autenticación
+    private authService: AuthServiceService,
+    public themeService: ThemeService
   ) {}
 
   // Listener para detectar cambios de tamaño de pantalla
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   onResize() {
     this.checkScreenSize();
   }
 
   ngOnInit() {
-    this.loadMenuState(); // Carga el estado persistido
-    this.checkScreenSize(); // Comprueba el tamaño inicial
-    // Asigna el observable del servicio para usarlo en la plantilla con async pipe
+    this.loadMenuState();
+    this.checkScreenSize();
     this.isUserLoggedIn$ = this.authService.isLoggedIn$;
+
+    // Valida el token contra el backend al iniciar el menú.
+    // Si el token expiró en el servidor, isLoggedIn$ pasa a false reactivamente.
+    this.authService.isAuthenticated()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
   }
 
-  // Lógica para abrir/cerrar el menú con persistencia
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
+
+  get isDarkTheme(): boolean {
+    return this.themeService.isDark;
+  }
+
   toggleMenu() {
     this.isMenuOpen = !this.isMenuOpen;
     this.saveMenuState();
@@ -70,7 +90,7 @@ export class MenuComponent implements OnInit {
         timestamp: new Date().getTime()
       }));
     } catch (error) {
-      console.warn('No se pudo guardar el estado del menú:', error);
+      void error;
     }
   }
 
@@ -83,7 +103,7 @@ export class MenuComponent implements OnInit {
         this.isMenuOpen = isOpen;
       }
     } catch (error) {
-      console.warn('No se pudo cargar el estado del menú:', error);
+      void error;
     }
   }
 
@@ -92,7 +112,6 @@ export class MenuComponent implements OnInit {
    * AuthService se encarga de limpiar el token, actualizar el estado y redirigir.
    */
   logout(): void {
-    console.log('[MenuComponent] Logout() llamado');
     // Si estás en móvil y haces logout, cerramos el menú
     if (this.isMobile) {
       this.isMenuOpen = false;

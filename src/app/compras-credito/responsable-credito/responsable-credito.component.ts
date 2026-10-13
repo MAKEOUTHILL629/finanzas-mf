@@ -73,7 +73,7 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
         this.updatePersonasDisponibles();
         this.notificarCambiosAlPadre();
       },
-      error => console.error('Error cargando responsables', error)
+      error => { void error; }
     );
   }
 
@@ -95,7 +95,7 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
         this.personas = personas;
         this.updatePersonasDisponibles();
       },
-      error => console.error('Error cargando personas', error)
+      error => { void error; }
     );
   }
 
@@ -157,7 +157,6 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
         compraCredito:  this.compra.id
       };
 
-      console.log(newResponsable)
       this.apiService.post<ResponsableCompraCredito>(`compras-credito/responsables`, newResponsable).subscribe(
         response => {
           this.responsables.push(response);
@@ -167,7 +166,7 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
           this.responsableForm.reset();
           this.loadResponsables();
         },
-        error => console.error('Error añadiendo responsable', error)
+        error => { void error; }
       );
     }
   }
@@ -421,7 +420,7 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
         this.eliminando = false;
       },
       error => {
-        console.error('Error eliminando responsable', error);
+        void error;
         this.eliminando = false;
       }
     );
@@ -439,7 +438,7 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
         this.loadResponsables();
       })
       .catch(error => {
-        console.error('Error actualizando responsables', error);
+        void error;
         throw error;
       });
   }

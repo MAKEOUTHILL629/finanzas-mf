@@ -5,17 +5,11 @@
    ============================================ */
 
 :host {
-  /* === TOKENS LIQUID TRUST === */
+  /* === TOKENS DE MARCA (no cambian con el tema) === */
   --blue-brand: #0071E3;
   --red-danger: #FF3B30;
-  --slate-900: #0B0E14;
-  --slate-800: #151A21;
-  --text-primary: #FFFFFF;
-  --text-secondary: #9CA3AF;
-  --border-glass: rgba(255, 255, 255, 0.12);
-  --bg-surface: rgba(21, 26, 33, 0.65);
-  --bg-overlay: rgba(11, 14, 20, 0.85);
-  --specular-light: rgba(255, 255, 255, 0.1);
+  /* theme-sensitive vars heredadas de :root via [data-theme] en <html> */
+  --bg-overlay: var(--overlay-bg);
 
   /* === ESPACIADO 8PT GRID === */
   --space-1: 8px;

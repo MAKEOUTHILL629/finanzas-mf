@@ -32,6 +32,7 @@ import { FormatoPersonaPipe } from './pipes/formato-persona.pipe';
 import { PagosMesTarjetasDetalleComponent } from './compras-credito/pagos-mes-tarjetas-detalle/pagos-mes-tarjetas-detalle.component';
 import { LoginComponent } from './login/login.component';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DecimalPipe } from '@angular/common';
 import { BalanceMesComponent } from './compras-credito/balance-mes/balance-mes.component';
@@ -72,8 +73,8 @@ import { BalanceMesComponent } from './compras-credito/balance-mes/balance-mes.c
 
   ],
   providers: [provideHttpClient(withInterceptors([
-    authInterceptor // <-- Simplemente añade tu función interceptora aquí
-    // , otherFunctionalInterceptor // Puedes añadir más interceptores funcionales separados por comas
+    httpErrorInterceptor, // Outermost: aplica timeout y clasifica errores de red
+    authInterceptor       // Añade cabecera Authorization
 ])),DecimalPipe, provideAnimations(), provideCharts(withDefaultRegisterables()),  { provide: HTTP_INTERCEPTORS, useClass: CsrfInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })

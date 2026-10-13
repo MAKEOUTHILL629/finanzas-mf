@@ -40,7 +40,7 @@ export class FormularioPrestamosComponent implements OnInit {
         this.personas = data;
       },
       error: (err) => {
-        console.error('Error fetching people:', err);
+        void err;
       }
     });
 
@@ -48,15 +48,13 @@ export class FormularioPrestamosComponent implements OnInit {
 
   onSubmit() {
     if (this.loanForm.valid) {
-      console.log(this.loanForm.value);
       // Aquí iría la lógica para guardar el préstamo
       this.apiService.post('prestamos', {...this.loanForm.value, responsable: Number(this.loanForm.get('responsablePersona')?.value)        }).subscribe({
-        next: (data) => {
-          console.log('Loan saved successfully', data);
+        next: (_data) => {
           // Aquí iría la lógica para cerrar el modal
         },
         error: (err) => {
-          console.error('Error saving loan:', err);
+          void err;
         }
       });
     } else {

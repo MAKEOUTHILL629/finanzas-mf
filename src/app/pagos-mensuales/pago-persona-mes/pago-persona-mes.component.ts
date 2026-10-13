@@ -58,8 +58,6 @@ export class PagoPersonaMesComponent implements OnInit {
     this.apiService.get<Persona[]>(`personas`).subscribe((personas) => {
       this.apiService.get<PagoMensualPersona[]>(`pagos/personas`).subscribe(
         (pagos) => {
-          console.log("SE CARGARON LOS PAGOS")
-          console.log(pagos)
           this.personasConPagos = personas.map((persona) => {
             return {
               ...persona,
@@ -68,7 +66,7 @@ export class PagoPersonaMesComponent implements OnInit {
             };
           });
         },
-        (error) => console.error('Error cargando personas', error)
+        (error) => { void error; }
       );
     });
   }

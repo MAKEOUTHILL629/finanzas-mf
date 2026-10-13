@@ -32,11 +32,34 @@ export class AuthServiceService {
   ) { }
 
   /**
-   * Verifica si existe un token almacenado.
-   * @returns boolean - True si hay token, false si no.
+   * Decodifica el payload del JWT y comprueba si ya expiró (sin red).
+   * @returns true si el token está expirado o es malformado.
+   */
+  private isTokenExpired(): boolean {
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      const payload = JSON.parse(atob(parts[1]));
+      if (!payload.exp) return false; // Sin claim exp → no expira
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true; // token malformado → tratar como expirado
+    }
+  }
+
+  /**
+   * Verifica si existe un token almacenado Y no ha expirado localmente.
+   * @returns boolean
    */
   private hasToken(): boolean {
-    return !!localStorage.getItem(this.TOKEN_KEY);
+    if (!localStorage.getItem(this.TOKEN_KEY)) return false;
+    if (this.isTokenExpired()) {
+      localStorage.removeItem(this.TOKEN_KEY);
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -49,22 +72,15 @@ export class AuthServiceService {
     return this.apiService.post<AuthResponse>(loginUrl, credentials)
       .pipe(
         tap(response => {
-          // Side effect: Si el login es exitoso (asumimos que token existe si no hay error)
-          // Guardar el token y actualizar el estado de autenticación.
           if (response && response.token) {
              localStorage.setItem(this.TOKEN_KEY, response.token);
-             this.loggedIn.next(true); // Notificar que el usuario está logueado
-             console.log('Token stored successfully.');
+             this.loggedIn.next(true);
           } else {
-            // Esto no debería pasar si el backend devuelve 200 OK solo con token,
-            // pero es una comprobación extra.
-            console.error('Login response ok but no token received:', response);
             this.loggedIn.next(false);
-            // Podrías lanzar un error aquí si quieres manejarlo como fallo
-             throw new Error('No token received in response');
+            throw new Error('No token received in response');
           }
         }),
-        catchError(this.handleError) // Manejar errores HTTP
+        catchError((error) => throwError(() => error)) // Preserva el error original
       );
   }
 
@@ -86,26 +102,22 @@ export class AuthServiceService {
    */
   isAuthenticated()  {
 
-   return  this.apiService.get<{ status?: string }>('auth/token-is-valid') // Llamada opcional al backend para verificar el estado
+   return  this.apiService.get<{ status?: string }>('auth/token-is-valid')
       .pipe(
         tap((response: { status?: string }) => {
-          console.log('Token validity check response:', response);
-          // Si la respuesta indica que el token es válido, actualiza el estado
           if (response && response.status === 'ok') {
             this.loggedIn.next(true);
           } else {
             this.loggedIn.next(false);
-            localStorage.removeItem(this.TOKEN_KEY); // Limpia el token si no es válido
+            localStorage.removeItem(this.TOKEN_KEY);
           }
         }),
-        catchError(err => {
-          console.error('Error checking token validity:', err);
-          this.loggedIn.next(false); // Si falla la verificación, asumimos que no está autenticado
-          return of(false); // Retorna un observable con false
+        catchError(() => {
+          // Si la red falla, no desloguear (puede ser error de red transitorio).
+          // Si el token está expirado localmente, ya lo maneja hasToken() en el arranque.
+          return of(false);
         })
-      ); // Necesario para que la llamada se ejecute
-
-    // Devuelve el valor actual del BehaviorSubject
+      );
   }
 
 
@@ -115,22 +127,7 @@ export class AuthServiceService {
    * @returns Observable que emite el error.
    */
   private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Ocurrió un error desconocido.';
-    if (error.error instanceof ErrorEvent) {
-      // Error del lado del cliente o de red.
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // El backend devolvió un código de error.
-      // El cuerpo de la respuesta puede contener pistas sobre qué salió mal.
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
-      if (error.error && typeof error.error === 'object' && error.error.message) {
-         errorMessage = `Error: ${error.error.message}`; // Usar mensaje del backend si está disponible
-      }
-    }
-    console.error('AuthService Error:', errorMessage, error);
-    // Devolver un observable con un error user-facing.
-    // El componente que llama puede usar este mensaje.
-    return throwError(() => new Error(errorMessage));
+    return throwError(() => error);
   }
 
 
@@ -142,18 +139,11 @@ logout(): void {
   // Solo si necesitas la lógica del backend (logging, blocklist)
   this.apiService.post(logoutUrl, {}) // Enviar POST vacío o como lo requiera tu API
     .pipe(
-      catchError(err => {
-        // Incluso si falla la llamada al backend (ej. red),
-        // probablemente quieras desloguear al usuario localmente.
-        console.error('Backend logout call failed, proceeding with local logout', err);
-        return of(null); // Continúa con el logout local
-      }),
+      catchError(() => of(null)),
       finalize(() => {
-        // Esta parte SIEMPRE se ejecuta (después de la llamada HTTP o si falló)
         localStorage.removeItem(this.TOKEN_KEY);
         this.loggedIn.next(false);
         this.router.navigate(['/login']);
-        console.log('User logged out locally.');
       })
     )
     .subscribe(); // Necesitas suscribirte para que la llamada se ejecute
