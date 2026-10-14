@@ -135,7 +135,7 @@
 
 .filter-group select option {
   background: var(--select-option-bg);
-  color: var(--text-primary);
+  color: var(--select-option-text, var(--text-primary));
   padding: 10px;
 }
 

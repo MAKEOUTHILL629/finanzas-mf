@@ -1,7 +1,7 @@
 .loan-table-container {
-  font-family: 'Roboto', Arial, sans-serif;
-  color: #333;
-  background-color: #f8f9fa;
+  font-family: var(--font-main, 'Roboto', Arial, sans-serif);
+  color: var(--text-primary, #333);
+  background-color: var(--bg-app, #f8f9fa);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -13,7 +13,7 @@
   gap: 15px;
   margin-bottom: 20px;
   padding: 20px;
-  background-color: #ffffff;
+  background-color: var(--bg-surface-solid, #ffffff);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
@@ -26,22 +26,29 @@
 .filter-group label {
   margin-bottom: 8px;
   font-weight: 500;
-  color: #495057;
+  color: var(--text-secondary, #495057);
 }
 
 .filter-group input,
 .filter-group select {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ced4da;
+  border: 1px solid var(--border-default, #ced4da);
   border-radius: 4px;
   font-size: 14px;
+  background-color: var(--bg-input, #ffffff);
+  color: var(--text-primary, #333);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.filter-group select option {
+  background-color: var(--select-option-bg, #ffffff);
+  color: var(--select-option-text, #111827);
 }
 
 .filter-group input:focus,
 .filter-group select:focus {
-  border-color: #007bff;
+  border-color: var(--brand-blue, #007bff);
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
   outline: none;
 }
@@ -52,7 +59,7 @@
 
 button {
   padding: 10px 15px;
-  background-color: #007bff;
+  background-color: var(--brand-blue, #007bff);
   color: white;
   border: none;
   border-radius: 4px;
@@ -62,14 +69,14 @@ button {
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: var(--brand-blue-hover, #0056b3);
 }
 
 .loan-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background-color: #ffffff;
+  background-color: var(--bg-surface-solid, #ffffff);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
@@ -79,13 +86,14 @@ button:hover {
 .loan-table td {
   padding: 12px 15px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--table-border, #e0e0e0);
+  color: var(--text-primary, #333);
 }
 
 .loan-table th {
-  background-color: #f8f9fa;
+  background-color: var(--table-header-bg, #f8f9fa);
   font-weight: 600;
-  color: #495057;
+  color: var(--text-secondary, #495057);
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.5px;
@@ -96,7 +104,7 @@ button:hover {
 }
 
 .loan-table tbody tr:hover {
-  background-color: #f8f9fa;
+  background-color: var(--table-row-hover, #f8f9fa);
 }
 
 /* Responsive design */
@@ -121,7 +129,7 @@ button:hover {
   .loan-table tbody tr {
     display: block;
     margin-bottom: 10px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--table-border, #e0e0e0);
     border-radius: 4px;
   }
 
@@ -129,7 +137,7 @@ button:hover {
     display: flex;
     justify-content: space-between;
     padding: 10px 15px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--table-border, #f0f0f0);
   }
 
   .loan-table td::before {
@@ -157,8 +165,6 @@ button:hover {
   }
 }
 
-
-
 .floating-button {
   position: fixed;
   bottom: 30px;
@@ -166,7 +172,7 @@ button:hover {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #1976d2;
+  background-color: var(--brand-blue, #1976d2);
   color: white;
   border: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -180,7 +186,7 @@ button:hover {
 }
 
 .floating-button:hover {
-  background-color: #1565c0;
+  background-color: var(--brand-blue-hover, #1565c0);
   transform: scale(1.1);
 }
 

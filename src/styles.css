@@ -118,6 +118,7 @@
 /* ── TEMA OSCURO — DEFAULT "Obsidian Slate" ── */
 :root,
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-app:               var(--slate-900);
   --bg-surface:           rgba(21, 26, 33, 0.65);
   --bg-surface-solid:     var(--slate-800);
@@ -157,6 +158,7 @@
 
 /* ── TEMA CLARO — "Ceramic Air" ── */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-app:               var(--gray-bg);
   --bg-surface:           rgba(255, 255, 255, 0.78);
   --bg-surface-solid:     var(--white);
@@ -192,6 +194,11 @@
   --select-option-bg:     #FFFFFF;
   --select-option-hover:  #F3F4F6;
   --select-option-text:   #111827;
+}
+
+select option {
+  background-color: var(--select-option-bg);
+  color: var(--select-option-text);
 }
 
 /* ── TRANSICIÓN GLOBAL AL CAMBIAR TEMA ── */
