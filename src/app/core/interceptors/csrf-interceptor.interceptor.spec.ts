@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpInterceptorFn } from '@angular/common/http';
+import { CsrfInterceptor } from './csrf-interceptor.interceptor';
 
-import { csrfInterceptorInterceptor } from './csrf-interceptor.interceptor';
-
-describe('csrfInterceptorInterceptor', () => {
-  const interceptor: HttpInterceptorFn = (req, next) => 
-    TestBed.runInInjectionContext(() => csrfInterceptorInterceptor(req, next));
+describe('CsrfInterceptor', () => {
+  let interceptor: CsrfInterceptor;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [CsrfInterceptor]
+    });
+    interceptor = TestBed.inject(CsrfInterceptor);
   });
 
   it('should be created', () => {

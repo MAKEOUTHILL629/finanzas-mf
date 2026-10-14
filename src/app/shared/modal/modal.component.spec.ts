@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { ModalComponent } from './modal.component';
+import { ModalService } from '../../services/modal.service';
 
 describe('ModalComponent', () => {
   let component: ModalComponent;
@@ -8,7 +9,8 @@ describe('ModalComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ModalComponent]
+      declarations: [ModalComponent],
+      providers: [ModalService, provideAnimations()]
     })
     .compileComponents();
 
