@@ -28,6 +28,7 @@ import { FormatoFechaPipe } from './pipes/formato-fecha.pipe';
 import { FormatoTarjetaPipe } from './pipes/formato-tarjeta.pipe';
 import { FormatoPersonaPipe } from './pipes/formato-persona.pipe';
 import { FormatoMonedaPipe } from './pipes/formato-moneda.pipe';
+import { FormatoFechaCortaPipe } from './pipes/formato-fecha-corta.pipe';
 import { ToastComponent } from './shared/toast/toast.component';
 
 // Dominio: Compras a Crédito
@@ -47,6 +48,10 @@ import { PagoPersonaMesDetalleComponent } from './pagos-mensuales/pago-persona-m
 // Dominio: Préstamos
 import { TablaPrestamosComponent } from './prestamos/tabla-prestamos/tabla-prestamos.component';
 import { FormularioPrestamosComponent } from './prestamos/formulario-prestamos/formulario-prestamos.component';
+import { DetallePrestamoComponent } from './prestamos/detalle-prestamo/detalle-prestamo.component';
+import { FormularioEditarPrestamoComponent } from './prestamos/formulario-editar-prestamo/formulario-editar-prestamo.component';
+import { ListaCortesComponent } from './prestamos/lista-cortes/lista-cortes.component';
+import { FormularioCorteComponent } from './prestamos/formulario-corte/formulario-corte.component';
 
 // Dominio: Obligaciones del mes
 import { ListaObligacionesComponent } from './obligaciones/lista-obligaciones/lista-obligaciones.component';
@@ -58,6 +63,31 @@ import { FormularioAportesComponent } from './obligaciones/formulario-aportes/fo
 import { ExtractosTarjetasComponent } from './extractos/extractos-tarjetas/extractos-tarjetas.component';
 import { FormularioPagarExtractoComponent } from './extractos/formulario-pagar-extracto/formulario-pagar-extracto.component';
 
+// Dominio: Tarjetas (configuración)
+import { ListaTarjetasComponent } from './tarjetas/lista-tarjetas/lista-tarjetas.component';
+import { FormularioTarjetaComponent } from './tarjetas/formulario-tarjeta/formulario-tarjeta.component';
+
+// Dominio: Cuentas y categorías
+import { ListaCuentasComponent } from './cuentas/lista-cuentas/lista-cuentas.component';
+import { FormularioCuentaComponent } from './cuentas/formulario-cuenta/formulario-cuenta.component';
+import { ListaCategoriasComponent } from './cuentas/lista-categorias/lista-categorias.component';
+import { FormularioCategoriaComponent } from './cuentas/formulario-categoria/formulario-categoria.component';
+
+// Dominio: Transacciones
+import { ListaTransaccionesComponent } from './transacciones/lista-transacciones/lista-transacciones.component';
+import { FormularioTransaccionComponent } from './transacciones/formulario-transaccion/formulario-transaccion.component';
+
+// Dominio: Correos del banco
+import { ListaCorreosComponent } from './correos/lista-correos/lista-correos.component';
+import { FormularioConciliarComponent } from './correos/formulario-conciliar/formulario-conciliar.component';
+
+// Dominio: Flujo de caja y deudas por persona
+import { FlujoCajaComponent } from './flujo-caja/flujo-caja.component';
+import { EstadoCuentaComponent } from './deudas/estado-cuenta/estado-cuenta.component';
+import { FormularioAbonoComponent } from './deudas/formulario-abono/formulario-abono.component';
+import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.component';
+import { FormularioCruceComponent } from './deudas/formulario-cruce/formulario-cruce.component';
+
 /**
  * Agrupación de declaraciones por dominio de la aplicación
  */
@@ -68,6 +98,7 @@ const SHARED_DECLARATIONS = [
   FormatoTarjetaPipe,
   FormatoPersonaPipe,
   FormatoMonedaPipe,
+  FormatoFechaCortaPipe,
   ToastComponent
 ];
 
@@ -89,7 +120,11 @@ const PAGOS_MENSUALES_DECLARATIONS = [
 
 const PRESTAMOS_DECLARATIONS = [
   TablaPrestamosComponent,
-  FormularioPrestamosComponent
+  FormularioPrestamosComponent,
+  DetallePrestamoComponent,
+  FormularioEditarPrestamoComponent,
+  ListaCortesComponent,
+  FormularioCorteComponent
 ];
 
 const OBLIGACIONES_DECLARATIONS = [
@@ -102,6 +137,36 @@ const OBLIGACIONES_DECLARATIONS = [
 const EXTRACTOS_DECLARATIONS = [
   ExtractosTarjetasComponent,
   FormularioPagarExtractoComponent
+];
+
+const TARJETAS_DECLARATIONS = [
+  ListaTarjetasComponent,
+  FormularioTarjetaComponent
+];
+
+const CUENTAS_DECLARATIONS = [
+  ListaCuentasComponent,
+  FormularioCuentaComponent,
+  ListaCategoriasComponent,
+  FormularioCategoriaComponent
+];
+
+const TRANSACCIONES_DECLARATIONS = [
+  ListaTransaccionesComponent,
+  FormularioTransaccionComponent
+];
+
+const CORREOS_DECLARATIONS = [
+  ListaCorreosComponent,
+  FormularioConciliarComponent
+];
+
+const ANALISIS_DECLARATIONS = [
+  FlujoCajaComponent,
+  EstadoCuentaComponent,
+  FormularioAbonoComponent,
+  ListaCrucesComponent,
+  FormularioCruceComponent
 ];
 
 /**
@@ -133,7 +198,12 @@ const CORE_PROVIDERS: (Provider | EnvironmentProviders)[] = [
     ...PAGOS_MENSUALES_DECLARATIONS,
     ...PRESTAMOS_DECLARATIONS,
     ...OBLIGACIONES_DECLARATIONS,
-    ...EXTRACTOS_DECLARATIONS
+    ...EXTRACTOS_DECLARATIONS,
+    ...TARJETAS_DECLARATIONS,
+    ...CUENTAS_DECLARATIONS,
+    ...TRANSACCIONES_DECLARATIONS,
+    ...CORREOS_DECLARATIONS,
+    ...ANALISIS_DECLARATIONS
   ],
   imports: [
     BrowserModule,

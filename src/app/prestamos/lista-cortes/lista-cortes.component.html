@@ -1,0 +1,89 @@
+<section class="erp-page" aria-labelledby="titulo-cortes">
+  <header class="erp-header">
+    <div>
+      <button type="button" class="erp-back" routerLink="/prestamos">
+        <i class="material-icons" aria-hidden="true">arrow_back</i>
+        Préstamos
+      </button>
+      <h1 id="titulo-cortes">Cortes de cobro</h1>
+      <p class="erp-subtitle">Ventanas de fechas a las que se asocian los préstamos para cobrarlos juntos.</p>
+    </div>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--primary" (click)="nuevo()">
+        <i class="material-icons" aria-hidden="true">add</i>
+        Nuevo corte
+      </button>
+    </div>
+  </header>
+
+  <div class="chips" role="group" aria-label="Filtrar por estado" *ngIf="!cargando && !error && cortes.length > 0">
+    <button type="button" class="chip" *ngFor="let f of filtros" [class.chip--activo]="filtro === f.valor"
+            [attr.aria-pressed]="filtro === f.valor" (click)="filtro = f.valor">
+      {{ f.etiqueta }} <span class="chip-n erp-num">{{ cantidad(f.valor) }}</span>
+    </button>
+  </div>
+
+  <!-- Confirmación de borrado -->
+  <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="borrar-titulo" *ngIf="confirmandoBorrado">
+    <i class="material-icons" aria-hidden="true">warning</i>
+    <div>
+      <strong id="borrar-titulo">¿Eliminar el corte «{{ confirmandoBorrado.concepto }}»?</strong>
+      <p class="aviso-texto">Solo se puede eliminar si no tiene préstamos asociados.</p>
+      <div class="erp-actions">
+        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarBorrado()" [disabled]="borrando">{{ borrando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarBorrado()" [disabled]="borrando">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando cortes">
+    <div class="erp-skeleton" style="height: 170px"></div>
+    <div class="erp-skeleton" style="height: 170px"></div>
+    <div class="erp-skeleton" style="height: 170px"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && visibles.length === 0">
+    <i class="material-icons" aria-hidden="true">event_repeat</i>
+    <h2>{{ cortes.length === 0 ? 'Aún no hay cortes' : 'No hay cortes con ese estado' }}</h2>
+    <p>{{ cortes.length === 0 ? 'Crea un corte con su rango de fechas para agrupar los cobros.' : 'Prueba con otro filtro.' }}</p>
+  </div>
+
+  <div class="erp-grid" *ngIf="!cargando && !error && visibles.length > 0">
+    <article class="erp-card corte" *ngFor="let c of visibles; trackBy: trackById" [attr.aria-label]="'Corte ' + c.concepto">
+      <header class="corte-cabecera">
+        <h2>{{ c.concepto }}</h2>
+        <span class="erp-badge erp-badge--{{ claseEstado(c.estado) }}">{{ etiquetaEstado(c.estado) }}</span>
+      </header>
+      <p class="rango erp-num">
+        <i class="material-icons" aria-hidden="true">date_range</i>
+        {{ c.fecha_inicio | formatoFecha }} → {{ c.fecha_final | formatoFecha }}
+      </p>
+      <dl class="cifras">
+        <div><dt class="erp-overline">Préstamos</dt><dd class="erp-num">{{ estadistica(c).prestamos }}</dd></div>
+        <div><dt class="erp-overline">Pendientes</dt><dd class="erp-num">{{ estadistica(c).pendientes }}</dd></div>
+        <div><dt class="erp-overline">Por cobrar</dt><dd class="erp-num" [class.erp-loss]="estadistica(c).saldoPorCobrar > 0">{{ estadistica(c).saldoPorCobrar | moneda }}</dd></div>
+      </dl>
+      <footer class="corte-acciones">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="editar(c)">
+          <i class="material-icons" aria-hidden="true">edit</i>Editar
+        </button>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirBorrado(c)" [disabled]="estadistica(c).prestamos > 0"
+                [attr.title]="estadistica(c).prestamos > 0 ? 'Tiene préstamos asociados' : null">
+          <i class="material-icons" aria-hidden="true">delete_outline</i>Eliminar
+        </button>
+      </footer>
+    </article>
+  </div>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-corte *ngIf="formularioAbierto" [corte]="corteEditando" (guardado)="onGuardado()" (cancelar)="cerrarFormulario()"></app-formulario-corte>
+</app-modal>

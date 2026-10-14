@@ -1,54 +1,105 @@
-<form [formGroup]="loanForm" (ngSubmit)="onSubmit()" class="loan-form">
-  <div class="form-group">
-    <label for="valorPrestado">Valor Prestado:</label>
-    <input type="number" id="valorPrestado" formControlName="valorPrestado" placeholder="Ingrese el valor prestado">
-    <div *ngIf="loanForm.get('valorPrestado')?.invalid && loanForm.get('valorPrestado')?.touched" class="error-message">
-      Valor prestado es requerido y debe ser mayor a 0.
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-form-prestamo">
+  <h2 class="erp-form-title" id="titulo-form-prestamo">Nuevo préstamo</h2>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <span>{{ errorServidor }}</span>
+  </div>
+
+  <div class="erp-form-grid">
+    <div class="erp-field">
+      <label class="erp-label" for="pf-valor">Valor prestado<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="pf-valor" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valorPrestado"
+             placeholder="0.00" [attr.aria-invalid]="campoInvalido('valorPrestado')" />
+      <p class="erp-field-error" *ngIf="campoInvalido('valorPrestado')">Indica un valor mayor a 0 con máximo 2 decimales.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-responsable">Persona<span class="erp-req" aria-hidden="true">*</span></label>
+      <select id="pf-responsable" class="erp-select" formControlName="responsable" [attr.aria-invalid]="campoInvalido('responsable')">
+        <option [ngValue]="null" disabled>{{ cargando ? 'Cargando…' : 'Selecciona una persona' }}</option>
+        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
+      </select>
+      <p class="erp-field-error" *ngIf="campoInvalido('responsable')">Selecciona a quién se le presta.</p>
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="pf-concepto">Concepto<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="pf-concepto" class="erp-input" type="text" formControlName="concepto" maxlength="255" autocomplete="off"
+             placeholder="Ej. Mercado de la semana" [attr.aria-invalid]="campoInvalido('concepto')" />
+      <p class="erp-field-error" *ngIf="campoInvalido('concepto')">Escribe un concepto.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-direccion">Dirección</label>
+      <select id="pf-direccion" class="erp-select" formControlName="direccionPrestamo">
+        <option *ngFor="let d of direcciones" [value]="d.valor">{{ d.etiqueta }}</option>
+      </select>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-metodo">Método</label>
+      <select id="pf-metodo" class="erp-select" formControlName="metodo">
+        <option [ngValue]="null">Sin especificar</option>
+        <option *ngFor="let m of metodos" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-fecha-prestamo">Fecha del préstamo<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="pf-fecha-prestamo" class="erp-input" type="date" formControlName="fechaPrestamo" />
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-fecha-cobro">Fecha de cobro<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="pf-fecha-cobro" class="erp-input" type="date" formControlName="fechaCobro" [attr.aria-invalid]="campoInvalido('fechaCobro')" />
+      <p class="erp-field-error" *ngIf="campoInvalido('fechaCobro')">Indica cuándo se cobra.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-corte">Corte de cobro</label>
+      <select id="pf-corte" class="erp-select" formControlName="corteId">
+        <option [ngValue]="null">Sin corte</option>
+        <option *ngFor="let c of cortes" [ngValue]="c.id">{{ c.concepto }}</option>
+      </select>
+      <p class="erp-field-hint">Se propone el corte que contiene la fecha de hoy.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pf-estado">Estado</label>
+      <select id="pf-estado" class="erp-select" formControlName="estado">
+        <option value="Pendiente">Pendiente</option>
+        <option value="Pagado">Pagado (ya cobrado)</option>
+      </select>
+    </div>
+
+    <label class="erp-check erp-span-2">
+      <input type="checkbox" formControlName="esRecurrenteMensual" />
+      <span>Es un préstamo recurrente mensual</span>
+    </label>
+
+    <div class="erp-field erp-span-2" *ngIf="form.controls.esRecurrenteMensual.value">
+      <label class="erp-label" for="pf-cuota">Cuota mensual acordada<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="pf-cuota" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="cuotaMensualAcordada"
+             placeholder="0.00" [attr.aria-invalid]="campoInvalido('cuotaMensualAcordada')" />
+      <p class="erp-field-error" *ngIf="campoInvalido('cuotaMensualAcordada')">Indica la cuota (mayor a 0, máximo 2 decimales).</p>
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="pf-comentarios">Comentarios</label>
+      <textarea id="pf-comentarios" class="erp-textarea" formControlName="comentarios" rows="3" placeholder="Opcional"></textarea>
     </div>
   </div>
 
-  <div class="form-group">
-    <label for="concepto">Concepto:</label>
-    <input type="text" id="concepto" formControlName="concepto" placeholder="Ingrese el concepto del préstamo">
-    <div *ngIf="loanForm.get('concepto')?.invalid && loanForm.get('concepto')?.touched" class="error-message">
-      Concepto es requerido.
-    </div>
+  <div class="erp-alert erp-alert--info">
+    <i class="material-icons" aria-hidden="true">info</i>
+    <span>Al guardar, la base de datos carga el préstamo en el estado de cuenta de la persona automáticamente.</span>
   </div>
 
-  <div class="form-group">
-    <label for="fechaCobro">Fecha de Cobro:</label>
-    <input type="date" id="fechaCobro" formControlName="fechaCobro">
-    <div *ngIf="loanForm.get('fechaCobro')?.invalid && loanForm.get('fechaCobro')?.touched" class="error-message">
-      Fecha de cobro es requerida.
-    </div>
+  <div class="erp-form-actions">
+    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando || cargando">
+      {{ enviando ? 'Guardando…' : 'Guardar préstamo' }}
+    </button>
   </div>
-
-  <div class="form-group">
-    <label for="responsable">Responsable:</label>
-    <select id="responsable" formControlName="responsablePersona">
-      <option value="">Seleccione un responsable</option>
-      <option *ngFor="let persona of personas" [value]="persona.id">{{ persona.nombre }}</option>
-    </select>
-    <div *ngIf="loanForm.get('responsablePersona')?.invalid && loanForm.get('responsablePersona')?.touched" class="error-message">
-      Responsable es requerido.
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label for="estado">Estado:</label>
-    <select id="estado" formControlName="estado">
-      <option value="">Seleccione un estado</option>
-      <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
-    </select>
-    <div *ngIf="loanForm.get('estado')?.invalid && loanForm.get('estado')?.touched" class="error-message">
-      Estado es requerido.
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label for="comentarios">Comentarios:</label>
-    <textarea id="comentarios" formControlName="comentarios" rows="3" placeholder="Ingrese comentarios adicionales"></textarea>
-  </div>
-
-  <button type="submit" [disabled]="loanForm.invalid">Guardar Préstamo</button>
 </form>

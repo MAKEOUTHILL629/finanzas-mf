@@ -1,0 +1,133 @@
+<section class="erp-page" aria-labelledby="titulo-detalle-prestamo">
+  <div>
+    <button type="button" class="erp-back" (click)="volver()">
+      <i class="material-icons" aria-hidden="true">arrow_back</i>
+      Préstamos
+    </button>
+  </div>
+
+  <div class="erp-grid erp-grid--stats" *ngIf="cargando" aria-busy="true" aria-label="Cargando préstamo">
+    <div class="erp-skeleton" style="height: 110px"></div>
+    <div class="erp-skeleton" style="height: 110px"></div>
+    <div class="erp-skeleton" style="height: 110px"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!cargando && !error && prestamo as p">
+    <header class="erp-header">
+      <div>
+        <h1 id="titulo-detalle-prestamo">{{ p.concepto }}</h1>
+        <p class="erp-subtitle">
+          <span class="erp-badge erp-badge--{{ claseEstado(p.estado) }}">{{ p.estado }}</span>
+          <span class="meta-linea">{{ p.direccionPrestamo === 'POR_PAGAR' ? 'Por pagar a' : 'Por cobrar a' }} {{ nombrePersona(p.responsable) }}</span>
+        </p>
+      </div>
+      <div class="erp-actions">
+        <button type="button" class="erp-btn erp-btn--secondary" (click)="abrirEdicion()">
+          <i class="material-icons" aria-hidden="true">edit</i>
+          Editar
+        </button>
+        <button type="button" class="erp-btn erp-btn--primary" *ngIf="esPendiente" (click)="pedirConfirmacion('pagar')" [disabled]="ejecutando">
+          <i class="material-icons" aria-hidden="true">task_alt</i>
+          Marcar como pagado
+        </button>
+        <button type="button" class="erp-btn erp-btn--danger" *ngIf="esPendiente" (click)="pedirConfirmacion('anular')" [disabled]="ejecutando">
+          <i class="material-icons" aria-hidden="true">block</i>
+          Anular
+        </button>
+      </div>
+    </header>
+
+    <!-- Confirmación inline -->
+    <div class="erp-alert erp-alert--warning confirmacion" role="alertdialog" aria-labelledby="confirmar-titulo" *ngIf="accionPendiente">
+      <i class="material-icons" aria-hidden="true">warning</i>
+      <div>
+        <strong id="confirmar-titulo">{{ accionPendiente === 'pagar' ? '¿Marcar este préstamo como pagado?' : '¿Anular este préstamo?' }}</strong>
+        <p class="confirmacion-texto" *ngIf="accionPendiente === 'pagar'">
+          Se registrará el abono de <span class="erp-num">{{ saldo | moneda }}</span> en el estado de cuenta de {{ nombrePersona(p.responsable) }}
+          y el saldo quedará en $0.00.
+        </p>
+        <p class="confirmacion-texto" *ngIf="accionPendiente === 'anular'">El préstamo quedará como «Anulado» y dejará de contarse como pendiente.</p>
+        <div class="erp-actions">
+          <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="confirmarAccion()" [disabled]="ejecutando">
+            {{ ejecutando ? 'Guardando…' : 'Sí, confirmar' }}
+          </button>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarAccion()" [disabled]="ejecutando">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="erp-grid erp-grid--stats">
+      <div class="erp-card erp-stat"><span class="erp-overline">Valor prestado</span><span class="erp-stat-value erp-num">{{ p.valorPrestado | moneda }}</span></div>
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Saldo pendiente</span>
+        <span class="erp-stat-value erp-num" [class.erp-loss]="saldo > 0">{{ saldo | moneda }}</span>
+      </div>
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Fecha de cobro</span>
+        <span class="erp-stat-value fecha">{{ p.fechaCobro | formatoFecha }}</span>
+      </div>
+    </div>
+
+    <div class="erp-card">
+      <h2 class="erp-card-title">Información</h2>
+      <dl class="info">
+        <div><dt class="erp-overline">Persona</dt><dd>{{ nombrePersona(p.responsable) }}</dd></div>
+        <div><dt class="erp-overline">Fecha del préstamo</dt><dd>{{ p.fechaPrestamo | formatoFecha }}</dd></div>
+        <div><dt class="erp-overline">Método</dt><dd>{{ p.metodo || '—' }}</dd></div>
+        <div><dt class="erp-overline">Corte de cobro</dt><dd>{{ nombreCorte(p.corteId) }}</dd></div>
+        <div *ngIf="p.esRecurrenteMensual">
+          <dt class="erp-overline">Cuota mensual acordada</dt><dd class="erp-num">{{ p.cuotaMensualAcordada | moneda }}</dd>
+        </div>
+        <div *ngIf="p.origenCruceAporteId">
+          <dt class="erp-overline">Origen</dt><dd>Generado por un aporte (cruce) #{{ p.origenCruceAporteId }}</dd>
+        </div>
+        <div class="info-ancho"><dt class="erp-overline">Comentarios</dt><dd>{{ p.comentarios || '—' }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="erp-card">
+      <h2 class="erp-card-title">Aprobaciones</h2>
+
+      <div class="erp-empty" *ngIf="p.aprobaciones.length === 0">
+        <i class="material-icons" aria-hidden="true">how_to_reg</i>
+        <h2>Sin aprobaciones</h2>
+        <p>Este préstamo no requiere aprobación de ninguna persona.</p>
+      </div>
+
+      <ul class="aprobaciones" *ngIf="p.aprobaciones.length > 0">
+        <li class="aprobacion" *ngFor="let a of p.aprobaciones; trackBy: trackByAprobacion">
+          <div class="aprobacion-cabecera">
+            <strong>{{ a.persona || nombrePersona(a.personaId) }}</strong>
+            <span class="erp-badge erp-badge--{{ claseAprobacion(a.estado) }}">{{ a.estado }}</span>
+            <span class="erp-muted fecha-aprobacion" *ngIf="a.fechaAprobacion && a.estado !== 'Pendiente'">{{ a.fechaAprobacion | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <p class="erp-muted aprobacion-comentario" *ngIf="a.comentarios">{{ a.comentarios }}</p>
+
+          <div class="aprobacion-acciones" *ngIf="a.estado === 'Pendiente'">
+            <label class="erp-sr-only" [for]="'apr-com-' + a.id">Comentario para {{ a.persona }}</label>
+            <input [id]="'apr-com-' + a.id" class="erp-input" type="text" placeholder="Comentario (opcional)" autocomplete="off"
+                   [(ngModel)]="comentarios[a.id]" [ngModelOptions]="{ standalone: true }" />
+            <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="resolver(a, 'Aprobado')" [disabled]="resolviendo === a.id">
+              <i class="material-icons" aria-hidden="true">check</i>Aprobar
+            </button>
+            <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="resolver(a, 'Rechazado')" [disabled]="resolviendo === a.id">
+              <i class="material-icons" aria-hidden="true">close</i>Rechazar
+            </button>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <app-modal [modalId]="modalId">
+      <app-formulario-editar-prestamo [prestamo]="p" [cortes]="cortes" (actualizado)="onActualizado($event)" (cancelar)="cerrarEdicion()"></app-formulario-editar-prestamo>
+    </app-modal>
+  </ng-container>
+</section>

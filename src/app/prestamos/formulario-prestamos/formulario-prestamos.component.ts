@@ -1,10 +1,22 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError, finalize, takeUntil } from 'rxjs/operators';
+import { CorteCobro, CrearPrestamo, MetodoPrestamo } from '../../modelos/cobros';
 import { Persona } from '../../modelos/persona';
-import { ApiServicesService } from '../../services/api-services.service';
-import { ModalService } from '../../services/modal.service';
-import { SharedListasService } from '../../services/shared-listas.service';
+import { CortesCobroService } from '../../services/cortes-cobro.service';
+import { PersonasService } from '../../services/personas.service';
+import { PrestamosService } from '../../services/prestamos.service';
+import { mensajeDeError } from '../../shared/http-error.helper';
+import { hoyIso } from '../../shared/periodo.helper';
+import { importeConDosDecimales, importeOpcional } from '../../shared/validadores';
+import { DIRECCIONES_PRESTAMO, METODOS_PRESTAMO } from '../prestamos.constants';
+
+/** Corte que contiene `hoy` (si hay varios, el ACTIVO); si ninguno, `null`. */
+export function corteParaHoy(cortes: CorteCobro[], hoy: string): CorteCobro | null {
+  const vigentes = cortes.filter((c) => c.fecha_inicio.slice(0, 10) <= hoy && hoy <= c.fecha_final.slice(0, 10));
+  return vigentes.find((c) => c.estado === 'ACTIVO') ?? vigentes[0] ?? null;
+}
 
 @Component({
   selector: 'app-formulario-prestamos',
@@ -12,22 +24,67 @@ import { SharedListasService } from '../../services/shared-listas.service';
   styleUrl: './formulario-prestamos.component.css'
 })
 export class FormularioPrestamosComponent implements OnInit, OnDestroy {
-  loanForm: FormGroup = new FormGroup({});
-  personas: Persona[] = [];
-  estados: string[] = ['Pendiente', 'Pagado', 'Vencido'];
+  @Output() creado = new EventEmitter<void>();
+  @Output() cancelar = new EventEmitter<void>();
 
+  readonly metodos = METODOS_PRESTAMO;
+  readonly direcciones = DIRECCIONES_PRESTAMO;
+
+  personas: Persona[] = [];
+  cortes: CorteCobro[] = [];
+  cargando = true;
+  enviando = false;
+  errorServidor: string | null = null;
+
+  private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
 
+  form = this.fb.group({
+    valorPrestado: [null as number | null, [Validators.required, importeConDosDecimales]],
+    concepto: ['', [Validators.required, Validators.maxLength(255)]],
+    responsable: [null as number | null, Validators.required],
+    direccionPrestamo: ['POR_COBRAR' as 'POR_COBRAR' | 'POR_PAGAR', Validators.required],
+    metodo: [null as MetodoPrestamo | null],
+    fechaPrestamo: [hoyIso(), Validators.required],
+    fechaCobro: ['', Validators.required],
+    corteId: [null as number | null],
+    estado: ['Pendiente', Validators.required],
+    esRecurrenteMensual: [false],
+    cuotaMensualAcordada: [null as number | null, importeOpcional],
+    comentarios: [''],
+  });
+
   constructor(
-    private fb: FormBuilder,
-    private apiService: ApiServicesService,
-    private modalService: ModalService,
-    private sharedListasService: SharedListasService
+    private prestamosService: PrestamosService,
+    private personasService: PersonasService,
+    private cortesService: CortesCobroService
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
-    this.loadPersonas();
+    forkJoin({
+      personas: this.personasService.getPersonas(),
+      cortes: this.cortesService.getCortes().pipe(catchError(() => of([] as CorteCobro[]))),
+    })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.cargando = false))
+      )
+      .subscribe({
+        next: ({ personas, cortes }) => {
+          this.personas = personas;
+          this.cortes = cortes;
+          this.form.controls.corteId.setValue(corteParaHoy(cortes, hoyIso())?.id ?? null);
+        },
+        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las personas.'))
+      });
+
+    // La cuota mensual solo se exige cuando el préstamo es recurrente.
+    this.form.controls.esRecurrenteMensual.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((recurrente) => {
+      const c = this.form.controls.cuotaMensualAcordada;
+      c.setValidators(recurrente ? [Validators.required, importeConDosDecimales] : [importeOpcional]);
+      if (!recurrente) c.setValue(null);
+      c.updateValueAndValidity();
+    });
   }
 
   ngOnDestroy(): void {
@@ -35,62 +92,65 @@ export class FormularioPrestamosComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  initForm(): void {
-    this.loanForm = this.fb.group({
-      valorPrestado: ['', [Validators.required, Validators.min(0)]],
-      concepto: ['', Validators.required],
-      fechaCobro: ['', Validators.required],
-      responsablePersona: ['', Validators.required],
-      estado: ['', Validators.required],
-      comentarios: ['']
-    });
+  /** Cuerpo exacto que se envía al backend (público para poder probarlo). */
+  construirCuerpo(): CrearPrestamo {
+    const v = this.form.getRawValue();
+    return {
+      valorPrestado: String(v.valorPrestado),
+      concepto: (v.concepto ?? '').trim(),
+      fechaCobro: v.fechaCobro as string,
+      responsable: Number(v.responsable),
+      estado: v.estado as string,
+      comentarios: (v.comentarios ?? '').trim(),
+      direccionPrestamo: v.direccionPrestamo ?? 'POR_COBRAR',
+      fechaPrestamo: v.fechaPrestamo as string,
+      ...(v.metodo ? { metodo: v.metodo } : {}),
+      ...(v.corteId !== null && v.corteId !== undefined ? { corteId: Number(v.corteId) } : {}),
+      ...(v.esRecurrenteMensual ? { esRecurrenteMensual: true, cuotaMensualAcordada: String(v.cuotaMensualAcordada) } : {}),
+    };
   }
 
-  loadPersonas(): void {
-    if (this.sharedListasService.listaPersonas.length > 0) {
-      this.personas = this.sharedListasService.listaPersonas;
+  enviar(): void {
+    this.errorServidor = null;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
-
-    this.apiService.get<Persona[]>('personas')
-      .pipe(takeUntil(this.destroy$))
+    this.enviando = true;
+    this.prestamosService
+      .crearPrestamo(this.construirCuerpo())
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.enviando = false))
+      )
       .subscribe({
-        next: (data) => {
-          this.personas = data || [];
-          this.sharedListasService.listaPersonas = this.personas;
+        next: () => {
+          this.reiniciar();
+          this.creado.emit();
         },
-        error: (err) => { void err; }
+        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudo registrar el préstamo.'))
       });
   }
 
-  onSubmit(): void {
-    if (this.loanForm.valid) {
-      const payload = {
-        ...this.loanForm.value,
-        responsable: Number(this.loanForm.get('responsablePersona')?.value)
-      };
-
-      this.apiService.post('prestamos', payload)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (_data) => {
-            this.modalService.close();
-            this.loanForm.reset();
-          },
-          error: (err) => { void err; }
-        });
-    } else {
-      this.markFormGroupTouched(this.loanForm);
-    }
+  private reiniciar(): void {
+    this.form.reset({
+      valorPrestado: null,
+      concepto: '',
+      responsable: null,
+      direccionPrestamo: 'POR_COBRAR',
+      metodo: null,
+      fechaPrestamo: hoyIso(),
+      fechaCobro: '',
+      corteId: corteParaHoy(this.cortes, hoyIso())?.id ?? null,
+      estado: 'Pendiente',
+      esRecurrenteMensual: false,
+      cuotaMensualAcordada: null,
+      comentarios: '',
+    });
   }
 
-  markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      }
-    });
+  campoInvalido(nombre: string): boolean {
+    const c = this.form.get(nombre);
+    return !!c && c.invalid && (c.touched || c.dirty);
   }
 }

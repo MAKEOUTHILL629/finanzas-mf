@@ -9,7 +9,7 @@ import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { finDePeriodo, hoyIso } from '../../shared/periodo.helper';
 import { METODOS_APORTE } from '../obligaciones.constants';
-import { importeConDosDecimales } from '../formulario-obligacion/formulario-obligacion.component';
+import { importeConDosDecimales } from '../../shared/validadores';
 
 /** El backend admite hasta 50 ítems por día. */
 export const MAX_ITEMS_APORTE = 50;

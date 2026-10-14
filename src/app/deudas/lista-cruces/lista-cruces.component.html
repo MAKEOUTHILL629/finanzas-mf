@@ -1,0 +1,69 @@
+<section class="erp-page" aria-labelledby="titulo-cruces">
+  <header class="erp-header">
+    <div>
+      <button type="button" class="erp-back" routerLink="/estado-cuenta">
+        <i class="material-icons" aria-hidden="true">arrow_back</i>
+        Estado de cuenta
+      </button>
+      <h1 id="titulo-cruces">Cruces de deuda</h1>
+      <p class="erp-subtitle">Cuando una persona paga lo que debe otra: la base de datos mueve la deuda de una a la otra automáticamente.</p>
+    </div>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--primary" (click)="nuevo()">
+        <i class="material-icons" aria-hidden="true">add</i>
+        Nuevo cruce
+      </button>
+    </div>
+  </header>
+
+  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando cruces">
+    <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3]"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && cruces.length === 0">
+    <i class="material-icons" aria-hidden="true">swap_horiz</i>
+    <h2>Aún no hay cruces de deuda</h2>
+    <p>Regístralos cuando alguien pague una deuda de otra persona (por ejemplo, quien cubre la cuota de otro).</p>
+    <button type="button" class="erp-btn erp-btn--primary" (click)="nuevo()">Nuevo cruce</button>
+  </div>
+
+  <div class="erp-card tabla-card" *ngIf="!cargando && !error && cruces.length > 0">
+    <div class="erp-table-wrap">
+      <table class="erp-table erp-table--stack">
+        <caption class="erp-sr-only">Cruces de deuda ({{ cruces.length }})</caption>
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Quien abona</th>
+            <th scope="col">Quien asume la deuda</th>
+            <th scope="col">Concepto</th>
+            <th scope="col">Aplicado a</th>
+            <th scope="col" class="num">Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of cruces; trackBy: trackById">
+            <td data-label="Fecha">{{ c.fecha_cruce | fechaCorta }}</td>
+            <td data-label="Quien abona">{{ nombre(c, 'abona') }}</td>
+            <td data-label="Quien asume">{{ nombre(c, 'asume') }}</td>
+            <td data-label="Concepto" class="concepto">{{ c.concepto }}<span class="erp-muted comentario" *ngIf="c.comentarios"> — {{ c.comentarios }}</span></td>
+            <td data-label="Aplicado a">{{ destino(c) }}</td>
+            <td data-label="Monto" class="num">{{ c.monto | moneda }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-cruce *ngIf="formularioAbierto" [personas]="personas" (creado)="onCreado()" (cancelar)="cerrarFormulario()"></app-formulario-cruce>
+</app-modal>

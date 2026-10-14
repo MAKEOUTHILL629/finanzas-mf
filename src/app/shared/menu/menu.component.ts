@@ -30,8 +30,15 @@ export class MenuComponent implements OnInit, OnDestroy {
     { label: 'Préstamos', icon: 'account_balance_wallet', route: '/prestamos' },
     { label: 'Pagos Mes', icon: 'calendar_today', route: '/pagos-mes' },
     { label: 'Pagos Persona', icon: 'people', route: '/pagos-mes-personas' },
+    { label: 'Cortes de cobro', icon: 'event_repeat', route: '/cortes-cobro', section: 'Cobros' },
+    { label: 'Tarjetas', icon: 'style', route: '/tarjetas', section: 'Pagos' },
     { label: 'Extractos', icon: 'receipt_long', route: '/extractos', section: 'Pagos' },
     { label: 'Obligaciones', icon: 'home_work', route: '/obligaciones', section: 'Pagos' },
+    { label: 'Cuentas', icon: 'account_balance', route: '/cuentas', section: 'Dinero' },
+    { label: 'Transacciones', icon: 'swap_horiz', route: '/transacciones', section: 'Dinero' },
+    { label: 'Correos', icon: 'mark_email_unread', route: '/correos', section: 'Dinero' },
+    { label: 'Flujo de caja', icon: 'query_stats', route: '/flujo-caja', section: 'Análisis' },
+    { label: 'Estado de cuenta', icon: 'groups', route: '/estado-cuenta', section: 'Análisis' },
   ];
 
   /** ¿Hay que pintar el encabezado de sección antes de este ítem? */

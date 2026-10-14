@@ -19,6 +19,35 @@ El frontend consume la API NestJS (`finanzas/backend-nestjs`, puerto 9000):
 4. Las fechas de calendario llegan como epoch-ms a las 00:00 UTC: usa `formatDateOnly()` / el pipe `formatoFecha`
    (`shared/date-only.helper.ts`) y no `formatDate(..., 'en-US')` a secas, que mostraría el día anterior en UTC-5.
 
+## Pantallas del ERP
+
+Todas cuelgan de `AppRoutingModule` (guard de sesión) y del menú lateral (`shared/menu`, por secciones). Cada una tiene estados
+de carga, vacío y error con reintento.
+
+| Ruta | Qué hace |
+|---|---|
+| `/prestamos`, `/prestamos/:id` | Totales, filtros, detalle con aprobaciones (aprobar/rechazar), edición por diferencias, marcar como pagado y anular |
+| `/cortes-cobro` | Cortes de cobro: activo, futuros y pasados, con estadísticas por corte |
+| `/obligaciones`, `/obligaciones/:id` | Obligaciones del mes (resumen, días, aportes y cruces) |
+| `/extractos` | Extracto por tarjeta y periodo; **Pagar extracto** (cuenta + fecha, `sp_pagar_extracto_tarjeta`) |
+| `/tarjetas` | Edición de día de corte, límite de pago, cupo, tasas y descripción (últimos 4) |
+| `/cuentas`, `/categorias` | Cuentas financieras (saldo solo lectura: lo mueve la BD) y categorías, con sugeridas opcionales |
+| `/transacciones` | Libro diario por periodo, alta, edición y anulación |
+| `/correos` | Bandeja de correos del banco por estado y **conciliación** (confirmar, descartar, cuotas, responsables) |
+| `/flujo-caja` | Flujo de caja libre estimado del mes con dona y barras (ng2-charts) |
+| `/estado-cuenta`, `/cruces-deuda` | Lo que cada persona debe por mes, extracto por persona, abonos y cruces de deuda |
+
+Convenciones:
+
+- **Dinero** solo con el pipe `moneda` (`$1,234.56`, negativos entre paréntesis) y números tabulares; nunca `number` con operaciones
+  financieras en el cliente más allá de sumas de presentación.
+- **Fechas** de calendario: `formatoFecha` (largo) y `fechaCorta` (`15 oct 2026`, para tablas) leen epoch-ms / ISO medianoche en UTC.
+- **Estilos**: tokens del sistema de diseño en `src/styles.css` y clases globales `erp-*` (páginas, tarjetas, tablas apilables en móvil,
+  formularios, alertas, skeletons) en `src/styles-erp.css`. Tablas anchas: `erp-table--compact`, y `erp-table--sticky` fija la primera columna.
+- **Formularios** reactivos con `inject(FormBuilder)`; los modales usan `ModalService` + `<app-modal>` y destruyen el formulario al cerrar.
+- **Pruebas** (`ng test`, Edge headless: `CHROME_BIN=msedge`): `src/app/testing/erp-testing.ts` ofrece los helpers de `HttpTestingController`
+  y el módulo de pruebas; `render-smoke.spec.ts` monta todas las pantallas nuevas. La lógica de cada pantalla vive en funciones puras con su spec.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.

@@ -1,0 +1,8 @@
+.enlace { color: var(--text-link); font-weight: var(--weight-semibold); }
+
+.resultado { display: flex; flex-direction: column; gap: 6px; }
+.resultado-valor { font-size: var(--text-hero); font-weight: var(--weight-bold); line-height: 1.05; overflow-wrap: anywhere; }
+.formula { font-size: var(--text-caption); }
+
+.graficos { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.grafico { position: relative; height: 300px; }

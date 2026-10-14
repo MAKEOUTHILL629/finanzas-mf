@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { PagarExtracto, Periodo, ResultadoPagoExtracto, ResumenMensualTarjeta } from '../modelos/erp';
+import { ActualizarTarjeta, PagarExtracto, Periodo, ResultadoPagoExtracto, ResumenMensualTarjeta } from '../modelos/erp';
 import { Tarjeta } from '../modelos/tarjeta';
 import { ApiServicesService } from './api-services.service';
 import { limpiarParams } from './http-params.util';
@@ -14,6 +14,14 @@ export class TarjetasService {
 
   getTarjetas(): Observable<Tarjeta[]> {
     return this.api.get<Tarjeta[]>(this.url);
+  }
+
+  /**
+   * Edita la configuración de la tarjeta (día de corte, límite de pago, cupo, tasas…). Cambiar `diaCorte` no recalcula el
+   * `periodo_facturacion` de las cuotas ya guardadas: aplica a las cuotas que se creen o recalculen desde ahora.
+   */
+  actualizarTarjeta(id: number, cambios: ActualizarTarjeta): Observable<Tarjeta> {
+    return this.api.put<Tarjeta>(`${this.url}/${id}`, cambios);
   }
 
   /**

@@ -1,26 +1,15 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { CrearObligacionMes } from '../../modelos/erp';
 import { Persona } from '../../modelos/persona';
 import { ObligacionesMesService } from '../../services/obligaciones-mes.service';
 import { PersonasService } from '../../services/personas.service';
-import { esImporteValido } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
+import { fechasCoherentes, importeConDosDecimales } from '../../shared/validadores';
 import { finDePeriodo, periodoActual } from '../../shared/periodo.helper';
 import { TIPOS_OBLIGACION } from '../obligaciones.constants';
-
-/** `fechaFinal`, si se indica, no puede ser anterior a `fechaInicio`. */
-export function fechasCoherentes(grupo: AbstractControl): ValidationErrors | null {
-  const inicio = grupo.get('fechaInicio')?.value as string;
-  const fin = grupo.get('fechaFinal')?.value as string;
-  return inicio && fin && fin < inicio ? { fechasInvertidas: true } : null;
-}
-
-export function importeConDosDecimales(control: AbstractControl): ValidationErrors | null {
-  return esImporteValido(control.value) ? null : { importe: true };
-}
 
 @Component({
   selector: 'app-formulario-obligacion',
@@ -51,7 +40,7 @@ export class FormularioObligacionComponent implements OnInit, OnDestroy {
       fechaInicio: [`${this.periodoInicial}-01`, Validators.required],
       fechaFinal: [finDePeriodo(this.periodoInicial)],
     },
-    { validators: fechasCoherentes }
+    { validators: fechasCoherentes('fechaInicio', 'fechaFinal') }
   );
 
   constructor(

@@ -145,7 +145,9 @@ export interface CrearTransaccion {
   notas?: string;
 }
 
-export type ActualizarTransaccion = Partial<Omit<CrearTransaccion, 'monedaOriginal' | 'origenRegistro'>> & {
+export type ActualizarTransaccion = Partial<
+  Omit<CrearTransaccion, 'monedaOriginal' | 'origenRegistro' | 'cuentaOrigenId' | 'cuentaDestinoId' | 'tarjetaPagadaId' | 'categoriaId'>
+> & {
   cuentaOrigenId?: number | null;
   cuentaDestinoId?: number | null;
   tarjetaPagadaId?: number | null;
@@ -279,7 +281,9 @@ export interface CrearPlantillaRecurrente {
   responsables?: ResponsableRecurrenteRequest[];
 }
 
-export type ActualizarPlantillaRecurrente = Partial<Omit<CrearPlantillaRecurrente, 'moneda'>> & {
+export type ActualizarPlantillaRecurrente = Partial<
+  Omit<CrearPlantillaRecurrente, 'moneda' | 'categoriaId' | 'cuentaDebitoDefaultId' | 'tarjetaCreditoDefaultId' | 'prestamoAsociadoId'>
+> & {
   categoriaId?: number | null;
   cuentaDebitoDefaultId?: number | null;
   tarjetaCreditoDefaultId?: number | null;
@@ -431,6 +435,25 @@ export interface ResumenMensualTarjeta {
   todas_trm_confirmadas: boolean;
   total_responsabilidad_terceros: number;
   total_propio: number;
+}
+
+/** `PUT /api/tarjetas/:id`: solo se envía lo que cambia. */
+export interface ActualizarTarjeta {
+  franquicia?: string;
+  /** Escribir aquí los últimos 4 dígitos (p. ej. `Oro *1927`) permite identificar la tarjeta en los correos del banco. */
+  descripcion?: string;
+  /** 1-31 */
+  diaCorte?: number;
+  /** 1-31 */
+  diaLimitePago?: number;
+  cupoTotal?: number | string;
+  permiteDolares?: boolean;
+  /** % mensual, máximo 4 decimales */
+  tasaInteresCompra?: number | string;
+  tasaInteresAvance?: number | string;
+  cuotaManejo?: number | string;
+  urlInfo?: string;
+  extractTasas?: boolean;
 }
 
 export interface PagarExtracto {

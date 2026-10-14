@@ -1,0 +1,22 @@
+.tipos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-1); margin: 0; padding: 0; border: none; min-width: 0; }
+.tipos legend { padding: 0; margin-bottom: var(--space-1); }
+.tipos:disabled { opacity: 0.6; }
+
+.tipo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out), border-color var(--duration-fast) var(--ease-in-out);
+}
+.tipo:hover { background: var(--bg-input-hover); }
+.tipo:focus-within { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.tipo--activo { background: var(--brand-blue-light); border-color: var(--brand-blue); color: var(--text-link); font-weight: var(--weight-semibold); }
+.tipo .material-icons { font-size: 20px; }

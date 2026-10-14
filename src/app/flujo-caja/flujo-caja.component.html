@@ -1,0 +1,88 @@
+<section class="erp-page" aria-labelledby="titulo-flujo">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-flujo">Flujo de caja</h1>
+      <p class="erp-subtitle">Lo que entra, lo que sale y lo que te queda libre en el mes, descontando lo que te devuelven los demás.</p>
+    </div>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
+        <i class="material-icons" aria-hidden="true">today</i>
+        Mes actual
+      </button>
+    </div>
+  </header>
+
+  <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
+    <div class="erp-field">
+      <label class="erp-label" for="fc-periodo">Periodo</label>
+      <div class="erp-month-picker">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <input id="fc-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+      </div>
+      <span class="erp-field-hint">{{ nombrePeriodo(periodo) }}</span>
+    </div>
+  </div>
+
+  <div class="erp-grid erp-grid--stats" *ngIf="cargando" aria-busy="true" aria-label="Calculando flujo de caja">
+    <div class="erp-skeleton" style="height: 120px"></div>
+    <div class="erp-skeleton" style="height: 120px"></div>
+    <div class="erp-skeleton" style="height: 120px"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!cargando && !error && flujo as f">
+    <div class="erp-card erp-empty" *ngIf="vacio">
+      <i class="material-icons" aria-hidden="true">query_stats</i>
+      <h2>No hay movimientos en {{ nombrePeriodo(periodo) }}</h2>
+      <p>El flujo se calcula con tus transacciones confirmadas, las cuotas de tarjetas del periodo, los gastos recurrentes y lo que te deben los demás. Prueba con otro mes.</p>
+    </div>
+
+    <ng-container *ngIf="!vacio">
+      <!-- Resultado -->
+      <div class="erp-card resultado" [class.resultado--negativo]="f.flujo_caja_libre_estimado < 0">
+        <span class="erp-overline">Flujo de caja libre estimado</span>
+        <span class="resultado-valor erp-num" [class.erp-gain]="f.flujo_caja_libre_estimado > 0" [class.erp-loss]="f.flujo_caja_libre_estimado < 0">{{ f.flujo_caja_libre_estimado | moneda }}</span>
+        <span class="erp-muted formula">Ingresos − (egresos + tarjetas + recurrentes − lo que te devuelven terceros)</span>
+      </div>
+
+      <div class="erp-alert erp-alert--info" *ngIf="f.total_ingresos === 0">
+        <i class="material-icons" aria-hidden="true">info</i>
+        <span>No hay ingresos confirmados en este periodo, por eso el flujo sale negativo. Registra tus ingresos en <a routerLink="/transacciones" class="enlace">Transacciones</a>.</span>
+      </div>
+
+      <div class="erp-grid erp-grid--stats">
+        <div class="erp-card erp-stat"><span class="erp-overline">Ingresos</span><span class="erp-stat-value erp-num erp-gain">{{ f.total_ingresos | moneda }}</span></div>
+        <div class="erp-card erp-stat"><span class="erp-overline">Egresos directos</span><span class="erp-stat-value erp-num">{{ f.total_egresos_directos | moneda }}</span></div>
+        <div class="erp-card erp-stat"><span class="erp-overline">Cuotas de tarjetas</span><span class="erp-stat-value erp-num">{{ f.total_tarjetas | moneda }}</span></div>
+        <div class="erp-card erp-stat"><span class="erp-overline">Recurrentes esperados</span><span class="erp-stat-value erp-num">{{ f.total_esperado_recurrentes | moneda }}</span></div>
+        <div class="erp-card erp-stat"><span class="erp-overline">Desembolso bruto</span><span class="erp-stat-value erp-num">{{ f.desembolso_bruto_mes | moneda }}</span></div>
+        <div class="erp-card erp-stat">
+          <span class="erp-overline">Te devuelven</span>
+          <span class="erp-stat-value erp-num">{{ f.total_por_cobrar_terceros | moneda }}</span>
+          <span class="erp-stat-hint">Parte de terceros</span>
+        </div>
+        <div class="erp-card erp-stat"><span class="erp-overline">Gasto neto tuyo</span><span class="erp-stat-value erp-num">{{ f.gasto_neto_real_tuyo | moneda }}</span></div>
+      </div>
+
+      <div class="graficos">
+        <div class="erp-card" *ngIf="piezas.length > 0">
+          <h2 class="erp-card-title">¿En qué se va el desembolso?</h2>
+          <div class="grafico"><canvas baseChart [data]="donaData" [options]="donaOpciones" type="doughnut" role="img" aria-label="Distribución del desembolso del mes"></canvas></div>
+          <ul class="erp-sr-only"><li *ngFor="let p of piezas">{{ p.etiqueta }}: {{ p.valor | moneda }}</li></ul>
+        </div>
+        <div class="erp-card">
+          <h2 class="erp-card-title">Entra y sale</h2>
+          <div class="grafico"><canvas baseChart [data]="barrasData" [options]="barrasOpciones" type="bar" role="img" aria-label="Comparación de ingresos, desembolso, lo que te devuelven y gasto neto"></canvas></div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+</section>

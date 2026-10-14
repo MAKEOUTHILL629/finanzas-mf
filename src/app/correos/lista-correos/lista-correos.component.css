@@ -1,0 +1,33 @@
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out), color var(--duration-fast) var(--ease-in-out);
+}
+.chip:hover { background: var(--bg-input-hover); color: var(--text-primary); }
+.chip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.chip--activo { background: var(--brand-blue-light); border-color: var(--brand-blue); color: var(--text-link); font-weight: var(--weight-semibold); }
+.chip-n { font-size: var(--text-caption); opacity: 0.8; }
+
+.aviso-texto { margin: 4px 0 var(--space-1); }
+
+.correo { display: flex; flex-direction: column; gap: var(--space-2); }
+.correo-cabecera { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-1); }
+.correo-titulo { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.correo-titulo h2 { margin: 0; font-size: var(--text-h3); font-weight: var(--weight-semibold); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.correo-titulo .erp-muted { font-size: var(--text-caption); }
+.correo-monto { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.correo-monto .erp-stat-value { font-size: var(--text-h2); }
+.correo-motivo { margin: 0; font-size: var(--text-body-sm); line-height: 1.5; }
+.correo-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); margin-top: auto; }
+.correo-acciones a { text-decoration: none; }

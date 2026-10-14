@@ -1,0 +1,97 @@
+<section class="erp-page" aria-labelledby="titulo-correos">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-correos">Correos del banco</h1>
+      <p class="erp-subtitle">Los correos de Bancolombia llegan solos y se convierten en movimientos. Aquí revisas los que necesitan tu decisión.</p>
+    </div>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--ghost" (click)="cargar()" [disabled]="cargando">
+        <i class="material-icons" aria-hidden="true">refresh</i>
+        Actualizar
+      </button>
+    </div>
+  </header>
+
+  <div class="chips" role="tablist" aria-label="Estado de los correos" *ngIf="!error">
+    <button type="button" class="chip" role="tab" *ngFor="let p of pestanas" [class.chip--activo]="pestana === p.valor"
+            [attr.aria-selected]="pestana === p.valor" (click)="pestana = p.valor">
+      {{ p.etiqueta }} <span class="chip-n erp-num">{{ cantidad(p.valor) }}</span>
+    </button>
+  </div>
+
+  <!-- Confirmación de descarte -->
+  <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="descartar-titulo" *ngIf="confirmandoDescarte">
+    <i class="material-icons" aria-hidden="true">warning</i>
+    <div>
+      <strong id="descartar-titulo">¿Descartar «{{ confirmandoDescarte.asunto }}»?</strong>
+      <p class="aviso-texto">{{ efectoDeDescartar(confirmandoDescarte) }}</p>
+      <div class="erp-actions">
+        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarDescarte()" [disabled]="trabajando">{{ trabajando ? 'Descartando…' : 'Sí, descartar' }}</button>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarDescarte()" [disabled]="trabajando">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando correos">
+    <div class="erp-skeleton" style="height: 170px"></div>
+    <div class="erp-skeleton" style="height: 170px"></div>
+    <div class="erp-skeleton" style="height: 170px"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && visibles.length === 0">
+    <i class="material-icons" aria-hidden="true">{{ pestana === 'PENDIENTE' ? 'mark_email_read' : 'inbox' }}</i>
+    <h2>{{ pestana === 'PENDIENTE' ? 'No hay correos por revisar' : 'No hay correos en esta vista' }}</h2>
+    <p>{{ pestana === 'PENDIENTE' ? 'Todo lo que llegó se registró solo o ya lo conciliaste.' : 'Cuando lleguen correos con este estado aparecerán aquí.' }}</p>
+  </div>
+
+  <div class="erp-grid" *ngIf="!cargando && !error && visibles.length > 0">
+    <article class="erp-card correo" *ngFor="let n of visibles; trackBy: trackById" [attr.aria-label]="n.asunto">
+      <header class="correo-cabecera">
+        <div class="correo-titulo">
+          <h2>{{ vista(n).comercio || n.asunto }}</h2>
+          <span class="erp-muted">{{ n.fecha_correo | date: 'dd/MM/yyyy HH:mm' }}<ng-container *ngIf="vista(n).tipo"> · {{ vista(n).tipo }}<ng-container *ngIf="vista(n).metodo"> · {{ vista(n).metodo }}</ng-container></ng-container></span>
+        </div>
+        <span class="erp-badge erp-badge--{{ claseEstado(n.estado_procesamiento) }}">{{ etiquetaEstado(n.estado_procesamiento) }}</span>
+      </header>
+
+      <div class="correo-monto">
+        <span class="erp-stat-value erp-num">{{ vista(n).monto !== null ? (vista(n).monto | moneda) : 'Monto no leído' }}</span>
+        <span class="erp-muted" *ngIf="vista(n).moneda !== 'COP' && vista(n).monto !== null">{{ vista(n).moneda }}</span>
+        <span class="erp-badge" *ngIf="vista(n).ultimos4"><i class="material-icons" aria-hidden="true">{{ vista(n).instrumento === 'TC' ? 'credit_card' : 'account_balance' }}</i><span class="erp-mono">••{{ vista(n).ultimos4 }}</span></span>
+      </div>
+
+      <p class="correo-motivo erp-muted" *ngIf="n.estado_procesamiento === 'PENDIENTE' && explicar(vista(n).motivo) as m">{{ m }}</p>
+      <p class="correo-motivo erp-muted" *ngIf="n.estado_procesamiento === 'PENDIENTE' && !vista(n).motivo && (n.compra_credito_generada_id || n.transaccion_generada_id)">
+        {{ n.compra_credito_generada_id ? 'Se importó como una compra a 1 cuota: asigna las cuotas y los responsables.' : 'Se creó una transacción pendiente: confírmala para ajustar el saldo.' }}
+      </p>
+
+      <footer class="correo-acciones">
+        <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="n.compra_credito_generada_id" [routerLink]="['/compra-credito-detalle', n.compra_credito_generada_id]">
+          <i class="material-icons" aria-hidden="true">shopping_cart</i>Ver compra
+        </a>
+        <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="n.transaccion_generada_id" routerLink="/transacciones">
+          <i class="material-icons" aria-hidden="true">receipt_long</i>Ver transacciones
+        </a>
+        <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="vista(n).linkCorreo" [href]="vista(n).linkCorreo" target="_blank" rel="noopener noreferrer">
+          <i class="material-icons" aria-hidden="true">open_in_new</i>Abrir correo
+        </a>
+        <ng-container *ngIf="n.estado_procesamiento === 'PENDIENTE'">
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">delete_outline</i>Descartar</button>
+          <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirConciliar(n)"><i class="material-icons" aria-hidden="true">task_alt</i>Conciliar</button>
+        </ng-container>
+      </footer>
+    </article>
+  </div>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-conciliar *ngIf="conciliando" [notificacion]="conciliando" (conciliada)="onConciliada($event)" (cancelar)="cerrarConciliar()"></app-formulario-conciliar>
+</app-modal>

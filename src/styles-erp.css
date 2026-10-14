@@ -85,7 +85,7 @@
   gap: var(--space-2);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
 }
-.erp-grid--stats { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.erp-grid--stats { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
 
 /* ── Números financieros ── */
 .erp-num {
@@ -102,10 +102,11 @@
   color: var(--text-tertiary);
 }
 .erp-stat-value {
-  font-size: var(--text-h2);
+  font-size: clamp(1.25rem, 0.9rem + 1vw, 1.65rem);
   font-weight: var(--weight-bold);
   line-height: 1.1;
-  overflow-wrap: anywhere;
+  /* una cifra monetaria nunca se parte en dos líneas (el tamaño se ajusta al ancho de la ventana) */
+  white-space: nowrap;
 }
 .erp-stat-hint { font-size: var(--text-caption); color: var(--text-secondary); }
 .erp-gain { color: var(--green-success); }
@@ -199,6 +200,23 @@
 .erp-field-hint { margin: 0; font-size: var(--text-caption); color: var(--text-tertiary); }
 .erp-form-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; margin-top: var(--space-1); }
 
+/* ── Casilla con texto ── */
+.erp-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-body-sm);
+  line-height: 1.45;
+  cursor: pointer;
+}
+.erp-check input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--brand-blue); cursor: pointer; }
+
+/* ── Sección desplegable ── */
+.erp-details { border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); }
+.erp-details > summary { cursor: pointer; font-size: var(--text-body-sm); font-weight: var(--weight-semibold); color: var(--text-secondary); padding: 6px 0; }
+.erp-details > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
+.erp-details[open] > summary { margin-bottom: var(--space-1); }
+
 /* ── Barra de herramientas / filtros ── */
 .erp-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-2); }
 .erp-toolbar .erp-field { min-width: 160px; }
@@ -267,6 +285,57 @@
 .erp-table th.num { text-align: right; }
 .erp-table tfoot td { font-weight: var(--weight-bold); border-bottom: none; }
 .erp-row-toggle { cursor: pointer; }
+
+/* Tabla compacta (muchas columnas): menos relleno, sin saltos de línea salvo en las celdas `.wrap`. */
+.erp-table--compact th, .erp-table--compact td { padding: 10px 10px; }
+.erp-table--compact td { white-space: nowrap; }
+.erp-table--compact td.wrap, .erp-table--compact th.wrap { white-space: normal; min-width: 140px; }
+.erp-table--compact .sub { display: block; font-size: var(--text-caption); color: var(--text-secondary); }
+
+/* Primera columna fija al desplazar horizontalmente (nombre de la persona, concepto…). */
+.erp-table--sticky th:first-child, .erp-table--sticky td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-surface-solid);
+  box-shadow: 1px 0 0 var(--table-border);
+}
+.erp-table--sticky thead th:first-child { z-index: 2; background: var(--bg-surface-solid); }
+
+/* En pantallas angostas cada fila se convierte en una tarjeta (usa `data-label` en cada <td>). */
+@media (max-width: 720px) {
+  .erp-table--stack thead { display: none; }
+  .erp-table--stack.erp-table--compact td, .erp-table--stack.erp-table--compact td.wrap { white-space: normal; min-width: 0; }
+  .erp-table--sticky th:first-child, .erp-table--sticky td:first-child { position: static; background: transparent; box-shadow: none; }
+  .erp-table--stack, .erp-table--stack tbody, .erp-table--stack tfoot, .erp-table--stack tr, .erp-table--stack td { display: block; width: 100%; box-sizing: border-box; }
+  .erp-table--stack tr {
+    margin-bottom: var(--space-1);
+    padding: var(--space-1) 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-input);
+  }
+  .erp-table--stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 6px var(--space-2);
+    border-bottom: none;
+    text-align: right;
+  }
+  .erp-table--stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: var(--text-caption);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: left;
+  }
+  .erp-table--stack td.num { text-align: right; }
+}
 
 /* ── Avisos en línea ── */
 .erp-alert {

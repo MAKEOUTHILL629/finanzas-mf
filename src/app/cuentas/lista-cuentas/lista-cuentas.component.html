@@ -1,0 +1,96 @@
+<section class="erp-page" aria-labelledby="titulo-cuentas">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-cuentas">Cuentas</h1>
+      <p class="erp-subtitle">Tus cuentas bancarias, billeteras y efectivo. El saldo lo mueven las transacciones confirmadas.</p>
+    </div>
+    <div class="erp-actions">
+      <a class="erp-btn erp-btn--ghost" routerLink="/categorias">
+        <i class="material-icons" aria-hidden="true">category</i>
+        Categorías
+      </a>
+      <button type="button" class="erp-btn erp-btn--primary" (click)="nueva()">
+        <i class="material-icons" aria-hidden="true">add</i>
+        Nueva cuenta
+      </button>
+    </div>
+  </header>
+
+  <!-- Saldo total por moneda -->
+  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && saldos.length > 0" aria-label="Saldo total">
+    <div class="erp-card erp-stat" *ngFor="let s of saldos">
+      <span class="erp-overline">Saldo total {{ s.moneda }}</span>
+      <span class="erp-stat-value erp-num" [class.erp-loss]="s.saldo < 0">{{ s.saldo | moneda }}</span>
+      <span class="erp-stat-hint">{{ s.cuentas }} {{ s.cuentas === 1 ? 'cuenta activa' : 'cuentas activas' }}</span>
+    </div>
+  </div>
+
+  <label class="erp-check" *ngIf="!cargando && !error && inactivas > 0">
+    <input type="checkbox" [(ngModel)]="mostrarInactivas" />
+    <span>Mostrar {{ inactivas }} {{ inactivas === 1 ? 'cuenta inactiva' : 'cuentas inactivas' }}</span>
+  </label>
+
+  <!-- Confirmación de borrado -->
+  <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="borrar-cuenta-titulo" *ngIf="confirmandoBorrado">
+    <i class="material-icons" aria-hidden="true">warning</i>
+    <div>
+      <strong id="borrar-cuenta-titulo">¿Eliminar la cuenta «{{ confirmandoBorrado.nombre }}»?</strong>
+      <p class="aviso-texto">Solo se puede eliminar si nunca tuvo transacciones; si las tiene, desactívala.</p>
+      <div class="erp-actions">
+        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarBorrado()" [disabled]="trabajando">{{ trabajando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarBorrado()" [disabled]="trabajando">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando cuentas">
+    <div class="erp-skeleton" style="height: 180px"></div>
+    <div class="erp-skeleton" style="height: 180px"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && visibles.length === 0">
+    <i class="material-icons" aria-hidden="true">account_balance</i>
+    <h2>Aún no tienes cuentas</h2>
+    <p>Crea tu primera cuenta para registrar movimientos y pagar los extractos de tus tarjetas.</p>
+    <button type="button" class="erp-btn erp-btn--primary" (click)="nueva()">Nueva cuenta</button>
+  </div>
+
+  <div class="erp-grid" *ngIf="!cargando && !error && visibles.length > 0">
+    <article class="erp-card cuenta" *ngFor="let c of visibles; trackBy: trackById" [class.cuenta--inactiva]="c.is_active === false" [attr.aria-label]="'Cuenta ' + c.nombre">
+      <header class="cuenta-cabecera">
+        <span class="cuenta-icono" aria-hidden="true"><i class="material-icons">{{ iconoTipo(c.tipo_cuenta) }}</i></span>
+        <div class="cuenta-titulo">
+          <h2>{{ c.nombre }}</h2>
+          <span class="erp-muted">{{ etiquetaTipo(c.tipo_cuenta) }}<ng-container *ngIf="c.banco_entidad"> · {{ c.banco_entidad }}</ng-container></span>
+        </div>
+        <span class="erp-badge" *ngIf="c.is_active === false">Inactiva</span>
+      </header>
+
+      <div class="cuenta-saldo">
+        <span class="erp-overline">Saldo</span>
+        <span class="erp-stat-value erp-num" [class.erp-loss]="c.saldo_actual < 0">{{ c.saldo_actual | moneda }}</span>
+        <span class="erp-stat-hint">{{ c.moneda }}<ng-container *ngIf="c.ultimos_4_digitos"> · <span class="erp-mono">{{ enmascarar(c.ultimos_4_digitos) }}</span></ng-container></span>
+      </div>
+
+      <footer class="cuenta-acciones">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="editar(c)"><i class="material-icons" aria-hidden="true">edit</i>Editar</button>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="alternarActiva(c)" [disabled]="trabajando">
+          <i class="material-icons" aria-hidden="true">{{ c.is_active === false ? 'toggle_off' : 'toggle_on' }}</i>{{ c.is_active === false ? 'Activar' : 'Desactivar' }}
+        </button>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirBorrado(c)"><i class="material-icons" aria-hidden="true">delete_outline</i>Eliminar</button>
+      </footer>
+    </article>
+  </div>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-cuenta *ngIf="formularioAbierto" [cuenta]="cuentaEditando" (guardada)="onGuardada()" (cancelar)="cerrarFormulario()"></app-formulario-cuenta>
+</app-modal>

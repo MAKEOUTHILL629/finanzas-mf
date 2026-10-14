@@ -1,0 +1,27 @@
+.tabla-card { padding: var(--space-1) var(--space-2) var(--space-2); }
+
+.fila { cursor: pointer; }
+.fila--activa { background: var(--brand-blue-light); }
+.saldo { font-weight: var(--weight-bold); }
+.acciones { text-align: right; white-space: nowrap; }
+
+.persona { display: inline-flex; align-items: center; gap: var(--space-1); }
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: #fff;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.02em;
+}
+.persona-nombre { padding: 0; border: none; background: none; color: var(--text-primary); font: inherit; font-weight: var(--weight-semibold); cursor: pointer; text-align: left; }
+.persona-nombre:hover { color: var(--text-link); text-decoration: underline; }
+.persona-nombre:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
+
+.extracto-cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1); margin-bottom: var(--space-2); }
+.extracto-cabecera .erp-card-title { margin: 0; }

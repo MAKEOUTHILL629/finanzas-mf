@@ -1,0 +1,72 @@
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-editar-prestamo">
+  <div>
+    <h2 class="erp-form-title" id="titulo-editar-prestamo">Editar préstamo</h2>
+    <p class="erp-subtitle" *ngIf="prestamo">{{ prestamo.concepto }}</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <span>{{ errorServidor }}</span>
+  </div>
+  <div class="erp-alert erp-alert--info" role="status" *ngIf="sinCambios">
+    <i class="material-icons" aria-hidden="true">info</i>
+    <span>No hay cambios para guardar.</span>
+  </div>
+
+  <div class="erp-form-grid">
+    <div class="erp-field">
+      <label class="erp-label" for="pe-estado">Estado</label>
+      <select id="pe-estado" class="erp-select" formControlName="estado">
+        <option value="Pendiente">Pendiente</option>
+        <option value="Pagado">Pagado</option>
+        <option value="Anulado">Anulado</option>
+      </select>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pe-saldo">Saldo pendiente</label>
+      <input id="pe-saldo" class="erp-input" type="number" inputmode="decimal" min="0" step="0.01" formControlName="saldoPendiente"
+             [attr.aria-invalid]="campoInvalido('saldoPendiente')" />
+      <p class="erp-field-error" *ngIf="campoInvalido('saldoPendiente')">Indica un valor de 0 o más con máximo 2 decimales.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pe-metodo">Método</label>
+      <select id="pe-metodo" class="erp-select" formControlName="metodo">
+        <option [ngValue]="null" [disabled]="!!prestamo.metodo">Sin especificar</option>
+        <option *ngFor="let m of metodos" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pe-corte">Corte de cobro</label>
+      <select id="pe-corte" class="erp-select" formControlName="corteId">
+        <option [ngValue]="null" [disabled]="prestamo.corteId !== null">Sin corte</option>
+        <option *ngFor="let c of cortes" [ngValue]="c.id">{{ c.concepto }}</option>
+      </select>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="pe-cobro">Fecha de cobro<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="pe-cobro" class="erp-input" type="date" formControlName="fechaCobro" [attr.aria-invalid]="campoInvalido('fechaCobro')" />
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="pe-comentarios">Comentarios</label>
+      <textarea id="pe-comentarios" class="erp-textarea" formControlName="comentarios" rows="3"></textarea>
+    </div>
+  </div>
+
+  <div class="erp-alert erp-alert--warning" *ngIf="pasaAPagado">
+    <i class="material-icons" aria-hidden="true">info</i>
+    <span>
+      Al pasar a «Pagado» la base de datos registra el abono por el saldo pendiente en el estado de cuenta de la persona
+      y el saldo queda en $0.00.
+    </span>
+  </div>
+
+  <div class="erp-form-actions">
+    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : 'Guardar cambios' }}</button>
+  </div>
+</form>

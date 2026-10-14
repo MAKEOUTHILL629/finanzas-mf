@@ -1,0 +1,71 @@
+<section class="erp-page" aria-labelledby="titulo-tarjetas">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-tarjetas">Tarjetas</h1>
+      <p class="erp-subtitle">Configura el corte, el límite de pago, el cupo y las tasas de cada tarjeta.</p>
+    </div>
+    <div class="erp-actions">
+      <a class="erp-btn erp-btn--secondary" routerLink="/extractos">
+        <i class="material-icons" aria-hidden="true">receipt_long</i>
+        Ver extractos
+      </a>
+    </div>
+  </header>
+
+  <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando tarjetas">
+    <div class="erp-skeleton" style="height: 240px"></div>
+    <div class="erp-skeleton" style="height: 240px"></div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && tarjetas.length === 0">
+    <i class="material-icons" aria-hidden="true">credit_card_off</i>
+    <h2>Aún no hay tarjetas</h2>
+    <p>Las tarjetas se registran en la base de datos; cuando existan aparecerán aquí para configurarlas.</p>
+  </div>
+
+  <div class="erp-grid" *ngIf="!cargando && !error && tarjetas.length > 0">
+    <article class="erp-card tarjeta" *ngFor="let t of tarjetas; trackBy: trackById" [attr.aria-label]="nombre(t)">
+      <header class="tarjeta-cabecera">
+        <span class="tarjeta-icono" aria-hidden="true"><i class="material-icons">credit_card</i></span>
+        <div class="tarjeta-titulo">
+          <h2>{{ nombre(t) }}</h2>
+          <span class="erp-muted" *ngIf="t.ultimaActualizacionTasas">Tasas actualizadas {{ t.ultimaActualizacionTasas | date: 'dd/MM/yyyy' }}</span>
+        </div>
+      </header>
+
+      <div class="erp-alert erp-alert--warning" *ngIf="pendientes(t).length > 0">
+        <i class="material-icons" aria-hidden="true">tune</i>
+        <span>Falta configurar: {{ pendientes(t).join(', ') }}.</span>
+      </div>
+
+      <dl class="cifras">
+        <div><dt class="erp-overline">Día de corte</dt><dd class="erp-num">{{ t.diaCorte ?? '—' }}</dd></div>
+        <div><dt class="erp-overline">Límite de pago</dt><dd class="erp-num">{{ t.diaLimitePago ?? '—' }}</dd></div>
+        <div><dt class="erp-overline">Cupo total</dt><dd class="erp-num">{{ t.cupoTotal | moneda }}</dd></div>
+        <div><dt class="erp-overline">Tasa compras</dt><dd class="erp-num">{{ t.tasaInteresCompra !== null && t.tasaInteresCompra !== undefined ? (t.tasaInteresCompra | number: '1.2-4') + '%' : '—' }}</dd></div>
+        <div><dt class="erp-overline">Tasa avances</dt><dd class="erp-num">{{ t.tasaInteresAvance !== null && t.tasaInteresAvance !== undefined ? (t.tasaInteresAvance | number: '1.2-4') + '%' : '—' }}</dd></div>
+        <div><dt class="erp-overline">Cuota de manejo</dt><dd class="erp-num">{{ t.cuotaManejo | moneda }}</dd></div>
+      </dl>
+
+      <footer class="tarjeta-acciones">
+        <span class="erp-badge" [class.erp-badge--info]="t.permiteDolares">{{ t.permiteDolares ? 'Acepta USD' : 'Solo COP' }}</span>
+        <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="editar(t)">
+          <i class="material-icons" aria-hidden="true">tune</i>
+          Configurar
+        </button>
+      </footer>
+    </article>
+  </div>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-tarjeta *ngIf="editando" [tarjeta]="editando" (guardada)="onGuardada($event)" (cancelar)="cerrar()"></app-formulario-tarjeta>
+</app-modal>
