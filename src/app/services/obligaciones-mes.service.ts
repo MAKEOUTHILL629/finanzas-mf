@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
+  AporteDiaConDetalle,
   AporteDiaResumen,
   CrearObligacionMes,
   ObligacionMes,
@@ -19,8 +20,9 @@ export class ObligacionesMesService {
 
   constructor(private api: ApiServicesService) {}
 
-  getObligaciones(periodo?: Periodo, tipo?: TipoObligacionMes): Observable<ObligacionMes[]> {
-    return this.api.get<ObligacionMes[]>(this.url, limpiarParams({ periodo, tipo }));
+  /** Lista desde la vista `vw_ResumenObligacionesMes`: ya trae aportado real, restante y nombre del responsable. */
+  getObligaciones(periodo?: Periodo, tipo?: TipoObligacionMes): Observable<ResumenObligacionMes[]> {
+    return this.api.get<ResumenObligacionMes[]>(this.url, limpiarParams({ periodo, tipo }));
   }
 
   crearObligacion(obligacion: CrearObligacionMes): Observable<ObligacionMes> {
@@ -37,13 +39,16 @@ export class ObligacionesMesService {
     return this.api.get<AporteDiaResumen[]>(`${this.url}/${id}/dias`);
   }
 
-  /** Detalle de aportes (por persona y método) de la obligación. */
-  getAportesDia(id: number): Observable<unknown[]> {
-    return this.api.get<unknown[]>(`${this.url}/${id}/aportes-dia`);
+  /** Días con aportes y su desglose por persona y método (de más reciente a más antiguo). */
+  getAportesDia(id: number): Observable<AporteDiaConDetalle[]> {
+    return this.api.get<AporteDiaConDetalle[]>(`${this.url}/${id}/aportes-dia`);
   }
 
-  /** Registra los aportes de un día; los de método 'Prestamo' generan el préstamo/cruce vía triggers. */
-  registrarAportesDia(id: number, aportes: RegistrarAportesDia): Observable<unknown> {
-    return this.api.post<unknown>(`${this.url}/${id}/aportes-dia`, aportes);
+  /**
+   * Registra los aportes de un día (si el día ya existe, agrega los ítems). Si aporta alguien distinto del responsable
+   * principal y del titular, el Trigger 3 de la BD crea un préstamo POR_COBRAR con sus aprobaciones.
+   */
+  registrarAportesDia(id: number, aportes: RegistrarAportesDia): Observable<AporteDiaConDetalle> {
+    return this.api.post<AporteDiaConDetalle>(`${this.url}/${id}/aportes-dia`, aportes);
   }
 }

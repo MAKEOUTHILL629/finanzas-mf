@@ -8,6 +8,9 @@ import { PagoPersonaMesComponent } from './pagos-mensuales/pago-persona-mes/pago
 import { PagoPersonaMesDetalleComponent } from './pagos-mensuales/pago-persona-mes-detalle/pago-persona-mes-detalle.component';
 import { PagosMesTarjetasDetalleComponent } from './compras-credito/pagos-mes-tarjetas-detalle/pagos-mes-tarjetas-detalle.component';
 import { LoginComponent } from './login/login.component';
+import { ListaObligacionesComponent } from './obligaciones/lista-obligaciones/lista-obligaciones.component';
+import { DetalleObligacionComponent } from './obligaciones/detalle-obligacion/detalle-obligacion.component';
+import { ExtractosTarjetasComponent } from './extractos/extractos-tarjetas/extractos-tarjetas.component';
 import { authGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
@@ -23,6 +26,9 @@ const routes: Routes = [
   { path: 'pagos-mes-personas', component: PagoPersonaMesComponent, canActivate: [authGuard] },
   { path: 'pagos-mes-personas-detalle/:id', component: PagoPersonaMesDetalleComponent, canActivate: [authGuard] },
   { path: 'pagos-mes/:id', component: PagosMesTarjetasDetalleComponent, canActivate: [authGuard] },
+  { path: 'extractos', component: ExtractosTarjetasComponent, canActivate: [authGuard] },
+  { path: 'obligaciones', component: ListaObligacionesComponent, canActivate: [authGuard] },
+  { path: 'obligaciones/:id', component: DetalleObligacionComponent, canActivate: [authGuard] },
   { path: '', redirectTo: 'compras-credito', pathMatch: 'full' },
   { path: '**', redirectTo: 'compras-credito' }
 ];

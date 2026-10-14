@@ -103,6 +103,13 @@ export class AuthServiceService {
    */
   isAuthenticated()  {
 
+    // Sin token (o ya vencido según su `exp`, hasToken() lo descarta) no hace falta preguntarle al backend:
+    // respondería 401 y ensuciaría la consola en cada carga y cada navegación protegida.
+    if (!this.hasToken()) {
+      this.loggedIn.next(false);
+      return of(false);
+    }
+
    return  this.apiService.get<{ status?: string }>('auth/token-is-valid')
       .pipe(
         tap((response: { status?: string }) => {
@@ -113,8 +120,14 @@ export class AuthServiceService {
             localStorage.removeItem(this.TOKEN_KEY);
           }
         }),
-        catchError(() => {
-          // Si la red falla, no desloguear (puede ser error de red transitorio).
+        catchError((error: HttpErrorResponse) => {
+          // 401 = el backend rechazó ESTE token (firma de otro entorno, usuario inexistente, vencido): la sesión no sirve
+          // y hay que descartarla; si no, cada navegación repite la petición y el 401 para siempre.
+          if (error?.status === 401) {
+            localStorage.removeItem(this.TOKEN_KEY);
+            this.loggedIn.next(false);
+          }
+          // Si la red falla (status 0) o el servidor da un 5xx, no desloguear: puede ser un error transitorio.
           // Si el token está expirado localmente, ya lo maneja hasToken() en el arranque.
           return of(false);
         })

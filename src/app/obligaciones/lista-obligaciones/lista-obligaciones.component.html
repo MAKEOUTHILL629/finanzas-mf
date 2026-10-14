@@ -1,0 +1,139 @@
+<section class="erp-page" aria-labelledby="titulo-obligaciones">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-obligaciones">Obligaciones del mes</h1>
+      <p class="erp-subtitle">Cuotas con meta mensual (carro, casa…) y los aportes diarios que las van cubriendo.</p>
+    </div>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">
+        <i class="material-icons" aria-hidden="true">add</i>
+        Nueva obligación
+      </button>
+    </div>
+  </header>
+
+  <!-- Filtros -->
+  <div class="erp-toolbar" role="search" aria-label="Filtrar obligaciones">
+    <div class="erp-field">
+      <label class="erp-label" for="filtro-periodo">Periodo</label>
+      <div class="erp-month-picker">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior">
+          <i class="material-icons" aria-hidden="true">chevron_left</i>
+        </button>
+        <input id="filtro-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)"
+               aria-describedby="ayuda-periodo" />
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente">
+          <i class="material-icons" aria-hidden="true">chevron_right</i>
+        </button>
+      </div>
+      <span id="ayuda-periodo" class="erp-field-hint">{{ periodo ? nombrePeriodo(periodo) : 'Mostrando todos los periodos' }}</span>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="filtro-tipo">Tipo</label>
+      <select id="filtro-tipo" class="erp-select" [value]="tipo" (change)="onTipoChange($any($event.target).value)">
+        <option value="">Todos los tipos</option>
+        <option *ngFor="let t of tipos" [value]="t.valor">{{ t.etiqueta }}</option>
+      </select>
+    </div>
+
+    <button type="button" class="erp-btn erp-btn--ghost" *ngIf="periodo" (click)="verTodos()">
+      <i class="material-icons" aria-hidden="true">history</i>
+      Ver todos los periodos
+    </button>
+  </div>
+
+  <!-- Totales del filtro actual -->
+  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && obligaciones.length > 0" aria-label="Totales">
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Meta total</span>
+      <span class="erp-stat-value erp-num">{{ totales.meta | moneda }}</span>
+      <span class="erp-stat-hint">{{ obligaciones.length }} {{ obligaciones.length === 1 ? 'obligación' : 'obligaciones' }}</span>
+    </div>
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Aportado</span>
+      <span class="erp-stat-value erp-num erp-gain">{{ totales.aportado | moneda }}</span>
+      <span class="erp-stat-hint">{{ porcentaje(totales.aportado, totales.meta) | number: '1.1-1' }}% de la meta</span>
+    </div>
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Restante</span>
+      <span class="erp-stat-value erp-num" [class.erp-loss]="totales.restante > 0">{{ totales.restante | moneda }}</span>
+      <span class="erp-stat-hint">{{ totales.restante > 0 ? 'Falta por cubrir' : 'Metas cubiertas' }}</span>
+    </div>
+  </div>
+
+  <!-- Carga -->
+  <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando obligaciones">
+    <div class="erp-skeleton" style="height: 190px"></div>
+    <div class="erp-skeleton" style="height: 190px"></div>
+    <div class="erp-skeleton" style="height: 190px"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      <strong>No se pudo cargar.</strong> {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Vacío -->
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && obligaciones.length === 0">
+    <i class="material-icons" aria-hidden="true">savings</i>
+    <h2>No hay obligaciones{{ periodo ? ' en ' + nombrePeriodo(periodo) : '' }}</h2>
+    <p>Crea una obligación con su meta mensual y registra los aportes de cada día para ver el avance.</p>
+    <div class="erp-actions" style="justify-content: center">
+      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">Nueva obligación</button>
+      <button type="button" class="erp-btn erp-btn--secondary" *ngIf="periodo || tipo" (click)="periodo = ''; tipo = ''; cargar()">Quitar filtros</button>
+    </div>
+  </div>
+
+  <!-- Listado agrupado por periodo -->
+  <ng-container *ngIf="!cargando && !error">
+    <section class="grupo" *ngFor="let g of grupos; trackBy: trackByPeriodo" [attr.aria-label]="g.titulo">
+      <h2 class="grupo-titulo erp-overline">{{ g.titulo }}</h2>
+      <div class="erp-grid">
+        <article class="erp-card erp-card--clickable obligacion"
+                 *ngFor="let o of g.obligaciones; trackBy: trackById"
+                 tabindex="0" role="link"
+                 [attr.aria-label]="'Ver detalle de ' + o.concepto"
+                 (click)="abrirDetalle(o)" (keydown.enter)="abrirDetalle(o)" (keydown.space)="abrirDetalle(o); $event.preventDefault()">
+          <div class="obligacion-cabecera">
+            <span class="obligacion-icono" aria-hidden="true"><i class="material-icons">{{ iconoTipo(o.tipo_obligacion) }}</i></span>
+            <div class="obligacion-titulo">
+              <h3>{{ o.concepto }}</h3>
+              <span class="erp-muted">{{ etiquetaTipo(o.tipo_obligacion) }} · {{ o.responsable_principal_nombre || 'Sin responsable' }}</span>
+            </div>
+            <span class="erp-badge" [class.erp-badge--success]="esCompletada(o)" [class.erp-badge--info]="!esCompletada(o)">
+              <i class="material-icons" aria-hidden="true">{{ esCompletada(o) ? 'check_circle' : 'timelapse' }}</i>
+              {{ esCompletada(o) ? 'Completada' : 'Abierta' }}
+            </span>
+          </div>
+
+          <div class="erp-progress" [class.erp-progress--done]="esCompletada(o)" role="progressbar"
+               [attr.aria-valuenow]="porcentaje(o.aporte_total_real, o.meta_mensual)" aria-valuemin="0" aria-valuemax="100"
+               [attr.aria-label]="'Avance de ' + o.concepto">
+            <div class="erp-progress-bar" [style.width.%]="porcentaje(o.aporte_total_real, o.meta_mensual)"></div>
+          </div>
+
+          <dl class="obligacion-cifras">
+            <div><dt class="erp-overline">Meta</dt><dd class="erp-num">{{ o.meta_mensual | moneda }}</dd></div>
+            <div><dt class="erp-overline">Aportado</dt><dd class="erp-num erp-gain">{{ o.aporte_total_real | moneda }}</dd></div>
+            <div><dt class="erp-overline">Restante</dt><dd class="erp-num" [class.erp-loss]="(o.restante_real ?? 0) > 0">{{ o.restante_real | moneda }}</dd></div>
+          </dl>
+
+          <p class="obligacion-pie erp-muted">
+            {{ porcentaje(o.aporte_total_real, o.meta_mensual) | number: '1.1-1' }}% ·
+            {{ o.dias_aportados ?? 0 }} {{ o.dias_aportados === 1 ? 'día' : 'días' }} con aportes
+            <ng-container *ngIf="(o.aportado_por_cruces ?? 0) > 0"> · incluye {{ o.aportado_por_cruces | moneda }} por cruces</ng-container>
+          </p>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-obligacion (creada)="onCreada()" (cancelar)="cerrarFormulario()"></app-formulario-obligacion>
+</app-modal>

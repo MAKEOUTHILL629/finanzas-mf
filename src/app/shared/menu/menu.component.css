@@ -119,13 +119,17 @@
     align-items: center;
     height: 100%;
     padding: 0 var(--space-1);
+    /* con más de ~5 opciones la barra se desliza en horizontal en lugar de aplastar los íconos */
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
     margin: 0;
     list-style: none;
     gap: 4px;
   }
 
   .menu-items li {
-    flex: 1;
+    flex: 1 0 76px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -728,5 +732,20 @@
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* === ENCABEZADOS DE SECCIÓN (solo escritorio) === */
+.menu-items li.menu-section { display: none; }
+@media (min-width: 768px) {
+  .menu-items li.menu-section {
+    display: block;
+    margin: var(--space-2) var(--space-2) 0;
+    padding: 0 var(--space-2);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
   }
 }

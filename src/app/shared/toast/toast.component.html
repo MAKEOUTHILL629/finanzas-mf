@@ -1,0 +1,11 @@
+<div class="toast-region" aria-live="polite" aria-atomic="false">
+  <div *ngFor="let t of toastService.toasts$ | async; trackBy: trackById"
+       class="toast toast--{{ t.tipo }}"
+       [attr.role]="t.tipo === 'error' ? 'alert' : 'status'">
+    <i class="material-icons toast-icon" aria-hidden="true">{{ iconos[t.tipo] }}</i>
+    <span class="toast-text">{{ t.mensaje }}</span>
+    <button type="button" class="toast-close" (click)="toastService.cerrar(t.id)" aria-label="Cerrar aviso">
+      <i class="material-icons" aria-hidden="true">close</i>
+    </button>
+  </div>
+</div>

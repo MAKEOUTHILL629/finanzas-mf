@@ -21,8 +21,11 @@ RUN npm run build
 
 FROM nginx:alpine
 
+# nginx.conf (por defecto): solo sirve la SPA. nginx.local.conf además reenvía /api a la API (docker-compose.local.yml).
+ARG NGINX_CONF=nginx.conf
+
 COPY --from=build /app/dist/finanzas-mf/browser/ /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY ${NGINX_CONF} /etc/nginx/nginx.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

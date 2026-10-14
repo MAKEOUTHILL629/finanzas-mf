@@ -1,0 +1,145 @@
+<section class="erp-page" aria-labelledby="titulo-detalle-obligacion">
+  <div>
+    <button type="button" class="erp-back" (click)="volver()">
+      <i class="material-icons" aria-hidden="true">arrow_back</i>
+      Obligaciones
+    </button>
+  </div>
+
+  <!-- Carga -->
+  <div class="erp-grid erp-grid--stats" *ngIf="cargando" aria-busy="true" aria-label="Cargando obligación">
+    <div class="erp-skeleton" style="height: 110px"></div>
+    <div class="erp-skeleton" style="height: 110px"></div>
+    <div class="erp-skeleton" style="height: 110px"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!cargando && !error && resumen as r">
+    <header class="erp-header">
+      <div>
+        <h1 id="titulo-detalle-obligacion">{{ r.concepto }}</h1>
+        <p class="erp-subtitle">
+          <span class="erp-badge erp-badge--info"><i class="material-icons" aria-hidden="true">{{ iconoTipo(r.tipo_obligacion) }}</i>{{ etiquetaTipo(r.tipo_obligacion) }}</span>
+          <span class="meta-linea">{{ nombrePeriodo(r.periodo) }} · Responsable: {{ r.responsable_principal_nombre || '—' }}</span>
+        </p>
+      </div>
+      <div class="erp-actions">
+        <span class="erp-badge" [class.erp-badge--success]="esCompletada()" [class.erp-badge--info]="!esCompletada()">
+          <i class="material-icons" aria-hidden="true">{{ esCompletada() ? 'check_circle' : 'timelapse' }}</i>
+          {{ esCompletada() ? 'Meta cubierta' : 'Abierta' }}
+        </span>
+        <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">
+          <i class="material-icons" aria-hidden="true">add</i>
+          Registrar aportes
+        </button>
+      </div>
+    </header>
+
+    <!-- Avance -->
+    <div class="erp-card avance">
+      <div class="avance-cabecera">
+        <span class="erp-overline">Avance de la meta</span>
+        <span class="erp-num avance-porcentaje">{{ porcentaje(r.aporte_total_real, r.meta_mensual) | number: '1.1-1' }}%</span>
+      </div>
+      <div class="erp-progress" [class.erp-progress--done]="esCompletada()" role="progressbar"
+           [attr.aria-valuenow]="porcentaje(r.aporte_total_real, r.meta_mensual)" aria-valuemin="0" aria-valuemax="100" aria-label="Avance de la meta">
+        <div class="erp-progress-bar" [style.width.%]="porcentaje(r.aporte_total_real, r.meta_mensual)"></div>
+      </div>
+    </div>
+
+    <div class="erp-grid erp-grid--stats">
+      <div class="erp-card erp-stat"><span class="erp-overline">Meta mensual</span><span class="erp-stat-value erp-num">{{ r.meta_mensual | moneda }}</span></div>
+      <div class="erp-card erp-stat"><span class="erp-overline">Aportado</span><span class="erp-stat-value erp-num erp-gain">{{ r.aporte_total_real | moneda }}</span></div>
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Restante</span>
+        <span class="erp-stat-value erp-num" [class.erp-loss]="(r.restante_real ?? 0) > 0">{{ r.restante_real | moneda }}</span>
+      </div>
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Directo del responsable</span>
+        <span class="erp-stat-value erp-num">{{ r.aportado_directo_responsable | moneda }}</span>
+      </div>
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Por cruces (terceros)</span>
+        <span class="erp-stat-value erp-num">{{ r.aportado_por_cruces | moneda }}</span>
+        <span class="erp-stat-hint">Generan préstamos por cobrar</span>
+      </div>
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Días con aportes</span>
+        <span class="erp-stat-value erp-num">{{ r.dias_aportados ?? 0 }}</span>
+        <span class="erp-stat-hint">{{ r.cantidad_registros ?? 0 }} registros</span>
+      </div>
+    </div>
+
+    <!-- Aportes por día -->
+    <div class="erp-card">
+      <h2 class="erp-card-title">Aportes por día</h2>
+
+      <div class="erp-empty" *ngIf="dias.length === 0">
+        <i class="material-icons" aria-hidden="true">event_note</i>
+        <h2>Aún no hay aportes</h2>
+        <p>Registra el primer aporte para empezar a cubrir la meta.</p>
+      </div>
+
+      <div class="erp-table-wrap" *ngIf="dias.length > 0">
+        <table class="erp-table">
+          <caption class="erp-sr-only">Aportes registrados por día</caption>
+          <thead>
+            <tr>
+              <th scope="col" style="width: 40px"><span class="erp-sr-only">Detalle</span></th>
+              <th scope="col">Fecha</th>
+              <th scope="col" class="num">Registros</th>
+              <th scope="col" class="num">Total del día</th>
+              <th scope="col">Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let dia of dias; trackBy: trackByDia">
+              <tr class="erp-row-toggle" (click)="alternarDia(dia)">
+                <td>
+                  <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon erp-btn--sm" (click)="alternarDia(dia); $event.stopPropagation()"
+                          [attr.aria-expanded]="estaAbierto(dia)" [attr.aria-label]="(estaAbierto(dia) ? 'Ocultar' : 'Ver') + ' el detalle del ' + (dia.fecha | formatoFecha)">
+                    <i class="material-icons" aria-hidden="true">{{ estaAbierto(dia) ? 'expand_less' : 'expand_more' }}</i>
+                  </button>
+                </td>
+                <td>{{ dia.fecha | formatoFecha }}</td>
+                <td class="num">{{ dia.items_count ?? dia.detalles.length }}</td>
+                <td class="num">{{ dia.valor_total_dia | moneda }}</td>
+                <td class="erp-muted">{{ dia.notas || '—' }}</td>
+              </tr>
+              <tr *ngIf="estaAbierto(dia)" class="fila-detalle">
+                <td></td>
+                <td colspan="4">
+                  <ul class="detalles" [attr.aria-label]="'Detalle del ' + (dia.fecha | formatoFecha)">
+                    <li *ngFor="let d of dia.detalles; trackBy: trackByDetalle">
+                      <span class="detalle-persona">{{ nombreAportante(d) }}</span>
+                      <span class="erp-badge">{{ d.metodo }}</span>
+                      <span class="erp-num detalle-valor">{{ d.valor | moneda }}</span>
+                      <span class="erp-muted detalle-comentario" *ngIf="d.comentarios">{{ d.comentarios }}</span>
+                      <span class="erp-badge erp-badge--warning" *ngIf="d.prestamo_cruce_generado_id"
+                            title="El aporte lo hizo un tercero: la base de datos creó un préstamo por cobrar">
+                        <i class="material-icons" aria-hidden="true">swap_horiz</i>
+                        Préstamo #{{ d.prestamo_cruce_generado_id }}{{ d.prestamo_cruce?.estado ? ' · ' + d.prestamo_cruce?.estado : '' }}
+                      </span>
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <app-modal [modalId]="modalId">
+      <app-formulario-aportes [obligacion]="r" [personas]="personas" (registrado)="onRegistrado($event)" (cancelar)="cerrarFormulario()"></app-formulario-aportes>
+    </app-modal>
+  </ng-container>
+</section>

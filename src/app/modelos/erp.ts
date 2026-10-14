@@ -393,6 +393,61 @@ export interface RegistrarAportesDia {
   items: AporteItemRequest[];
 }
 
+/** Fila de `AportesDetalle` con la persona (y el préstamo por cruce que generó el Trigger 3, si lo hubo). */
+export interface AporteDetalle {
+  id: number;
+  aporte_dia_id: number;
+  persona_id: number;
+  valor: number;
+  metodo: MetodoAporte | string;
+  comentarios: string | null;
+  /** Lo completa la BD cuando aporta alguien que no es el responsable ni el titular: nace un préstamo POR_COBRAR. */
+  prestamo_cruce_generado_id: number | null;
+  created_at: string | null;
+  persona?: { id: number; nombre: string | null; iniciales_nombre?: string | null; color_representativo?: string | null };
+  prestamo_cruce?: { id: number; estado: string | null; valor_prestado: number; corte_id: number | null } | null;
+}
+
+/** `GET /api/obligaciones-mes/:id/aportes-dia` y respuesta de `POST` (resumen del día + desglose). */
+export interface AporteDiaConDetalle extends AporteDiaResumen {
+  detalles: AporteDetalle[];
+}
+
+// ───────────────────────────── extractos de tarjeta ─────────────────────────────
+
+/** `GET /api/tarjetas/resumen-mensual?periodo=YYYY-MM` — una fila por tarjeta con cuotas facturadas en el periodo. */
+export interface ResumenMensualTarjeta {
+  tarjeta_id: number;
+  franquicia: string | null;
+  nombre_tarjeta: string | null;
+  dia_corte: number | null;
+  dia_limite_pago: number | null;
+  periodo_facturacion: Periodo;
+  total_cuotas_mes: number;
+  /** Lo que cobra el banco en el extracto (COP). */
+  total_extracto_cop: number;
+  componente_en_usd: number;
+  /** false ⇒ hay compras en USD con TRM provisional: el total puede variar al confirmarla. */
+  todas_trm_confirmadas: boolean;
+  total_responsabilidad_terceros: number;
+  total_propio: number;
+}
+
+export interface PagarExtracto {
+  cuentaOrigenId: number;
+  periodo: Periodo;
+  /** > 0, máximo 2 decimales. */
+  montoPagado: number | string;
+}
+
+export interface ResultadoPagoExtracto {
+  transaccionId: number;
+  tarjetaId: number;
+  cuentaOrigenId: number;
+  periodo: Periodo;
+  montoPagado: number;
+}
+
 // ───────────────────────────── ledger de deudas y analítica ─────────────────────────────
 
 /** `GET /api/ledger/estado-cuenta?periodo=` — una fila por persona. */

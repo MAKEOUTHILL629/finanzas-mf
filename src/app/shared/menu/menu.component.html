@@ -22,15 +22,17 @@
   <ul class="menu-items">
     <!-- Items de navegación -->
     <ng-container *ngIf="isUserLoggedIn$ | async">
-      <li *ngFor="let item of loggedInMenuItems"
-          routerLinkActive="active"
-          (click)="isMobile && toggleMenu()"
-          [title]="item.label">
-        <a [routerLink]="item.route">
-          <i class="material-icons" *ngIf="item.icon">{{item.icon}}</i>
-          <span class="menu-label">{{item.label}}</span>
-        </a>
-      </li>
+      <ng-container *ngFor="let item of loggedInMenuItems; let i = index">
+        <li class="menu-section" *ngIf="mostrarSeccion(i)" aria-hidden="true">{{ item.section }}</li>
+        <li routerLinkActive="active"
+            (click)="isMobile && toggleMenu()"
+            [title]="item.label">
+          <a [routerLink]="item.route">
+            <i class="material-icons" *ngIf="item.icon">{{item.icon}}</i>
+            <span class="menu-label">{{item.label}}</span>
+          </a>
+        </li>
+      </ng-container>
     </ng-container>
 
     <li *ngIf="!(isUserLoggedIn$ | async)"

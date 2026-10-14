@@ -38,3 +38,9 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Docker local (con reconstrucción automática)
+
+`../finanzas/docker-compose.local.yml` construye esta imagen (`Dockerfile`, con `nginx.local.conf`: sirve la SPA y reenvía `/api`
+a la API NestJS) y la API, y con `docker compose -f docker-compose.local.yml watch` (ejecutado desde `../finanzas`) las reconstruye al guardar cambios.
+Frontend en http://localhost:8085. Detalles en `finanzas/backend-nestjs/README.md` ("Docker local con reconstrucción automática").

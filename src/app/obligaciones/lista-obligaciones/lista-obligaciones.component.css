@@ -1,0 +1,38 @@
+.grupo { display: flex; flex-direction: column; gap: var(--space-1); }
+.grupo-titulo { margin: var(--space-1) 0 0; }
+
+.obligacion { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.obligacion-cabecera { display: flex; align-items: flex-start; gap: var(--space-2); }
+.obligacion-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-blue-light);
+  color: var(--text-link);
+}
+.obligacion-titulo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.obligacion-titulo h3 {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.obligacion-titulo .erp-muted { font-size: var(--text-caption); }
+
+.obligacion-cifras {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+}
+.obligacion-cifras div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.obligacion-cifras dt { margin: 0; }
+.obligacion-cifras dd { margin: 0; font-size: var(--text-body-sm); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+
+.obligacion-pie { margin: 0; font-size: var(--text-caption); }

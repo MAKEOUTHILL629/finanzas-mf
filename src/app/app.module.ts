@@ -27,6 +27,8 @@ import { ModalComponent } from './shared/modal/modal.component';
 import { FormatoFechaPipe } from './pipes/formato-fecha.pipe';
 import { FormatoTarjetaPipe } from './pipes/formato-tarjeta.pipe';
 import { FormatoPersonaPipe } from './pipes/formato-persona.pipe';
+import { FormatoMonedaPipe } from './pipes/formato-moneda.pipe';
+import { ToastComponent } from './shared/toast/toast.component';
 
 // Dominio: Compras a Crédito
 import { TablaComprasCreditoComponent } from './compras-credito/tabla-compras-credito/tabla-compras-credito.component';
@@ -46,6 +48,16 @@ import { PagoPersonaMesDetalleComponent } from './pagos-mensuales/pago-persona-m
 import { TablaPrestamosComponent } from './prestamos/tabla-prestamos/tabla-prestamos.component';
 import { FormularioPrestamosComponent } from './prestamos/formulario-prestamos/formulario-prestamos.component';
 
+// Dominio: Obligaciones del mes
+import { ListaObligacionesComponent } from './obligaciones/lista-obligaciones/lista-obligaciones.component';
+import { FormularioObligacionComponent } from './obligaciones/formulario-obligacion/formulario-obligacion.component';
+import { DetalleObligacionComponent } from './obligaciones/detalle-obligacion/detalle-obligacion.component';
+import { FormularioAportesComponent } from './obligaciones/formulario-aportes/formulario-aportes.component';
+
+// Dominio: Extractos de tarjetas
+import { ExtractosTarjetasComponent } from './extractos/extractos-tarjetas/extractos-tarjetas.component';
+import { FormularioPagarExtractoComponent } from './extractos/formulario-pagar-extracto/formulario-pagar-extracto.component';
+
 /**
  * Agrupación de declaraciones por dominio de la aplicación
  */
@@ -54,7 +66,9 @@ const SHARED_DECLARATIONS = [
   ModalComponent,
   FormatoFechaPipe,
   FormatoTarjetaPipe,
-  FormatoPersonaPipe
+  FormatoPersonaPipe,
+  FormatoMonedaPipe,
+  ToastComponent
 ];
 
 const COMPRAS_CREDITO_DECLARATIONS = [
@@ -76,6 +90,18 @@ const PAGOS_MENSUALES_DECLARATIONS = [
 const PRESTAMOS_DECLARATIONS = [
   TablaPrestamosComponent,
   FormularioPrestamosComponent
+];
+
+const OBLIGACIONES_DECLARATIONS = [
+  ListaObligacionesComponent,
+  FormularioObligacionComponent,
+  DetalleObligacionComponent,
+  FormularioAportesComponent
+];
+
+const EXTRACTOS_DECLARATIONS = [
+  ExtractosTarjetasComponent,
+  FormularioPagarExtractoComponent
 ];
 
 /**
@@ -105,7 +131,9 @@ const CORE_PROVIDERS: (Provider | EnvironmentProviders)[] = [
     ...SHARED_DECLARATIONS,
     ...COMPRAS_CREDITO_DECLARATIONS,
     ...PAGOS_MENSUALES_DECLARATIONS,
-    ...PRESTAMOS_DECLARATIONS
+    ...PRESTAMOS_DECLARATIONS,
+    ...OBLIGACIONES_DECLARATIONS,
+    ...EXTRACTOS_DECLARATIONS
   ],
   imports: [
     BrowserModule,

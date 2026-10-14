@@ -1,0 +1,119 @@
+<section class="erp-page" aria-labelledby="titulo-extractos">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-extractos">Extractos de tarjetas</h1>
+      <p class="erp-subtitle">Lo que cobra el banco en cada periodo, cuánto es tuyo y cuánto de terceros. Desde aquí pagas el extracto.</p>
+    </div>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
+        <i class="material-icons" aria-hidden="true">today</i>
+        Mes actual
+      </button>
+    </div>
+  </header>
+
+  <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
+    <div class="erp-field">
+      <label class="erp-label" for="ext-periodo">Periodo de facturación</label>
+      <div class="erp-month-picker">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior">
+          <i class="material-icons" aria-hidden="true">chevron_left</i>
+        </button>
+        <input id="ext-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente">
+          <i class="material-icons" aria-hidden="true">chevron_right</i>
+        </button>
+      </div>
+      <span class="erp-field-hint">{{ nombrePeriodo(periodo) }}</span>
+    </div>
+  </div>
+
+  <!-- Totales -->
+  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && resumenes.length > 0" aria-label="Totales del periodo">
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Total de extractos</span>
+      <span class="erp-stat-value erp-num">{{ totales.extracto | moneda }}</span>
+      <span class="erp-stat-hint">{{ resumenes.length }} {{ resumenes.length === 1 ? 'tarjeta' : 'tarjetas' }}</span>
+    </div>
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Tu parte</span>
+      <span class="erp-stat-value erp-num">{{ totales.propio | moneda }}</span>
+    </div>
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">De terceros</span>
+      <span class="erp-stat-value erp-num">{{ totales.terceros | moneda }}</span>
+      <span class="erp-stat-hint">Lo que te deben por estas cuotas</span>
+    </div>
+  </div>
+
+  <!-- Carga -->
+  <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando extractos">
+    <div class="erp-skeleton" style="height: 260px"></div>
+    <div class="erp-skeleton" style="height: 260px"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      <strong>No se pudo cargar.</strong> {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Vacío -->
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && resumenes.length === 0">
+    <i class="material-icons" aria-hidden="true">credit_card_off</i>
+    <h2>No hay cuotas facturadas en {{ nombrePeriodo(periodo) }}</h2>
+    <p>Aquí aparecen las tarjetas que tienen cuotas cuyo periodo de facturación es este mes. Prueba con otro periodo.</p>
+  </div>
+
+  <!-- Tarjetas -->
+  <div class="erp-grid" *ngIf="!cargando && !error && resumenes.length > 0">
+    <article class="erp-card extracto" *ngFor="let r of resumenes; trackBy: trackById" [attr.aria-label]="'Extracto de ' + nombreTarjeta(r)">
+      <header class="extracto-cabecera">
+        <span class="extracto-icono" aria-hidden="true"><i class="material-icons">credit_card</i></span>
+        <div class="extracto-titulo">
+          <h2>{{ nombreTarjeta(r) }}</h2>
+          <span class="erp-muted">
+            {{ r.total_cuotas_mes }} {{ r.total_cuotas_mes === 1 ? 'cuota' : 'cuotas' }}
+            <ng-container *ngIf="r.dia_corte"> · corte día {{ r.dia_corte }}</ng-container>
+            <ng-container *ngIf="r.dia_limite_pago"> · paga antes del día {{ r.dia_limite_pago }}</ng-container>
+          </span>
+        </div>
+      </header>
+
+      <div class="extracto-total">
+        <span class="erp-overline">Total del extracto</span>
+        <span class="erp-stat-value erp-num">{{ r.total_extracto_cop | moneda }}</span>
+      </div>
+
+      <dl class="extracto-desglose">
+        <div><dt class="erp-overline">Tu parte</dt><dd class="erp-num">{{ r.total_propio | moneda }}</dd></div>
+        <div><dt class="erp-overline">De terceros</dt><dd class="erp-num">{{ r.total_responsabilidad_terceros | moneda }}</dd></div>
+        <div *ngIf="tieneUsd(r)"><dt class="erp-overline">Componente USD</dt><dd class="erp-num">US{{ r.componente_en_usd | moneda }}</dd></div>
+      </dl>
+
+      <div class="erp-alert erp-alert--warning" *ngIf="!r.todas_trm_confirmadas">
+        <i class="material-icons" aria-hidden="true">currency_exchange</i>
+        <span>Hay compras en USD con TRM sin confirmar: este total puede cambiar cuando la confirmes.</span>
+      </div>
+
+      <footer class="extracto-acciones">
+        <a class="erp-btn erp-btn--ghost" [routerLink]="['/pagos-mes', r.tarjeta_id]"
+           [queryParams]="paramsCuotas">
+          <i class="material-icons" aria-hidden="true">list_alt</i>
+          Ver cuotas
+        </a>
+        <button type="button" class="erp-btn erp-btn--primary" (click)="abrirPago(r)">
+          <i class="material-icons" aria-hidden="true">payments</i>
+          Pagar extracto
+        </button>
+      </footer>
+    </article>
+  </div>
+</section>
+
+<app-modal [modalId]="modalId">
+  <app-formulario-pagar-extracto *ngIf="seleccionada" [resumen]="seleccionada" (pagado)="onPagado($event)" (cancelar)="cerrarPago()"></app-formulario-pagar-extracto>
+</app-modal>

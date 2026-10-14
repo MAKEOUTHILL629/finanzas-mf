@@ -1,175 +1,2933 @@
+# ==============================================================================
 # SISTEMA DE DISEÑO FINANCIERO: "LIQUID TRUST" & "SWISS GLASS"
+# Versión: 2.0 — Complemento Integral
 # CONTEXTO: Single Page Application (SPA) Angular + CSS Nativo
 # FUENTE: Guías de Estilo Visual Financiero Moderno (2025-2026)
+# ==============================================================================
 
-La propuesta establece una filosofía de diseño denominada "Liquid Trust" (o "Swiss Glass"), la cual fusiona la precisión matemática del Estilo Suizo con una evolución sofisticada del glassmorphism que utiliza capas de desenfoque, saturación y bordes especulares para crear profundidad semántica y jerarquía en el eje Z. A nivel visual, se rechaza el diseño plano absoluto y los negros puros (#000000), optando por un sistema cromático "Deep Ocean & Ceramic" (grises azulados profundos y blancos hueso) que reduce la fatiga visual en pantallas OLED, complementado por una tipografía funcional (Inter) configurada obligatoriamente con Tabular Figures (tnum) para garantizar la alineación vertical perfecta de los datos financieros. El objetivo es evocar un "lujo silencioso" similar al de Apple, donde la interfaz se siente sólida como una bóveda en su estructura de navegación (textura "concreto") pero fluida como el mercado en sus paneles de datos (vidrio).
+La propuesta establece una filosofía de diseño denominada "Liquid Trust" (o "Swiss Glass"),
+la cual fusiona la precisión matemática del Estilo Suizo con una evolución sofisticada del
+glassmorphism que utiliza capas de desenfoque, saturación y bordes especulares para crear
+profundidad semántica y jerarquía en el eje Z. A nivel visual, se rechaza el diseño plano
+absoluto y los negros puros (#000000), optando por un sistema cromático "Deep Ocean & Ceramic"
+(grises azulados profundos y blancos hueso) que reduce la fatiga visual en pantallas OLED,
+complementado por una tipografía funcional (Inter) configurada obligatoriamente con Tabular
+Figures (tnum) para garantizar la alineación vertical perfecta de los datos financieros.
+El objetivo es evocar un "lujo silencioso" similar al de Apple, donde la interfaz se siente
+sólida como una bóveda en su estructura de navegación (textura "concreto") pero fluida como
+el mercado en sus paneles de datos (vidrio).
 
-En cuanto a la Experiencia de Usuario (UX) y arquitectura, el sistema se basa en un "Bento Grid" adaptativo que trasciende el diseño responsivo tradicional: se comporta como una pila vertical eficiente en móviles y se expande modularmente en monitores ultra-wide (21:9) para aprovechar la visión periférica con paneles de utilidad sin estirar el contenido. La interacción se rige por la "física intuitiva", implementando micro-interacciones táctiles (botones que se hunden al clic), validación de formularios en tiempo real y patrones de rendimiento críticos como el Virtual Scrolling para manejar tablas con miles de transacciones sin bloquear el DOM. Finalmente, la confianza se diseña mediante funcionalidades éticas, como un "Modo Privacidad" global que desenfoca saldos sensibles y animaciones funcionales que confirman operaciones para liberar dopamina y reducir la ansiedad financiera del usuario
+En cuanto a la Experiencia de Usuario (UX) y arquitectura, el sistema se basa en un "Bento
+Grid" adaptativo que trasciende el diseño responsivo tradicional: se comporta como una pila
+vertical eficiente en móviles y se expande modularmente en monitores ultra-wide (21:9) para
+aprovechar la visión periférica con paneles de utilidad sin estirar el contenido. La interacción
+se rige por la "física intuitiva", implementando micro-interacciones táctiles (botones que se
+hunden al clic), validación de formularios en tiempo real y patrones de rendimiento críticos
+como el Virtual Scrolling para manejar tablas con miles de transacciones sin bloquear el DOM.
+Finalmente, la confianza se diseña mediante funcionalidades éticas, como un "Modo Privacidad"
+global que desenfoca saldos sensibles y animaciones funcionales que confirman operaciones para
+liberar dopamina y reducir la ansiedad financiera del usuario.
 
-==============================================================================
-1. FILOSOFÍA Y PRINCIPIOS (DIRECTIVAS PARA IA Y DISEÑO)
-==============================================================================
-El diseño NO es "Flat" ni "Minimalismo Vacío". Es una fusión de "Precisión Suiza" (Estructura)
-y "Cristal Líquido" (Materialidad).
+
+# ==============================================================================
+# 1. FILOSOFÍA Y PRINCIPIOS (DIRECTIVAS PARA IA Y DISEÑO)
+# ==============================================================================
+# El diseño NO es "Flat" ni "Minimalismo Vacío". Es una fusión de "Precisión Suiza"
+# (Estructura) y "Cristal Líquido" (Materialidad).
+#
+# Citas textuales extraídas de los documentos fuente:
+# "El efecto 'Liquid Glass' se compone técnicamente de cuatro capas superpuestas que
+#  deben implementarse vía CSS avanzado." — Diseño Web Financiero Moderno y Minimalista.pdf
+# "La arquitectura visual propuesta se rige por tres pilares rectores: Claridad sobre
+#  Reducción, Materialidad Semántica y Fluidez Responsiva." — Guía de Estilo Visual
+#  Financiero Moderno.pdf
 
 PRINCIPIOS RECTORES:
-1.  Claridad sobre Reducción: No eliminar datos necesarios. Usar jerarquía tipográfica para manejar densidad.
+1.  Claridad sobre Reducción:
+    - No eliminar datos necesarios. Usar jerarquía tipográfica para manejar densidad.
+    - Regla: Priorizar claridad sobre reducción; no ocultar datos críticos, organizarlos.
+    - Acción: Definir tokens tipográficos (hero, h1, body, small, caption) y aplicar
+      font-feature-settings: "tnum" on, "zero" on; en todos los contenedores numéricos.
+
 2.  Materialidad Semántica (Eje Z):
     - Fondo (Canvas) = Estático.
     - Vidrio (Paneles) = Flotante. Lo que está "más cerca" del cristal es más interactivo.
-3.  Fluidez Responsiva (Bento Grid):
+    - Regla: Paneles multicapa con semántica Z (más cercano = más interactivo).
+    - Acción: Implementar clase base .panel-glass / .surface-glass con
+      backdrop-filter: blur(20–25px) saturate(180%), borde especular y sombra interna sutil;
+      ajustar blur según contraste del fondo.
+
+3.  Contraste Vidrio vs Concreto:
+    - Vidrio para datos; textura mate (concreto) para estructura de navegación.
+    - Sidebar/header usan textura/grain CSS y colores sólidos; tarjetas y modales usan
+      .surface-glass.
+
+4.  Fluidez Responsiva (Bento Grid):
     - Móvil: Stack Vertical.
     - Desktop: Grid de 3 columnas.
-    - Ultra-Wide (21:9): NO ESTIRAR. Usar "Zonificación de Productividad" (Paneles periféricos auxiliares).
+    - Ultra-Wide (21:9): NO ESTIRAR. Usar "Zonificación de Productividad"
+      (Paneles periféricos auxiliares).
 
-==============================================================================
-2. IMPLEMENTACIÓN CSS: TOKENS MAESTROS (:root)
-==============================================================================
-Copiar y pegar en `styles.css` o el archivo de estilos global de Angular.
+
+# ==============================================================================
+# 2. IMPLEMENTACIÓN CSS: TOKENS MAESTROS (:root)
+# ==============================================================================
+# Copiar y pegar en `styles.css` o el archivo de estilos global de Angular.
 
 :root {
   /* --- PALETA ESTRUCTURAL (Deep Ocean & Ceramic) --- */
   /* Neutros Oscuros (Evitar Negro Puro #000000) */
   --slate-900: #0B0E14; /* Deep Obsidian (Fondo Dark) */
   --slate-800: #151A21; /* Superficie Dark */
+  --slate-700: #1E2530; /* Superficie Elevada Dark (hover rows, dropdowns) */
+  --slate-600: #2A3140; /* Bordes sutiles en dark mode */
+  --slate-500: #3B4559; /* Texto deshabilitado en dark mode */
+  --slate-400: #6B7A90; /* Texto placeholder en dark mode */
+  --slate-300: #9CA3AF; /* Texto secundario genérico */
+  --slate-200: #D1D5DB; /* Bordes en light mode */
+  --slate-100: #E5E7EB; /* Dividers en light mode */
   --slate-50:  #F9FAFB; /* Texto Dark Principal */
 
   /* Neutros Claros (Evitar Blanco Puro #FFFFFF en fondos generales) */
   --gray-bg:   #F5F5F7; /* System Gray 6 (Fondo Light) */
+  --gray-100:  #F3F4F6; /* Input backgrounds en light mode */
+  --gray-200:  #E5E7EB; /* Hover states en light mode */
   --white:     #FFFFFF; /* Solo para tarjetas en Light Mode */
 
   /* --- SEMÁNTICA FINANCIERA (Indicadores de Estado) --- */
   --brand-blue:    #0071E3; /* Electric Blue (Acción Primaria) */
+  --brand-blue-hover: #005BB5; /* Hover del primario */
+  --brand-blue-active: #004A94; /* Active/pressed del primario */
+  --brand-blue-light: rgba(0, 113, 227, 0.12); /* Tint para backgrounds sutiles */
+  --brand-blue-glow:  rgba(0, 113, 227, 0.30); /* Para box-shadow glow de botones */
+
   --green-success: #34C759; /* Mint Neon (Ganancia/Bull) - No usar verde bosque */
+  --green-success-bg: rgba(52, 199, 89, 0.12); /* Background para badges de ganancia */
   --red-danger:    #FF3B30; /* Apple Red (Pérdida/Bear/Error) */
+  --red-danger-bg: rgba(255, 59, 48, 0.12); /* Background para badges de pérdida */
   --gold-premium:  #D4AF37; /* Metallic Gold (Cuentas VIP/Gradientes) */
+  --gold-premium-bg: rgba(212, 175, 55, 0.12);
+
+  --amber-warning: #FFAB00; /* Amarillo Oro para warnings y alertas */
+  --amber-warning-bg: rgba(255, 171, 0, 0.12);
+  --info-blue:     #0052CC; /* Azul profundo para mensajes informativos */
+  --info-blue-bg:  rgba(0, 82, 204, 0.12);
+
+  /* --- PALETA DE DATA VIZ (Accesible para daltónicos) --- */
+  --chart-1: #0071E3; /* Azul Primario */
+  --chart-2: #00A3BF; /* Verde Azulado (Teal) */
+  --chart-3: #5243AA; /* Púrpura */
+  --chart-4: #FF5630; /* Coral */
+  --chart-5: #FFAB00; /* Amarillo Oro */
+  --chart-6: #36B37E; /* Verde Esmeralda */
+  /* Alternativa Daltónicos (Azul/Naranja): */
+  --chart-cb-1: #0071E3;
+  --chart-cb-2: #FF8800;
 
   /* --- TIPOGRAFÍA (Precisión Suiza) --- */
-  /* Prioridad: Nativa Apple -> Inter (Google Fonts) -> Sans Generico */
-  --font-main: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-  --font-mono: 'SF Mono', 'Roboto Mono', monospace;
+  /* Prioridad: Nativa Apple -> Inter (Google Fonts) -> Sans Genérico */
+  --font-main: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Roboto Mono', 'Fira Code', monospace;
+
+  /* --- ESCALA TIPOGRÁFICA (Fluid / Responsive Clamp) --- */
+  --text-hero:    clamp(2.25rem, 5vw, 3.5rem);   /* 36px → 56px */
+  --text-h1:      clamp(1.75rem, 3.5vw, 2.25rem); /* 28px → 36px */
+  --text-h2:      clamp(1.375rem, 2.5vw, 1.75rem);/* 22px → 28px */
+  --text-h3:      clamp(1.125rem, 2vw, 1.375rem); /* 18px → 22px */
+  --text-body:    1rem;     /* 16px — Mínimo estricto para inputs en mobile */
+  --text-body-sm: 0.875rem; /* 14px */
+  --text-caption:  0.75rem; /* 12px */
+  --text-overline: 0.6875rem; /* 11px — Solo para labels ALL-CAPS */
+
+  /* --- PESOS TIPOGRÁFICOS --- */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* --- LINE HEIGHTS --- */
+  --leading-tight:  1.2;  /* Headings */
+  --leading-normal: 1.5;  /* Body text */
+  --leading-relaxed: 1.65; /* Bloques de texto largo */
 
   /* --- ESPACIADO (Sistema Grid de 8 Puntos) --- */
+  --space-0: 4px;  /* Micro-espacio (entre icono y label) */
   --space-1: 8px;
   --space-2: 16px;
   --space-3: 24px;
   --space-4: 32px;
+  --space-5: 40px;
   --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+  --space-12: 96px;
 
   /* --- BORDER RADIUS (Curvatura Moderna) --- */
+  --radius-xs: 4px;   /* Checkboxes, Tags muy pequeños */
   --radius-sm: 8px;
-  --radius-md: 16px; /* Inputs, Tarjetas internas */
-  --radius-lg: 24px; /* Contenedores principales, Modales */
-  --radius-pill: 9999px; /* Botones globales */
+  --radius-md: 16px;   /* Inputs, Tarjetas internas */
+  --radius-lg: 24px;   /* Contenedores principales, Modales */
+  --radius-xl: 32px;   /* Hero cards */
+  --radius-pill: 9999px; /* Botones globales, badges */
+
+  /* --- SOMBRAS SEMÁNTICAS --- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.18);
+  --shadow-glow-brand: 0 4px 14px -2px var(--brand-blue-glow);
+  --shadow-glow-success: 0 4px 14px -2px rgba(52, 199, 89, 0.3);
+  --shadow-glow-danger: 0 4px 14px -2px rgba(255, 59, 48, 0.3);
+
+  /* --- TRANSICIONES (Easing System) --- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1); /* Efecto "rebote" sutil */
+  --duration-instant: 100ms;
+  --duration-fast:    150ms;
+  --duration-normal:  250ms;
+  --duration-slow:    400ms;
+  --duration-dramatic: 600ms;
+
+  /* --- Z-INDEX SCALE (Capas de Materialidad) --- */
+  --z-base:      0;
+  --z-dropdown:  100;
+  --z-sticky:    200;   /* Sticky headers, Bottom Tab Bar */
+  --z-overlay:   300;   /* Overlays semitransparentes */
+  --z-modal:     400;   /* Modales y Bottom Sheets */
+  --z-popover:   500;   /* Tooltips y popovers */
+  --z-toast:     600;   /* Notificaciones toast */
+  --z-command:   700;   /* Command Palette (Cmd+K) */
+  --z-max:       9999;  /* Casos extremos */
+
+  /* --- BREAKPOINTS (Referencia para media queries) --- */
+  /* --bp-mobile:    0px    */
+  /* --bp-tablet:    768px  */
+  /* --bp-desktop:   1024px */
+  /* --bp-wide:      1440px */
+  /* --bp-ultrawide: 1800px */
+
+  /* --- GLASS SYSTEM TOKENS --- */
+  --glass-blur: 25px;
+  --glass-saturate: 180%;
+  --glass-blur-light: 12px;  /* Para elementos glass secundarios */
+  --glass-blur-heavy: 40px;  /* Para modales y overlays */
 }
 
 /* --- TEMA CLARO (Ceramic Air) --- */
 [data-theme="light"] {
   --bg-app:        var(--gray-bg);
   --bg-surface:    rgba(255, 255, 255, 0.75); /* Translucidez CLAVE */
-  --text-primary:  #111827;
-  --text-secondary:#6B7280;
-  --border-glass:  rgba(255, 255, 255, 0.5);
-  --shadow-card:   0 10px 30px -5px rgba(0, 0, 0, 0.05);
-  --input-bg:      #F3F4F6;
-  --specular-light: rgba(255, 255, 255, 0.4);
+  --bg-surface-solid: var(--white); /* Para elementos que NO deben tener transparencia */
+  --bg-surface-hover: rgba(255, 255, 255, 0.90);
+  --bg-surface-elevated: var(--white); /* Dropdowns, popovers */
+  --bg-sidebar:    rgba(245, 245, 247, 0.85); /* Sidebar "concreto" con ligera transparencia */
+  --bg-input:      var(--gray-100);
+  --bg-input-hover: var(--gray-200);
+  --bg-input-focus: var(--white);
+
+  --text-primary:   #111827;
+  --text-secondary:  #6B7280;
+  --text-tertiary:   #9CA3AF;
+  --text-disabled:   #D1D5DB;
+  --text-inverse:    #FFFFFF;
+  --text-link:       var(--brand-blue);
+  --text-link-hover: var(--brand-blue-hover);
+
+  --border-default:  #E5E7EB;
+  --border-subtle:   rgba(0, 0, 0, 0.06);
+  --border-glass:    rgba(255, 255, 255, 0.5);
+  --border-focus:    var(--brand-blue);
+  --border-error:    var(--red-danger);
+
+  --shadow-card:     0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  --shadow-dropdown: 0 12px 28px -4px rgba(0, 0, 0, 0.12),
+                     0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-modal:    0 24px 48px -12px rgba(0, 0, 0, 0.18);
+  --shadow-toast:    0 6px 20px -2px rgba(0, 0, 0, 0.15);
+
+  --specular-light:  rgba(255, 255, 255, 0.4);
+  --overlay-bg:      rgba(0, 0, 0, 0.3);
+
+  --divider:         rgba(0, 0, 0, 0.08);
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+
+  /* Table */
+  --table-header-bg:  rgba(249, 250, 251, 0.85);
+  --table-row-hover:  rgba(0, 113, 227, 0.04);
+  --table-row-stripe: rgba(0, 0, 0, 0.02);
+  --table-border:     var(--border-subtle);
 }
 
 /* --- TEMA OSCURO (Obsidian Slate) --- */
 [data-theme="dark"] {
   --bg-app:        var(--slate-900);
   --bg-surface:    rgba(21, 26, 33, 0.65); /* Slate 800 + Transparencia */
-  --text-primary:  #FFFFFF;
-  --text-secondary:#9CA3AF;
-  --border-glass:  rgba(255, 255, 255, 0.12);
-  --shadow-card:   0 10px 40px -10px rgba(0, 0, 0, 0.5);
-  --input-bg:      rgba(255, 255, 255, 0.05);
-  --specular-light: rgba(255, 255, 255, 0.1);
+  --bg-surface-solid: var(--slate-800);
+  --bg-surface-hover: rgba(21, 26, 33, 0.80);
+  --bg-surface-elevated: var(--slate-700);
+  --bg-sidebar:    rgba(11, 14, 20, 0.90); /* Sidebar sólido oscuro */
+  --bg-input:      rgba(255, 255, 255, 0.05);
+  --bg-input-hover: rgba(255, 255, 255, 0.08);
+  --bg-input-focus: rgba(255, 255, 255, 0.10);
+
+  --text-primary:   #FFFFFF;
+  --text-secondary:  #9CA3AF;
+  --text-tertiary:   #6B7A90;
+  --text-disabled:   #3B4559;
+  --text-inverse:    #111827;
+  --text-link:       #4DA3FF; /* Azul más claro para contraste en dark */
+  --text-link-hover: #80BFFF;
+
+  --border-default:  rgba(255, 255, 255, 0.08);
+  --border-subtle:   rgba(255, 255, 255, 0.04);
+  --border-glass:    rgba(255, 255, 255, 0.12);
+  --border-focus:    #4DA3FF;
+  --border-error:    #FF6B6B;
+
+  --shadow-card:     0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --shadow-dropdown: 0 12px 28px -4px rgba(0, 0, 0, 0.45),
+                     0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-modal:    0 24px 48px -12px rgba(0, 0, 0, 0.6);
+  --shadow-toast:    0 6px 20px -2px rgba(0, 0, 0, 0.4);
+
+  --specular-light:  rgba(255, 255, 255, 0.1);
+  --overlay-bg:      rgba(0, 0, 0, 0.6);
+
+  --divider:         rgba(255, 255, 255, 0.06);
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.20);
+
+  /* Table */
+  --table-header-bg:  rgba(21, 26, 33, 0.90);
+  --table-row-hover:  rgba(77, 163, 255, 0.06);
+  --table-row-stripe: rgba(255, 255, 255, 0.02);
+  --table-border:     var(--border-subtle);
 }
 
-==============================================================================
-3. MATERIALIDAD: EL EFECTO "LIQUID GLASS"
-==============================================================================
-REGLA: No usar fondos sólidos planos. Usar esta clase para paneles y tarjetas.
-Se compone de 4 capas: Blur + Tinte + Saturación + Borde Especular.
 
+# ==============================================================================
+# 3. MATERIALIDAD: EL EFECTO "LIQUID GLASS"
+# ==============================================================================
+# REGLA: No usar fondos sólidos planos. Usar esta clase para paneles y tarjetas.
+# Se compone de 4 capas: Blur + Tinte + Saturación + Borde Especular.
+
+/* --- Superficie Glass Principal (Tarjetas, Paneles de Dashboard) --- */
 .surface-glass {
   position: relative;
   background: var(--bg-surface);
-  /* Núcleo del efecto: Blur alto + Saturación para 'Vibrancy' */
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-
-  /* Borde sutil y Luz Cenital (Inset shadow superior) */
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--border-glass);
   box-shadow:
-    0 4px 24px -1px rgba(0, 0, 0, 0.1), /* Sombra elevación */
-    inset 0 1px 0 var(--specular-light); /* Luz superior */
-
+    0 4px 24px -1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 var(--specular-light);
   border-radius: var(--radius-lg);
+  transition: box-shadow var(--duration-normal) var(--ease-in-out),
+              transform var(--duration-normal) var(--ease-in-out);
 }
 
-==============================================================================
-4. TIPOGRAFÍA FINANCIERA (CRÍTICO)
-==============================================================================
-REGLA: Todos los números financieros (saldos, precios, porcentajes) DEBEN usar OpenType.
-Esto evita que los números "bailen" cuando cambian en tiempo real.
+/* Hover sutil para tarjetas interactivas */
+.surface-glass--interactive:hover {
+  box-shadow:
+    0 8px 32px -2px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 var(--specular-light);
+  transform: translateY(-2px);
+}
 
-.financial-num {
+/* --- Superficie Glass Secundaria (Elementos internos, Sub-paneles) --- */
+.surface-glass--secondary {
+  position: relative;
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur-light)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-light)) saturate(140%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* --- Superficie Concreto (Sidebar, Headers — estructura fija) --- */
+.surface-concrete {
+  background: var(--bg-sidebar);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  border-right: 1px solid var(--border-default);
+  /* Textura sutil grain — se puede añadir un SVG noise como background-image */
+}
+
+/* --- Fallback para dispositivos con bajo rendimiento --- */
+@supports not (backdrop-filter: blur(1px)) {
+  .surface-glass,
+  .surface-glass--secondary,
+  .surface-concrete {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  [data-theme="light"] .surface-glass {
+    background: rgba(255, 255, 255, 0.92);
+  }
+  [data-theme="dark"] .surface-glass {
+    background: rgba(21, 26, 33, 0.92);
+  }
+}
+
+
+# ==============================================================================
+# 4. TIPOGRAFÍA FINANCIERA (CRÍTICO)
+# ==============================================================================
+# REGLA: Todos los números financieros (saldos, precios, porcentajes) DEBEN usar OpenType.
+# Esto evita que los números "bailen" cuando cambian en tiempo real.
+
+/* --- Utilidad Global de Números Tabulares --- */
+.financial-num,
+.text-tabular {
   font-family: var(--font-main);
-  /* 'tnum': Tabular Figures (Ancho fijo igual para todos los números) */
-  /* 'zero': Slashed Zero (Cero con barra para distinguir de la letra O) */
   font-feature-settings: "tnum" on, "zero" on;
   font-variant-numeric: tabular-nums;
-  text-align: right; /* Estándar contable */
+  text-align: right;
   letter-spacing: -0.01em;
 }
 
-ESCALA DE TEXTO (Responsive Clamp):
-- Hero Balance: 36px (Mobile) -> 56px (Desktop) | Peso: Bold (700)
-- H1 Page Title: 28px (Mobile) -> 36px (Desktop) | Peso: SemiBold (600)
-- Body: 16px (Minimo estricto para Inputs en Mobile para evitar zoom) | Peso: Regular (400)
-- Caption: 12px | Peso: Medium (500)
+/* --- Código Monoespaciado (IDs, hashes, códigos de referencia) --- */
+.text-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  letter-spacing: 0.02em;
+}
 
-==============================================================================
-5. COMPONENTES Y COMPORTAMIENTO (UX)
-==============================================================================
+/* --- Escala Tipográfica Completa --- */
+.text-hero {
+  font-size: var(--text-hero);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.025em;
+}
 
-[BOTONES]
-- Primario: Forma "Pill" (redonda). Fondo gradiente sutil. Sombra de color (Glow).
-- Interacción: Hover = Elevación (translateY -2px). Click = Hundimiento (scale 0.98).
-- Secundario: Fondo transparente. Borde 1px color marca.
+.text-h1 {
+  font-size: var(--text-h1);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+}
 
-[INPUTS / FORMULARIOS]
-- Altura: 48px (Touch friendly).
-- Focus State: NUNCA usar borde azul default del navegador.
-  Usar "Ring": box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
-- Validación: Feedback inmediato (no esperar al submit). Error = Vibración + Borde Rojo.
+.text-h2 {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.015em;
+}
 
-[TABLAS DE DATOS]
-- Header: Sticky (fijo arriba) con backdrop-filter (blur) al hacer scroll.
-- Celdas: Números alineados a la derecha (.financial-num). Texto a la izquierda.
-- Acciones:
-  - Desktop: Hover sobre la fila revela acciones.
-  - Mobile: Transformar fila en "Card" individual (NO mostrar tabla ancha).
+.text-h3 {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+}
 
-[PRIVACIDAD (MODO OJO)]
-- Funcionalidad requerida: Botón global que aplica `filter: blur(6px)` a todos los elementos con la clase `.financial-num`.
+.text-body {
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+}
 
-==============================================================================
-6. LAYOUT: ESTRATEGIA RESPONSIVA
-==============================================================================
+.text-body-sm {
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-normal);
+}
 
-A. MOBILE (<768px):
-   - Estructura: Stack Vertical (Columna única).
-   - Navegación: Bottom Tab Bar (Glass).
-   - Modales: Bottom Sheets (Salen de abajo, ocupan 80%).
+.text-caption {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
 
-B. DESKTOP (1024px - 1440px):
-   - Estructura: Grid Bento (Dashboard modular).
-   - Sidebar: Izquierda fija (Glass vertical).
-   - Grid CSS: `grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));`
+.text-overline {
+  font-size: var(--text-overline);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-normal);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
 
-C. ULTRA-WIDE (>1440px / 21:9):
-   - REGLA: Contenido principal (Main Stage) max-width: 1600px centrado.
-   - Zonas Periféricas: Usar el espacio sobrante a izquierda/derecha para Paneles de Utilidad (Noticias, Chat, Calculadora rápida).
+/* --- Colores Semánticos de Texto Financiero --- */
+.text-gain {
+  color: var(--green-success);
+}
+.text-loss {
+  color: var(--red-danger);
+}
+.text-neutral-change {
+  color: var(--text-secondary);
+}
+
+/* --- Formato de Moneda: Reglas de Visualización --- */
+/*
+  REGLA ESTRICTA DE FORMATO MONETARIO:
+  - Símbolo de moneda SIEMPRE a la izquierda, pegado al número: $1,234.56
+  - Miles separados con coma: 1,234,567.89
+  - Decimales con punto: .00
+  - Saldos SIEMPRE con 2 decimales: $1,234.00 (no $1,234)
+  - Negativos con paréntesis contables: ($1,234.56), NO con signo menos
+  - Porcentajes: +2.45% / -1.23% — con signo explícito y 2 decimales
+  - Moneda secundaria entre paréntesis: $1,234.56 (€1,150.20)
+  - Abreviaciones de cifras grandes: $1.2M, $450K — Solo en cards y gráficos, NO en tablas
+
+  NOTA PARA AGENTES IA: Nunca renderizar un valor monetario sin decimales.
+  Nunca usar notación tipo "1234.5" sin separador de miles.
+*/
+
+
+# ==============================================================================
+# 5. COMPONENTES Y COMPORTAMIENTO (UX) — ESPECIFICACIONES COMPLETAS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 5.1 BOTONES
+# ------------------------------------------------------------------------------
+
+/* --- Botón Primario (CTA Principal) --- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 48px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  color: var(--text-inverse);
+  background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-hover) 100%);
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-glow-brand);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -2px var(--brand-blue-glow);
+}
+.btn-primary:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 2px 8px -2px var(--brand-blue-glow);
+}
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-blue-light), var(--shadow-glow-brand);
+}
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Botón Secundario (Acciones complementarias) --- */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 48px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--brand-blue);
+  background: transparent;
+  border: 1.5px solid var(--brand-blue);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+[data-theme="dark"] .btn-secondary {
+  color: var(--text-link);
+  border-color: var(--text-link);
+}
+.btn-secondary:hover {
+  background: var(--brand-blue-light);
+  transform: translateY(-1px);
+}
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+}
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- Botón Ghost (Mínima jerarquía visual) --- */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 40px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.btn-ghost:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+
+/* --- Botón Peligro (Eliminar, Cancelar transacciones) --- */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 48px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  color: #FFFFFF;
+  background: var(--red-danger);
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-glow-danger);
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+.btn-danger:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+.btn-danger:active {
+  transform: scale(0.98);
+}
+
+/* --- Botón Icon-Only (Acciones en toolbar) --- */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.btn-icon:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.btn-icon:active {
+  transform: scale(0.92);
+}
+
+/* --- Tamaños Alternativos --- */
+.btn--sm {
+  height: 36px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-body-sm);
+}
+.btn--lg {
+  height: 56px;
+  padding: 0 var(--space-6);
+  font-size: 1.125rem;
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.2 INPUTS / FORMULARIOS
+# ------------------------------------------------------------------------------
+
+/* --- Input Base --- */
+.input-field {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-2);
+  font-family: var(--font-main);
+  font-size: var(--text-body); /* 16px min para evitar zoom en iOS */
+  font-weight: var(--weight-regular);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all var(--duration-fast) var(--ease-in-out);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.input-field::placeholder {
+  color: var(--text-tertiary);
+}
+.input-field:hover {
+  background: var(--bg-input-hover);
+}
+.input-field:focus {
+  background: var(--bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+}
+
+/* --- Input Error State --- */
+.input-field--error {
+  border-color: var(--red-danger) !important;
+  box-shadow: 0 0 0 3px var(--red-danger-bg) !important;
+  animation: input-shake 0.4s var(--ease-out-expo);
+}
+@keyframes input-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(2px); }
+}
+
+/* --- Input Success State --- */
+.input-field--success {
+  border-color: var(--green-success);
+  box-shadow: 0 0 0 3px var(--green-success-bg);
+}
+
+/* --- Input Disabled --- */
+.input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-input);
+}
+
+/* --- Floating Label Pattern --- */
+.input-group {
+  position: relative;
+}
+.input-group .input-label {
+  position: absolute;
+  top: 50%;
+  left: var(--space-2);
+  transform: translateY(-50%);
+  font-size: var(--text-body);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  transition: all var(--duration-fast) var(--ease-out-expo);
+  background: transparent;
+  padding: 0 4px;
+}
+.input-group .input-field:focus ~ .input-label,
+.input-group .input-field:not(:placeholder-shown) ~ .input-label {
+  top: -2px;
+  transform: translateY(-50%) scale(0.75);
+  color: var(--border-focus);
+  background: var(--bg-app);
+}
+
+/* --- Input Monetario --- */
+.input-currency-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-currency-wrapper .currency-symbol {
+  position: absolute;
+  left: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+.input-currency-wrapper .input-field {
+  padding-left: calc(var(--space-2) + 1.2em); /* Espacio para el símbolo */
+  text-align: right;
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Textarea --- */
+.textarea-field {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-2);
+  font-family: var(--font-main);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md);
+  outline: none;
+  resize: vertical;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.textarea-field:focus {
+  background: var(--bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+}
+
+/* --- Select / Dropdown --- */
+.select-field {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-4) 0 var(--space-2);
+  font-family: var(--font-main);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  /* Flecha custom */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B7280' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
+  background-size: 12px;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.select-field:focus {
+  background-color: var(--bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+}
+
+/* --- Checkbox --- */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+.checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-xs);
+  background: var(--bg-input);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.checkbox input[type="checkbox"]:checked {
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+  /* Checkmark via SVG background */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='white' d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 111.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z'/%3E%3C/svg%3E");
+  background-size: 14px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.checkbox input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+}
+
+/* --- Toggle Switch --- */
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+.toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle .toggle-track {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--slate-300);
+  transition: background var(--duration-normal) var(--ease-in-out);
+  position: relative;
+}
+.toggle input:checked + .toggle-track {
+  background: var(--green-success);
+}
+.toggle .toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-normal) var(--ease-spring);
+}
+.toggle input:checked + .toggle-track::after {
+  transform: translateX(18px);
+}
+
+/* --- Mensajes de Error / Ayuda bajo Input --- */
+.input-message {
+  display: block;
+  margin-top: var(--space-0);
+  font-size: var(--text-caption);
+  line-height: var(--leading-normal);
+}
+.input-message--error {
+  color: var(--red-danger);
+}
+.input-message--success {
+  color: var(--green-success);
+}
+.input-message--hint {
+  color: var(--text-tertiary);
+}
+
+/* --- Validación en Tiempo Real: Reglas UX --- */
+/*
+  REGLA: Nunca esperar al submit para validar.
+  1. Campos obligatorios: Validar al perder foco (blur) o tras 800ms de inactividad.
+  2. Campos de email/teléfono: Validar formato al blur.
+  3. Campos monetarios: Formatear automáticamente al blur (agregar separadores de miles y decimales).
+  4. Campos de contraseña: Mostrar indicador de fortaleza en tiempo real (keyup).
+  5. Error visual: Borde rojo + shake + mensaje descriptivo bajo el campo.
+  6. Success visual: Borde verde + checkmark icon aparece en el lado derecho del input.
+  7. NUNCA bloquear al usuario de continuar escribiendo durante la validación.
+
+  NOTA PARA AGENTES IA: Todo input de formulario DEBE tener un mensaje de error
+  asociado. Nunca dejar un input-field--error sin un .input-message--error visible.
+*/
+
+
+# ------------------------------------------------------------------------------
+# 5.3 CAMPO DE BÚSQUEDA (Search Bar)
+# ------------------------------------------------------------------------------
+
+/* --- Search Bar Global --- */
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  height: 44px;
+  background: var(--bg-input);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-2);
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.search-bar:focus-within {
+  background: var(--bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+  max-width: 560px; /* Se expande al focus */
+}
+.search-bar .search-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--text-tertiary);
+  margin-right: var(--space-1);
+}
+.search-bar input {
+  flex: 1;
+  height: 100%;
+  font-family: var(--font-main);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.search-bar input::placeholder {
+  color: var(--text-tertiary);
+}
+.search-bar .search-shortcut {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xs);
+}
+/* Muestra "⌘K" o "Ctrl+K" según plataforma */
+
+/* --- Search Results Dropdown --- */
+.search-results {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+  z-index: var(--z-dropdown);
+}
+.search-results .search-result-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+.search-results .search-result-item:hover,
+.search-results .search-result-item[aria-selected="true"] {
+  background: var(--table-row-hover);
+}
+
+/*
+  REGLA DE BÚSQUEDA UX:
+  1. Debounce de 300ms antes de ejecutar búsqueda.
+  2. Mostrar estado de carga (skeleton/spinner) tras 500ms sin respuesta.
+  3. Resultados agrupados por categoría: Cuentas, Transacciones, Contactos.
+  4. Máximo 8 resultados visibles sin scroll.
+  5. Navegación por teclado: ↑/↓ para moverse, Enter para seleccionar, Esc para cerrar.
+  6. Texto de búsqueda resaltado (highlight) en los resultados.
+  7. Estado vacío: Mostrar "No se encontraron resultados" + sugerencias.
+*/
+
+
+# ------------------------------------------------------------------------------
+# 5.4 TARJETAS (Cards)
+# ------------------------------------------------------------------------------
+
+/* --- Card Base (Aplica .surface-glass como base) --- */
+.card {
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+}
+
+/* --- Card de Saldo / Balance --- */
+/*
+  Estructura obligatoria:
+  ┌─────────────────────────────┐
+  │ [Overline: Tipo de Cuenta]  │  .text-overline
+  │ $12,345.67                  │  .text-hero + .financial-num
+  │ +$234.56 (+1.94%) ▲        │  .text-body-sm + .text-gain
+  │ Actualizado hace 2 min      │  .text-caption
+  └─────────────────────────────┘
+*/
+.card-balance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.card-balance .balance-amount {
+  font-size: var(--text-hero);
+  font-weight: var(--weight-bold);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+}
+.card-balance .balance-change {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
+  font-size: var(--text-body-sm);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+}
+.card-balance .balance-change--up {
+  color: var(--green-success);
+}
+.card-balance .balance-change--down {
+  color: var(--red-danger);
+}
+.card-balance .balance-updated {
+  font-size: var(--text-caption);
+  color: var(--text-tertiary);
+}
+
+/* --- Card de Cuenta --- */
+/*
+  Estructura obligatoria:
+  ┌─────────────────────────────────────────┐
+  │ [Icon Banco] Banco Nacional    ●●●● 4532│  Header con logo + últimos 4 dígitos
+  │ Cuenta Corriente                         │  Tipo de cuenta
+  │                               $8,421.00  │  Saldo alineado derecha
+  │ Disponible: $7,200.00                    │  Sub-saldo
+  └─────────────────────────────────────────┘
+*/
+.card-account {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.card-account .account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-account .account-number-masked {
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm);
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+}
+
+/* --- Card de Transacción Rápida (Para listas mobile) --- */
+/*
+  Estructura obligatoria (Card View de una fila de tabla en mobile):
+  ┌─────────────────────────────────────────┐
+  │ [Icon] Supermercado XYZ                  │
+  │ Hoy, 14:32        Categoría: Alimentos  │
+  │                              -$45.90     │  Monto en rojo (gasto)
+  ├─────────────────────────────────────────┤
+  │ ▶ Ver detalle                            │  Accordion / expand
+  └─────────────────────────────────────────┘
+*/
+.card-transaction {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+.card-transaction:active {
+  background: var(--bg-surface-hover);
+}
+.card-transaction .transaction-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-transaction .transaction-amount {
+  font-weight: var(--weight-semibold);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* --- Card KPI / Métrica --- */
+/*
+  Estructura obligatoria:
+  ┌───────────────────────┐
+  │ Ingresos Mensuales    │  .text-caption o .text-overline
+  │ $45,231.00            │  .text-h1 + .financial-num
+  │ ▲ 12.3% vs mes ant.  │  .text-body-sm
+  │ ─── [Sparkline] ───   │  Mini gráfico inline (opcional)
+  └───────────────────────┘
+*/
+.card-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+.card-kpi .kpi-value {
+  font-size: var(--text-h1);
+  font-weight: var(--weight-bold);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+}
+.card-kpi .kpi-sparkline {
+  height: 32px;
+  width: 100%;
+  margin-top: var(--space-1);
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.5 TABLAS DE DATOS
+# ------------------------------------------------------------------------------
+
+/* --- Tabla Base --- */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-body-sm);
+}
+
+/* --- Encabezado Sticky con Glass --- */
+.data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+.data-table thead th {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: var(--table-header-bg);
+  backdrop-filter: blur(var(--glass-blur-light)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-light)) saturate(150%);
+  border-bottom: 1px solid var(--table-border);
+  text-align: left;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Columnas numéricas alineadas a la derecha */
+.data-table thead th[data-type="number"],
+.data-table thead th[data-type="currency"],
+.data-table thead th[data-type="percentage"] {
+  text-align: right;
+}
+
+/* --- Filas --- */
+.data-table tbody tr {
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+.data-table tbody tr:hover {
+  background: var(--table-row-hover);
+}
+
+/* Striping opcional */
+.data-table--striped tbody tr:nth-child(even) {
+  background: var(--table-row-stripe);
+}
+
+/* --- Celdas --- */
+.data-table tbody td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--table-border);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+/* Celdas numéricas */
+.data-table tbody td[data-type="number"],
+.data-table tbody td[data-type="currency"],
+.data-table tbody td[data-type="percentage"] {
+  text-align: right;
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+}
+
+/* Celdas monetarias con color semántico */
+.data-table tbody td.amount-positive {
+  color: var(--green-success);
+}
+.data-table tbody td.amount-negative {
+  color: var(--red-danger);
+}
+
+/* --- Acciones en Fila (Desktop: Hover reveal) --- */
+.data-table .row-actions {
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-in-out);
+  display: flex;
+  gap: var(--space-0);
+  justify-content: flex-end;
+}
+.data-table tbody tr:hover .row-actions {
+  opacity: 1;
+}
+
+/* --- Ordenamiento (Sort Indicators) --- */
+.data-table thead th[data-sortable] {
+  cursor: pointer;
+}
+.data-table thead th[data-sortable]:hover {
+  color: var(--text-primary);
+}
+.data-table thead th[data-sort="asc"]::after {
+  content: ' ▲';
+  font-size: 0.6em;
+}
+.data-table thead th[data-sort="desc"]::after {
+  content: ' ▼';
+  font-size: 0.6em;
+}
+
+/* --- Tabla Vacía --- */
+.data-table-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.data-table-empty .empty-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-2);
+  opacity: 0.3;
+}
+.data-table-empty .empty-title {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+}
+.data-table-empty .empty-description {
+  font-size: var(--text-body-sm);
+  color: var(--text-tertiary);
+  max-width: 320px;
+}
+
+/* --- Virtual Scrolling Container --- */
+/*
+  REGLA DE RENDIMIENTO:
+  1. Toda tabla con más de 100 filas DEBE usar Virtual Scrolling (cdk-virtual-scroll en Angular).
+  2. El contenedor de scroll debe tener altura fija o max-height definido.
+  3. Cada fila debe tener altura predecible (no variable) para el cálculo del viewport.
+  4. Target: 60fps con 10,000+ filas.
+  5. Sticky header DEBE permanecer visible durante el virtual scroll.
+*/
+.table-scroll-container {
+  max-height: 600px; /* Ajustar según contexto */
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--table-border);
+}
+
+/* --- Mobile: Tabla → Card View --- */
+/*
+  REGLA: En breakpoints < 768px, las tablas NO se muestran como tablas anchas con scroll
+  horizontal. Se transforman en Card View.
+
+  Patrón de transformación:
+  - Cada fila se convierte en un .card-transaction (ver 5.4)
+  - El header de la tabla se oculta
+  - Los labels de cada columna se muestran como "data-label" antes de cada valor
+  - Monto y fecha siempre visibles; columnas secundarias en acordeón
+*/
+@media (max-width: 767px) {
+  .data-table--responsive thead {
+    display: none;
+  }
+  .data-table--responsive tbody tr {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-2);
+    margin-bottom: var(--space-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+  }
+  .data-table--responsive tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-0) 0;
+    border-bottom: none;
+  }
+  .data-table--responsive tbody td::before {
+    content: attr(data-label);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.6 FECHAS Y FORMATO TEMPORAL
+# ------------------------------------------------------------------------------
+
+/*
+  REGLAS ESTRICTAS DE FORMATO DE FECHAS:
+  
+  1. FORMATO CORTO (en tablas, listas, transacciones):
+     - Hoy:         "Hoy, 14:32"
+     - Ayer:         "Ayer, 09:15"
+     - Esta semana:  "Lun, 14:32" (nombre corto del día)
+     - Este año:     "15 Mar" (día + mes abreviado 3 letras)
+     - Otro año:     "15 Mar 2024"
+  
+  2. FORMATO LARGO (en detalles, recibos, reportes):
+     - "15 de Marzo de 2025, 14:32:05"
+  
+  3. FORMATO ISO (para atributos data- y APIs):
+     - "2025-03-15T14:32:05Z"
+  
+  4. RANGOS DE FECHA:
+     - Mismo mes:    "1 – 15 Mar 2025"
+     - Diferente mes: "15 Mar – 10 Abr 2025"
+     - Diferente año: "15 Dic 2024 – 10 Ene 2025"
+  
+  5. TIEMPO RELATIVO (para actividad reciente):
+     - < 1 min:      "Ahora"
+     - < 60 min:     "Hace 23 min"
+     - < 24 horas:   "Hace 5 horas"
+     - > 24 horas:   Cambiar a formato corto
+  
+  6. REGLA VISUAL:
+     - Fechas usan .text-caption con color var(--text-tertiary)
+     - Horas usan .text-mono para alineación
+     - En tablas, la columna de fecha ocupa mínimo 100px para evitar wrap
+  
+  NOTA PARA AGENTES IA: Nunca mostrar timestamps crudos al usuario.
+  Siempre formatear según estas reglas. El idioma por defecto es Español (es-419).
+*/
+
+/* --- Date Picker Financiero --- */
+/*
+  ESPECIFICACIÓN DEL DATE PICKER:
+
+  Componente compuesto por:
+  ┌──────────────────────────────────────────────────────┐
+  │ [Presets Laterales]  │  [Calendario Grid]            │
+  │                      │                               │
+  │  Hoy                 │  ◀  Marzo 2025  ▶            │
+  │  Ayer                │  Lu Ma Mi Ju Vi Sa Do         │
+  │  Últimos 7 días      │  .. ..  1  2  3  4  5         │
+  │  Este Mes            │   6  7  8  9 10 11 12         │
+  │  Último Mes          │  13 14 [15====20] 21 22       │ ← Rango seleccionado
+  │  Último Trimestre    │  23 24 25 26 27 28 29         │
+  │  Año Fiscal Actual   │  30 31 .. .. .. .. ..         │
+  │  YTD                 │                               │
+  │  Personalizado       │  [Aplicar]     [Cancelar]     │
+  └──────────────────────────────────────────────────────┘
+
+  REGLAS:
+  1. Los presets SIEMPRE están visibles en el lateral izquierdo (desktop) o como
+     chips scrollables arriba (mobile).
+  2. La banda del rango seleccionado es semitransparente (var(--brand-blue-light))
+     conectando los días del rango.
+  3. El día actual tiene un punto indicador debajo del número.
+  4. Los días fuera del mes actual se muestran con opacity 0.3.
+  5. Al seleccionar un rango, el input muestra: "1 Mar – 15 Mar 2025".
+  6. Keyboard: Flechas para navegar, Enter para seleccionar, Esc para cerrar.
+  7. El date picker es un dropdown glass (.surface-glass + shadow-dropdown).
+*/
+
+.datepicker-container {
+  display: flex;
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-dropdown);
+  overflow: hidden;
+  z-index: var(--z-dropdown);
+}
+.datepicker-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  border-right: 1px solid var(--divider);
+  min-width: 160px;
+}
+.datepicker-presets button {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-body-sm);
+  text-align: left;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-in-out);
+}
+.datepicker-presets button:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+.datepicker-presets button.active {
+  background: var(--brand-blue-light);
+  color: var(--brand-blue);
+  font-weight: var(--weight-medium);
+}
+.datepicker-calendar {
+  padding: var(--space-2);
+}
+.datepicker-day--in-range {
+  background: var(--brand-blue-light);
+}
+.datepicker-day--selected {
+  background: var(--brand-blue);
+  color: white;
+  border-radius: var(--radius-pill);
+}
+.datepicker-day--today::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand-blue);
+  margin: 2px auto 0;
+}
+
+/* --- Mobile Date Picker --- */
+@media (max-width: 767px) {
+  .datepicker-container {
+    flex-direction: column;
+    width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0; /* Bottom Sheet */
+  }
+  .datepicker-presets {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--divider);
+    min-width: auto;
+    padding: var(--space-1);
+  }
+  .datepicker-presets button {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.7 BADGES, TAGS Y STATUS INDICATORS
+# ------------------------------------------------------------------------------
+
+/* --- Badge Numérico (Notificaciones, Contadores) --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  font-feature-settings: "tnum" on;
+  color: white;
+  background: var(--red-danger);
+  border-radius: var(--radius-pill);
+}
+
+/* --- Status Dot (Online, Activa, Procesando) --- */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot--active   { background: var(--green-success); }
+.status-dot--inactive { background: var(--text-tertiary); }
+.status-dot--warning  { background: var(--amber-warning); }
+.status-dot--error    { background: var(--red-danger); }
+.status-dot--pulse {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* --- Tag / Chip (Categorías, Filtros) --- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
+  height: 28px;
+  padding: 0 var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+.tag--success { color: var(--green-success); background: var(--green-success-bg); border-color: transparent; }
+.tag--danger  { color: var(--red-danger);    background: var(--red-danger-bg);    border-color: transparent; }
+.tag--warning { color: var(--amber-warning); background: var(--amber-warning-bg); border-color: transparent; }
+.tag--info    { color: var(--info-blue);     background: var(--info-blue-bg);     border-color: transparent; }
+.tag--premium { color: var(--gold-premium);  background: var(--gold-premium-bg);  border-color: transparent; }
+
+/* --- Financial Change Indicator (Inline) --- */
+/*
+  Uso: junto a montos para indicar variación
+  Ejemplo: $1,234.56  ▲ +2.45%
+*/
+.change-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+  font-feature-settings: "tnum" on, "zero" on;
+  font-variant-numeric: tabular-nums;
+}
+.change-indicator--up {
+  color: var(--green-success);
+}
+.change-indicator--up::before {
+  content: '▲';
+  font-size: 0.6em;
+}
+.change-indicator--down {
+  color: var(--red-danger);
+}
+.change-indicator--down::before {
+  content: '▼';
+  font-size: 0.6em;
+}
+.change-indicator--neutral {
+  color: var(--text-tertiary);
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.8 MODALES Y BOTTOM SHEETS
+# ------------------------------------------------------------------------------
+
+/* --- Overlay / Backdrop --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: var(--z-overlay);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-in-out);
+}
+.modal-overlay.active {
+  opacity: 1;
+}
+
+/* --- Modal (Desktop) --- */
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-saturate));
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  z-index: var(--z-modal);
+  padding: var(--space-4);
+  opacity: 0;
+  transition: all var(--duration-slow) var(--ease-out-expo);
+}
+.modal.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.modal .modal-header h2 {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+}
+
+/* --- Bottom Sheet (Mobile <768px) --- */
+@media (max-width: 767px) {
+  .modal {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(100%);
+    width: 100%;
+    max-width: none;
+    max-height: 85vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--space-3);
+  }
+  .modal.active {
+    transform: translateY(0);
+  }
+  /* Drag handle visual */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--text-disabled);
+    margin: 0 auto var(--space-2);
+  }
+}
+
+/* --- Confirmation Modal (Transacciones) --- */
+/*
+  REGLA UX PARA CONFIRMACIONES FINANCIERAS:
+  1. Mostrar SIEMPRE un resumen de la operación antes de confirmar.
+  2. Incluir: Tipo de operación, Monto, Destinatario, Fecha estimada.
+  3. Botón de confirmar debe ser .btn-primary (NO .btn-danger a menos que sea cancelación).
+  4. Botón cancelar debe ser .btn-ghost.
+  5. Tras confirmar exitosamente: Animación de check (Lottie/CSS) + mensaje de éxito.
+  6. La animación de éxito libera dopamina y reduce ansiedad financiera.
+  7. Duración de animación de éxito: 1.2s — luego auto-dismiss o botón "Listo".
+*/
+
+/* --- Animation: Success Checkmark --- */
+@keyframes check-draw {
+  0%   { stroke-dashoffset: 50; }
+  100% { stroke-dashoffset: 0; }
+}
+.success-check svg {
+  width: 64px;
+  height: 64px;
+}
+.success-check .check-circle {
+  stroke: var(--green-success);
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: check-draw 0.6s var(--ease-out-expo) forwards;
+}
+.success-check .check-path {
+  stroke: var(--green-success);
+  stroke-width: 3;
+  fill: none;
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: check-draw 0.3s var(--ease-out-expo) 0.4s forwards;
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.9 TOAST / NOTIFICACIONES
+# ------------------------------------------------------------------------------
+
+/* --- Toast Container --- */
+.toast-container {
+  position: fixed;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+@media (max-width: 767px) {
+  .toast-container {
+    top: auto;
+    bottom: calc(var(--space-8) + 56px); /* Encima del Bottom Tab Bar */
+    right: var(--space-2);
+    left: var(--space-2);
+  }
+}
+
+/* --- Toast Individual --- */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-toast);
+  pointer-events: auto;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all var(--duration-slow) var(--ease-out-expo);
+  max-width: 420px;
+}
+.toast.active {
+  transform: translateX(0);
+  opacity: 1;
+}
+.toast--success { border-left: 3px solid var(--green-success); }
+.toast--error   { border-left: 3px solid var(--red-danger); }
+.toast--warning { border-left: 3px solid var(--amber-warning); }
+.toast--info    { border-left: 3px solid var(--brand-blue); }
+
+.toast .toast-message {
+  flex: 1;
+  font-size: var(--text-body-sm);
+  color: var(--text-primary);
+}
+.toast .toast-dismiss {
+  flex-shrink: 0;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color var(--duration-fast);
+}
+.toast .toast-dismiss:hover {
+  color: var(--text-primary);
+}
+
+/*
+  REGLA DE TOASTS:
+  1. Duración por defecto: 5 segundos, luego auto-dismiss.
+  2. Toasts de error: NO auto-dismiss. Requieren click para cerrar.
+  3. Máximo 3 toasts visibles a la vez. Los nuevos empujan a los viejos.
+  4. En mobile: Toasts aparecen desde abajo, encima del Bottom Tab Bar.
+  5. Toasts de transacciones exitosas incluyen mini resumen del monto.
+*/
+
+
+# ------------------------------------------------------------------------------
+# 5.10 TOOLTIPS Y POPOVERS
+# ------------------------------------------------------------------------------
+
+.tooltip {
+  position: absolute;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--text-inverse);
+  background: var(--slate-800);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  z-index: var(--z-popover);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all var(--duration-fast) var(--ease-out-expo);
+}
+[data-theme="light"] .tooltip {
+  background: #1F2937;
+  color: white;
+}
+.tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Flecha del tooltip */
+.tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: inherit;
+}
+.tooltip--top::after {
+  bottom: -4px;
+}
+.tooltip--bottom::after {
+  top: -4px;
+  bottom: auto;
+}
+
+/*
+  REGLA TOOLTIPS:
+  1. Delay de aparición: 500ms (evitar flash accidental).
+  2. Contenido: Máximo 2 líneas de texto.
+  3. No usar tooltips para información crítica — usar popovers o inline text.
+  4. En mobile: Los tooltips se activan con long-press (no hover).
+*/
+
+
+# ------------------------------------------------------------------------------
+# 5.11 COMMAND PALETTE (Cmd+K)
+# ------------------------------------------------------------------------------
+
+/*
+  ESPECIFICACIÓN COMMAND PALETTE:
+  - Acceso: Cmd/Ctrl + K (global shortcut)
+  - Funcionalidad: Búsqueda global + Acciones rápidas
+  - Posición: Centrado horizontal, top 20% vertical
+  - Máximo 8 resultados visibles
+  - Agrupados por categoría: Navegación, Cuentas, Transacciones, Configuración
+  - Keyboard-first: ↑/↓ para navegar, Enter para ejecutar, Esc para cerrar
+  - Fuzzy search con highlight de matches
+*/
+
+.command-palette-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: var(--z-command);
+  display: flex;
+  justify-content: center;
+  padding-top: 20vh;
+}
+.command-palette {
+  width: 90%;
+  max-width: 640px;
+  max-height: 480px;
+  background: var(--bg-surface-elevated);
+  backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur-heavy)) saturate(var(--glass-saturate));
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.command-palette .cp-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--divider);
+}
+.command-palette .cp-input {
+  flex: 1;
+  height: 40px;
+  font-size: var(--text-h3);
+  font-weight: var(--weight-regular);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.command-palette .cp-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-1);
+}
+.command-palette .cp-group-label {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.command-palette .cp-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+.command-palette .cp-item:hover,
+.command-palette .cp-item[aria-selected="true"] {
+  background: var(--table-row-hover);
+}
+.command-palette .cp-item-title {
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+.command-palette .cp-item-shortcut {
+  margin-left: auto;
+  font-size: var(--text-caption);
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+
+# ------------------------------------------------------------------------------
+# 5.12 PRIVACIDAD (MODO OJO)
+# ------------------------------------------------------------------------------
+
+/* --- Toggle Global de Privacidad --- */
+/*
+  COMPORTAMIENTO:
+  1. Un botón con icono de "ojo" en el header/toolbar global.
+  2. Al activar, TODOS los elementos con clase .privacy-sensitive se desenfoccan.
+  3. El botón cambia a icono de "ojo tachado".
+  4. Estado persistido en localStorage.
+  5. El blur no afecta la interacción (el usuario puede seguir haciendo click).
+  6. NO aplicar blur a: navegación, botones de acción, nombres de sección.
+  7. SÍ aplicar blur a: saldos, montos, porcentajes, nombres de destinatarios,
+     números de cuenta.
+*/
+
+body.privacy-mode .privacy-sensitive {
+  filter: blur(6px);
+  user-select: none;
+  transition: filter var(--duration-normal) var(--ease-in-out);
+}
+body.privacy-mode .privacy-sensitive:hover {
+  /* NO revelar al hover — solo con toggle explícito */
+  filter: blur(6px);
+}
+
+/* Botón de privacidad */
+.btn-privacy {
+  position: relative;
+}
+.btn-privacy .privacy-icon-visible,
+.btn-privacy .privacy-icon-hidden {
+  transition: opacity var(--duration-fast);
+}
+body:not(.privacy-mode) .btn-privacy .privacy-icon-hidden { display: none; }
+body.privacy-mode .btn-privacy .privacy-icon-visible { display: none; }
+
+
+# ==============================================================================
+# 6. LAYOUT: ESTRATEGIA RESPONSIVA — ESPECIFICACIÓN COMPLETA
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 6.1 GLOBALS
+# ------------------------------------------------------------------------------
+
+/* --- Reset y Base Global --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-main);
+  font-size: 16px; /* Base para rem */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-app);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* --- Scrollbar Custom --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* --- Selección de Texto --- */
+::selection {
+  background: var(--brand-blue-light);
+  color: var(--text-primary);
+}
+
+
+# ------------------------------------------------------------------------------
+# 6.2 MOBILE (<768px)
+# ------------------------------------------------------------------------------
+
+/*
+  ESTRUCTURA MOBILE:
+  ┌─────────────────────────┐
+  │ [Status Bar del OS]     │
+  ├─────────────────────────┤
+  │ [Top Bar: Logo + Icons] │  height: 56px; glass
+  ├─────────────────────────┤
+  │                         │
+  │  [Contenido Principal]  │  Stack vertical, scroll
+  │  Columna única          │
+  │  padding: 16px          │
+  │                         │
+  ├─────────────────────────┤
+  │ [Bottom Tab Bar]        │  height: 56px + safe-area; glass
+  └─────────────────────────┘
+
+  REGLAS MOBILE:
+  1. Todo contenido en columna única.
+  2. Touch targets mínimo 44x44px (WCAG) — preferir 48px.
+  3. Acciones principales alcanzables con el pulgar (zona inferior).
+  4. NO usar hover states — usar tap y long-press.
+  5. Modales = Bottom Sheets (máximo 85% de la pantalla).
+  6. Tables → Card View (ver 5.5).
+  7. Inputs: font-size MÍNIMO 16px para evitar zoom en iOS.
+  8. Padding horizontal del contenido: 16px.
+  9. Gap entre cards: 12px.
+*/
+
+/* --- Top Bar Mobile --- */
+.topbar-mobile {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 var(--space-2);
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--border-glass);
+  z-index: var(--z-sticky);
+}
+
+/* --- Bottom Tab Bar Mobile --- */
+.bottom-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: calc(56px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-top: 1px solid var(--border-glass);
+  z-index: var(--z-sticky);
+}
+.bottom-tabbar .tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1) 0;
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast);
+}
+.bottom-tabbar .tab-item.active {
+  color: var(--brand-blue);
+}
+.bottom-tabbar .tab-item .tab-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* --- Mobile Content Area --- */
+.main-content-mobile {
+  padding: var(--space-2);
+  padding-bottom: calc(56px + env(safe-area-inset-bottom) + var(--space-2)); /* Space for tabbar */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+# ------------------------------------------------------------------------------
+# 6.3 TABLET (768px - 1023px)
+# ------------------------------------------------------------------------------
+
+/*
+  ESTRUCTURA TABLET:
+  ┌─────────────────────────────────────┐
+  │ [Top Bar: Logo + Search + Icons]    │
+  ├─────────────────────────────────────┤
+  │                                     │
+  │  Grid de 2 columnas                 │
+  │  padding: 24px                      │
+  │  gap: 24px                          │
+  │                                     │
+  └─────────────────────────────────────┘
+
+  REGLAS TABLET:
+  1. Grid de 2 columnas como máximo.
+  2. Sidebar colapsada a iconos (rail de 64px) o drawer.
+  3. Cards de saldo pueden hacer span 2 columnas.
+  4. Bottom Tab Bar se MANTIENE (mejor ergonomía que sidebar en tablets).
+  5. Date picker: Layout horizontal (presets + calendar).
+*/
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+  .bento-grid .span-full {
+    grid-column: 1 / -1;
+  }
+}
+
+
+# ------------------------------------------------------------------------------
+# 6.4 DESKTOP (1024px - 1439px)
+# ------------------------------------------------------------------------------
+
+/*
+  ESTRUCTURA DESKTOP:
+  ┌──────┬──────────────────────────────┐
+  │      │ [Top Bar: Search + User]     │
+  │      ├──────────────────────────────┤
+  │ Side │                              │
+  │ bar  │  Bento Grid (3 cols)         │
+  │      │  padding: 32px              │
+  │ 240px│  gap: 24px                  │
+  │      │                              │
+  │      │                              │
+  └──────┴──────────────────────────────┘
+
+  REGLAS DESKTOP:
+  1. Sidebar fija a la izquierda, 240px ancho, colapsable a 64px (rail con iconos).
+  2. Sidebar usa .surface-concrete (textura mate, no glass).
+  3. El item activo del sidebar tiene glow de color marca.
+  4. Main grid: 3 columnas con auto-fit minmax(320px, 1fr).
+  5. Cards de KPI pueden hacer span de 2 o 3 columnas.
+  6. Tablas: Hover actions visibles (ver 5.5).
+  7. Command Palette habilitado (Cmd+K).
+*/
+
+/* --- App Layout Desktop --- */
+@media (min-width: 1024px) {
+  .app-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+  .app-layout.sidebar-collapsed {
+    grid-template-columns: 64px 1fr;
+  }
+
+  /* --- Sidebar Desktop --- */
+  .sidebar {
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-3) var(--space-2);
+    gap: var(--space-0);
+    /* Textura concreto */
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-default);
+    transition: width var(--duration-normal) var(--ease-out-expo);
+  }
+  .sidebar .nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-body-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-in-out);
+    text-decoration: none;
+  }
+  .sidebar .nav-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-input);
+  }
+  .sidebar .nav-item.active {
+    color: var(--brand-blue);
+    background: var(--brand-blue-light);
+    font-weight: var(--weight-semibold);
+    /* Glow sutil */
+    box-shadow: inset 3px 0 0 var(--brand-blue);
+  }
+  [data-theme="dark"] .sidebar .nav-item.active {
+    color: var(--text-link);
+    background: rgba(77, 163, 255, 0.08);
+    box-shadow: inset 3px 0 0 var(--text-link);
+  }
+  .sidebar .nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .sidebar .nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity var(--duration-fast);
+  }
+  /* Sidebar colapsada: solo iconos */
+  .app-layout.sidebar-collapsed .sidebar .nav-label {
+    opacity: 0;
+    width: 0;
+  }
+
+  /* --- Top Bar Desktop --- */
+  .topbar-desktop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 var(--space-4);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    backdrop-filter: blur(var(--glass-blur-light)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--glass-blur-light)) saturate(150%);
+  }
+
+  /* --- Main Content Desktop --- */
+  .main-content-desktop {
+    padding: var(--space-4);
+    overflow-y: auto;
+  }
+
+  .bento-grid {
+    display: grid;
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  .bento-grid .span-2 {
+    grid-column: span 2;
+  }
+  .bento-grid .span-3 {
+    grid-column: span 3;
+  }
+  .bento-grid .span-full {
+    grid-column: 1 / -1;
+  }
+
+  /* Bottom Tab Bar oculta en desktop */
+  .bottom-tabbar {
+    display: none;
+  }
+}
+
+
+# ------------------------------------------------------------------------------
+# 6.5 ULTRA-WIDE (>1440px / 21:9)
+# ------------------------------------------------------------------------------
+
+/*
+  ESTRUCTURA ULTRA-WIDE:
+  ┌──────┬────────────┬────────────────────────────────┬────────────┐
+  │      │  Utility   │                                │  Utility   │
+  │ Side │  Panel     │     Main Stage                 │  Panel     │
+  │ bar  │  Izquierdo │     (max-width: 1600px)        │  Derecho   │
+  │      │  (Noticias)│     centrado                   │  (Chat,    │
+  │      │            │                                │  Calc)     │
+  └──────┴────────────┴────────────────────────────────┴────────────┘
+
+  REGLAS ULTRA-WIDE:
+  1. Contenido principal (Main Stage) centrado con max-width: 1600px.
+  2. NO estirar contenido para llenar el ancho.
+  3. Usar espacio sobrante para Paneles de Utilidad (peripheral):
+     - Izquierda: Feed de noticias, alertas del mercado.
+     - Derecha: Chat/soporte, Calculadora rápida, Notas.
+  4. Paneles de utilidad son colapsables y opcionales.
+  5. Grid principal puede tener hasta 4 columnas.
+  6. Los paneles periféricos usan .surface-glass--secondary.
+*/
+
+@media (min-width: 1440px) {
+  .app-layout--ultrawide {
+    display: grid;
+    grid-template-columns: 240px minmax(200px, 280px) minmax(0, 1600px) minmax(200px, 280px);
+    min-height: 100vh;
+  }
+
+  .main-stage {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: var(--space-4);
+  }
+
+  .utility-panel {
+    padding: var(--space-3);
+    border-left: 1px solid var(--border-subtle);
+    overflow-y: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .utility-panel--left {
+    border-left: none;
+    border-right: 1px solid var(--border-subtle);
+  }
+
+  .bento-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1800px) {
+  .bento-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+
+# ==============================================================================
+# 7. VISUALIZACIÓN DE DATOS (DATA VIZ)
+# ==============================================================================
+
+/*
+  REGLAS DE DATA VIZ FINANCIERO:
+
+  7.1 PRINCIPIOS GENERALES:
+  - Eliminar chart junk: NO bordes exteriores, NO grid vertical, NO fondos en área de gráfico.
+  - Líneas de grid horizontal: Color var(--divider), 1px, dashed opcional.
+  - Ejes: Simplificar labels (ej. "10k" en vez de "10,000", "Mar" en vez de "Marzo 2025").
+  - Área del gráfico: Fondo transparente (hereda del .surface-glass contenedor).
+  - Animación de entrada: drawLine de izquierda a derecha, 800ms, ease-out-expo.
+
+  7.2 CROSSHAIR / TOOLTIP DEL GRÁFICO:
+  - Línea vertical que sigue al cursor/dedo.
+  - Color: var(--text-tertiary) con opacity 0.5.
+  - Ancho: 1px.
+  - Punto sobre la línea del gráfico: 6px circle, borde 2px blanco, fondo color de la serie.
+  - Etiqueta: Fuera del área del gráfico (panel lateral o tooltip flotante arriba).
+  - Contenido de la etiqueta: Fecha + Valor formateado ($1,234.56).
+  - En mobile: Activar con touch and hold + drag.
+
+  7.3 PALETA DE COLORES PARA GRÁFICOS:
+  Usar los tokens --chart-1 a --chart-6 definidos en :root.
+  - Máximo 6 series simultáneas. Más de 6 = usar agrupación o filtros.
+  - Para gráficos de línea: usar line-width 2px, con área fill al 10% de opacidad.
+  - Para barras: border-radius superior de 4px, gap entre barras de 4px.
+
+  7.4 ACCESIBILIDAD EN GRÁFICOS:
+  - Ofrecer alternativa Azul/Naranja (--chart-cb-1, --chart-cb-2) para daltónicos.
+  - Diferenciar series con texturas además de color: línea sólida, dashed, dotted.
+  - Proveer tabla de datos accesible como alternativa al gráfico (sr-only o toggle).
+  - Tooltips del gráfico deben ser legibles por screen readers (aria-live region).
+
+  7.5 SPARKLINES (Mini gráficos inline):
+  - Usados en cards y tablas para mostrar tendencia.
+  - Alto: 24–32px. Ancho: 80–120px.
+  - Sin ejes, sin labels, sin grid.
+  - Color: var(--green-success) para tendencia positiva, var(--red-danger) para negativa.
+  - Stroke-width: 1.5px.
+  - Área fill: 8% de opacidad del color de la línea.
+
+  7.6 GRÁFICOS DE DONUT / PIE:
+  - Máximo 5 segmentos. Más = agrupar en "Otros".
+  - Grosor del donut: 24px.
+  - Espacio entre segmentos: 2px (fondo transparente).
+  - Centro del donut: Mostrar total o valor principal.
+  - Labels: Fuera del gráfico, conectados con líneas guía sutiles.
+
+  7.7 GRÁFICOS DE BARRAS:
+  - Orientación: Vertical para series temporales, Horizontal para rankings.
+  - Border-radius en la parte superior: var(--radius-xs) (4px).
+  - Ancho de barra: Mínimo 12px, máximo 48px.
+  - Barras negativas: Mismo color pero debajo del eje X.
+  - Hover: Barra se ilumina (brightness 1.15) + tooltip.
+*/
+
+/* --- Contenedor de Gráfico --- */
+.chart-container {
+  position: relative;
+  width: 100%;
+  padding: var(--space-2);
+}
+.chart-container .chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+.chart-container .chart-title {
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+.chart-container .chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.chart-container .chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.chart-container .chart-legend-item .legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* --- Crosshair --- */
+.chart-crosshair {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text-tertiary);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.chart-crosshair-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: var(--shadow-sm);
+  transform: translate(-50%, -50%);
+}
+
+
+# ==============================================================================
+# 8. ACCESIBILIDAD (A11Y)
+# ==============================================================================
+
+/*
+  REGLAS DE ACCESIBILIDAD (WCAG AA Obligatorio):
+
+  8.1 CONTRASTE DE COLOR:
+  - Texto normal (< 18px): Ratio mínimo 4.5:1 contra su fondo.
+  - Texto grande (≥ 18px bold o ≥ 24px regular): Ratio mínimo 3:1.
+  - Componentes de UI (bordes de inputs, iconos funcionales): Ratio mínimo 3:1.
+  - VERIFICAR: Todos los textos en ambos temas (light y dark).
+
+  8.2 FOCUS RINGS:
+  - NUNCA eliminar el outline de focus sin reemplazarlo.
+  - Usar ring personalizado: box-shadow: 0 0 0 3px var(--brand-blue-light);
+  - El focus ring debe ser visible en AMBOS temas.
+  - Orden de tabulación lógico y secuencial.
+*/
+
+/* --- Focus Ring Global --- */
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-blue-light);
+  border-radius: var(--radius-sm);
+}
+
+/* --- Skip Link (Navegación por teclado) --- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--brand-blue);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-semibold);
+  z-index: var(--z-max);
+  text-decoration: none;
+}
+.skip-link:focus {
+  top: var(--space-1);
+}
+
+/*
+  8.3 REDUCED MOTION:
+  - Respetar prefers-reduced-motion: reduce.
+  - Desactivar TODAS las animaciones excepto cambios de opacidad instantáneos.
+  - No afectar funcionalidad, solo decoración.
+*/
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+  8.4 SCREEN READERS:
+  - Usar sr-only class para texto solo para lectores de pantalla.
+  - Todos los iconos funcionales deben tener aria-label.
+  - Tablas deben tener <caption> y headers con scope.
+  - Formularios: Todo input con <label> asociado (for/id).
+  - Regiones ARIA: main, navigation, complementary, contentinfo.
+  - Toasts y alertas: aria-live="polite" o aria-live="assertive" para errores.
+*/
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/*
+  8.5 TOUCH TARGETS:
+  - Mínimo 44x44px (WCAG 2.5.5 AAA) — preferir 48x48px.
+  - Espacio entre targets interactivos: mínimo 8px.
+  - En mobile, asegurar que no haya overlapping de touch targets.
+*/
+
+/*
+  8.6 CONTRASTE ALTO (High Contrast Mode):
+  - Respetar forced-colors: active.
+  - Borders y outlines deben usar system colors.
+*/
+@media (forced-colors: active) {
+  .surface-glass,
+  .surface-glass--secondary {
+    border: 2px solid ButtonText;
+    background: Canvas;
+  }
+  .btn-primary {
+    background: ButtonFace;
+    color: ButtonText;
+    border: 2px solid ButtonText;
+  }
+}
+
+
+# ==============================================================================
+# 9. TEMA OSCURO / CLARO — REGLAS DE COHERENCIA
+# ==============================================================================
+
+/*
+  REGLAS DE SWITCHING TEMÁTICO:
+
+  9.1 DETECCIÓN AUTOMÁTICA:
+  - Al primer load: Respetar prefers-color-scheme del sistema operativo.
+  - Si el usuario elige manualmente: Guardar en localStorage como 'theme'.
+  - Orden de prioridad: localStorage > prefers-color-scheme > default (light).
+
+  9.2 TRANSICIÓN ENTRE TEMAS:
+  - Aplicar data-theme="light" o data-theme="dark" en el <html>.
+  - Transición global de 300ms para background y color (evitar flash).
+  - NO animar backdrop-filter (causa parpadeo en algunos navegadores).
+
+  9.3 COHERENCIA CROMÁTICA:
+  - Mismo componente en ambos temas debe tener la MISMA jerarquía visual.
+  - Si un botón primario es "llamativo" en light, debe ser "llamativo" en dark.
+  - Los colores semánticos (success, danger, warning) NO cambian entre temas.
+  - Lo que cambia: fondos, superficies, bordes, sombras, texto base.
+
+  9.4 IMÁGENES Y LOGOS:
+  - Logos: Versión light y dark. Cambiar con data-theme.
+  - Imágenes/Ilustraciones: Reducir brightness un 10% en dark mode.
+  - Avatares: No modificar.
+
+  9.5 TEST:
+  - Cada componente DEBE ser testeado visualmente en AMBOS temas.
+  - Screenshot comparison automatizado recomendado (Chromatic / Percy).
+*/
+
+html {
+  transition: background-color var(--duration-normal) var(--ease-in-out),
+              color var(--duration-normal) var(--ease-in-out);
+}
+
+[data-theme="dark"] img:not([data-no-dim]) {
+  filter: brightness(0.9);
+}
+
+
+# ==============================================================================
+# 10. ANIMACIONES Y MICRO-INTERACCIONES
+# ==============================================================================
+
+/*
+  REGLAS DE ANIMACIÓN:
+
+  10.1 PRINCIPIO: Las animaciones son FUNCIONALES, no decorativas.
+  - Confirman acciones (checkmark de éxito).
+  - Comunican estado (skeleton loading).
+  - Guían atención (highlight de cambio de valor).
+  - NUNCA retrasar al usuario innecesariamente.
+
+  10.2 TIMING:
+  - Feedback de click: < 100ms (instantáneo percibido).
+  - Transiciones de hover: 150ms.
+  - Apertura de modales/paneles: 250–400ms.
+  - Animaciones de éxito/celebración: 600–1200ms.
+  - Animaciones de carga (skeleton): Infinitas, loop suave.
+
+  10.3 EASING:
+  - Salida (elementos apareciendo): var(--ease-out-expo).
+  - Entrada/Salida (toggle states): var(--ease-in-out).
+  - Rebote sutil (toggle, switch): var(--ease-spring).
+  - NUNCA usar linear para UI.
+*/
+
+/* --- Skeleton Loading --- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--specular-light) 50%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton--text {
+  height: 16px;
+  width: 100%;
+  margin-bottom: var(--space-1);
+}
+.skeleton--text-sm {
+  height: 12px;
+  width: 60%;
+}
+.skeleton--circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.skeleton--card {
+  height: 120px;
+  border-radius: var(--radius-md);
+}
+
+/* --- Value Change Animation (Cuando un número financiero cambia en tiempo real) --- */
+@keyframes value-flash-up {
+  0%   { background-color: var(--green-success-bg); }
+  100% { background-color: transparent; }
+}
+@keyframes value-flash-down {
+  0%   { background-color: var(--red-danger-bg); }
+  100% { background-color: transparent; }
+}
+.value-changed-up {
+  animation: value-flash-up 1.5s var(--ease-in-out);
+}
+.value-changed-down {
+  animation: value-flash-down 1.5s var(--ease-in-out);
+}
+
+/* --- Page Transition (Angular Route Animations) --- */
+/*
+  Para navegación entre rutas:
+  - Fade cross-dissolve: opacity 0→1, duración 200ms.
+  - Slide: translateY(8px) → translateY(0), duración 250ms.
+  - NUNCA slide horizontal completo (se siente app nativa, no web).
+*/
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+
+
+# ==============================================================================
+# 11. RENDIMIENTO Y OPTIMIZACIÓN
+# ==============================================================================
+
+/*
+  REGLAS DE RENDIMIENTO:
+
+  11.1 BACKDROP-FILTER:
+  - Es GPU-intensivo. Limitar a máximo 5-6 elementos simultáneos con blur activo.
+  - En dispositivos de bajo rendimiento: Degradar a fondo semitransparente sin blur.
+  - Medir FPS con DevTools Performance panel.
+  - Usar will-change: backdrop-filter SOLO en elementos que animan.
+
+  11.2 VIRTUAL SCROLLING:
+  - Obligatorio para listas/tablas > 100 items.
+  - Usar Angular CDK Virtual Scroll (cdk-virtual-scroll-viewport).
+  - Altura de fila fija (no variable) para cálculo óptimo del viewport.
+  - Prefetch: Cargar 20 items adicionales fuera del viewport.
+  - Target: 60fps con 10,000+ filas.
+
+  11.3 IMÁGENES:
+  - Formato: WebP con fallback JPEG.
+  - Lazy loading: loading="lazy" en todas las imágenes fuera del viewport.
+  - Avatares: Máximo 48x48px @ 2x (96x96px real).
+  - Logos de bancos/instituciones: SVG preferido, PNG máximo 64x64.
+
+  11.4 CSS:
+  - Evitar selectores anidados profundos (> 3 niveles).
+  - Usar clases utilitarias para propiedades repetidas.
+  - No usar !important excepto en overrides de accesibilidad.
+  - Critical CSS inlined en el <head> para above-the-fold.
+
+  11.5 KPIS DE RENDIMIENTO:
+  - TTI (Time to Interactive) del dashboard: < 2 segundos.
+  - LCP (Largest Contentful Paint): < 1.5 segundos.
+  - FPS durante scroll con virtual scrolling: ≥ 60fps.
+  - Bundle size del CSS del design system: < 50KB gzipped.
+  - Error rate en formularios (tras validación real-time): < 1%.
+*/
+
+
+# ==============================================================================
+# 12. ICONOGRAFÍA
+# ==============================================================================
+
+/*
+  REGLAS DE ICONOGRAFÍA:
+
+  12.1 LIBRERÍA:
+  - Usar una única librería de iconos consistente (recomendado: Lucide Icons o Heroicons).
+  - NO mezclar librerías de iconos.
+  - Formato: SVG inline (para coloring con currentColor) o Icon Font.
+
+  12.2 TAMAÑOS:
+  - Tamaño base: 20x20px (en botones, sidebar, tablas).
+  - Tamaño pequeño: 16x16px (en badges, tags, inline text).
+  - Tamaño grande: 24x24px (en Bottom Tab Bar, headers).
+  - Tamaño hero: 32x32px (en estados vacíos, confirmaciones).
+  - Tamaño ilustrativo: 48–64px (en empty states, onboarding).
+
+  12.3 COLOR:
+  - Iconos heredan color del texto (currentColor).
+  - Iconos activos/seleccionados: var(--brand-blue) en light, var(--text-link) en dark.
+  - Iconos deshabilitados: var(--text-disabled).
+  - Iconos de estado: Usan colores semánticos (success, danger, warning).
+
+  12.4 STROKE:
+  - Stroke-width consistente: 1.5px para iconos de 20px, 2px para iconos ≥ 24px.
+  - Estilo: Outline (no filled) para la mayoría. Filled solo para iconos activos en tab bar.
+*/
+
+
+# ==============================================================================
+# 13. PATRONES DE PÁGINA COMPLETA
+# ==============================================================================
+
+/*
+  13.1 DASHBOARD (Página Principal):
+  ┌──────┬──────────────────────────────────────┐
+  │      │ [Saludo] Buenos días, Juan    [🔔][👁]│
+  │      ├──────────────────────────────────────┤
+  │ Side │ [Card Balance Principal] span-full    │
+  │ bar  │ ┌──────────┬──────────┬──────────┐   │
+  │      │ │ KPI 1    │ KPI 2    │ KPI 3    │   │
+  │      │ └──────────┴──────────┴──────────┘   │
+  │      │ [Últimas Transacciones] span-2        │
+  │      │ [Gráfico de Gastos] span-1           │
+  │      │ [Acciones Rápidas]                    │
+  └──────┴──────────────────────────────────────┘
+
+  13.2 DETALLE DE CUENTA:
+  ┌──────┬──────────────────────────────────────┐
+  │      │ ← Volver   Cuenta Corriente ●●●● 4532│
+  │      ├──────────────────────────────────────┤
+  │ Side │ [Card Balance] + [Acciones: Transferir│
+  │ bar  │  Pagar, Descargar Estado]             │
+  │      │                                       │
+  │      │ [Filtros: Búsqueda + DatePicker +     │
+  │      │  Tipo de Movimiento]                  │
+  │      │                                       │
+  │      │ [Tabla de Movimientos]                │
+  │      │  Fecha | Concepto | Monto | Saldo    │
+  │      │  (Virtual Scrolling)                  │
+  └──────┴──────────────────────────────────────┘
+
+  13.3 TRANSFERENCIA (Flujo Multi-Step):
+  Paso 1: Seleccionar Destino (Búsqueda + Favoritos)
+  Paso 2: Ingresar Monto (Input monetario + Saldo disponible)
+  Paso 3: Confirmar (Resumen completo — Modal de Confirmación)
+  Paso 4: Resultado (Animación éxito/error + Comprobante descargable)
+
+  - Progress indicator: Steps numerados en la parte superior.
+  - Cada paso es un panel dentro del .surface-glass principal.
+  - En mobile: Cada paso ocupa pantalla completa con navegación prev/next.
+
+  13.4 LOGIN / ONBOARDING:
+  - Fondo: Gradiente sutil del dark theme (no glass).
+  - Card de login: Centrada, .surface-glass, max-width 420px.
+  - Inputs: Floating labels.
+  - CTA: Botón primario full-width dentro del card.
+  - Links secundarios (olvidé contraseña, registrarse): .btn-ghost debajo del card.
+  - Biometría: Botón con icono de huella/face ID, estilo .btn-secondary.
+*/
+
+
+# ==============================================================================
+# 14. INTERNACIONALIZACIÓN (i18n)
+# ==============================================================================
+
+/*
+  REGLAS DE i18n:
+
+  14.1 IDIOMA POR DEFECTO: Español (es-419 / Latinoamérica).
+
+  14.2 FORMATOS SEGÚN LOCALE:
+  - Moneda:   es-419 → $1,234.56  |  es-ES → 1.234,56 €
+  - Fecha:    es-419 → 15/03/2025 |  en-US → 03/15/2025
+  - Números:  es-419 → 1,234.56   |  de-DE → 1.234,56
+  - NOTA: Usar Intl.NumberFormat y Intl.DateTimeFormat del navegador.
+  
+  14.3 RTL SUPPORT (Futura expansión):
+  - Usar propiedades lógicas CSS: margin-inline-start, padding-inline-end.
+  - Evitar margin-left/right y padding-left/right para layout.
+  - dir="rtl" en <html> para idiomas RTL.
+
+  14.4 TEXTOS:
+  - Todos los textos visibles externalizados en archivos de traducción (JSON/XLIFF).
+  - Nunca hardcoded en templates.
+  - Botones y labels: Máximo 2-3 palabras (evitar overflow en traducciones largas).
+  - Mensajes de error: Descriptivos y accionables ("El monto debe ser mayor a $0.00").
+*/
+
+
+# ==============================================================================
+# FIN DEL DOCUMENTO — VERSIÓN 2.0
+# ==============================================================================
+# Mantener este documento actualizado con cada sprint.
+# Toda decisión de diseño debe referenciarse aquí para evitar alucinaciones de IA.
+# Los agentes IA deben tratar este documento como FUENTE DE VERDAD para el diseño.
+# ==============================================================================

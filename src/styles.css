@@ -3,6 +3,9 @@
    STYLE_APP.txt v2.0 — Angular 18 SPA
    ============================================================== */
 
+/* Componentes compartidos del módulo ERP (obligaciones, extractos, cuentas, transacciones, correos…) */
+@import './styles-erp.css';
+
 /* ── TOKENS UNIVERSALES (NO cambian con el tema) ── */
 :root {
   /* Paleta estructural */

@@ -24,12 +24,21 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   // Mantenemos la estructura original de tus items principales que requieren login
   // La lógica de si se muestran o no, la haremos en el HTML con *ngIf
-  loggedInMenuItems = [
+  // `section` (opcional) muestra un encabezado en el menú de escritorio cuando cambia respecto al ítem anterior.
+  loggedInMenuItems: Array<{ label: string; icon: string; route: string; section?: string }> = [
     { label: 'Compras Crédito', icon: 'credit_card', route: '/compras-credito' },
     { label: 'Préstamos', icon: 'account_balance_wallet', route: '/prestamos' },
     { label: 'Pagos Mes', icon: 'calendar_today', route: '/pagos-mes' },
     { label: 'Pagos Persona', icon: 'people', route: '/pagos-mes-personas' },
+    { label: 'Extractos', icon: 'receipt_long', route: '/extractos', section: 'Pagos' },
+    { label: 'Obligaciones', icon: 'home_work', route: '/obligaciones', section: 'Pagos' },
   ];
+
+  /** ¿Hay que pintar el encabezado de sección antes de este ítem? */
+  mostrarSeccion(i: number): boolean {
+    const actual = this.loggedInMenuItems[i]?.section;
+    return !!actual && actual !== this.loggedInMenuItems[i - 1]?.section;
+  }
 
   isDarkTheme: boolean = true;
 
