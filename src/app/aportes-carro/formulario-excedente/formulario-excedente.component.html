@@ -1,0 +1,60 @@
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-form-excedente">
+  <div>
+    <h2 class="erp-form-title" id="titulo-form-excedente">Aplicar saldo a favor</h2>
+    <p class="erp-subtitle">El excedente de {{ responsableNombre }} sobre la cuota de un mes se puede pasar al mes siguiente o descontar de lo que debe a fin de mes.</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <span>{{ errorServidor }}</span>
+  </div>
+
+  <div class="erp-alert erp-alert--warning" *ngIf="periodos.length === 0">
+    <i class="material-icons" aria-hidden="true">info</i>
+    <span>Ningún mes tiene saldo a favor disponible.</span>
+  </div>
+
+  <div class="erp-form-grid" *ngIf="periodos.length > 0">
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="fx-periodo">Saldo a favor de<span class="erp-req" aria-hidden="true">*</span></label>
+      <select id="fx-periodo" class="erp-select" formControlName="periodoId" [attr.aria-invalid]="campoInvalido('periodoId')">
+        <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.concepto }} — disponible {{ p.saldoAFavorDisponible | moneda }}</option>
+      </select>
+    </div>
+
+    <fieldset class="erp-field erp-span-2 opciones">
+      <legend class="erp-label">¿Qué hacer con el saldo?</legend>
+      <label class="erp-check">
+        <input type="radio" formControlName="destino" value="SIGUIENTE_MES" />
+        <span>Trasladarlo al mes siguiente <span class="erp-muted" *ngIf="siguiente">({{ nombrePeriodo(siguiente) }})</span></span>
+      </label>
+      <label class="erp-check">
+        <input type="radio" formControlName="destino" value="ESTADO_CUENTA" />
+        <span>Cruzarlo contra el estado de cuenta de fin de mes de {{ responsableNombre }}</span>
+      </label>
+    </fieldset>
+
+    <div class="erp-field">
+      <label class="erp-label" for="fx-valor">Valor a aplicar<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="fx-valor" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valor" [attr.aria-invalid]="campoInvalido('valor') || excede" />
+      <p class="erp-field-error" *ngIf="campoInvalido('valor')">Mayor a 0, con máximo 2 decimales.</p>
+      <p class="erp-field-error" *ngIf="excede">Solo hay {{ periodo?.saldoAFavorDisponible | moneda }} disponibles.</p>
+    </div>
+
+    <div class="erp-field" *ngIf="destino === 'ESTADO_CUENTA'">
+      <label class="erp-label" for="fx-imputacion">Estado de cuenta del mes</label>
+      <input id="fx-imputacion" class="erp-input" type="month" formControlName="periodoImputacion" />
+    </div>
+  </div>
+
+  <div class="erp-alert erp-alert--info" *ngIf="periodos.length > 0">
+    <i class="material-icons" aria-hidden="true">info</i>
+    <span *ngIf="destino === 'SIGUIENTE_MES'">Se registra un aporte «Saldo a favor» en el mes siguiente (con referencia a este mes); no mueve dinero de tus cuentas.</span>
+    <span *ngIf="destino === 'ESTADO_CUENTA'">Se registra un abono en el estado de cuenta de {{ responsableNombre }}: lo que te debe ese mes baja por este valor.</span>
+  </div>
+
+  <div class="erp-form-actions">
+    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando || periodos.length === 0">{{ enviando ? 'Aplicando…' : 'Aplicar saldo a favor' }}</button>
+  </div>
+</form>

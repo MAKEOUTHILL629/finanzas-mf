@@ -1,0 +1,278 @@
+<section class="erp-page" aria-labelledby="titulo-aportes-carro">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-aportes-carro">Aportes del carro</h1>
+      <p class="erp-subtitle">Lo que se aporta día a día a la cuota de cada mes, con sus cruces de cuentas y el saldo a favor.</p>
+    </div>
+    <div class="erp-actions">
+      <a class="erp-btn erp-btn--ghost" routerLink="/liquidacion">
+        <i class="material-icons" aria-hidden="true">fact_check</i>
+        Liquidación
+      </a>
+      <button type="button" class="erp-btn erp-btn--secondary" (click)="abrirPeriodo()">
+        <i class="material-icons" aria-hidden="true">tune</i>
+        Configurar cuota mensual
+      </button>
+      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirAporte()" [disabled]="cargando || !!error">
+        <i class="material-icons" aria-hidden="true">add</i>
+        Agregar aporte
+      </button>
+    </div>
+  </header>
+
+  <!-- Carga -->
+  <div class="erp-grid erp-grid--stats" *ngIf="cargando" aria-busy="true" aria-label="Cargando aportes">
+    <div class="erp-skeleton" style="height: 130px" *ngFor="let _ of [1, 2, 3]"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Aún no hay periodos -->
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && resumen && periodos.length === 0">
+    <i class="material-icons" aria-hidden="true">directions_car</i>
+    <h2>Aún no hay periodos de la cuota</h2>
+    <p>Configura la cuota de un mes y empieza a registrar los aportes de cada día.</p>
+    <button type="button" class="erp-btn erp-btn--primary" (click)="abrirPeriodo()">Configurar cuota mensual</button>
+  </div>
+
+  <ng-container *ngIf="!cargando && !error && resumen && periodos.length > 0">
+    <!-- Indicadores del mes elegido -->
+    <div class="erp-toolbar kpi-selector" role="group" aria-label="Mes de los indicadores">
+      <div class="erp-field">
+        <label class="erp-label" for="ac-kpi">Indicadores de</label>
+        <select id="ac-kpi" class="erp-select" [ngModel]="periodoKpiId" (ngModelChange)="periodoKpiId = +$event">
+          <option *ngFor="let p of periodos" [ngValue]="p.id">{{ p.concepto }}</option>
+        </select>
+      </div>
+      <span class="erp-field-hint" *ngIf="resumen.responsable">Responsable de la cuota: {{ resumen.responsable.nombre }}</span>
+    </div>
+
+    <div class="erp-alert erp-alert--info" *ngIf="faltaPeriodoActual">
+      <i class="material-icons" aria-hidden="true">event_available</i>
+      <div>
+        Aún no configuras la cuota de <strong>{{ nombrePeriodo(hoy) }}</strong>. Al registrar un aporte de este mes se creará con la cuota del último periodo
+        ({{ resumen.cuotaBase | moneda }}); también puedes ajustarla.
+        <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="abrirPeriodo()">Configurar</button>
+      </div>
+    </div>
+
+    <div class="erp-grid erp-grid--stats" aria-label="Indicadores de la cuota" *ngIf="periodoKpi as k">
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Cuota de {{ nombrePeriodo(k.periodo) }}</span>
+        <span class="erp-stat-value erp-num">{{ k.valorCuotaObjetivo | moneda }}</span>
+        <div class="erp-progress" [class.erp-progress--done]="k.estado === 'COMPLETADO' || k.estado === 'CON_SALDO_A_FAVOR'" role="progressbar"
+             [attr.aria-valuenow]="k.progresoPorcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Avance de la cuota de ' + nombrePeriodo(k.periodo)">
+          <div class="erp-progress-bar" [style.width.%]="k.progresoPorcentaje"></div>
+        </div>
+        <span class="erp-stat-hint">{{ k.montoAbonado | moneda }} abonado · {{ k.progresoPorcentaje | number: '1.0-1' }} %</span>
+      </div>
+
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Estado del mes</span>
+        <span class="estado-mes">
+          <span class="erp-badge erp-badge--{{ claseEstado(k.estado) }}">{{ etiquetaEstado(k.estado) }}</span>
+        </span>
+        <span class="erp-stat-value erp-num" [class.erp-loss]="k.saldoPendiente > 0" [class.erp-gain]="k.saldoAFavorDisponible > 0">
+          {{ (k.saldoPendiente > 0 ? k.saldoPendiente : k.saldoAFavorGenerado) | moneda }}
+        </span>
+        <span class="erp-stat-hint">
+          {{ k.saldoPendiente > 0 ? 'Falta para completar la cuota' : k.saldoAFavorGenerado > 0 ? 'Excedente sobre la cuota' : 'Cuota cubierta' }}
+        </span>
+      </div>
+
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Saldo a favor de {{ responsableNombre }}</span>
+        <span class="erp-stat-value erp-num" [class.erp-gain]="resumen.saldoAFavorDisponibleGlobal > 0">{{ resumen.saldoAFavorDisponibleGlobal | moneda }}</span>
+        <span class="erp-stat-hint">Excedentes de todos los meses aún sin aplicar</span>
+        <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="abrirExcedente()" [disabled]="periodosConExcedente.length === 0">
+          <i class="material-icons" aria-hidden="true">savings</i>
+          Aplicar a mes / cruzar cuenta
+        </button>
+      </div>
+
+      <div class="erp-card erp-stat">
+        <span class="erp-overline">Por cruces de cuentas</span>
+        <span class="erp-stat-value erp-num">{{ k.aportadoPorCruces | moneda }}</span>
+        <span class="erp-stat-hint">Aportado en {{ nombrePeriodo(k.periodo) }} por terceros: se les cobra a ellos</span>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <form class="erp-toolbar" role="search" aria-label="Filtrar aportes" (submit)="$event.preventDefault()">
+      <div class="erp-field">
+        <label class="erp-label" for="ac-f-periodo">Mes</label>
+        <select id="ac-f-periodo" class="erp-select" [ngModel]="filtros.periodo" (ngModelChange)="cambiarFiltro('periodo', $event)" name="periodo">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let p of periodos" [ngValue]="p.periodo">{{ p.concepto }}</option>
+        </select>
+      </div>
+      <div class="erp-field">
+        <label class="erp-label" for="ac-f-persona">Persona</label>
+        <select id="ac-f-persona" class="erp-select" [ngModel]="filtros.personaId" (ngModelChange)="cambiarFiltro('personaId', $event)" name="personaId">
+          <option [ngValue]="null">Todas</option>
+          <option *ngFor="let p of personasFiltro" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
+      </div>
+      <div class="erp-field">
+        <label class="erp-label" for="ac-f-metodo">Método</label>
+        <select id="ac-f-metodo" class="erp-select" [ngModel]="filtros.metodo" (ngModelChange)="cambiarFiltro('metodo', $event)" name="metodo">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let m of metodosFiltro" [ngValue]="m.valor">{{ m.etiqueta }}</option>
+        </select>
+      </div>
+      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="filtrando" (click)="reiniciarFiltros()">
+        <i class="material-icons" aria-hidden="true">filter_alt_off</i>
+        Quitar filtros
+      </button>
+    </form>
+
+    <!-- Confirmación de eliminación -->
+    <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="eliminar-aporte-titulo" *ngIf="eliminando as e">
+      <i class="material-icons" aria-hidden="true">warning</i>
+      <div>
+        <strong id="eliminar-aporte-titulo">¿Eliminar el aporte de {{ e.valorTotal | moneda }} del {{ e.fecha | fechaCorta }}?</strong>
+        <span *ngIf="efectosDeEliminar(e) as ef">
+          <ng-container *ngIf="ef.cruces > 0"> Se anularán {{ ef.cruces }} cruce{{ ef.cruces === 1 ? '' : 's' }} (dejan de contar en la cuenta por cobrar de esa persona).</ng-container>
+          <ng-container *ngIf="ef.ingresos > 0"> Se revertirán {{ ef.ingresos }} ingreso{{ ef.ingresos === 1 ? '' : 's' }} a tus cuentas.</ng-container>
+        </span>
+        <div class="acciones-confirmacion">
+          <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarEliminar()" [disabled]="trabajando">{{ trabajando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarEliminar()" [disabled]="trabajando">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sin resultados -->
+    <div class="erp-card erp-empty" *ngIf="visibles.length === 0">
+      <i class="material-icons" aria-hidden="true">search_off</i>
+      <h2>Ningún aporte coincide</h2>
+      <p>Prueba quitando algún filtro.</p>
+      <button type="button" class="erp-btn erp-btn--secondary" (click)="reiniciarFiltros()">Quitar filtros</button>
+    </div>
+
+    <!-- Periodos (acordeón) -->
+    <div class="periodos" *ngIf="visibles.length > 0">
+      <section class="erp-card periodo" *ngFor="let p of visibles; trackBy: trackPeriodo" [attr.aria-label]="p.concepto">
+        <h2 class="periodo-titulo">
+          <button type="button" class="periodo-cabecera" (click)="alternar(p)" [attr.aria-expanded]="estaAbierto(p)" [attr.aria-controls]="'periodo-' + p.id">
+            <i class="material-icons chevron" [class.chevron--abierto]="estaAbierto(p)" aria-hidden="true">chevron_right</i>
+            <span class="periodo-nombre">{{ p.concepto }}</span>
+            <span class="erp-badge erp-badge--info periodo-total"><i class="material-icons" aria-hidden="true">payments</i>{{ p.montoAbonado | moneda }}</span>
+            <span class="erp-badge erp-badge--{{ claseEstado(p.estado) }}">{{ textoEstado(p) }}</span>
+          </button>
+        </h2>
+
+        <div class="periodo-cuerpo" [id]="'periodo-' + p.id" *ngIf="estaAbierto(p)">
+          <p class="periodo-resumen erp-muted">
+            Cuota {{ p.valorCuotaObjetivo | moneda }} · {{ p.cantidadAportes }} aporte{{ p.cantidadAportes === 1 ? '' : 's' }}
+            <ng-container *ngIf="p.aportadoPorCruces > 0"> · {{ p.aportadoPorCruces | moneda }} por cruces</ng-container>
+            <ng-container *ngIf="p.saldoAFavorAplicado > 0"> · {{ p.saldoAFavorAplicado | moneda }} de saldo a favor ya aplicado</ng-container>
+          </p>
+
+          <div class="erp-alert erp-alert--info" *ngIf="p.saldoAFavorDisponible > 0">
+            <i class="material-icons" aria-hidden="true">savings</i>
+            <div>
+              Este mes quedó con <strong>{{ p.saldoAFavorDisponible | moneda }}</strong> de saldo a favor sin aplicar.
+              <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="abrirExcedente(p)">Trasladar o cruzar</button>
+            </div>
+          </div>
+
+          <p class="erp-muted" *ngIf="p.aportes.length === 0">Aún no hay aportes en este mes.
+            <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="abrirAporte(null, p.periodo)">Agregar el primero</button>
+          </p>
+
+          <ul class="aportes" *ngIf="p.aportes.length > 0">
+            <li class="aporte" *ngFor="let a of p.aportes; trackBy: trackAporte">
+              <div class="aporte-fila">
+                <div class="aporte-principal">
+                  <span class="aporte-valor erp-num">{{ a.valorTotal | moneda }}</span>
+                  <span class="aporte-fecha erp-muted">
+                    {{ a.fecha | formatoFecha }}
+                    <span class="erp-badge" *ngIf="otroMes(a, p)" title="Se hizo en otro mes y abona a esta cuota">de otro mes</span>
+                  </span>
+                </div>
+
+                <div class="aporte-chips" aria-label="Cómo se compuso el aporte">
+                  <span class="erp-badge chip chip--{{ c.tipo }}" *ngFor="let c of chipsDe(a)">{{ c.texto }}</span>
+                  <span class="aporte-nota erp-muted" *ngIf="a.notas">{{ a.notas }}</span>
+                </div>
+
+                <div class="aporte-acciones">
+                  <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="alternarDesglose(a)" [attr.aria-expanded]="conDesglose.has(a.id)"
+                          [attr.aria-label]="'Ver detalle del aporte del ' + (a.fecha | fechaCorta)"><i class="material-icons" aria-hidden="true">{{ conDesglose.has(a.id) ? 'visibility_off' : 'visibility' }}</i></button>
+                  <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="abrirAporte(a)" [attr.aria-label]="'Editar el aporte del ' + (a.fecha | fechaCorta)"><i class="material-icons" aria-hidden="true">edit</i></button>
+                  <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon peligro" (click)="pedirEliminar(a)" [attr.aria-label]="'Eliminar el aporte del ' + (a.fecha | fechaCorta)"><i class="material-icons" aria-hidden="true">delete_outline</i></button>
+                </div>
+              </div>
+
+              <div class="erp-table-wrap desglose" *ngIf="conDesglose.has(a.id)">
+                <table class="erp-table erp-table--stack erp-table--compact">
+                  <caption class="erp-sr-only">Desglose del aporte del {{ a.fecha | fechaCorta }}</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Método</th>
+                      <th scope="col">Persona</th>
+                      <th scope="col" class="num">Valor</th>
+                      <th scope="col" class="wrap">Cuenta / comentario</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let d of a.detalles; trackBy: trackDetalle">
+                      <td data-label="Método"><i class="material-icons metodo-icono" aria-hidden="true">{{ iconoMetodo(d.metodoCanonico) }}</i>{{ etiquetaMetodo(d.metodo) }}</td>
+                      <td data-label="Persona">{{ nombreDetalle(d) }}<span class="sub" *ngIf="d.esCruce">Le cargas esta deuda</span></td>
+                      <td data-label="Valor" class="num">{{ d.valor | moneda }}</td>
+                      <td data-label="Cuenta / comentario" class="wrap">
+                        <span *ngIf="d.cuentaNombre">{{ d.cuentaNombre }}</span>
+                        <span class="sub" *ngIf="d.comentarios">{{ d.comentarios }}</span>
+                        <span class="erp-muted" *ngIf="!d.cuentaNombre && !d.comentarios">—</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</section>
+
+<app-modal [modalId]="modalAporte">
+  <app-formulario-aporte-diario
+    *ngIf="aporteAbierto && resumen"
+    [periodos]="periodos"
+    [responsable]="resumen.responsable"
+    [cuotaBase]="resumen.cuotaBase"
+    [aporte]="aporteEnEdicion"
+    [periodoInicial]="periodoDelFormulario"
+    (guardado)="onAporteGuardado($event)"
+    (cancelar)="cerrarModal()"></app-formulario-aporte-diario>
+</app-modal>
+
+<app-modal [modalId]="modalPeriodo">
+  <app-formulario-periodo-carro
+    *ngIf="periodoAbierto && resumen"
+    [periodos]="periodos"
+    [cuotaBase]="resumen.cuotaBase"
+    [periodoInicial]="periodoKpi?.periodo ?? null"
+    (guardado)="onPeriodoGuardado($event)"
+    (cancelar)="cerrarModal()"></app-formulario-periodo-carro>
+</app-modal>
+
+<app-modal [modalId]="modalExcedente">
+  <app-formulario-excedente
+    *ngIf="excedenteAbierto && resumen"
+    [periodos]="periodosConExcedente"
+    [periodoInicialId]="periodoExcedenteId"
+    [responsableNombre]="responsableNombre"
+    (aplicado)="onExcedenteAplicado($event)"
+    (cancelar)="cerrarModal()"></app-formulario-excedente>
+</app-modal>

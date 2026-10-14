@@ -1,0 +1,192 @@
+<section class="erp-page" aria-labelledby="titulo-liquidacion">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-liquidacion">Liquidación de fin de mes</h1>
+      <p class="erp-subtitle">Cuánto te debe cada persona al cierre del mes: tarjetas, préstamos, recurrentes, cruces de cuentas y la cuota del carro, menos lo que ya abonó.</p>
+    </div>
+    <div class="erp-actions">
+      <a class="erp-btn erp-btn--ghost" routerLink="/aportes-carro">
+        <i class="material-icons" aria-hidden="true">directions_car</i>
+        Aportes del carro
+      </a>
+      <a class="erp-btn erp-btn--secondary" routerLink="/recurrentes-persona">
+        <i class="material-icons" aria-hidden="true">autorenew</i>
+        Recurrentes por persona
+      </a>
+      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
+        <i class="material-icons" aria-hidden="true">today</i>
+        Mes actual
+      </button>
+    </div>
+  </header>
+
+  <div class="erp-toolbar" role="search" aria-label="Elegir periodo y persona">
+    <div class="erp-field">
+      <label class="erp-label" for="li-periodo">Periodo</label>
+      <div class="erp-month-picker">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <input id="li-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+      </div>
+      <span class="erp-field-hint">{{ nombrePeriodo(periodo) }}</span>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="li-persona">Persona</label>
+      <select id="li-persona" class="erp-select" [ngModel]="personaFiltro" (ngModelChange)="onPersonaChange($event)" name="persona">
+        <option [ngValue]="null">Todas</option>
+        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
+      </select>
+    </div>
+
+    <label class="erp-check" *ngIf="personaFiltro === null">
+      <input type="checkbox" [ngModel]="todas" (ngModelChange)="onTodasChange($event)" name="todas" />
+      <span>Incluir personas sin movimientos</span>
+    </label>
+  </div>
+
+  <!-- Totales -->
+  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length > 0" aria-label="Totales del mes">
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Total a cobrar</span>
+      <span class="erp-stat-value erp-num">{{ liquidacion.totales.totalCargos | moneda }}</span>
+      <span class="erp-stat-hint">Cargos del mes y faltante de la cuota</span>
+    </div>
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Abonos y a favor</span>
+      <span class="erp-stat-value erp-num erp-gain">{{ liquidacion.totales.totalAbonosYFavor | moneda }}</span>
+      <span class="erp-stat-hint">Pagos, cruces a favor y descuentos</span>
+    </div>
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Saldo neto del mes</span>
+      <span class="erp-stat-value erp-num" [class.erp-loss]="liquidacion.totales.saldoNetoFinal > 0" [class.erp-gain]="liquidacion.totales.saldoNetoFinal < 0">{{ liquidacion.totales.saldoNetoFinal | moneda }}</span>
+      <span class="erp-stat-hint">{{ liquidacion.totales.saldoNetoFinal > 0 ? 'Lo que te deben en total' : liquidacion.totales.saldoNetoFinal < 0 ? 'Lo que tú debes en total' : 'Todo saldado' }}</span>
+    </div>
+  </div>
+
+  <!-- Carga -->
+  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando la liquidación">
+    <div class="erp-skeleton" style="height: 64px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3]"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Vacío -->
+  <div class="erp-card erp-empty" *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length === 0">
+    <i class="material-icons" aria-hidden="true">fact_check</i>
+    <h2>Nadie debe nada en {{ nombrePeriodo(periodo) }}</h2>
+    <p>Aquí aparece lo que cada persona debe por cuotas de tarjeta, préstamos, recurrentes, cruces de cuentas o la cuota del carro. Prueba con otro mes.</p>
+  </div>
+
+  <!-- Una tarjeta por persona -->
+  <div class="personas" *ngIf="!cargando && !error && personasLiquidacion.length > 0">
+    <article class="erp-card persona" *ngFor="let l of personasLiquidacion; trackBy: trackPersona" [attr.aria-label]="'Liquidación de ' + l.persona.nombre">
+      <h2 class="persona-titulo">
+        <button type="button" class="persona-cabecera" (click)="alternar(l)" [attr.aria-expanded]="estaAbierta(l)" [attr.aria-controls]="'liq-' + l.persona.id">
+          <span class="avatar" [style.background]="l.persona.color || 'var(--brand-blue)'" aria-hidden="true">{{ iniciales(l.persona.nombre, l.persona.iniciales) }}</span>
+          <span class="persona-texto">
+            <span class="persona-nombre">{{ l.persona.nombre }}</span>
+            <span class="persona-mensaje" [class.erp-loss]="l.resumenNeto.estado === 'DEBE'" [class.erp-gain]="l.resumenNeto.estado === 'A_FAVOR'">{{ mensaje(l.persona.nombre, l.resumenNeto.saldoNetoFinal, l.resumenNeto.estado) }}</span>
+          </span>
+          <span class="erp-badge erp-badge--{{ claseEstado(l.resumenNeto.estado) }}">{{ etiquetaEstado(l.resumenNeto.estado) }}</span>
+          <span class="persona-neto erp-num" [class.erp-loss]="l.resumenNeto.estado === 'DEBE'" [class.erp-gain]="l.resumenNeto.estado === 'A_FAVOR'">{{ l.resumenNeto.saldoNetoFinal | moneda }}</span>
+          <i class="material-icons chevron" [class.chevron--abierto]="estaAbierta(l)" aria-hidden="true">expand_more</i>
+        </button>
+      </h2>
+
+      <div class="persona-cuerpo" [id]="'liq-' + l.persona.id" *ngIf="estaAbierta(l)">
+        <!-- Resumen -->
+        <dl class="resumen">
+          <div><dt>Total a cobrar</dt><dd class="erp-num">{{ l.resumenNeto.totalCargos | moneda }}</dd></div>
+          <div><dt>Abonos y a favor</dt><dd class="erp-num erp-gain">{{ l.resumenNeto.totalAbonosYFavor | moneda }}</dd></div>
+          <div><dt>Saldo neto del mes</dt><dd class="erp-num">{{ l.resumenNeto.saldoNetoFinal | moneda }}</dd></div>
+          <div *ngIf="l.saldoAnterior !== 0"><dt>Arrastrado de meses anteriores</dt><dd class="erp-num">{{ l.saldoAnterior | moneda }}</dd></div>
+        </dl>
+
+        <!-- Cuota del carro (si es el responsable) -->
+        <div class="carro" *ngIf="l.estadoAporteCarro as c">
+          <div class="carro-cabecera">
+            <span class="erp-overline"><i class="material-icons" aria-hidden="true">directions_car</i> {{ c.concepto }}</span>
+            <span class="erp-badge erp-badge--{{ claseEstadoPeriodo(c.estado) }}">{{ etiquetaEstadoPeriodo(c.estado) }}</span>
+          </div>
+          <div class="erp-progress" [class.erp-progress--done]="c.estado === 'COMPLETADO' || c.estado === 'CON_SALDO_A_FAVOR'" role="progressbar" [attr.aria-valuenow]="c.progresoPorcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Avance de ' + c.concepto">
+            <div class="erp-progress-bar" [style.width.%]="c.progresoPorcentaje"></div>
+          </div>
+          <p class="carro-datos">
+            Cuota <strong class="erp-num">{{ c.valorCuotaObjetivo | moneda }}</strong> · aportado <strong class="erp-num">{{ c.montoAbonado | moneda }}</strong>
+            <ng-container *ngIf="c.saldoPendiente > 0"> · faltan <strong class="erp-num erp-loss">{{ c.saldoPendiente | moneda }}</strong> (se suman a lo que debe)</ng-container>
+            <ng-container *ngIf="c.saldoAFavorDisponible > 0"> · saldo a favor <strong class="erp-num erp-gain">{{ c.saldoAFavorDisponible | moneda }}</strong></ng-container>
+          </p>
+        </div>
+
+        <!-- Bloques -->
+        <section class="bloque" *ngFor="let b of bloquesConItems(l)" [attr.aria-label]="b.titulo">
+          <header class="bloque-cabecera">
+            <h3><i class="material-icons" aria-hidden="true">{{ b.icono }}</i>{{ b.titulo }}</h3>
+            <span class="erp-num bloque-subtotal">{{ b.bloque.subtotal | moneda }}</span>
+          </header>
+          <ul class="items">
+            <li class="item" *ngFor="let i of b.bloque.items; trackBy: trackItem">
+              <div class="item-texto">
+                <span class="item-concepto">{{ i.concepto }}</span>
+                <span class="item-meta erp-muted">
+                  {{ i.fecha | fechaCorta }} · <span class="erp-badge">{{ etiquetaOrigen(i.origen) }}</span>
+                  <span class="erp-badge erp-badge--warning" *ngIf="i.estado === 'PROYECTADO'">Proyectado</span>
+                  <ng-container *ngIf="i.comentario"> · {{ i.comentario }}</ng-container>
+                </span>
+              </div>
+              <span class="item-monto erp-num" [ngClass]="clasePorSigno(i)">{{ i.impacto | moneda }}</span>
+            </li>
+          </ul>
+        </section>
+
+        <div class="faltante" *ngIf="l.faltanteObligacion > 0">
+          <i class="material-icons" aria-hidden="true">pending_actions</i>
+          <span>Faltante de la cuota del carro: <strong class="erp-num erp-loss">{{ l.faltanteObligacion | moneda }}</strong> (incluido en el total a cobrar)</span>
+        </div>
+
+        <p class="erp-muted" *ngIf="bloquesConItems(l).length === 0 && !l.estadoAporteCarro">Sin movimientos en {{ nombrePeriodo(periodo) }}.</p>
+
+        <!-- Acciones -->
+        <div class="acciones-persona">
+          <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirAbono(l)">
+            <i class="material-icons" aria-hidden="true">savings</i>
+            Registrar abono / pago de fin de mes
+          </button>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="abrirCruce(l)">
+            <i class="material-icons" aria-hidden="true">compare_arrows</i>
+            Cruzar cuenta con otra persona
+          </button>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="tieneSaldoAFavor(l)" (click)="abrirExcedente(l)">
+            <i class="material-icons" aria-hidden="true">savings</i>
+            Aplicar saldo a favor
+          </button>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<app-modal [modalId]="modalAbono">
+  <app-formulario-abono *ngIf="abonando && personaParaAbono as p" [persona]="p" [periodo]="periodo" (abonado)="onAbonado($event)" (cancelar)="cerrarModal()"></app-formulario-abono>
+</app-modal>
+
+<app-modal [modalId]="modalCruce">
+  <app-formulario-cruce *ngIf="cruzando" [personas]="personas" (creado)="onCruceCreado()" (cancelar)="cerrarModal()"></app-formulario-cruce>
+</app-modal>
+
+<app-modal [modalId]="modalExcedente">
+  <app-formulario-excedente
+    *ngIf="excedenteAbierto"
+    [periodos]="excedentePeriodos"
+    [responsableNombre]="excedenteResponsable"
+    (aplicado)="onExcedenteAplicado($event)"
+    (cancelar)="cerrarModal()"></app-formulario-excedente>
+</app-modal>

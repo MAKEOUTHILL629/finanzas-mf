@@ -34,11 +34,14 @@ export class MenuComponent implements OnInit, OnDestroy {
     { label: 'Tarjetas', icon: 'style', route: '/tarjetas', section: 'Pagos' },
     { label: 'Extractos', icon: 'receipt_long', route: '/extractos', section: 'Pagos' },
     { label: 'Obligaciones', icon: 'home_work', route: '/obligaciones', section: 'Pagos' },
+    { label: 'Aportes del carro', icon: 'directions_car', route: '/aportes-carro', section: 'Pagos' },
     { label: 'Cuentas', icon: 'account_balance', route: '/cuentas', section: 'Dinero' },
     { label: 'Transacciones', icon: 'swap_horiz', route: '/transacciones', section: 'Dinero' },
     { label: 'Correos', icon: 'mark_email_unread', route: '/correos', section: 'Dinero' },
     { label: 'Flujo de caja', icon: 'query_stats', route: '/flujo-caja', section: 'Análisis' },
     { label: 'Estado de cuenta', icon: 'groups', route: '/estado-cuenta', section: 'Análisis' },
+    { label: 'Liquidación', icon: 'fact_check', route: '/liquidacion', section: 'Análisis' },
+    { label: 'Recurrentes persona', icon: 'autorenew', route: '/recurrentes-persona', section: 'Análisis' },
   ];
 
   /** ¿Hay que pintar el encabezado de sección antes de este ítem? */

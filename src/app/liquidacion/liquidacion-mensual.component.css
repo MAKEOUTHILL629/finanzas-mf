@@ -1,0 +1,63 @@
+.personas { display: flex; flex-direction: column; gap: var(--space-2); }
+.persona { padding: 0; overflow: hidden; }
+.persona-titulo { margin: 0; font-size: inherit; font-weight: inherit; }
+.persona-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.persona-cabecera:hover { background: var(--table-row-hover); }
+.persona-cabecera:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+
+.avatar { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-weight: var(--weight-bold); flex: none; }
+.persona-texto { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.persona-nombre { font-size: var(--text-h3); font-weight: var(--weight-semibold); }
+.persona-mensaje { font-size: var(--text-body-sm); color: var(--text-secondary); }
+.persona-neto { font-size: var(--text-h3); font-weight: var(--weight-bold); white-space: nowrap; }
+.chevron { transition: transform var(--duration-base) var(--ease-out-expo); color: var(--text-secondary); }
+.chevron--abierto { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+
+.persona-cuerpo { display: flex; flex-direction: column; gap: var(--space-2); padding: 0 var(--space-2) var(--space-2); }
+
+.resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-1) var(--space-2); margin: 0; padding: var(--space-1) var(--space-2); background: var(--bg-input); border-radius: var(--radius-md); }
+.resumen dt { font-size: var(--text-caption); color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.resumen dd { margin: 2px 0 0; font-size: var(--text-h3); font-weight: var(--weight-semibold); }
+
+.carro { display: flex; flex-direction: column; gap: 8px; padding: var(--space-2); border: 1px solid var(--table-border); border-radius: var(--radius-md); }
+.carro-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.carro-cabecera .erp-overline { display: inline-flex; align-items: center; gap: 6px; }
+.carro-cabecera .material-icons { font-size: 18px; }
+.carro-datos { margin: 0; font-size: var(--text-body-sm); color: var(--text-secondary); }
+
+.bloque { display: flex; flex-direction: column; gap: 4px; }
+.bloque-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); border-bottom: 1px solid var(--table-border); padding-bottom: 6px; }
+.bloque-cabecera h3 { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: var(--text-body); font-weight: var(--weight-semibold); }
+.bloque-cabecera .material-icons { font-size: 20px; color: var(--text-secondary); }
+.bloque-subtotal { font-weight: var(--weight-semibold); }
+
+.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.item { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-2); padding: 8px 0; border-bottom: 1px solid var(--table-border); }
+.item:last-child { border-bottom: 0; }
+.item-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.item-concepto { overflow-wrap: anywhere; }
+.item-meta { font-size: var(--text-caption); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.item-monto { white-space: nowrap; font-weight: var(--weight-semibold); }
+
+.faltante { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); background: var(--warning-bg, rgba(255, 159, 10, 0.12)); border-radius: var(--radius-md); font-size: var(--text-body-sm); }
+.faltante .material-icons { color: var(--orange-warning, #ff9f0a); }
+
+.acciones-persona { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-top: var(--space-1); }
+
+@media (max-width: 720px) {
+  .persona-cabecera { flex-wrap: wrap; }
+  .persona-neto { margin-left: auto; }
+}

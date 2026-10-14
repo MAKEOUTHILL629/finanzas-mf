@@ -1,0 +1,59 @@
+.kpi-selector { align-items: flex-end; }
+.estado-mes { display: inline-flex; margin-bottom: 2px; }
+.erp-stat .erp-btn { align-self: flex-start; margin-top: var(--space-1); }
+.erp-stat .erp-progress { margin: 4px 0; }
+
+.acciones-confirmacion { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
+
+.periodos { display: flex; flex-direction: column; gap: var(--space-2); }
+.periodo { padding: 0; overflow: hidden; }
+.periodo-titulo { margin: 0; font-size: inherit; font-weight: inherit; }
+.periodo-cabecera {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  background: transparent;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.periodo-cabecera:hover { background: var(--table-row-hover); }
+.periodo-cabecera:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.periodo-nombre { font-size: var(--text-h3); font-weight: var(--weight-semibold); }
+.periodo-total { margin-left: auto; }
+.chevron { transition: transform var(--duration-base) var(--ease-out-expo); color: var(--text-secondary); }
+.chevron--abierto { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+
+.periodo-cuerpo { display: flex; flex-direction: column; gap: var(--space-2); padding: 0 var(--space-2) var(--space-2); }
+.periodo-resumen { margin: 0; font-size: var(--text-caption); }
+
+.aportes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.aporte { border-top: 1px solid var(--table-border); padding: var(--space-1) 0; }
+.aporte-fila { display: grid; grid-template-columns: minmax(150px, 220px) 1fr auto; align-items: center; gap: var(--space-1) var(--space-2); }
+.aporte-principal { display: flex; flex-direction: column; gap: 2px; }
+.aporte-valor { font-size: var(--text-h3); font-weight: var(--weight-bold); }
+.aporte-fecha { font-size: var(--text-caption); display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
+.aporte-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.aporte-nota { font-size: var(--text-caption); max-width: 48ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aporte-acciones { display: flex; gap: 2px; }
+.peligro:hover { color: var(--red-danger, #ff453a); }
+
+.chip--efectivo { background: var(--success-bg, rgba(52, 199, 89, 0.14)); color: var(--green-success); }
+.chip--transferencia { background: var(--info-bg, rgba(10, 132, 255, 0.14)); color: var(--text-link); }
+.chip--cruce { background: var(--warning-bg, rgba(255, 159, 10, 0.16)); color: var(--orange-warning, #ff9f0a); }
+.chip--favor { background: var(--info-bg, rgba(94, 92, 230, 0.16)); color: var(--chart-5, #5e5ce6); }
+
+.desglose { margin-top: var(--space-1); }
+.metodo-icono { font-size: 18px; vertical-align: middle; margin-right: 6px; color: var(--text-secondary); }
+
+@media (max-width: 720px) {
+  .aporte-fila { grid-template-columns: 1fr auto; }
+  .aporte-chips { grid-column: 1 / -1; order: 3; }
+  .periodo-total { margin-left: 0; }
+}

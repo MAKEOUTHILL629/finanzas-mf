@@ -21,6 +21,9 @@ import { ListaCorreosComponent } from './correos/lista-correos/lista-correos.com
 import { FlujoCajaComponent } from './flujo-caja/flujo-caja.component';
 import { EstadoCuentaComponent } from './deudas/estado-cuenta/estado-cuenta.component';
 import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.component';
+import { AportesCarroComponent } from './aportes-carro/aportes-carro.component';
+import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.component';
+import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
 import { authGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
@@ -46,6 +49,9 @@ const routes: Routes = [
   { path: 'correos', component: ListaCorreosComponent, canActivate: [authGuard] },
   { path: 'flujo-caja', component: FlujoCajaComponent, canActivate: [authGuard] },
   { path: 'estado-cuenta', component: EstadoCuentaComponent, canActivate: [authGuard] },
+  { path: 'aportes-carro', component: AportesCarroComponent, canActivate: [authGuard] },
+  { path: 'liquidacion', component: LiquidacionMensualComponent, canActivate: [authGuard] },
+  { path: 'recurrentes-persona', component: ListaRecurrentesPersonaComponent, canActivate: [authGuard] },
   { path: 'cruces-deuda', component: ListaCrucesComponent, canActivate: [authGuard] },
   { path: 'obligaciones', component: ListaObligacionesComponent, canActivate: [authGuard] },
   { path: 'obligaciones/:id', component: DetalleObligacionComponent, canActivate: [authGuard] },

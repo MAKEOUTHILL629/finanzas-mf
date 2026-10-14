@@ -1,0 +1,130 @@
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-form-aporte">
+  <div>
+    <h2 class="erp-form-title" id="titulo-form-aporte">{{ editando ? 'Editar aporte diario' : 'Agregar aporte' }}</h2>
+    <p class="erp-subtitle">Desglosa cómo se entregó el dinero de ese día: efectivo, transferencia o un cruce de cuentas.</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <span>{{ errorServidor }}</span>
+  </div>
+
+  <div class="erp-skeleton" style="height: 160px" *ngIf="cargando" aria-busy="true"></div>
+
+  <ng-container *ngIf="!cargando">
+    <div class="erp-form-grid">
+      <div class="erp-field">
+        <label class="erp-label" for="fa-fecha">Fecha del aporte<span class="erp-req" aria-hidden="true">*</span></label>
+        <input id="fa-fecha" class="erp-input" type="date" formControlName="fecha" [attr.aria-invalid]="campoInvalido('fecha')" />
+      </div>
+
+      <div class="erp-field">
+        <label class="erp-label" for="fa-periodo">Abona a la cuota de<span class="erp-req" aria-hidden="true">*</span></label>
+        <select id="fa-periodo" class="erp-select" formControlName="periodo" [attr.aria-invalid]="campoInvalido('periodo')">
+          <option *ngFor="let o of opcionesPeriodo" [value]="o.periodo">{{ o.etiqueta }}{{ o.existe ? '' : ' (nuevo)' }}</option>
+        </select>
+        <p class="erp-field-hint" *ngIf="periodoNuevo">
+          Aún no existe este mes: se creará con la cuota {{ cuotaBase !== null ? 'de ' + (cuotaBase | moneda) : 'del último periodo' }}. Puedes ajustarla después con «Configurar cuota mensual».
+        </p>
+        <p class="erp-field-hint" *ngIf="!periodoNuevo">Puede ser distinto al mes de la fecha (p. ej. un aporte de octubre para la cuota de septiembre).</p>
+      </div>
+
+      <div class="erp-field erp-span-2">
+        <label class="erp-label" for="fa-notas">Notas del día</label>
+        <input id="fa-notas" class="erp-input" type="text" formControlName="notas" placeholder="Opcional" autocomplete="off" maxlength="2000" />
+      </div>
+    </div>
+
+    <fieldset class="lineas" formArrayName="lineas">
+      <legend class="erp-label">Líneas del aporte</legend>
+
+      <div class="linea" *ngFor="let fila of lineas.controls; let i = index" [formGroupName]="i">
+        <div class="linea-cabecera">
+          <span class="linea-numero">Línea {{ i + 1 }}</span>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="quitarLinea(i)" [disabled]="lineas.length === 1" [attr.aria-label]="'Quitar la línea ' + (i + 1)">
+            <i class="material-icons" aria-hidden="true">delete_outline</i>
+          </button>
+        </div>
+
+        <div class="linea-campos">
+          <div class="erp-field">
+            <label class="erp-label" [for]="'fa-valor-' + i">Valor</label>
+            <input [id]="'fa-valor-' + i" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valor" placeholder="0.00"
+                   [attr.aria-invalid]="lineaInvalida(fila, 'valor')" />
+            <p class="erp-field-error" *ngIf="lineaInvalida(fila, 'valor')">Mayor a 0, con máximo 2 decimales.</p>
+          </div>
+
+          <div class="erp-field">
+            <label class="erp-label" [for]="'fa-metodo-' + i">Método</label>
+            <select [id]="'fa-metodo-' + i" class="erp-select" formControlName="metodo">
+              <option *ngFor="let m of metodos" [value]="m.valor">{{ m.etiqueta }}</option>
+              <option *ngIf="metodoHeredado(fila) as h" [value]="h">{{ etiquetaMetodo(h) }} (anterior)</option>
+            </select>
+          </div>
+
+          <div class="erp-field">
+            <label class="erp-label" [for]="'fa-persona-' + i">{{ esMetodo(fila, 'CRUCE_CUENTAS') ? 'Quién asume la deuda' : 'Persona' }}</label>
+            <select [id]="'fa-persona-' + i" class="erp-select" formControlName="personaId" [attr.aria-invalid]="lineaInvalida(fila, 'personaId')">
+              <option [ngValue]="null" disabled>Selecciona…</option>
+              <option *ngFor="let p of opcionesPersona(fila)" [ngValue]="p.id">{{ p.nombre }}</option>
+            </select>
+            <p class="erp-field-error" *ngIf="lineaInvalida(fila, 'personaId')">Elige la persona.</p>
+          </div>
+
+          <div class="erp-field" *ngIf="esMetodo(fila, 'EFECTIVO', 'TRANSFERENCIA')">
+            <label class="erp-label" [for]="'fa-cuenta-' + i">Entra a la cuenta</label>
+            <select [id]="'fa-cuenta-' + i" class="erp-select" formControlName="cuentaFinancieraId">
+              <option [ngValue]="null">{{ esMetodo(fila, 'EFECTIVO') ? 'Efectivo (por defecto)' : 'Sin cuenta' }}</option>
+              <option *ngFor="let c of cuentas" [ngValue]="c.id">{{ c.nombre }}</option>
+            </select>
+          </div>
+
+          <div class="erp-field" *ngIf="esMetodo(fila, 'SALDO_A_FAVOR')">
+            <label class="erp-label" [for]="'fa-origen-' + i">Saldo a favor de</label>
+            <select [id]="'fa-origen-' + i" class="erp-select" formControlName="origenObligacionMesId">
+              <option [ngValue]="null" disabled>Selecciona un mes…</option>
+              <option *ngFor="let p of periodosOrigen" [ngValue]="p.id">{{ p.concepto }} — disponible {{ p.saldoAFavorDisponible | moneda }}</option>
+            </select>
+          </div>
+
+          <div class="erp-field linea-comentario">
+            <label class="erp-label" [for]="'fa-comentario-' + i">Comentarios</label>
+            <input [id]="'fa-comentario-' + i" class="erp-input" type="text" formControlName="comentarios" placeholder="Opcional" autocomplete="off" />
+          </div>
+        </div>
+
+        <p class="linea-aviso linea-aviso--cruce" *ngIf="esMetodo(fila, 'CRUCE_CUENTAS') && fila.controls.personaId.value !== null">
+          <i class="material-icons" aria-hidden="true">compare_arrows</i>{{ textoCruce(fila) }}
+        </p>
+        <p class="linea-aviso" *ngIf="esMetodo(fila, 'SALDO_A_FAVOR') && periodosOrigen.length === 0">
+          <i class="material-icons" aria-hidden="true">info</i>Ningún mes tiene saldo a favor disponible.
+        </p>
+        <p class="linea-aviso" *ngIf="esMetodo(fila, 'EFECTIVO', 'TRANSFERENCIA') && cuentasSinEfectivo">
+          <i class="material-icons" aria-hidden="true">info</i>No tienes cuentas: el aporte se registra sin ingreso en tus cuentas.
+        </p>
+      </div>
+
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="agregarLinea()" [disabled]="lineas.length >= maxLineas">
+        <i class="material-icons" aria-hidden="true">add</i>
+        Agregar otro método / cruce en este mismo día
+      </button>
+    </fieldset>
+
+    <div class="resumen-total">
+      <div>
+        <span class="erp-overline">Valor total del día</span>
+        <strong class="erp-num total">{{ total | moneda }}</strong>
+      </div>
+      <p class="erp-field-hint proyeccion" *ngIf="proyeccion as p">
+        <ng-container *ngIf="p.faltante > 0">Tras guardar, a {{ nombrePeriodo(form.controls.periodo.value || '') }} le faltarían <strong>{{ p.faltante | moneda }}</strong>.</ng-container>
+        <ng-container *ngIf="p.excedente > 0">Tras guardar, {{ nombrePeriodo(form.controls.periodo.value || '') }} quedaría con <strong>{{ p.excedente | moneda }}</strong> de saldo a favor.</ng-container>
+        <ng-container *ngIf="p.faltante === 0 && p.excedente === 0">Tras guardar, la cuota de {{ nombrePeriodo(form.controls.periodo.value || '') }} quedaría cubierta.</ng-container>
+      </p>
+    </div>
+  </ng-container>
+
+  <div class="erp-form-actions">
+    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando || cargando">{{ enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Guardar aporte' }}</button>
+  </div>
+</form>

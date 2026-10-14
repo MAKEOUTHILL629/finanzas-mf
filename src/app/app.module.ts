@@ -84,6 +84,14 @@ import { FormularioConciliarComponent } from './correos/formulario-conciliar/for
 // Dominio: Flujo de caja y deudas por persona
 import { FlujoCajaComponent } from './flujo-caja/flujo-caja.component';
 import { EstadoCuentaComponent } from './deudas/estado-cuenta/estado-cuenta.component';
+// Dominio: Aportes del carro, liquidación de fin de mes y recurrentes por persona
+import { AportesCarroComponent } from './aportes-carro/aportes-carro.component';
+import { FormularioAporteDiarioComponent } from './aportes-carro/formulario-aporte-diario/formulario-aporte-diario.component';
+import { FormularioPeriodoCarroComponent } from './aportes-carro/formulario-periodo-carro/formulario-periodo-carro.component';
+import { FormularioExcedenteComponent } from './aportes-carro/formulario-excedente/formulario-excedente.component';
+import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.component';
+import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
+import { FormularioRecurrentePersonaComponent } from './recurrentes-persona/formulario-recurrente-persona/formulario-recurrente-persona.component';
 import { FormularioAbonoComponent } from './deudas/formulario-abono/formulario-abono.component';
 import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.component';
 import { FormularioCruceComponent } from './deudas/formulario-cruce/formulario-cruce.component';
@@ -164,6 +172,13 @@ const CORREOS_DECLARATIONS = [
 const ANALISIS_DECLARATIONS = [
   FlujoCajaComponent,
   EstadoCuentaComponent,
+  AportesCarroComponent,
+  FormularioAporteDiarioComponent,
+  FormularioPeriodoCarroComponent,
+  FormularioExcedenteComponent,
+  LiquidacionMensualComponent,
+  ListaRecurrentesPersonaComponent,
+  FormularioRecurrentePersonaComponent,
   FormularioAbonoComponent,
   ListaCrucesComponent,
   FormularioCruceComponent

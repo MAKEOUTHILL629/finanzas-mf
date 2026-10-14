@@ -36,6 +36,9 @@ de carga, vacío y error con reintento.
 | `/correos` | Bandeja de correos del banco por estado y **conciliación** (confirmar, descartar, cuotas, responsables) |
 | `/flujo-caja` | Flujo de caja libre estimado del mes con dona y barras (ng2-charts) |
 | `/estado-cuenta`, `/cruces-deuda` | Lo que cada persona debe por mes, extracto por persona, abonos y cruces de deuda |
+| `/aportes-carro` | Cuota del carro por mes (acordeón), aportes diarios con desglose por método, cruces de cuentas con terceros, saldo a favor (trasladar al mes siguiente o cruzar contra el estado de cuenta) y configuración de la cuota mensual |
+| `/liquidacion` | Liquidación de fin de mes por persona: tarjetas, préstamos, recurrentes, cruces, cuota del carro y abonos; registrar pago, cruzar cuenta y aplicar saldo a favor |
+| `/recurrentes-persona` | Cargos o descuentos mensuales por persona, de por vida o por X meses (progreso k/X), pausar/reactivar |
 
 Convenciones:
 
