@@ -12,16 +12,19 @@ import { authGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'compras-credito', component: TablaComprasCreditoComponent , canActivate: [authGuard] },
+  { path: 'compras-credito', component: TablaComprasCreditoComponent, canActivate: [authGuard] },
   {
     path: 'compra-credito-detalle/:id',
-    component: DetalleComprasCreditoComponent, canActivate: [authGuard]
+    component: DetalleComprasCreditoComponent,
+    canActivate: [authGuard]
   },
-  { path: 'prestamos', component: TablaPrestamosComponent , canActivate: [authGuard]  },
+  { path: 'prestamos', component: TablaPrestamosComponent, canActivate: [authGuard] },
   { path: 'pagos-mes', component: PagosMesTarjetasComponent, canActivate: [authGuard] },
-  { path: 'pagos-mes-personas', component: PagoPersonaMesComponent , canActivate: [authGuard]  },
-  { path: 'pagos-mes-personas-detalle/:id', component: PagoPersonaMesDetalleComponent , canActivate: [authGuard]  },
-  { path: 'pagos-mes/:id', component: PagosMesTarjetasDetalleComponent , canActivate: [authGuard]  },
+  { path: 'pagos-mes-personas', component: PagoPersonaMesComponent, canActivate: [authGuard] },
+  { path: 'pagos-mes-personas-detalle/:id', component: PagoPersonaMesDetalleComponent, canActivate: [authGuard] },
+  { path: 'pagos-mes/:id', component: PagosMesTarjetasDetalleComponent, canActivate: [authGuard] },
+  { path: '', redirectTo: 'compras-credito', pathMatch: 'full' },
+  { path: '**', redirectTo: 'compras-credito' }
 ];
 
 @NgModule({
