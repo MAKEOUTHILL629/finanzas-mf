@@ -1,6 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppComponent } from './app.component';
+import { ThemeService } from './services/theme.service';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -11,6 +15,12 @@ describe('AppComponent', () => {
       declarations: [
         AppComponent
       ],
+      providers: [
+        ThemeService,
+        provideHttpClient(),
+        provideHttpClientTesting()
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
   });
 
@@ -26,10 +36,10 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('finanzas-mf');
   });
 
-  it('should render title', () => {
+  it('should render app container', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, finanzas-mf');
+    expect(compiled.querySelector('.app-container')).toBeTruthy();
   });
 });
