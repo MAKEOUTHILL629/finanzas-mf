@@ -56,9 +56,12 @@ La aplicación implementa un sistema de autenticación robusto con guards y inte
 
 ```
 src/app/
-├── core/                       # Núcleo de la aplicación
-│   ├── guards/                 # Auth Guard (funcional)
-│   └── interceptors/           # Auth Interceptor (funcional)
+├── core/                       # Núcleo y middleware de la aplicación
+│   ├── guards/                 # Auth Guard funcional (CanActivateFn)
+│   └── interceptors/           # Interceptores HTTP
+│       ├── auth.interceptor.ts         # Inyección de Bearer Token JWT
+│       ├── csrf-interceptor.interceptor.ts # Manejo de tokens CSRF
+│       └── http-error.interceptor.ts   # Timeout y manejo transversal de errores
 │
 ├── compras-credito/            # Módulo de Compras a Crédito
 │   ├── tabla-compras-credito/
@@ -78,14 +81,13 @@ src/app/
 │   ├── pago-persona-mes/
 │   └── pago-persona-mes-detalle/
 │
-├── services/                   # Servicios de Negocio
-│   ├── auth-service.service.ts
-│   └── shared-listas.service.ts
-│
-├── servicios/                  # Servicios de Infraestructura
-│   ├── api-services.service.ts  # Wrapper genérico HTTP
-│   ├── compras-credito.service.ts
-│   └── modal.service.ts
+├── services/                   # Capa Unificada de Servicios
+│   ├── api-services.service.ts      # Cliente HTTP genérico tipado
+│   ├── auth-service.service.ts      # Gestión de sesión y credenciales
+│   ├── compras-credito.service.ts   # Operaciones específicas de compras a crédito
+│   ├── modal.service.ts             # Control global de modales
+│   ├── shared-listas.service.ts     # Catálogos cacheados con índices O(1)
+│   └── theme.service.ts             # SSOT de temas (Dark/Light/Desktop OS)
 │
 ├── modelos/                    # Interfaces TypeScript
 │   ├── Authenticate.ts
@@ -95,19 +97,20 @@ src/app/
 │   ├── prestamos.ts
 │   └── tarjeta.ts
 │
-├── pipes/                      # Pipes personalizados
+├── pipes/                      # Pipes puros optimizados O(1)
 │   ├── formato-fecha.pipe.ts
 │   ├── formato-persona.pipe.ts
 │   └── formato-tarjeta.pipe.ts
 │
-├── shared/                     # Componentes compartidos
-│   ├── menu/
-│   ├── modal/
-│   ├── directives/
-│   └── utils.ts
+├── shared/                     # Componentes y utilidades transversales
+│   ├── menu/                   # Menú de navegación principal
+│   ├── modal/                  # Contenedor de diálogos modales
+│   ├── directives/             # Directivas compartidas
+│   ├── utils.ts                # Motor puro de búsqueda y normalización de cadenas
+│   └── table-filter.helper.ts  # Persistencia sessionStorage, sumByField y ordenamiento
 │
-└── login/                      # Autenticación
-    └── login.component.ts
+└── login/                      # Módulo de Autenticación
+    └── login.component.ts      # Pantalla de acceso Liquid Trust
 ```
 
 ### Patrón Arquitectónico
@@ -220,15 +223,21 @@ ng serve --host 0.0.0.0 --proxy-config proxy.conf.json
 
 ### 2. **Configuración de Entornos**
 
+La aplicación mantiene entornos estandarizados en `src/environments/`:
+- `environment.ts`: Configuración por defecto para desarrollo con proxy `/api`.
+- `environment.prod.ts`: Configuración para builds de producción y despliegues en contenedores.
+
 ```typescript
-// enviroment.dev.ts
+// environment.ts
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:9000'
+  production: false
+};
+
+// environment.prod.ts
+export const environment = {
+  production: true
 };
 ```
-
-**Nota**: Actualmente `ApiServicesService` usa `/api` directamente (hardcoded), aprovechando el proxy. Considerar usar `environment.apiUrl` para mayor flexibilidad.
 
 ### 3. **Dockerfile Multi-Stage**
 
@@ -379,18 +388,25 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 ### 2. **CSRF Interceptor** (Class-based)
 
 ```typescript
-// interceptor/csrf-interceptor.interceptor.ts
+// core/interceptors/csrf-interceptor.interceptor.ts
 @Injectable()
 export class CsrfInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler) {
-    // Lógica de protección CSRF
+    // Inyección de credenciales y encabezados CSRF
   }
 }
 ```
 
-**Nota**: Coexisten dos tipos de interceptores (funcional y basado en clase). Esto es normal en transición a Angular 18.
+### 3. **HTTP Error Interceptor** (Funcional)
 
-### 3. **Auth Guard**
+```typescript
+// core/interceptors/http-error.interceptor.ts
+export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
+  // Manejo transversal de timeouts (15s), captura de errores HTTP y clasificación de red
+};
+```
+
+### 4. **Auth Guard**
 
 ```typescript
 export const authGuard: CanActivateFn = (route, state) => {
@@ -412,7 +428,7 @@ export const authGuard: CanActivateFn = (route, state) => {
 
 **Protección**: Valida autenticación antes de acceder a rutas protegidas. Redirige a `/login` si no está autenticado.
 
-### 4. **Auth Service**
+### 5. **Auth Service**
 
 ```typescript
 export class AuthServiceService {
@@ -438,11 +454,30 @@ export class AuthServiceService {
 }
 ```
 
-**Características:**
-- ✅ Estado reactivo con BehaviorSubject
-- ✅ Persistencia en localStorage
-- ✅ Manejo de errores
-- ✅ Logout con limpieza
+### 6. **Theme Service (Single Source of Truth)**
+
+Centraliza y controla el tema visual de la aplicación:
+- **Detección OS**: Consulta `window.matchMedia('(prefers-color-scheme: dark)')` si el usuario no ha fijado una preferencia manual.
+- **Escucha en tiempo real**: Reacciona a cambios del sistema operativo mientras no haya preferencia manual forzada.
+- **Persistencia**: Almacena la preferencia del usuario en `localStorage` (`'finanzas-theme'`).
+- **Sincronización multi-pestaña**: Escucha eventos `storage` para sincronizar ventanas simultáneas.
+- **Sincronización DOM**: Aplica simultáneamente la clase `dark-theme` / `light-theme` y el atributo `data-theme` a `document.documentElement` y `document.body`.
+
+### 7. **SharedListasService (Catálogos O(1))**
+
+Almacena listas en memoria y construye mapas indexados `Map<string | number, Persona>` y `Map<string | number, Tarjeta>` para búsquedas instantáneas:
+- `findPersonaFast(id)` / `getNombrePersonaById(id)`: Tiempo $O(1)$.
+- `findTarjetaFast(id)` / `getNombreTarjetaById(id)`: Tiempo $O(1)$.
+- Inyectado en `FormatoPersonaPipe` y `FormatoTarjetaPipe` para renderizar tablas masivas sin impacto en rendimiento.
+
+### 8. **Motor Unificado de Búsqueda y Persistencia Shared**
+
+- `normalizeSearchText(value)`: Normaliza mayúsculas, recorta espacios y remueve tildes/marcas diacríticas (NFD).
+- `matchesSearchFields(query, fields)`: Búsqueda flexible multicampo con soporte para tokens separados por espacios.
+- `matchesExactFilter(itemValue, filterValue)`: Comparación uniforme para selectores ignorando valores neutros (`TODOS`, `0`, `''`).
+- `FilterStateStorage`: Persistencia segura de estados de filtros y meses en `sessionStorage`.
+- `sumByField`: Sumatorias con prevención de errores de punto flotante de Javascript (`Number.EPSILON`).
+- `sortCollection`: Ordenamiento inmutable genérico para fechas, números y textos.
 
 ---
 
