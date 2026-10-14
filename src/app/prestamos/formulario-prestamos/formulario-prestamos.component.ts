@@ -1,26 +1,41 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { Persona } from '../../modelos/persona';
 import { ApiServicesService } from '../../services/api-services.service';
+import { ModalService } from '../../services/modal.service';
+import { SharedListasService } from '../../services/shared-listas.service';
 
 @Component({
   selector: 'app-formulario-prestamos',
   templateUrl: './formulario-prestamos.component.html',
   styleUrl: './formulario-prestamos.component.css'
 })
-export class FormularioPrestamosComponent implements OnInit {
+export class FormularioPrestamosComponent implements OnInit, OnDestroy {
   loanForm: FormGroup = new FormGroup({});
   personas: Persona[] = [];
   estados: string[] = ['Pendiente', 'Pagado', 'Vencido'];
 
-  constructor(private fb: FormBuilder, private apiService: ApiServicesService) {}
+  private destroy$ = new Subject<void>();
 
-  ngOnInit() {
+  constructor(
+    private fb: FormBuilder,
+    private apiService: ApiServicesService,
+    private modalService: ModalService,
+    private sharedListasService: SharedListasService
+  ) {}
+
+  ngOnInit(): void {
     this.initForm();
     this.loadPersonas();
   }
 
-  initForm() {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  initForm(): void {
     this.loanForm = this.fb.group({
       valorPrestado: ['', [Validators.required, Validators.min(0)]],
       concepto: ['', Validators.required],
@@ -31,38 +46,45 @@ export class FormularioPrestamosComponent implements OnInit {
     });
   }
 
-  loadPersonas() {
-    // Aquí cargarías la lista de personas desde tu servicio
-    // Por ahora, usaremos datos de ejemplo
+  loadPersonas(): void {
+    if (this.sharedListasService.listaPersonas.length > 0) {
+      this.personas = this.sharedListasService.listaPersonas;
+      return;
+    }
 
-    this.apiService.get<Persona[]>('personas').subscribe({
-      next: (data) => {
-        this.personas = data;
-      },
-      error: (err) => {
-        void err;
-      }
-    });
-
+    this.apiService.get<Persona[]>('personas')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.personas = data || [];
+          this.sharedListasService.listaPersonas = this.personas;
+        },
+        error: (err) => { void err; }
+      });
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.loanForm.valid) {
-      // Aquí iría la lógica para guardar el préstamo
-      this.apiService.post('prestamos', {...this.loanForm.value, responsable: Number(this.loanForm.get('responsablePersona')?.value)        }).subscribe({
-        next: (_data) => {
-          // Aquí iría la lógica para cerrar el modal
-        },
-        error: (err) => {
-          void err;
-        }
-      });
+      const payload = {
+        ...this.loanForm.value,
+        responsable: Number(this.loanForm.get('responsablePersona')?.value)
+      };
+
+      this.apiService.post('prestamos', payload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (_data) => {
+            this.modalService.close();
+            this.loanForm.reset();
+          },
+          error: (err) => { void err; }
+        });
     } else {
       this.markFormGroupTouched(this.loanForm);
     }
   }
 
-  markFormGroupTouched(formGroup: FormGroup) {
+  markFormGroupTouched(formGroup: FormGroup): void {
     Object.values(formGroup.controls).forEach(control => {
       control.markAsTouched();
 

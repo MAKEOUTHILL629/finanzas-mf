@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { Subject, switchMap, takeUntil } from 'rxjs';
 import { PagoMensualPersonaDetalle } from '../../modelos/pagos';
 import { ApiServicesService } from '../../services/api-services.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { Persona } from '../../modelos/persona';
-
+import { sortCollection, sumByField } from '../../shared/table-filter.helper';
 
 export interface ResumenTarjeta {
   tarjeta: number;
@@ -28,7 +29,7 @@ export interface ResumenTarjeta {
     ])
   ]
 })
-export class PagoPersonaMesDetalleComponent  implements OnInit {
+export class PagoPersonaMesDetalleComponent implements OnInit, OnDestroy {
   pagosMensualesPersonaDetalle: PagoMensualPersonaDetalle[] = [];
   persona?: Persona;
   fechaPago: Date = new Date();
@@ -36,57 +37,57 @@ export class PagoPersonaMesDetalleComponent  implements OnInit {
   mes: number = 0;
   year: number = 0;
   sortColumn: keyof PagoMensualPersonaDetalle | null = null;
-
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor(private apiService: ApiServicesService, private route: ActivatedRoute, private sharedListas: SharedListasService, private router:Router ) {}
-  ngOnInit(): void {
+  private destroy$ = new Subject<void>();
 
+  constructor(
+    private apiService: ApiServicesService,
+    private route: ActivatedRoute,
+    private sharedListas: SharedListasService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
     this.loadPagosMensualesPersonaDetalle();
   }
 
-  loadPagosMensualesPersonaDetalle() {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
+  loadPagosMensualesPersonaDetalle(): void {
     this.idPersona = Number(this.route.snapshot.paramMap.get('id')) || 1;
 
-    this.route.queryParamMap.subscribe(params => {
-      this.mes = Number(params.get('mes')) || 1;
-      this.year = Number(params.get('year')) || 2021;
-    });
-
-
-
-    this.apiService.get<PagoMensualPersonaDetalle[]>(`pagos/personas/${this.idPersona}?mes=${this.mes}&year=${this.year}`).subscribe(
-      (pagosProductosDetalleMes) => {
-        this.pagosMensualesPersonaDetalle = pagosProductosDetalleMes;
-        this.persona = this.sharedListas.listaPersonas.find(persona => persona.id === this.idPersona);
-        this.fechaPago = pagosProductosDetalleMes[0].fechaPago;
+    this.route.queryParamMap.pipe(
+      takeUntil(this.destroy$),
+      switchMap(params => {
+        this.mes = Number(params.get('mes')) || (new Date().getMonth() + 1);
+        this.year = Number(params.get('year')) || new Date().getFullYear();
+        return this.apiService.get<PagoMensualPersonaDetalle[]>(
+          `pagos/personas/${this.idPersona}?mes=${this.mes}&year=${this.year}`
+        );
+      })
+    ).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (pagosProductosDetalleMes) => {
+        this.pagosMensualesPersonaDetalle = pagosProductosDetalleMes || [];
+        this.persona = this.sharedListas.findPersonaFast(this.idPersona) ||
+                       this.sharedListas.listaPersonas.find(p => p.id === this.idPersona);
+        if (this.pagosMensualesPersonaDetalle.length > 0) {
+          this.fechaPago = this.pagosMensualesPersonaDetalle[0].fechaPago;
+        }
       },
-      (error) => { void error; }
-    );
+      error: (error) => { void error; }
+    });
   }
 
   get sortedData(): PagoMensualPersonaDetalle[] {
     if (!this.sortColumn) {
-      // Si no se ha hecho clic en ninguna columna todavía, retorna los datos en su orden original
       return this.pagosMensualesPersonaDetalle;
     }
-
-    return [...this.pagosMensualesPersonaDetalle].sort((a, b) => {
-      let valA: any = a[this.sortColumn!];
-      let valB: any = b[this.sortColumn!];
-
-      // Si la columna es fecha, comparamos timestamps
-      if (this.sortColumn === 'fechaPago') {
-        valA = new Date(valA).getTime();
-        valB = new Date(valB).getTime();
-      }
-
-      // Comparación genérica (números o strings)
-      if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
-      if (valA > valB) return this.sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+    return sortCollection(this.pagosMensualesPersonaDetalle, this.sortColumn, this.sortDirection);
   }
 
   /**
@@ -113,12 +114,11 @@ export class PagoPersonaMesDetalleComponent  implements OnInit {
     return `${dia}/${mes}/${anio}`;
   }
 
-   /**
+  /**
    * Resumen: Calcula totales por TARJETA
    * Devuelve un array de { tarjeta, totalResponsable, totalInteres, totalCapital, totalSaldo }
    */
-   get resumenPorTarjeta(): ResumenTarjeta[] {
-    // Creamos un Map para ir sumando por cada tarjeta
+  get resumenPorTarjeta(): ResumenTarjeta[] {
     const map = new Map<number, ResumenTarjeta>();
 
     for (const item of this.pagosMensualesPersonaDetalle) {
@@ -132,10 +132,10 @@ export class PagoPersonaMesDetalleComponent  implements OnInit {
         });
       }
       const resumen = map.get(item.tarjeta)!;
-      resumen.totalResponsable += item.valorPagoResponsable;
-      resumen.totalInteres += item.interesPagado;
-      resumen.totalCapital += item.aporteCapital;
-      resumen.totalSaldo += item.saldoRestante;
+      resumen.totalResponsable = Math.round((resumen.totalResponsable + (item.valorPagoResponsable || 0) + Number.EPSILON) * 100) / 100;
+      resumen.totalInteres = Math.round((resumen.totalInteres + (item.interesPagado || 0) + Number.EPSILON) * 100) / 100;
+      resumen.totalCapital = Math.round((resumen.totalCapital + (item.aporteCapital || 0) + Number.EPSILON) * 100) / 100;
+      resumen.totalSaldo = Math.round((resumen.totalSaldo + (item.saldoRestante || 0) + Number.EPSILON) * 100) / 100;
     }
 
     return Array.from(map.values());
@@ -145,24 +145,18 @@ export class PagoPersonaMesDetalleComponent  implements OnInit {
    * Resumen: Totales Generales sumando TODAS las tarjetas
    */
   get resumenGeneral(): ResumenTarjeta {
-    return this.resumenPorTarjeta.reduce<ResumenTarjeta>((acc, curr) => {
-      acc.totalResponsable += curr.totalResponsable;
-      acc.totalInteres += curr.totalInteres;
-      acc.totalCapital += curr.totalCapital;
-      acc.totalSaldo += curr.totalSaldo;
-      return acc;
-    }, {
+    return {
       tarjeta: 0,
-      totalResponsable: 0,
-      totalInteres: 0,
-      totalCapital: 0,
-      totalSaldo: 0
-    });
+      totalResponsable: sumByField(this.resumenPorTarjeta, 'totalResponsable'),
+      totalInteres: sumByField(this.resumenPorTarjeta, 'totalInteres'),
+      totalCapital: sumByField(this.resumenPorTarjeta, 'totalCapital'),
+      totalSaldo: sumByField(this.resumenPorTarjeta, 'totalSaldo')
+    };
   }
 
   irDetalleCompra(compra: number): void {
-      this.router.navigate(['/compra-credito-detalle', compra], {
-        state: { compra: compra },
-      });
-    }
+    this.router.navigate(['/compra-credito-detalle', compra], {
+      state: { compra: compra },
+    });
+  }
 }
