@@ -1,7 +1,7 @@
-<div class="app-container" [class.menu-closed]="!menuComponent.isMenuOpen">
-  <app-menu #menuComponent></app-menu>
+<div class="app-container" [ngClass]="'layout-' + (menuEstado.layout$ | async)">
+  <app-menu></app-menu>
   <div class="main-content">
     <router-outlet></router-outlet>
   </div>
+  <app-toast></app-toast>
 </div>
-<app-toast></app-toast>

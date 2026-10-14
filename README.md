@@ -51,6 +51,23 @@ Convenciones:
 - **Pruebas** (`ng test`, Edge headless: `CHROME_BIN=msedge`): `src/app/testing/erp-testing.ts` ofrece los helpers de `HttpTestingController`
   y el módulo de pruebas; `render-smoke.spec.ts` monta todas las pantallas nuevas. La lógica de cada pantalla vive en funciones puras con su spec.
 
+## Navegación (menú)
+
+El mapa de secciones vive en **`src/app/shared/menu/menu.config.ts`**: para añadir una pantalla basta con agregar un ítem a su grupo
+(o un grupo nuevo); el menú, la búsqueda, los favoritos, la barra inferior del móvil y la sección activa se derivan de ahí.
+Una prueba verifica que cada enlace del menú existe en el enrutador.
+
+| Dispositivo | Qué se ve |
+|---|---|
+| Escritorio (≥ 1024 px) | Barra lateral con **buscador** (`Ctrl/⌘ + K`), **favoritos** y **grupos que se despliegan de uno en uno** (el de la sección actual), así nunca hace falta scroll. El botón `«` la **contrae** a una barra de íconos; cada grupo abre un menú emergente. La preferencia se recuerda. |
+| Tablet (768–1023 px) | Barra superior con la sección actual y un **panel deslizable** (se cierra con Esc, tocando fuera, deslizando o al navegar). |
+| Móvil (< 768 px) | Lo mismo + barra inferior con los **4 favoritos** y «Más» (abre el panel con todo). |
+| Sin sesión | Sin menú: solo el cambio de tema. |
+
+- **Favoritos:** la estrella de cada sección la fija (máximo 4, son también los de la barra inferior); la `×` de una ficha la quita.
+- **Búsqueda:** ignora tildes y mayúsculas, exige todas las palabras y ordena por relevancia (`↑ ↓` recorren, `Enter` abre, `Esc` limpia).
+- El estado (ancho, barra contraída, panel abierto, favoritos) está en `MenuStateService`; el layout de la página lo lee de ahí (`layout-sidebar | layout-rail | layout-drawer | layout-movil | layout-invitado`).
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.

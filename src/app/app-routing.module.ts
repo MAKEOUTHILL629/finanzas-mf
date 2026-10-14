@@ -26,7 +26,7 @@ import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.c
 import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
 import { authGuard } from './core/guards/auth.guard';
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'compras-credito', component: TablaComprasCreditoComponent, canActivate: [authGuard] },
   {

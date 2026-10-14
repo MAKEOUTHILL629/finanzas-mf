@@ -109,7 +109,7 @@
   --z-overlay:  300;
   --z-modal:    400;
   --z-popover:  500;
-  --z-toast:    600;
+  --z-toast:    1500; /* por encima de la navegación (1000) y del velo del panel, por debajo de los modales (2000) */
   --z-command:  700;
   --z-max:      9999;
 
@@ -294,34 +294,21 @@ body {
 .app-container {
   position: relative;
   min-height: 100vh;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* === MAIN CONTENT === */
 .main-content {
   padding: 24px;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* === RESPONSIVE LAYOUT === */
-/* Mobile: Bottom padding para el tab bar */
-@media (max-width: 767px) {
-  .main-content {
-    padding-bottom: 104px; /* 80px tab bar + 24px spacing */
-  }
-}
-
-/* Desktop: Left margin cuando el menú está abierto */
-@media (min-width: 768px) {
-  .app-container:not(.menu-closed) .main-content {
-    margin-left: 280px; /* Ancho del menú */
-  }
-
-  .app-container.menu-closed .main-content {
-    margin-left: 0;
-  }
-
-  .main-content {
-    padding: 32px;
-  }
-}
+/* === RESPONSIVE LAYOUT (lo decide MenuStateService) ===
+   sidebar: barra lateral completa · rail: barra compacta · drawer: barra superior + panel (tablet)
+   movil: barra superior + panel + barra inferior · invitado: sin sesión, sin menú */
+.layout-sidebar .main-content { margin-left: 288px; padding: 32px; }
+.layout-rail .main-content { margin-left: 76px; padding: 32px; }
+.layout-drawer .main-content { padding: calc(56px + env(safe-area-inset-top) + 24px) 32px 32px; }
+.layout-movil .main-content { padding: calc(56px + env(safe-area-inset-top) + 16px) 16px calc(64px + env(safe-area-inset-bottom) + 24px); }
+.layout-invitado .main-content { padding: 24px; }
+/* los avisos no quedan tapados por la barra inferior del móvil */
+.layout-movil { --toast-offset-inferior: calc(64px + env(safe-area-inset-bottom)); }

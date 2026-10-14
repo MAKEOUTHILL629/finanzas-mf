@@ -1,81 +1,180 @@
-<!-- Toggle Button - Solo visible cuando el menú está cerrado -->
-<button class="menu-toggle-floating" *ngIf="!isMenuOpen" (click)="toggleMenu()" aria-label="Abrir menú">
-  <i class="material-icons">menu</i>
-</button>
+<ng-container *ngIf="isUserLoggedIn$ | async; else invitado">
 
-<nav class="finance-menu" [class.open]="isMenuOpen">
-
-  <div class="menu-header">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40" class="logo">
-      <circle cx="50" cy="50" r="45" fill="#1976d2" />
-      <path d="M50 25v50M25 50h50" stroke="white" stroke-width="8" stroke-linecap="round" />
-      <path d="M35 35l30 30M35 65l30-30" stroke="white" stroke-width="6" stroke-linecap="round" />
-    </svg>
-    <h1>Finanzas Make</h1>
-
-    <!-- Toggle integrado en el header cuando está abierto -->
-    <button class="menu-toggle-integrated" (click)="toggleMenu()" aria-label="Cerrar menú">
-      <i class="material-icons">close</i>
+  <!-- Barra superior: tablet y móvil. Muestra dónde estás y abre el panel. -->
+  <header class="topbar" *ngIf="esPanel">
+    <button #botonAbrir type="button" class="icono-btn" (click)="abrirDrawer()" aria-label="Abrir el menú de navegación"
+            aria-controls="panel-navegacion" [attr.aria-expanded]="drawerAbierto">
+      <i class="material-icons" aria-hidden="true">menu</i>
     </button>
-  </div>
+    <div class="topbar-titulo">
+      <span class="topbar-marca">Finanzas Make</span>
+      <span class="topbar-seccion">{{ tituloActual }}</span>
+    </div>
+    <button type="button" class="icono-btn" (click)="enfocarBuscador()" aria-label="Buscar una sección">
+      <i class="material-icons" aria-hidden="true">search</i>
+    </button>
+  </header>
 
-  <ul class="menu-items">
-    <!-- Items de navegación -->
-    <ng-container *ngIf="isUserLoggedIn$ | async">
-      <ng-container *ngFor="let item of loggedInMenuItems; let i = index">
-        <li class="menu-section" *ngIf="mostrarSeccion(i)" aria-hidden="true">{{ item.section }}</li>
-        <li routerLinkActive="active"
-            (click)="isMobile && toggleMenu()"
-            [title]="item.label">
-          <a [routerLink]="item.route">
-            <i class="material-icons" *ngIf="item.icon">{{item.icon}}</i>
-            <span class="menu-label">{{item.label}}</span>
-          </a>
+  <div class="velo" [class.visible]="drawerAbierto" (click)="cerrarDrawer()" aria-hidden="true"></div>
+
+  <nav #panel id="panel-navegacion" class="nav" aria-label="Navegación principal"
+       [class.nav--compacto]="esCompacto" [class.nav--panel]="esPanel" [class.abierto]="drawerAbierto"
+       [attr.aria-hidden]="esPanel && !drawerAbierto ? true : null"
+       (keydown)="teclaPanel($event)" (touchstart)="inicioTactil($event)" (touchend)="finTactil($event)">
+
+    <div class="nav-cabecera">
+      <button type="button" class="marca" (click)="esCompacto && alternarColapsado()" [attr.tabindex]="esCompacto ? 0 : -1"
+              [attr.aria-label]="esCompacto ? 'Expandir el menú' : 'Finanzas Make'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="36" height="36" class="logo" aria-hidden="true">
+          <circle cx="50" cy="50" r="45" fill="#1976d2" />
+          <path d="M50 25v50M25 50h50" stroke="white" stroke-width="8" stroke-linecap="round" />
+          <path d="M35 35l30 30M35 65l30-30" stroke="white" stroke-width="6" stroke-linecap="round" />
+        </svg>
+        <span class="marca-texto">Finanzas Make</span>
+      </button>
+
+      <button type="button" class="icono-btn panel-cerrar" *ngIf="esPanel" (click)="cerrarDrawer()" aria-label="Cerrar el menú">
+        <i class="material-icons" aria-hidden="true">close</i>
+      </button>
+      <button type="button" class="icono-btn" *ngIf="!esPanel" (click)="alternarColapsado()"
+              [attr.aria-label]="esCompacto ? 'Expandir el menú' : 'Contraer el menú'" [title]="esCompacto ? 'Expandir el menú' : 'Contraer el menú'">
+        <i class="material-icons" aria-hidden="true">{{ esCompacto ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left' }}</i>
+      </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="buscador" role="search" *ngIf="!esCompacto">
+      <i class="material-icons buscador-icono" aria-hidden="true">search</i>
+      <input #buscador type="search" class="buscador-input" placeholder="Buscar sección…" autocomplete="off" spellcheck="false"
+             aria-label="Buscar una sección" [value]="consulta" (input)="onConsulta($any($event.target).value)" (keydown)="teclaBuscador($event)" />
+      <kbd class="buscador-atajo" *ngIf="!consulta && !esPanel" aria-hidden="true">Ctrl K</kbd>
+      <button type="button" class="buscador-limpiar" *ngIf="consulta" (click)="limpiarBusqueda(); buscador.focus()" aria-label="Limpiar la búsqueda">
+        <i class="material-icons" aria-hidden="true">close</i>
+      </button>
+    </div>
+    <button type="button" class="rail-btn" *ngIf="esCompacto" (click)="enfocarBuscador()" aria-label="Buscar una sección (Ctrl K)" title="Buscar (Ctrl K)">
+      <i class="material-icons" aria-hidden="true">search</i>
+    </button>
+
+    <div class="nav-cuerpo">
+
+      <!-- Favoritos -->
+      <section class="favoritos" *ngIf="!buscando && !esCompacto && itemsFavoritos.length > 0" aria-label="Favoritos">
+        <h2 class="seccion-titulo"><i class="material-icons" aria-hidden="true">star</i>Favoritos</h2>
+        <ul class="favoritos-fila">
+          <li class="fav" *ngFor="let f of itemsFavoritos; trackBy: trackItem" [class.activo]="esActivo(f.item)">
+            <a class="fav-enlace" [routerLink]="f.item.ruta" (click)="alElegir()" [title]="f.item.etiqueta"
+               [attr.aria-label]="f.item.etiqueta" [attr.aria-current]="esActivo(f.item) ? 'page' : null">
+              <i class="material-icons" aria-hidden="true">{{ f.item.icono }}</i>
+              <span>{{ etiquetaCorta(f.item) }}</span>
+            </a>
+            <button type="button" class="fav-quitar" (click)="alternarFavorito(f.item, $event)"
+                    [attr.aria-label]="'Quitar de favoritos: ' + f.item.etiqueta" title="Quitar de favoritos">
+              <i class="material-icons" aria-hidden="true">close</i>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Modo compacto: un botón por grupo que abre un menú emergente -->
+      <ul class="rail" *ngIf="esCompacto">
+        <li *ngFor="let g of grupos; trackBy: trackGrupo">
+          <button type="button" class="rail-btn rail-grupo" [class.activo]="grupoActivo(g)" [class.abierto]="flyout?.grupo?.id === g.id"
+                  (click)="abrirFlyout(g, $event)" aria-haspopup="true" [attr.aria-expanded]="flyout?.grupo?.id === g.id"
+                  [attr.aria-label]="g.titulo" [title]="g.titulo">
+            <i class="material-icons" aria-hidden="true">{{ g.icono }}</i>
+          </button>
         </li>
-      </ng-container>
-    </ng-container>
+      </ul>
 
-    <li *ngIf="!(isUserLoggedIn$ | async)"
-        routerLinkActive="active"
-        (click)="isMobile && toggleMenu()"
-        title="Iniciar Sesión">
-      <a routerLink="/login">
-        <i class="material-icons">login</i>
-        <span class="menu-label">Iniciar Sesión</span>
-      </a>
-    </li>
-  </ul>
+      <!-- Resultados de la búsqueda: lista plana ordenada por relevancia -->
+      <ul class="items resultados" *ngIf="!esCompacto && buscando" aria-label="Resultados de la búsqueda">
+        <ng-container *ngFor="let r of resultados; trackBy: trackItem">
+          <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: r.item, grupo: r.grupo.titulo }"></ng-container>
+        </ng-container>
+      </ul>
+      <p class="sin-resultados" *ngIf="!esCompacto && sinResultados" role="status">Ninguna sección coincide con «{{ consulta }}».</p>
 
-  <!-- Logout al final -->
-  <div class="menu-footer" *ngIf="isUserLoggedIn$ | async">
-    <button
-      type="button"
-      class="menu-item-theme"
-      (click)="toggleTheme()"
-      [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
-    >
-      <i class="material-icons">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
-      <span class="menu-label">{{ isDarkTheme ? 'Tema Claro' : 'Tema Oscuro' }}</span>
-    </button>
-    <button type="button" class="menu-item-logout" (click)="logout()" title="Cerrar Sesión">
-      <i class="material-icons">logout</i>
-      <span class="menu-label">Cerrar Sesión</span>
-    </button>
-  </div>
+      <!-- Grupos: se despliega uno a la vez -->
+      <div class="grupos" *ngIf="!esCompacto && !buscando">
+        <section class="grupo" *ngFor="let g of grupos; trackBy: trackGrupo"
+                 [class.abierto]="estaAbierto(g)" [class.grupo--activo]="grupoActivo(g)">
+          <h2 class="grupo-titulo">
+            <button type="button" class="grupo-btn" (click)="alternarGrupo(g)"
+                    [attr.aria-expanded]="estaAbierto(g)" [attr.aria-controls]="'grupo-' + g.id">
+              <i class="material-icons grupo-icono" aria-hidden="true">{{ g.icono }}</i>
+              <span class="grupo-nombre">{{ g.titulo }}</span>
+              <i class="material-icons chevron" aria-hidden="true">expand_more</i>
+            </button>
+          </h2>
+          <div class="grupo-lista" [id]="'grupo-' + g.id">
+            <ul class="items">
+              <ng-container *ngFor="let item of g.items; trackBy: trackItem">
+                <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: item }"></ng-container>
+              </ng-container>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
 
-  <!-- Toggle de tema cuando NO está logueado (visible en pantalla de login) -->
-  <div class="menu-footer-guest" *ngIf="!(isUserLoggedIn$ | async)">
-    <button
-      type="button"
-      class="menu-item-theme"
-      (click)="toggleTheme()"
-      [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
-    >
-      <i class="material-icons">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
-      <span class="menu-label">{{ isDarkTheme ? 'Tema Claro' : 'Tema Oscuro' }}</span>
-    </button>
-  </div>
-
+    <div class="nav-pie">
+      <button type="button" class="pie-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+              [attr.aria-label]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+        <i class="material-icons" aria-hidden="true">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
+        <span class="pie-etiqueta">{{ isDarkTheme ? 'Tema claro' : 'Tema oscuro' }}</span>
+      </button>
+      <button type="button" class="pie-btn pie-btn--salir" (click)="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+        <i class="material-icons" aria-hidden="true">logout</i>
+        <span class="pie-etiqueta">Cerrar sesión</span>
+      </button>
+    </div>
   </nav>
 
-<div class="menu-backdrop" [class.visible]="isMenuOpen && isMobile" (click)="toggleMenu()"></div>
+  <!-- Menú emergente del modo compacto -->
+  <div class="flyout" *ngIf="flyout as f" role="group" [attr.aria-label]="f.grupo.titulo" [style.top.px]="f.top">
+    <p class="flyout-titulo">{{ f.grupo.titulo }}</p>
+    <ul class="items">
+      <ng-container *ngFor="let item of f.grupo.items; trackBy: trackItem">
+        <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: item }"></ng-container>
+      </ng-container>
+    </ul>
+  </div>
+
+  <!-- Barra inferior del móvil: los favoritos y «Más» -->
+  <nav class="barra-inferior" *ngIf="layout === 'movil'" aria-label="Accesos rápidos">
+    <a *ngFor="let f of itemsFavoritos; trackBy: trackItem" class="barra-item" [routerLink]="f.item.ruta" [class.activo]="esActivo(f.item)"
+       [attr.aria-current]="esActivo(f.item) ? 'page' : null" (click)="alElegir()">
+      <i class="material-icons" aria-hidden="true">{{ f.item.icono }}</i>
+      <span>{{ etiquetaCorta(f.item) }}</span>
+    </a>
+    <button type="button" class="barra-item" [class.activo]="activo && !favoritos.includes(activo.item.id)" (click)="abrirDrawer()" aria-label="Más secciones">
+      <i class="material-icons" aria-hidden="true">apps</i>
+      <span>Más</span>
+    </button>
+  </nav>
+</ng-container>
+
+<!-- Un ítem del menú: enlace + estrella para fijarlo en favoritos -->
+<ng-template #itemTpl let-item let-grupo="grupo">
+  <li class="item" [class.activo]="esActivo(item)" [class.resultado]="esResultadoActivo(item)">
+    <a class="item-enlace" [routerLink]="item.ruta" (click)="alElegir()" [attr.aria-current]="esActivo(item) ? 'page' : null">
+      <i class="material-icons" aria-hidden="true">{{ item.icono }}</i>
+      <span class="item-etiqueta">{{ item.etiqueta }}</span>
+      <span class="item-grupo" *ngIf="grupo">{{ grupo }}</span>
+    </a>
+    <button type="button" class="item-fav" [class.fijado]="esFavorito(item)" (click)="alternarFavorito(item, $event)"
+            [attr.aria-pressed]="esFavorito(item)" [attr.aria-label]="(esFavorito(item) ? 'Quitar de favoritos: ' : 'Fijar en favoritos: ') + item.etiqueta"
+            [title]="esFavorito(item) ? 'Quitar de favoritos' : 'Fijar en favoritos'">
+      <i class="material-icons" aria-hidden="true">{{ esFavorito(item) ? 'star' : 'star_border' }}</i>
+    </button>
+  </li>
+</ng-template>
+
+<!-- Sin sesión no hay menú: solo el cambio de tema -->
+<ng-template #invitado>
+  <button type="button" class="tema-flotante" (click)="toggleTheme()"
+          [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'" [attr.aria-label]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+    <i class="material-icons" aria-hidden="true">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
+  </button>
+</ng-template>

@@ -1,7 +1,7 @@
 .toast-region {
   position: fixed;
   right: var(--space-3);
-  bottom: var(--space-3);
+  bottom: calc(var(--toast-offset-inferior, 0px) + var(--space-3));
   z-index: var(--z-toast, 600);
   display: flex;
   flex-direction: column;
