@@ -15,6 +15,18 @@ export interface ComprasCredito {
   porcentajePago?: number;
 }
 
+/**
+ * Respuesta del backend NestJS: además del contrato legacy trae el modelo multimoneda (Supabase).
+ * `valorCompra` siempre está en COP; las compras en USD traen su valor y TRM originales.
+ * (Se mantiene aparte de `ComprasCredito` para no ampliar `keyof ComprasCredito` en las comparaciones de los formularios.)
+ */
+export interface ComprasCreditoMultimoneda extends ComprasCredito {
+  monedaOriginal?: string;
+  valorMonedaOriginal?: number | null;
+  tasaCambioAplicada?: number | null;
+  trmConfirmada?: boolean | null;
+}
+
 
 export  type SortableFields = 'id' | 'concepto' | 'valorCompra' | 'fechaCompra' | 'numeroCuotas' |
 'fechaUltimaCuota' | 'pagoMensual' | 'interes' | 'descripcion' | 'estado' | 'tarjeta' | 'responsables';
@@ -34,6 +46,9 @@ export interface CuotaDetalle {
   aporteCapital?: number;
   pagoTotal?: number;
   compra?: number;
+  estado?: string | null;
+  /** Mes de facturación (`YYYY-MM`) calculado por la BD según el día de corte de la tarjeta. */
+  periodoFacturacion?: string | null;
 }
 
 

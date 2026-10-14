@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { months } from '../modelos/compras-credito';
+import { partesFechaCalendario } from '../shared/date-only.helper';
 
 @Pipe({
   name: 'formatoFecha',
@@ -17,9 +18,9 @@ export class FormatoFechaPipe implements PipeTransform {
       return '';
     }
 
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
+    // Los epoch-ms del backend son 00:00 UTC del día: se leen en UTC para no mostrar el día anterior (UTC-5).
+    const { dia: day, mes, anio: year } = partesFechaCalendario(value);
+    const month = months[mes];
 
     if (!month) {
       return '';

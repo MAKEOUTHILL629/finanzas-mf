@@ -46,7 +46,7 @@
 
         <td data-label="Valor Prestado">{{ prestamo.valorPrestado | currency }}</td>
         <td data-label="Concepto">{{ prestamo.concepto }}</td>
-        <td data-label="Fecha de Cobro">{{ prestamo.fechaCobro | date:'dd/MM/yyyy' }}</td>
+        <td data-label="Fecha de Cobro">{{ prestamo.fechaCobro | date:'dd/MM/yyyy':'UTC' }}</td>
         <td data-label="Responsable">{{ getPersonaNombre(prestamo.responsable || 0) }}</td>
         <td data-label="Estado">{{ prestamo.estado }}</td>
         <td data-label="Comentarios">{{ prestamo.comentarios }}</td>

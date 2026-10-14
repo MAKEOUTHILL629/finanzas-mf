@@ -8,7 +8,7 @@ import {
 } from '../../modelos/compras-credito';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiServicesService } from '../../services/api-services.service';
-import { formatDate } from '@angular/common';
+import { formatDateOnly, partesFechaCalendario } from '../../shared/date-only.helper';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { Tarjeta } from '../../modelos/tarjeta';
@@ -221,11 +221,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   recalcularCuotas(): void {
     const compraFormateada = {
       id: this.compraCredito?.id,
-      fechaCompra: formatDate(
-        this.compraCredito?.fechaCompra || new Date(),
-        'yyyy-MM-dd',
-        'en-US'
-      ),
+      fechaCompra: formatDateOnly(this.compraCredito?.fechaCompra || new Date()),
       concepto: this.compraCredito?.concepto,
       valorCompra: this.compraCredito?.valorCompra,
       numeroCuotas: this.compraCredito?.numeroCuotas,
@@ -260,8 +256,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         this.lineChartData.datasets[2].data.push(cuota.aporteCapital || 0);
         this.lineChartData.datasets[1].data.push(cuota.saldoRestante || 0);
 
-        const date = new Date(cuota.fechaPago || new Date());
-        this.lineChartData.labels?.push(`${months[date.getMonth()]} del ${date.getFullYear()}`);
+        const { mes, anio } = partesFechaCalendario(cuota.fechaPago || new Date());
+        this.lineChartData.labels?.push(`${months[mes]} del ${anio}`);
       }
     );
     this.chart?.update();
@@ -318,7 +314,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   getDateForInput(value: any): string {
     if (!value) return '';
     try {
-      return formatDate(value, 'yyyy-MM-dd', 'en-US');
+      return formatDateOnly(value);
     } catch {
       return String(value).substring(0, 10);
     }
@@ -349,8 +345,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
 
       // Comparación especial para fechas
       if (campo === 'fechaCompra') {
-        const fechaOriginal = valorOriginal ? formatDate(valorOriginal, 'yyyy-MM-dd', 'en-US') : '';
-        const fechaEditada = valorEditado ? formatDate(valorEditado, 'yyyy-MM-dd', 'en-US') : '';
+        const fechaOriginal = valorOriginal ? formatDateOnly(valorOriginal) : '';
+        const fechaEditada = valorEditado ? formatDateOnly(valorEditado) : '';
         return fechaOriginal !== fechaEditada;
       }
 
@@ -453,8 +449,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
       const valorOriginal = this.compraOriginal?.[campo as keyof ComprasCredito];
       const valorEditado = this.compraEditada[campo as keyof ComprasCredito];
       if (campo === 'fechaCompra') {
-        const fechaOriginal = valorOriginal ? formatDate(valorOriginal, 'yyyy-MM-dd', 'en-US') : '';
-        const fechaEditada = valorEditado ? formatDate(valorEditado, 'yyyy-MM-dd', 'en-US') : '';
+        const fechaOriginal = valorOriginal ? formatDateOnly(valorOriginal) : '';
+        const fechaEditada = valorEditado ? formatDateOnly(valorEditado) : '';
         return fechaOriginal !== fechaEditada;
       }
       return valorOriginal !== valorEditado;
@@ -479,11 +475,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
       };
 
       if (datosActualizacion.fechaCompra) {
-        datosActualizacion.fechaCompra = formatDate(
-          datosActualizacion.fechaCompra,
-          'yyyy-MM-dd',
-          'en-US'
-        ) as any;
+        datosActualizacion.fechaCompra = formatDateOnly(datosActualizacion.fechaCompra) as any;
       }
 
       promesas.push(this.apiService.put<ComprasCredito>('compras-credito', datosActualizacion).toPromise());
@@ -553,8 +545,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
 
       // Comparación especial para fechas
       if (campo === 'fechaCompra') {
-        const fechaOriginal = valorOriginal ? formatDate(valorOriginal, 'yyyy-MM-dd', 'en-US') : '';
-        const fechaEditada = valorEditado ? formatDate(valorEditado, 'yyyy-MM-dd', 'en-US') : '';
+        const fechaOriginal = valorOriginal ? formatDateOnly(valorOriginal) : '';
+        const fechaEditada = valorEditado ? formatDateOnly(valorEditado) : '';
         hayDiferencia = fechaOriginal !== fechaEditada;
         valorAnteriorFormateado = fechaOriginal;
         valorNuevoFormateado = fechaEditada;

@@ -9,4 +9,9 @@ export interface Tarjeta{
   urlInfo?: string | null;
   ultimaActualizacionTasas?: string | null;
   extractTasas?: boolean;
+  // Campos del esquema Supabase (el backend NestJS los devuelve además del contrato legacy)
+  diaCorte?: number | null;
+  diaLimitePago?: number | null;
+  cupoTotal?: number | null;
+  permiteDolares?: boolean | null;
 }
