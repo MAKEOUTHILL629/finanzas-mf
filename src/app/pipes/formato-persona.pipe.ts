@@ -2,28 +2,17 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { SharedListasService } from '../services/shared-listas.service';
 
 @Pipe({
-  name: 'formatoPersona'
+  name: 'formatoPersona',
+  pure: true
 })
 export class FormatoPersonaPipe implements PipeTransform {
 
-  constructor(private sharedListas: SharedListasService) {
+  constructor(private sharedListas: SharedListasService) {}
+
+  transform(value: number | string | null | undefined): string {
+    if (value === null || value === undefined || value === '') {
+      return '';
     }
-
-    transform(
-      value: number,
-
-    ): string {
-      // Obtenemos la lista directamente desde el servicio
-      const lista = this.sharedListas.listaPersonas;
-
-      if (!lista || !Array.isArray(lista)) {
-        return '';
-      }
-
-      // Buscamos el objeto donde la propiedad ID coincida
-      const objetoEncontrado = lista.find(item => item.id === value);
-
-      // Retornamos la propiedad deseada si existe, o cadena vacía si no se encontró
-      return objetoEncontrado ? objetoEncontrado.nombre || '' : '';
-    }
+    return this.sharedListas.getNombrePersonaById(value);
+  }
 }
