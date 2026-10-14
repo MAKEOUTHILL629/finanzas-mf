@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Persona } from '../../modelos/persona';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 
 @Component({
   selector: 'app-formulario-prestamos',

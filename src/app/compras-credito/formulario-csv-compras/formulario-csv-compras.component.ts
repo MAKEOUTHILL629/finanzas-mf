@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
-import { ApiServicesService } from '../../servicios/api-services.service';
-import { ModalService } from '../../servicios/modal.service';
+import { ApiServicesService } from '../../services/api-services.service';
+import { ModalService } from '../../services/modal.service';
 import { Tarjeta } from '../../modelos/tarjeta';
 
 interface CSVRecord {

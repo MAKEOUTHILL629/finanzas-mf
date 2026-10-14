@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { PagoMensualPersonaDetalle } from '../../modelos/pagos';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { Persona } from '../../modelos/persona';

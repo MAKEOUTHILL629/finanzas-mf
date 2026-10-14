@@ -24,7 +24,7 @@ import { FormularioPrestamosComponent } from './prestamos/formulario-prestamos/f
 import { ModalComponent } from './shared/modal/modal.component';
 import { PagosMesTarjetasComponent } from './compras-credito/pagos-mes-tarjetas/pagos-mes-tarjetas.component';
 import { BaseChartDirective, provideCharts, withDefaultRegisterables   } from 'ng2-charts';
-import { CsrfInterceptor } from './interceptor/csrf-interceptor.interceptor';
+import { CsrfInterceptor } from './core/interceptors/csrf-interceptor.interceptor';
 import { PagoPersonaMesComponent } from './pagos-mensuales/pago-persona-mes/pago-persona-mes.component';
 import { PagoPersonaMesDetalleComponent } from './pagos-mensuales/pago-persona-mes-detalle/pago-persona-mes-detalle.component';
 import { FormatoTarjetaPipe } from './pipes/formato-tarjeta.pipe';

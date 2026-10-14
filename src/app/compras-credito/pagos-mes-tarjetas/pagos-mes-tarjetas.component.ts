@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { MesPagoTarjeta } from '../../modelos/compras-credito';
 import { Tarjeta } from '../../modelos/tarjeta';
 import { Router } from '@angular/router';

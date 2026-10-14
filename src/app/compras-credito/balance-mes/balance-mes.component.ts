@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { BalanceTarjeta, months } from '../../modelos/compras-credito';
 import { Subject, takeUntil, finalize } from 'rxjs';
 

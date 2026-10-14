@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { Persona } from '../../modelos/persona';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { PagoMensualPersona } from '../../modelos/pagos';
 import { Router } from '@angular/router';
 

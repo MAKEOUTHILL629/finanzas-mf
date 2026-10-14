@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { Subscription } from 'rxjs';
-import { ModalService } from '../../servicios/modal.service';
+import { ModalService } from '../../services/modal.service';
 
 @Component({
   selector: 'app-modal',

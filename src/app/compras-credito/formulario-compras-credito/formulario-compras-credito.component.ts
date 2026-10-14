@@ -3,8 +3,8 @@ import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/fo
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { Observable, Subject } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, takeUntil, finalize } from 'rxjs/operators';
-import { ApiServicesService } from '../../servicios/api-services.service';
-import { ModalService } from '../../servicios/modal.service';
+import { ApiServicesService } from '../../services/api-services.service';
+import { ModalService } from '../../services/modal.service';
 import { Tarjeta } from '../../modelos/tarjeta';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
 import { Persona } from '../../modelos/persona';

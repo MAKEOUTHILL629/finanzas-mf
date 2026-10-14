@@ -7,7 +7,7 @@ import {
   months,
 } from '../../modelos/compras-credito';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { formatDate } from '@angular/common';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';

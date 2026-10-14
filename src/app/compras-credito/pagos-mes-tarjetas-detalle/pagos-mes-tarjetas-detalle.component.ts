@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { PagoMensualTarjetaDetalle } from '../../modelos/pagos';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({

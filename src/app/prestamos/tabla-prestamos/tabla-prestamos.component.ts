@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { Prestamo } from '../../modelos/prestamos';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Persona } from '../../modelos/persona';
-import { ApiServicesService } from '../../servicios/api-services.service';
-import { ModalService } from '../../servicios/modal.service';
+import { ApiServicesService } from '../../services/api-services.service';
+import { ModalService } from '../../services/modal.service';
 
 @Component({
   selector: 'app-tabla-prestamos',

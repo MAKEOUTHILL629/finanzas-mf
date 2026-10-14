@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ComprasCreditoService } from '../../servicios/compras-credito.service';
+import { ComprasCreditoService } from '../../services/compras-credito.service';
 import {
   ColumnasCompraCredito,
   ComprasCredito,
@@ -8,9 +8,9 @@ import {
 } from '../../modelos/compras-credito';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Tarjeta } from '../../modelos/tarjeta';
-import { ApiServicesService } from '../../servicios/api-services.service';
+import { ApiServicesService } from '../../services/api-services.service';
 import { Router } from '@angular/router';
-import { ModalService } from '../../servicios/modal.service';
+import { ModalService } from '../../services/modal.service';
 import { Persona } from '../../modelos/persona';
 import { capitalize } from '../../shared/utils';
 import { SharedListasService } from '../../services/shared-listas.service';
