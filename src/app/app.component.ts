@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ThemeService } from './services/theme.service';
 
 @Component({
@@ -6,10 +6,14 @@ import { ThemeService } from './services/theme.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'finanzas-mf';
 
-  // Inyectar ThemeService lo inicializa y aplica el tema guardado
-  // antes del primer render visible (el Renderer2 escribe data-theme en <html>)
+  // Inyectar ThemeService asegura que el tema se resuelva y aplique
+  // en document.documentElement y document.body antes del primer render visible.
   constructor(readonly themeService: ThemeService) {}
+
+  ngOnInit(): void {
+    this.themeService.initTheme();
+  }
 }

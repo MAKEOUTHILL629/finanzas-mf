@@ -31,6 +31,8 @@ export class MenuComponent implements OnInit, OnDestroy {
     { label: 'Pagos Persona', icon: 'people', route: '/pagos-mes-personas' },
   ];
 
+  isDarkTheme: boolean = true;
+
   constructor(
     private authService: AuthServiceService,
     public themeService: ThemeService
@@ -47,6 +49,14 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.checkScreenSize();
     this.isUserLoggedIn$ = this.authService.isLoggedIn$;
 
+    // Suscripción reactiva para sincronizar en tiempo real el tema
+    // si el SO cambia de light/dark, otra pestaña actualiza storage o el usuario lo alterna
+    this.themeService.isDarkMode$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(isDark => {
+        this.isDarkTheme = isDark;
+      });
+
     // Valida el token contra el backend al iniciar el menú.
     // Si el token expiró en el servidor, isLoggedIn$ pasa a false reactivamente.
     this.authService.isAuthenticated()
@@ -60,11 +70,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   toggleTheme(): void {
-    this.themeService.toggle();
-  }
-
-  get isDarkTheme(): boolean {
-    return this.themeService.isDark;
+    this.themeService.toggleTheme();
   }
 
   toggleMenu() {

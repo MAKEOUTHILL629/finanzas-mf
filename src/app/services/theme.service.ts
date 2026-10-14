@@ -79,11 +79,26 @@ export class ThemeService implements OnDestroy {
   }
 
   /**
+   * Asegura la inicialización y aplicación temprana del tema en el DOM.
+   */
+  initTheme(): void {
+    const theme = this.resolveInitialTheme();
+    this.applyTheme(theme, false);
+  }
+
+  /**
    * Alterna entre oscuro y claro, persistiendo la decisión en localStorage.
    */
   toggle(): void {
     const next: Theme = this._theme$.value === 'dark' ? 'light' : 'dark';
     this.applyTheme(next, true);
+  }
+
+  /**
+   * Alias para toggle() garantizando retrocompatibilidad con componentes existentes.
+   */
+  toggleTheme(): void {
+    this.toggle();
   }
 
   /**
