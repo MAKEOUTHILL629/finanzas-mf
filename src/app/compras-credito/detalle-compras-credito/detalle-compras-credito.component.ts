@@ -186,8 +186,10 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     this.lineChartData.labels = [];
   }
   loadCuotas(): void {
+    if (!this.compraCredito?.id) return;
     this.apiService
-      .get<CuotaDetalle[]>(`compras-credito/${this.compraCredito?.id}`)
+      .get<CuotaDetalle[]>(`compras-credito/${this.compraCredito.id}`)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.cuotaDetalles = data;
@@ -234,12 +236,11 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     };
     this.apiService
       .post<CuotaDetalle[]>(`recalcular-compra-credito`, compraFormateada)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.cuotaDetalles = data;
           this.loadCuotas();
-
-
         },
         error: (err) => {
           void err;
@@ -253,39 +254,17 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     this.lineChartData.datasets[2].data = [];
     this.lineChartData.labels = []; // Reset labels para evitar acumulación
 
-     this.cuotaDetalles.forEach(
-      (cuota) =>{
+    this.cuotaDetalles.forEach(
+      (cuota) => {
         this.lineChartData.datasets[0].data.push(cuota.interesPagado || 0);
-
-
-
-
         this.lineChartData.datasets[2].data.push(cuota.aporteCapital || 0);
-
         this.lineChartData.datasets[1].data.push(cuota.saldoRestante || 0);
 
         const date = new Date(cuota.fechaPago || new Date());
-
-        this.lineChartData.labels?.push (`${months[date.getMonth()]} del ${date.getFullYear()}`);
-
-        this.chart?.update();
+        this.lineChartData.labels?.push(`${months[date.getMonth()]} del ${date.getFullYear()}`);
       }
     );
-
-    // this.lineChartData.datasets[2].data = this.cuotaDetalles.map(
-    //   (cuota) => cuota.aporteCapital || 0
-    // );
-    // this.lineChartData.datasets[1].data = this.cuotaDetalles.map(
-    //   (cuota) => cuota.saldoRestante || 0
-    // );
-
-
-    // this.lineChartData.labels = this.cuotaDetalles.map((cuota) => {
-    //   const date = new Date(cuota.fechaPago || new Date());
-    //   return `${months[date.getMonth()]} del ${date.getFullYear()}`;
-    // });
-
-
+    this.chart?.update();
   }
 
   confirmarEliminacion(): void {
@@ -305,6 +284,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
 
     this.apiService
       .delete(`compras-credito/${this.compraCredito.id}`)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.eliminando = false;
@@ -628,13 +608,15 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   }
 
   private loadTarjetas(): void {
-    this.apiService.get<Tarjeta[]>('tarjetas').subscribe({
-      next: (data) => {
-        this.tarjetas = data;
-      },
-      error: (err) => {
-        void err;
-      },
-    });
+    this.apiService.get<Tarjeta[]>('tarjetas')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.tarjetas = data;
+        },
+        error: (err) => {
+          void err;
+        },
+      });
   }
 }

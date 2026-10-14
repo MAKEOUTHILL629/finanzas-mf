@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, OnInit, OnDestroy, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { Persona } from '../../modelos/persona';
 import { ApiServicesService } from '../../services/api-services.service';
+import { SharedListasService } from '../../services/shared-listas.service';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
 
 @Component({
@@ -9,7 +11,7 @@ import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-
   templateUrl: './responsable-credito.component.html',
   styleUrl: './responsable-credito.component.css'
 })
-export class ResponsableCreditoComponent implements OnInit , OnChanges{
+export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy {
   @Input() compra: ComprasCredito = { id: 0, concepto: '', valorCompra: 0, fechaCompra: new Date(), numeroCuotas: 0, fechaUltimaCuota: new Date(), pagoMensual: 0, interes: 0, descripcion: '', estado: '', tarjeta: 0 };
 
 
@@ -27,6 +29,8 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
   responsableEditando: { [id: number]: ResponsableCompraCredito } = {};
   camposEditandoResp: { [id: number]: { [campo: string]: boolean } } = {};
 
+  private destroy$ = new Subject<void>();
+
   // Comunicación con componente padre
   @Output() cambiosResponsables = new EventEmitter<{
     hayUsuarios: boolean;
@@ -36,7 +40,8 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
 
   constructor(
     private fb: FormBuilder,
-    private apiService: ApiServicesService // Asume que has creado este servicio
+    private apiService: ApiServicesService,
+    private sharedListasService: SharedListasService
   ) {
     this.responsableForm = this.fb.group({
       personaId: ['', Validators.required],
@@ -54,27 +59,32 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
   }
 
   ngOnInit() {
-
     this.loadResponsables();
     this.loadPersonas();
-    this.responsableForm.get('porcentajePago')?.valueChanges.subscribe(value => this.updateCantidadPago(value));
-    this.responsableForm.get('cantidadPago')?.valueChanges.subscribe(value => this.updatePorcentajePago(value));
-    this.responsableForm.get('personaId')?.valueChanges.subscribe(value => this.onPersonaSelected(value));
+    this.responsableForm.get('porcentajePago')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => this.updateCantidadPago(value));
+    this.responsableForm.get('cantidadPago')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => this.updatePorcentajePago(value));
+    this.responsableForm.get('personaId')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => this.onPersonaSelected(value));
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   loadResponsables() {
-    this.apiService.get<ResponsableCompraCredito[]>(`compras-credito/${this.compra.id}/responsables`).subscribe(
-      responsables => {
-        this.responsables = responsables;
-        // Guardar copia profunda para comparación
-        this.responsablesOriginales = JSON.parse(JSON.stringify(responsables));
-        this.calcularPorcentajeRestante();
-        this.updatePersonasDisponibles();
-        this.notificarCambiosAlPadre();
-      },
-      error => { void error; }
-    );
+    this.apiService.get<ResponsableCompraCredito[]>(`compras-credito/${this.compra.id}/responsables`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (responsables) => {
+          this.responsables = responsables;
+          // Guardar copia profunda para comparación
+          this.responsablesOriginales = JSON.parse(JSON.stringify(responsables));
+          this.calcularPorcentajeRestante();
+          this.updatePersonasDisponibles();
+          this.notificarCambiosAlPadre();
+        },
+        error: (error) => { void error; }
+      });
   }
 
   updateFormValidators() {
@@ -89,14 +99,18 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
   }
 
   loadPersonas() {
-    // Cargar la lista de personas desde tu servicio
-    this.apiService.get<Persona[]>(`personas`).subscribe(
-      personas => {
-        this.personas = personas;
-        this.updatePersonasDisponibles();
-      },
-      error => { void error; }
-    );
+    this.apiService.get<Persona[]>(`personas`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (personas) => {
+          this.personas = personas || [];
+          if (!this.sharedListasService.listaPersonas || this.sharedListasService.listaPersonas.length === 0) {
+            this.sharedListasService.listaPersonas = this.personas;
+          }
+          this.updatePersonasDisponibles();
+        },
+        error: (error) => { void error; }
+      });
   }
 
   updatePersonasDisponibles() {
@@ -157,21 +171,24 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
         compraCredito:  this.compra.id
       };
 
-      this.apiService.post<ResponsableCompraCredito>(`compras-credito/responsables`, newResponsable).subscribe(
-        response => {
-          this.responsables.push(response);
-          this.responsables.push(response);
-          this.calcularPorcentajeRestante();
-          this.updatePersonasDisponibles();
-          this.responsableForm.reset();
-          this.loadResponsables();
-        },
-        error => { void error; }
-      );
+      this.apiService.post<ResponsableCompraCredito>(`compras-credito/responsables`, newResponsable)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            this.responsables.push(response);
+            this.calcularPorcentajeRestante();
+            this.updatePersonasDisponibles();
+            this.responsableForm.reset();
+            this.loadResponsables();
+          },
+          error: (error) => { void error; }
+        });
     }
   }
 
   getPersonaNombre(id: number): string {
+    const nombre = this.sharedListasService.getNombrePersonaById(id);
+    if (nombre) return nombre;
     const persona = this.personas.find(p => p.id == id);
     return persona ? persona.nombre : 'N/A';
   }
@@ -412,18 +429,20 @@ export class ResponsableCreditoComponent implements OnInit , OnChanges{
     if (!this.responsableAEliminar?.id) return;
 
     this.eliminando = true;
-    this.apiService.delete(`compras-credito/responsables/${this.responsableAEliminar.id}`).subscribe(
-      () => {
-        // Recargar lista de responsables
-        this.loadResponsables();
-        this.cancelarEliminacion();
-        this.eliminando = false;
-      },
-      error => {
-        void error;
-        this.eliminando = false;
-      }
-    );
+    this.apiService.delete(`compras-credito/responsables/${this.responsableAEliminar.id}`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          // Recargar lista de responsables
+          this.loadResponsables();
+          this.cancelarEliminacion();
+          this.eliminando = false;
+        },
+        error: (error) => {
+          void error;
+          this.eliminando = false;
+        }
+      });
   }
 
   // Método público para ser llamado desde el padre al actualizar

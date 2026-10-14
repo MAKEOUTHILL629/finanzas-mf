@@ -1,17 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiServicesService } from '../../services/api-services.service';
 import { MesPagoTarjeta } from '../../modelos/compras-credito';
 import { Tarjeta } from '../../modelos/tarjeta';
 import { Router } from '@angular/router';
+import { SharedListasService } from '../../services/shared-listas.service';
+import { normalizeSearchText } from '../../shared/utils';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-pagos-mes-tarjetas',
   templateUrl: './pagos-mes-tarjetas.component.html',
   styleUrl: './pagos-mes-tarjetas.component.css'
 })
-export class PagosMesTarjetasComponent implements OnInit{
+export class PagosMesTarjetasComponent implements OnInit, OnDestroy {
   mesPagoTarjetas: MesPagoTarjeta[] = [];
   tarjetas: Tarjeta[] = [];
+  private destroy$ = new Subject<void>();
 
   // Secciones colapsables
   showBalance: boolean = true;
@@ -31,32 +35,38 @@ export class PagosMesTarjetasComponent implements OnInit{
   ordenarPor: 'fecha' | 'valor' = 'fecha';
   ordenarDireccion: 'asc' | 'desc' = 'desc';
 
-  constructor(private apiService: ApiServicesService, private route: Router) { }
+  constructor(
+    private apiService: ApiServicesService,
+    private route: Router,
+    private sharedListasService: SharedListasService
+  ) { }
 
   ngOnInit(): void {
     this.loadTarjetas();
-    this.apiService.get<MesPagoTarjeta[]>('tarjetas/pagos').subscribe({
-      next: (data) => {
-        this.mesPagoTarjetas = data;
+    this.apiService.get<MesPagoTarjeta[]>('tarjetas/pagos')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.mesPagoTarjetas = data;
 
-        //Ahora necesito ordenar los pagos por fecha, desde la menor a la mayor, sin usar la funcion getTime()
-        this.mesPagoTarjetas.sort((a, b) => {
-          const fechaA = new Date(a.fechaPago);
-          const fechaB = new Date(b.fechaPago);
-          if (fechaA < fechaB) {
-            return -1;
-          }
-          if (fechaA > fechaB) {
-            return 1;
-          }
-          return 0;
-        });
-        this.calcularTresMesesClave();
-      },
-      error: (err) => {
-        void err;
-      }
-    });
+          this.mesPagoTarjetas.sort((a, b) => {
+            const fechaA = new Date(a.fechaPago);
+            const fechaB = new Date(b.fechaPago);
+            if (fechaA < fechaB) return -1;
+            if (fechaA > fechaB) return 1;
+            return 0;
+          });
+          this.calcularTresMesesClave();
+        },
+        error: (err) => {
+          void err;
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   calcularTresMesesClave(): void {
@@ -120,7 +130,7 @@ export class PagosMesTarjetasComponent implements OnInit{
       resultado = resultado.filter(pago => pago.tarjeta === this.tarjetaFiltro);
     }
 
-    // Filtrar por búsqueda inteligente de fecha
+    // Filtrar por búsqueda inteligente de fecha normalizada
     if (this.busquedaFecha && this.busquedaFecha.trim() !== '') {
       resultado = resultado.filter(pago => {
         return this.coincideBusquedaFecha(pago.fechaPago, this.busquedaFecha.trim());
@@ -132,8 +142,8 @@ export class PagosMesTarjetasComponent implements OnInit{
       let comparacion = 0;
 
       if (this.ordenarPor === 'fecha') {
-        const fechaA = new Date(a.fechaPago);
-        const fechaB = new Date(b.fechaPago);
+        const fechaA = new Date(a.fechaPago).getTime();
+        const fechaB = new Date(b.fechaPago).getTime();
         comparacion = fechaA < fechaB ? -1 : (fechaA > fechaB ? 1 : 0);
       } else {
         comparacion = a.valorPago - b.valorPago;
@@ -150,7 +160,7 @@ export class PagosMesTarjetasComponent implements OnInit{
     const fecha = new Date(fechaPago);
     const mes = fecha.getMonth();
     const year = fecha.getFullYear();
-    const busquedaLower = busqueda.toLowerCase();
+    const busquedaNorm = normalizeSearchText(busqueda);
 
     const mesesCompletos = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                             'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -160,16 +170,16 @@ export class PagosMesTarjetasComponent implements OnInit{
     // Búsqueda simple: mes completo o abreviado
     const mesNombre = mesesCompletos[mes];
     const mesCorto = mesesCortos[mes];
-    if (busquedaLower === mesNombre || busquedaLower === mesCorto) {
+    if (busquedaNorm === mesNombre || busquedaNorm === mesCorto) {
       return true;
     }
 
     // Búsqueda con año: "diciembre 2024"
-    if (busquedaLower.includes(' ')) {
-      const partes = busquedaLower.split(' ');
+    if (busquedaNorm.includes(' ')) {
+      const partes = busquedaNorm.split(' ');
       if (partes.length === 2) {
         const mesBusqueda = partes[0];
-        const yearBusqueda = parseInt(partes[1]);
+        const yearBusqueda = parseInt(partes[1], 10);
         if ((mesBusqueda === mesNombre || mesBusqueda === mesCorto) && year === yearBusqueda) {
           return true;
         }
@@ -177,18 +187,18 @@ export class PagosMesTarjetasComponent implements OnInit{
     }
 
     // Formato ISO: "2024-12"
-    if (busquedaLower.match(/^\d{4}-\d{1,2}$/)) {
-      const [yearStr, mesStr] = busquedaLower.split('-');
-      const yearBusqueda = parseInt(yearStr);
-      const mesBusqueda = parseInt(mesStr) - 1;
+    if (busquedaNorm.match(/^\d{4}-\d{1,2}$/)) {
+      const [yearStr, mesStr] = busquedaNorm.split('-');
+      const yearBusqueda = parseInt(yearStr, 10);
+      const mesBusqueda = parseInt(mesStr, 10) - 1;
       if (year === yearBusqueda && mes === mesBusqueda) {
         return true;
       }
     }
 
     // Rango de meses: "ene-mar"
-    if (busquedaLower.includes('-') && !busquedaLower.match(/^\d{4}-\d{1,2}$/)) {
-      const partes = busquedaLower.split('-');
+    if (busquedaNorm.includes('-') && !busquedaNorm.match(/^\d{4}-\d{1,2}$/)) {
+      const partes = busquedaNorm.split('-');
       if (partes.length === 2) {
         const mesInicio = mesesCortos.indexOf(partes[0].trim()) !== -1
           ? mesesCortos.indexOf(partes[0].trim())
@@ -212,10 +222,9 @@ export class PagosMesTarjetasComponent implements OnInit{
   }
 
   aplicarFiltros(): void {
-    // Método llamado por ngModelChange
+    // Disparado por ngModelChange
   }
 
-  // Cambiar ordenamiento
   cambiarOrdenamiento(campo: 'fecha' | 'valor'): void {
     if (this.ordenarPor === campo) {
       this.ordenarDireccion = this.ordenarDireccion === 'asc' ? 'desc' : 'asc';
@@ -225,7 +234,6 @@ export class PagosMesTarjetasComponent implements OnInit{
     }
   }
 
-  // Limpiar filtros
   limpiarFiltros(): void {
     this.tarjetaFiltro = 0;
     this.busquedaFecha = '';
@@ -254,39 +262,40 @@ export class PagosMesTarjetasComponent implements OnInit{
   }
 
   loadTarjetas(): void {
-    this.apiService.get<Tarjeta[]>('tarjetas').subscribe({
-      next: (data) => {
-        this.tarjetas = data;
-      },
-      error: (err) => {
-        void err;
-      }
-    });
+    this.apiService.get<Tarjeta[]>('tarjetas')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.tarjetas = data;
+          this.sharedListasService.listaTarjetas = data;
+        },
+        error: (err) => {
+          void err;
+        }
+      });
   }
 
   obtenerTarjeta(id: number): string {
-    const tarjeta = this.tarjetas.find(tarjeta => tarjeta.id === id);
-    return tarjeta?.franquicia ? tarjeta.franquicia : 'N/A';
+    return this.sharedListasService.getNombreTarjetaById(id) || 'N/A';
   }
 
   esPagoActual(fechaPago: Date): boolean {
-    fechaPago = new Date(fechaPago);
+    const fecha = new Date(fechaPago);
     const fechaActual = new Date();
 
-    if(fechaPago === undefined || !fechaPago) return false;
+    if (!fechaPago) return false;
 
     return (
-      fechaPago.getMonth() === fechaActual.getMonth() &&
-      fechaPago.getFullYear() === fechaActual.getFullYear()
+      fecha.getMonth() === fechaActual.getMonth() &&
+      fecha.getFullYear() === fechaActual.getFullYear()
     );
   }
 
-  detallePagosMesTarjeta(idTarjeta: number, mes: Date) {
-    const fecha : Date  = new Date(mes);
+  detallePagosMesTarjeta(idTarjeta: number, mes: Date): void {
+    const fecha: Date = new Date(mes);
     const mesObtenido = fecha.getMonth() + 1;
     const yearObtenido = fecha.getFullYear();
 
-    this.route.navigate(['/pagos-mes', idTarjeta], { queryParams: { mes:mesObtenido, year: yearObtenido } });
+    this.route.navigate(['/pagos-mes', idTarjeta], { queryParams: { mes: mesObtenido, year: yearObtenido } });
   }
-
 }

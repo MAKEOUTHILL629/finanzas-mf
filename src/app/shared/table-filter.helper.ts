@@ -61,14 +61,19 @@ export class FilterStateStorage {
  */
 export function sumByField<T>(
   items: T[],
-  selector: (item: T) => number | string | null | undefined
+  selector: keyof T | ((item: T) => number | string | null | undefined)
 ): number {
   if (!Array.isArray(items) || items.length === 0) {
     return 0;
   }
 
+  const fn: (item: T) => number | string | null | undefined =
+    typeof selector === 'function'
+      ? selector
+      : (item: T) => item[selector] as unknown as number | string | null | undefined;
+
   const rawTotal = items.reduce((acc, curr) => {
-    const rawVal = selector(curr);
+    const rawVal = fn(curr);
     let numVal = 0;
     if (typeof rawVal === 'number') {
       numVal = isNaN(rawVal) ? 0 : rawVal;

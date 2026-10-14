@@ -1,9 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ComprasCreditoService } from '../../services/compras-credito.service';
 import {
   ColumnasCompraCredito,
   ComprasCredito,
-  ResponsableCompraCredito,
   SortableFields,
 } from '../../modelos/compras-credito';
 import { FormBuilder, FormGroup } from '@angular/forms';
@@ -12,7 +10,7 @@ import { ApiServicesService } from '../../services/api-services.service';
 import { Router } from '@angular/router';
 import { ModalService } from '../../services/modal.service';
 import { Persona } from '../../modelos/persona';
-import { capitalize } from '../../shared/utils';
+import { capitalize, matchesSearchFields, normalizeSearchText } from '../../shared/utils';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -58,7 +56,6 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   personas: Persona[] = [];
 
   constructor(
-    private comprasCreditoService: ComprasCreditoService,
     private fb: FormBuilder,
     private apiService: ApiServicesService,
     private router: Router,
@@ -72,7 +69,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       fechaUltimaCuotaInicio: [''],
       fechaUltimaCuotaFin: [''],
       concepto: [''],
-      soloSinResponsablesCompletos: [false], // Nuevo filtro
+      soloSinResponsablesCompletos: [false],
     });
   }
 
@@ -102,56 +99,61 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   }
 
   loadTarjetas(): void {
-    this.apiService.get<Tarjeta[]>('tarjetas').subscribe({
-      next: (data) => {
-        this.tarjetas = data;
-        this.sharedListasService.listaTarjetas = data;
-      },
-      error: (err) => {
-        void err;
-      },
-    });
+    this.apiService.get<Tarjeta[]>('tarjetas')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.tarjetas = data;
+          this.sharedListasService.listaTarjetas = data;
+        },
+        error: (err) => {
+          void err;
+        },
+      });
   }
 
   obtenerTarjeta(id: number): string {
-    const tarjeta = this.tarjetas.find((tarjeta) => tarjeta.id === id);
-    return tarjeta?.franquicia ? tarjeta.franquicia : 'N/A';
+    return this.sharedListasService.getNombreTarjetaById(id) || 'N/A';
   }
 
   loadProducts(): void {
     this.isLoading = true;
     this.error = null;
-    this.apiService.get<ComprasCredito[]>('compras-credito').subscribe({
-      next: (data) => {
-        this.comprasCredito = data;
-        this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
-        this.isLoading = false;
-        this.applyFilters();
-      },
-      error: (err) => {
-        this.error = 'Error al cargar los productos. Por favor, intente de nuevo.';
-        this.isLoading = false;
-      },
-    });
+    this.apiService.get<ComprasCredito[]>('compras-credito')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.comprasCredito = data;
+          this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
+          this.isLoading = false;
+          this.applyFilters();
+        },
+        error: () => {
+          this.error = 'Error al cargar los productos. Por favor, intente de nuevo.';
+          this.isLoading = false;
+        },
+      });
   }
 
   refreshCompras(): void {
     this.isRefreshing = true;
-    this.apiService.get<ComprasCredito[]>('compras-credito').subscribe({
-      next: (data) => {
-        this.comprasCredito = data;
-        this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
-        this.isRefreshing = false;
-        this.applyFilters(); // Mantiene los filtros aplicados
-      },
-      error: (err) => {
-        void err;
-        this.isRefreshing = false;
-      },
-    });
+    this.apiService.get<ComprasCredito[]>('compras-credito')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.comprasCredito = data;
+          this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
+          this.isRefreshing = false;
+          this.applyFilters();
+        },
+        error: (err) => {
+          void err;
+          this.isRefreshing = false;
+        },
+      });
   }
 
-  applyFilters() {
+  applyFilters(): void {
     const filters = this.filterForm.value;
 
     this.filteredPurchases = this.comprasCredito.filter((purchase) => {
@@ -160,13 +162,13 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       // Filtro de fecha de compra inicio
       if (filters.fechaCompraInicio && purchase.fechaCompra) {
         const filterDate = new Date(filters.fechaCompraInicio);
-        matchesFilter = matchesFilter && purchase.fechaCompra >= filterDate;
+        matchesFilter = matchesFilter && new Date(purchase.fechaCompra) >= filterDate;
       }
 
       // Filtro de fecha de compra fin
       if (filters.fechaCompraFin && purchase.fechaCompra) {
         const filterDate = new Date(filters.fechaCompraFin);
-        matchesFilter = matchesFilter && purchase.fechaCompra <= filterDate;
+        matchesFilter = matchesFilter && new Date(purchase.fechaCompra) <= filterDate;
       }
 
       // Filtro de número de cuotas
@@ -180,14 +182,14 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       if (filters.fechaUltimaCuotaInicio && purchase.fechaUltimaCuota) {
         const filterDate = new Date(filters.fechaUltimaCuotaInicio);
         matchesFilter =
-          matchesFilter && purchase.fechaUltimaCuota >= filterDate;
+          matchesFilter && new Date(purchase.fechaUltimaCuota) >= filterDate;
       }
 
       // Filtro de fecha última cuota fin
       if (filters.fechaUltimaCuotaFin && purchase.fechaUltimaCuota) {
         const filterDate = new Date(filters.fechaUltimaCuotaFin);
         matchesFilter =
-          matchesFilter && purchase.fechaUltimaCuota <= filterDate;
+          matchesFilter && new Date(purchase.fechaUltimaCuota) <= filterDate;
       }
 
       // Filtro multiselect de tarjetas
@@ -195,21 +197,18 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
         matchesFilter = matchesFilter && this.selectedTarjetas.has(purchase.tarjeta);
       }
 
-      // Filtro de concepto
-      if (filters.concepto && purchase.concepto) {
-        matchesFilter =
-          matchesFilter &&
-          purchase.concepto
-            .toLowerCase()
-            .includes(filters.concepto.toLowerCase());
+      // Filtro de concepto normalizado
+      if (filters.concepto) {
+        matchesFilter = matchesFilter && matchesSearchFields(filters.concepto, [purchase.concepto, purchase.descripcion]);
       }
 
       // Filtro multiselect de estados
       if (this.selectedEstados.size > 0 && purchase.estado) {
+        const estadoNorm = normalizeSearchText(purchase.estado);
         matchesFilter =
           matchesFilter &&
-          Array.from(this.selectedEstados).some(estado =>
-            purchase.estado?.toLowerCase() === estado.toLowerCase()
+          Array.from(this.selectedEstados).some(selected =>
+            normalizeSearchText(selected) === estadoNorm
           );
       }
 
@@ -222,21 +221,20 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       return matchesFilter;
     });
 
-    // Ordenar automáticamente por fecha de compra más reciente
     this.sortByMostRecent();
   }
 
   sortByMostRecent(): void {
     this.filteredPurchases.sort((a, b) => {
-      const aFecha = new Date(a.fechaCompra || 0);
-      const bFecha = new Date(b.fechaCompra || 0);
-      return bFecha.getTime() - aFecha.getTime(); // Descendente (más reciente primero)
+      const aFecha = new Date(a.fechaCompra || 0).getTime();
+      const bFecha = new Date(b.fechaCompra || 0).getTime();
+      return bFecha - aFecha;
     });
     this.sortColumn = 'fechaCompra';
     this.sortDirection = 'desc';
   }
 
-  sortData(column: SortableFields) {
+  sortData(column: SortableFields): void {
     this.sortColumn = column;
     this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
 
@@ -254,7 +252,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     });
   }
 
-  resetFilters() {
+  resetFilters(): void {
     this.filterForm.reset();
     this.selectedEstados.clear();
     this.selectedTarjetas.clear();
@@ -321,51 +319,26 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     this.showTarjetasDropdown = false;
   }
 
-  getPropertyValue(purchase: ComprasCredito, property: SortableFields): any {
-    return purchase[property];
-  }
-
-  // Método auxiliar para formatear fechas de manera segura
-  formatDate(date: Date | undefined): string {
-    return date ? date.toLocaleDateString() : 'N/A';
-  }
-
-  // Método auxiliar para formatear moneda de manera segura
-  formatCurrency(value: number | undefined): string {
-    return value !== undefined
-      ? value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
-      : 'N/A';
-  }
-
-  // Método auxiliar para manejar valores posiblemente undefined
-  safeValue(value: any, defaultValue: any = 'N/A'): any {
-    return value !== undefined ? value : defaultValue;
-  }
-
-  imprimirCompra(_compra: ComprasCredito): void {
-  }
-
   irDetalleCompra(compra: ComprasCredito): void {
     this.router.navigate(['/compra-credito-detalle', compra.id], {
       state: { compra: compra },
     });
   }
 
-  openCreditForm() {
-    // Aquí irá la lógica para abrir tu formulario de crédito
+  openCreditForm(): void {
     this.modalService.open('compra-credito-form');
   }
 
-  openCSVUploadForm() {
+  openCSVUploadForm(): void {
     this.modalService.open('csv-upload-form');
   }
 
-  pagarProductosTarjetaCredito() {
+  pagarProductosTarjetaCredito(): void {
     this.apiService
-      .post<string>('/compras-credito/pagar-productos', {})
+      .post<string>('compras-credito/pagar-productos', {})
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => {
-          void data;
+        next: () => {
           this.loadProducts();
         },
         error: (err) => {
@@ -374,37 +347,33 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       });
   }
 
-  cargarResponsables(responsables: string) {
-    let listaResponsables = responsables.split(',');
+  cargarResponsables(responsables: string): { iniciales: string; color: string; nombre: string }[] {
+    if (!responsables) return [];
 
-    const nombresResponsables: {
-      iniciales: string;
-      color: string;
-      nombre: string;
-    }[] = [];
+    const listaResponsables = responsables.split(',').filter(r => r.trim().length > 0);
+    return listaResponsables.map((responsable) => {
+      const personaId = parseInt(responsable.trim(), 10);
+      const persona = this.sharedListasService.findPersonaFast(personaId);
 
-    listaResponsables.forEach((responsable, index) => {
-      const persona = this.personas.find((persona) => {
-        return persona.id === parseInt(responsable, 10);
-      });
-
-      nombresResponsables.push({
+      return {
         iniciales: persona?.inicialesNombre || '',
         color: persona?.colorRepresentativo || '',
         nombre: persona?.nombre || '',
-      });
+      };
     });
-
-    return nombresResponsables;
   }
 
-  loadPersonas() {
-    this.apiService.get<Persona[]>(`personas`).subscribe(
-      (personas) => {
-        this.personas = personas;
-        this.sharedListasService.listaPersonas = personas;
-      },
-      (error) => { void error; }
-    );
+  loadPersonas(): void {
+    this.apiService.get<Persona[]>('personas')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (personas) => {
+          this.personas = personas;
+          this.sharedListasService.listaPersonas = personas;
+        },
+        error: (error) => {
+          void error;
+        }
+      });
   }
 }

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiServicesService } from '../../services/api-services.service';
 import { BalanceTarjeta, months } from '../../modelos/compras-credito';
 import { Subject, takeUntil, finalize } from 'rxjs';
+import { sumByField } from '../../shared/table-filter.helper';
 
 @Component({
   selector: 'app-balance-mes',
@@ -56,10 +57,7 @@ export class BalanceMesComponent implements OnInit, OnDestroy {
   }
 
   calculateTotalBalance(): void {
-    this.totalBalance = this.balances.reduce(
-      (sum, balance) => sum + (balance.total_saldo_restante || 0),
-      0
-    );
+    this.totalBalance = sumByField(this.balances, 'total_saldo_restante');
   }
 
   onMonthChange(event: Event): void {
