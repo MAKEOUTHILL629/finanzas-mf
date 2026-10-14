@@ -5,6 +5,7 @@ import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { tap, catchError, finalize } from 'rxjs/operators';
 import { ApiServicesService } from './api-services.service';
 import { Credentials, AuthResponse } from '../modelos/Authenticate';
+import { clearAllFilterStates } from '../shared/table-filter.helper';
 
 @Injectable({
   providedIn: 'root'
@@ -131,27 +132,19 @@ export class AuthServiceService {
   }
 
 
-  // En AuthService (Ejemplo opcional de llamada al backend logout)
-logout(): void {
-  const logoutUrl = `auth/logout`;
+  logout(): void {
+    const logoutUrl = `auth/logout`;
 
-  // Llamada opcional al backend antes de limpiar localmente
-  // Solo si necesitas la lógica del backend (logging, blocklist)
-  this.apiService.post(logoutUrl, {}) // Enviar POST vacío o como lo requiera tu API
-    .pipe(
-      catchError(() => of(null)),
-      finalize(() => {
-        localStorage.removeItem(this.TOKEN_KEY);
-        this.loggedIn.next(false);
-        this.router.navigate(['/login']);
-      })
-    )
-    .subscribe(); // Necesitas suscribirte para que la llamada se ejecute
-
-  // *** Versión simple (sin llamada al backend): ***
-  // localStorage.removeItem(this.TOKEN_KEY);
-  // this.loggedIn.next(false);
-  // this.router.navigate(['/login']);
-  // console.log('User logged out locally.');
-}
+    this.apiService.post(logoutUrl, {})
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => {
+          clearAllFilterStates();
+          localStorage.removeItem(this.TOKEN_KEY);
+          this.loggedIn.next(false);
+          this.router.navigate(['/login']);
+        })
+      )
+      .subscribe();
+  }
 }

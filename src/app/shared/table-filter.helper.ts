@@ -54,6 +54,34 @@ export class FilterStateStorage {
       // ignore
     }
   }
+
+  /**
+   * Limpia todos los estados de filtros guardados en sessionStorage por la aplicación.
+   */
+  static clearAllFilterStates(): void {
+    if (typeof window === 'undefined' || !window.sessionStorage) {
+      return;
+    }
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith(this.PREFIX)) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => sessionStorage.removeItem(k));
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
+ * Función helper de conveniencia para limpiar todos los estados de filtros en logout.
+ */
+export function clearAllFilterStates(): void {
+  FilterStateStorage.clearAllFilterStates();
 }
 
 /**
