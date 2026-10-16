@@ -90,6 +90,10 @@ Convertidas hasta ahora: Compras a crédito, Transacciones, Préstamos, Estado d
 cabeceras ya usan `<app-acciones>`. Quedan con `appTable` (ya responsivo con `stack`) las sub-tablas de detalle: desglose de aportes del carro,
 compras de una persona, aportes por día de una obligación y muestras de reproceso de correos; el historial de tarjeta se rehace en la fase 2.
 Los filtros son funciones puras por pantalla (`compras-filtros.ts`, `transacciones-filtros.ts`, `filtrarPrestamos`, `filtrarRecurrentesConBarra`) con sus pruebas.
+**Tarjetas y línea de tiempo (fase 2):** `/tarjetas` agrupa tarjetas de crédito y de débito (una cuenta puede tener varias), con **todos** sus plásticos y su estado
+(Activa · Reemplazada · Histórica); «Nueva tarjeta» crea una tarjeta o renueva un plástico y «Plásticos» agrega uno nuevo o uno anterior sin tocar el historial.
+`/linea-tiempo` muestra cuándo se usó cada tarjeta (por plástico) y cada cuenta, con sus movimientos. Las tarjetas de débito no se ofrecen en los formularios de
+compras a crédito, extractos ni pagos (`<app-select catalogo="tarjetas" [incluirDebito]>` las incluye solo cuando hace falta).
 Marca: el logo (`public/brand/logo.svg`) genera favicon, íconos PWA, `manifest.webmanifest`, *splash* de arranque y `<app-logo>`.
 
 ## Code scaffolding

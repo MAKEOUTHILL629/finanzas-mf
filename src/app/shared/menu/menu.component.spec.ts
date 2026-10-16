@@ -247,7 +247,7 @@ describe('MenuComponent', () => {
       (qa('.rail-grupo')[3] as HTMLButtonElement).click();
       refrescar();
       expect(texto('.flyout .flyout-titulo')).toBe('Dinero');
-      expect(qa('.flyout .item').map((i) => i.querySelector('.item-etiqueta')!.textContent)).toEqual(['Cuentas', 'Categorías', 'Transacciones', 'Correos']);
+      expect(qa('.flyout .item').map((i) => i.querySelector('.item-etiqueta')!.textContent)).toEqual(['Cuentas', 'Línea de tiempo', 'Categorías', 'Transacciones', 'Correos']);
 
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       refrescar();

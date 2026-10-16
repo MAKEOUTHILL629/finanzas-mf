@@ -40,6 +40,8 @@ export interface OpcionesCatalogo {
   filtro: ((item: any) => boolean) | null;
   etiquetar: ((item: any) => string) | null;
   soloActivas: boolean;
+  /** Tarjetas: ofrecer también las de débito (por defecto no: las compras, los extractos y los pagos son de crédito). */
+  incluirDebito?: boolean;
   /** La selección actual: si el filtro la descartaría (p. ej. cuenta inactiva) se conserva igualmente. */
   valorActual: number | string | null;
 }
@@ -52,6 +54,7 @@ export function opcionesDeCatalogo(tipo: TipoCatalogo, datos: ReadonlyArray<any>
   const etiquetar = o.etiquetar ?? ((i: unknown) => etiquetaDeCatalogo(tipo, i));
   const pasa = (i: any): boolean => {
     if (tipo === 'cuentas' && o.soloActivas && (i as ItemCuenta).activa === false) return false;
+    if (tipo === 'tarjetas' && !o.incluirDebito && (i as ItemTarjeta).tipo === 'DEBITO') return false;
     return o.filtro ? o.filtro(i) : true;
   };
   const vistos = new Set<string>();

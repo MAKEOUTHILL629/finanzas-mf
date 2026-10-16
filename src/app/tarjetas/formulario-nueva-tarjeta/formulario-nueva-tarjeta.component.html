@@ -1,0 +1,112 @@
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-nueva-tarjeta">
+  <div>
+    <h2 class="erp-form-title" id="titulo-nueva-tarjeta">{{ renueva ? 'Renovar plástico' : 'Nueva tarjeta' }}</h2>
+    <p class="erp-subtitle">Una cuenta puede tener varias tarjetas. Los plásticos anteriores se conservan con todo su historial.</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <span>{{ errorServidor }}</span>
+  </div>
+
+  <div class="erp-field">
+    <span class="erp-label" id="nt-tipo-etiqueta">Tipo</span>
+    <div class="erp-segmented nt-tipo" role="radiogroup" aria-labelledby="nt-tipo-etiqueta" [style.--seg-count]="2" [style.--seg-index]="tipo === 'DEBITO' ? 1 : 0">
+      <button type="button" class="erp-segmented__item" role="radio" *ngFor="let t of tipos" [attr.aria-checked]="tipo === t.valor" (click)="elegirTipo(t.valor)">
+        <i class="material-icons" aria-hidden="true">{{ t.icono }}</i>{{ t.etiqueta }}
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-form-grid">
+    <div class="erp-field erp-span-2" *ngIf="opcionesRenovacion.length > 0">
+      <label class="erp-label" for="nt-anterior">¿Reemplaza a un plástico anterior?</label>
+      <select id="nt-anterior" appInput formControlName="plasticoAnteriorId" [attr.aria-describedby]="'nt-anterior-ayuda'">
+        <option [ngValue]="null">No, es una tarjeta nueva</option>
+        <option *ngFor="let o of opcionesRenovacion" [ngValue]="o.plasticoId">{{ o.etiqueta }}</option>
+      </select>
+      <p id="nt-anterior-ayuda" class="erp-field-hint">Si el banco te reexpidió la tarjeta, elige el plástico viejo: queda archivado y el nuevo sigue su historial.</p>
+    </div>
+
+    <div class="erp-field erp-span-2" *ngIf="!renueva">
+      <label class="erp-label" for="nt-cuenta">Cuenta asociada <span class="erp-req" *ngIf="tipo === 'DEBITO'">*</span></label>
+      <app-select inputId="nt-cuenta" catalogo="cuentas" formControlName="cuentaId" [placeholder]="tipo === 'DEBITO' ? 'Elige la cuenta de la tarjeta' : 'Sin cuenta (opcional)'" [permitirVacio]="tipo !== 'DEBITO'" [invalido]="intentado && tipo === 'DEBITO' && !form.controls.cuentaId.value"></app-select>
+      <p class="erp-field-hint" *ngIf="tipo === 'DEBITO'">La tarjeta de débito mueve el saldo de esta cuenta.</p>
+      <p class="erp-field-hint" *ngIf="tipo === 'CREDITO'">En crédito es opcional: la cuenta desde la que normalmente la pagas.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="nt-ult4">Últimos 4 dígitos <span class="erp-req">*</span></label>
+      <input id="nt-ult4" appInput class="erp-mono" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="7992" formControlName="ultimos4" [attr.aria-invalid]="campoInvalido('ultimos4')" />
+      <p class="erp-field-hint">Con ellos se reconoce la tarjeta en los correos del banco.</p>
+      <p class="erp-field-error" *ngIf="campoInvalido('ultimos4')">Exactamente 4 dígitos.</p>
+    </div>
+
+    <div class="erp-field" *ngIf="!renueva">
+      <label class="erp-label" for="nt-franquicia">Franquicia</label>
+      <input id="nt-franquicia" appInput type="text" maxlength="255" autocomplete="off" [placeholder]="tipo === 'DEBITO' ? 'Visa, Mastercard…' : 'Visa, American Express…'" formControlName="franquicia" />
+    </div>
+
+    <div class="erp-field erp-span-2" *ngIf="!renueva">
+      <label class="erp-label" for="nt-alias">Alias</label>
+      <input id="nt-alias" appInput type="text" maxlength="255" autocomplete="off" placeholder="Cómo quieres verla («Débito *3698»)" formControlName="alias" />
+    </div>
+
+    <div class="erp-field erp-span-2" *ngIf="!renueva">
+      <span class="erp-label" id="nt-estado-etiqueta">Estado</span>
+      <div class="erp-segmented nt-estado" role="radiogroup" aria-labelledby="nt-estado-etiqueta" [style.--seg-count]="2" [style.--seg-index]="form.controls.estado.value === 'INACTIVA' ? 1 : 0">
+        <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="form.controls.estado.value === 'ACTIVA'" (click)="elegirEstado('ACTIVA')">Activa</button>
+        <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="form.controls.estado.value === 'INACTIVA'" (click)="elegirEstado('INACTIVA')">Histórica</button>
+      </div>
+      <p class="erp-field-hint" *ngIf="form.controls.estado.value === 'INACTIVA'">Una tarjeta histórica ya no se usa: aparece en la línea de tiempo y en el historial, pero no en los formularios nuevos.</p>
+    </div>
+
+    <div class="erp-field" [class.erp-span-2]="renueva || form.controls.estado.value !== 'INACTIVA'">
+      <label class="erp-label" for="nt-desde">{{ renueva ? 'Rige desde' : 'Se usa desde' }}</label>
+      <input id="nt-desde" appInput type="date" formControlName="desde" />
+    </div>
+
+    <div class="erp-field" *ngIf="!renueva && form.controls.estado.value === 'INACTIVA'">
+      <label class="erp-label" for="nt-hasta">Se usó hasta</label>
+      <input id="nt-hasta" appInput type="date" formControlName="hasta" />
+    </div>
+
+    <div class="erp-field erp-span-2" *ngIf="renueva">
+      <label class="erp-label" for="nt-motivo">¿Por qué se cambió el plástico anterior?</label>
+      <select id="nt-motivo" appInput formControlName="motivo">
+        <option value="">Sin especificar</option>
+        <option *ngFor="let m of motivos" [value]="m.valor">{{ m.etiqueta }}</option>
+      </select>
+    </div>
+
+    <ng-container *ngIf="!renueva && tipo === 'CREDITO'">
+      <div class="erp-field">
+        <label class="erp-label" for="nt-corte">Día de corte</label>
+        <input id="nt-corte" appInput type="number" inputmode="numeric" min="1" max="31" step="1" formControlName="diaCorte" [attr.aria-invalid]="campoInvalido('diaCorte')" />
+        <p class="erp-field-error" *ngIf="campoInvalido('diaCorte')">Un día entero entre 1 y 31.</p>
+      </div>
+      <div class="erp-field">
+        <label class="erp-label" for="nt-limite">Día límite de pago</label>
+        <input id="nt-limite" appInput type="number" inputmode="numeric" min="1" max="31" step="1" formControlName="diaLimitePago" [attr.aria-invalid]="campoInvalido('diaLimitePago')" />
+        <p class="erp-field-error" *ngIf="campoInvalido('diaLimitePago')">Un día entero entre 1 y 31.</p>
+      </div>
+      <div class="erp-field erp-span-2">
+        <label class="erp-label" for="nt-cupo">Cupo total</label>
+        <input id="nt-cupo" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="cupoTotal" [attr.aria-invalid]="campoInvalido('cupoTotal')" />
+        <p class="erp-field-error" *ngIf="campoInvalido('cupoTotal')">Mayor a 0 con máximo 2 decimales.</p>
+      </div>
+    </ng-container>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="nt-notas">Notas</label>
+      <textarea id="nt-notas" appInput rows="2" maxlength="500" formControlName="notas" placeholder="Ej. Tarjeta del banco X, la usa mi papá"></textarea>
+    </div>
+  </div>
+
+  <p class="erp-field-error" role="alert" *ngIf="intentado && problema">{{ problema }}</p>
+
+  <div class="erp-form-actions">
+    <button type="button" appButton="ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" appButton="primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : renueva ? 'Registrar plástico' : 'Crear tarjeta' }}</button>
+  </div>
+</form>

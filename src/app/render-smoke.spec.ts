@@ -144,6 +144,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     configurarTestBed([ListaTarjetasComponent]);
     const f = TestBed.createComponent(ListaTarjetasComponent);
     f.detectChanges();
+    responderCatalogos(); // nombres de cuentas
     responder('tarjetas', [{ id: 4, franquicia: 'Visa', descripcion: 'Oro', tasaInteresCompra: 1.8895, tasaInteresAvance: null, cuotaManejo: null, diaCorte: null, diaLimitePago: null, cupoTotal: null, permiteDolares: false }]);
     const t = texto(f);
     for (const esperado of ['Visa · Oro', 'Falta configurar', 'día de corte', '1.8895%', 'Solo COP', 'Configurar']) expect(t).toContain(esperado);

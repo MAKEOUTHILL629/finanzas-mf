@@ -65,6 +65,7 @@ export const GRUPOS_MENU: GrupoMenu[] = [
     icono: 'account_balance',
     items: [
       { id: 'cuentas', etiqueta: 'Cuentas', icono: 'account_balance', ruta: '/cuentas', palabras: 'cuentas bancos saldo nequi efectivo' },
+      { id: 'linea-tiempo', etiqueta: 'Línea de tiempo', corta: 'Uso', icono: 'timeline', ruta: '/linea-tiempo', palabras: 'linea tiempo periodo uso tarjetas cuentas historico plasticos debito credito' },
       { id: 'categorias', etiqueta: 'Categorías', icono: 'category', ruta: '/categorias', palabras: 'categorias gastos ingresos clasificar' },
       { id: 'transacciones', etiqueta: 'Transacciones', corta: 'Movimientos', icono: 'swap_horiz', ruta: '/transacciones', palabras: 'transacciones movimientos ingresos egresos libro diario' },
       { id: 'correos', etiqueta: 'Correos', icono: 'mark_email_unread', ruta: '/correos', palabras: 'correos bancolombia notificaciones conciliar' },

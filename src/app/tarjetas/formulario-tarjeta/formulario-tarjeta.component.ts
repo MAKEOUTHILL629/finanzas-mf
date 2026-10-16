@@ -7,11 +7,13 @@ import { Tarjeta } from '../../modelos/tarjeta';
 import { TarjetasService } from '../../services/tarjetas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { importeNoNegativoOpcional, importeOpcional } from '../../shared/validadores';
-import { terminacion, vigenciaLegible } from '../tarjetas.constants';
+import { esDebito, etiquetaEstadoPlastico, terminacion, tonoEstadoPlastico, vigenciaLegible } from '../tarjetas.constants';
 
 export interface ValoresTarjeta {
   franquicia: string;
   descripcion: string;
+  alias: string;
+  cuentaId: number | string | null;
   diaCorte: number | null;
   diaLimitePago: number | null;
   cupoTotal: number | string | null;
@@ -25,6 +27,8 @@ export function valoresDeTarjeta(t: Tarjeta): ValoresTarjeta {
   return {
     franquicia: t.franquicia ?? '',
     descripcion: t.descripcion ?? '',
+    alias: t.alias ?? '',
+    cuentaId: t.cuentaId ?? null,
     diaCorte: t.diaCorte ?? null,
     diaLimitePago: t.diaLimitePago ?? null,
     cupoTotal: t.cupoTotal ?? null,
@@ -44,6 +48,9 @@ export function cambiosDeTarjeta(original: Tarjeta, v: ValoresTarjeta): Actualiz
   const cambios: ActualizarTarjeta = {};
   if (v.franquicia.trim() !== base.franquicia.trim()) cambios.franquicia = v.franquicia.trim();
   if (v.descripcion.trim() !== base.descripcion.trim()) cambios.descripcion = v.descripcion.trim();
+  if (v.alias.trim() !== base.alias.trim()) cambios.alias = v.alias.trim();
+  // La cuenta: obligatoria en débito (el servidor lo exige); en crédito se puede quitar (null).
+  if (!igual(v.cuentaId, base.cuentaId)) cambios.cuentaId = vacio(v.cuentaId) ? null : Number(v.cuentaId);
   if (!vacio(v.diaCorte) && !igual(v.diaCorte, base.diaCorte)) cambios.diaCorte = Number(v.diaCorte);
   if (!vacio(v.diaLimitePago) && !igual(v.diaLimitePago, base.diaLimitePago)) cambios.diaLimitePago = Number(v.diaLimitePago);
   if (!vacio(v.cupoTotal) && !igual(v.cupoTotal, base.cupoTotal)) cambios.cupoTotal = String(v.cupoTotal);
@@ -71,6 +78,8 @@ export class FormularioTarjetaComponent implements OnChanges, OnDestroy {
 
   readonly terminacion = terminacion;
   readonly vigencia = vigenciaLegible;
+  readonly etiquetaEstado = etiquetaEstadoPlastico;
+  readonly tonoEstado = tonoEstadoPlastico;
 
   enviando = false;
   errorServidor: string | null = null;
@@ -82,6 +91,8 @@ export class FormularioTarjetaComponent implements OnChanges, OnDestroy {
   form = this.fb.group({
     franquicia: ['', Validators.maxLength(255)],
     descripcion: ['', Validators.maxLength(255)],
+    alias: ['', Validators.maxLength(255)],
+    cuentaId: [null as number | string | null],
     diaCorte: [null as number | null, [Validators.min(1), Validators.max(31), Validators.pattern(/^\d+$/)]],
     diaLimitePago: [null as number | null, [Validators.min(1), Validators.max(31), Validators.pattern(/^\d+$/)]],
     cupoTotal: [null as number | string | null, importeOpcional],
@@ -92,6 +103,10 @@ export class FormularioTarjetaComponent implements OnChanges, OnDestroy {
   });
 
   constructor(private tarjetasService: TarjetasService) {}
+
+  get esDebito(): boolean {
+    return esDebito(this.tarjeta);
+  }
 
   ngOnChanges(): void {
     if (this.tarjeta) {
@@ -109,7 +124,7 @@ export class FormularioTarjetaComponent implements OnChanges, OnDestroy {
   enviar(): void {
     this.errorServidor = null;
     this.sinCambios = false;
-    if (this.form.invalid) {
+    if (this.form.invalid || (this.esDebito && vacio(this.form.controls.cuentaId.value))) {
       this.form.markAllAsTouched();
       return;
     }

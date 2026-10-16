@@ -31,6 +31,8 @@ export class SelectComponent implements ControlValueAccessor, OnInit, OnChanges,
   @Input() etiquetar: ((item: any) => string) | null = null;
   /** Cuentas: ofrecer solo las activas (por defecto sí). La cuenta ya seleccionada se conserva aunque esté inactiva. */
   @Input() soloActivas = true;
+  /** Tarjetas: ofrecer también las de débito (por defecto solo las de crédito). */
+  @Input() incluirDebito = false;
   @Input() inputId: string | null = null;
   @Input() placeholder = 'Selecciona…';
   /** Permite volver a «sin selección» (campos opcionales). En los obligatorios el marcador no se puede elegir. */
@@ -158,6 +160,7 @@ export class SelectComponent implements ControlValueAccessor, OnInit, OnChanges,
         filtro: this.filtro,
         etiquetar: this.etiquetar,
         soloActivas: this.soloActivas,
+        incluirDebito: this.incluirDebito,
         valorActual: this.valor,
       });
     } else {

@@ -1,0 +1,103 @@
+/* Línea de tiempo: un renglón por producto; la barra va de cuándo empezó a usarse a cuándo dejó de usarse (o hoy). Solo tokens del sistema de diseño. */
+.lt { gap: var(--space-2); }
+.lt-card { overflow: hidden; }
+
+.lt-resumen { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Escala de años */
+.lt-escala, .lt-fila { display: grid; grid-template-columns: minmax(220px, 310px) minmax(0, 1fr); column-gap: var(--space-2); align-items: center; }
+.lt-escala { position: sticky; top: 0; z-index: 2; height: 28px; background: var(--bg-surface-solid); }
+.lt-escala__pista { position: relative; height: 100%; }
+.lt-marca, .lt-hoy { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border-subtle); }
+.lt-marca span, .lt-hoy span { position: absolute; top: 4px; left: 4px; font-size: var(--text-overline); font-weight: var(--weight-semibold); letter-spacing: 0.06em; color: var(--text-tertiary); }
+.lt-hoy { border-left-color: var(--red-danger); }
+.lt-hoy span { left: auto; right: 4px; color: var(--red-danger); }
+
+.lt-filas { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.lt-fila { padding: 8px 0; border-top: 1px solid var(--divider); }
+.lt-fila--abierta { background: color-mix(in srgb, var(--brand-blue) 4%, transparent); }
+
+/* Cabecera del renglón (botón: abre el detalle) */
+.lt-cabecera {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+.lt-cabecera:hover { background: var(--bg-input); }
+.lt-cabecera:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.lt-icono { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-sm); color: var(--text-on-accent); }
+.lt-icono .material-icons { font-size: 18px; }
+.lt-icono[data-tipo='CREDITO'], .lt-barra[data-tipo='CREDITO'] { --lt-color: var(--brand-blue); }
+.lt-icono[data-tipo='DEBITO'], .lt-barra[data-tipo='DEBITO'] { --lt-color: var(--green-success); }
+.lt-icono[data-tipo='CUENTA'], .lt-barra[data-tipo='CUENTA'] { --lt-color: var(--amber-warning); }
+.lt-icono { background: var(--lt-color, var(--brand-blue)); }
+.lt-nombre { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.lt-nombre strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--weight-semibold); }
+.lt-nombre small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-caption); }
+
+/* Pista y barra */
+.lt-pista { grid-column: 2; position: relative; height: 36px; }
+.lt-linea { position: absolute; top: -8px; bottom: -8px; border-left: 1px dashed var(--border-subtle); pointer-events: none; }
+.lt-barra {
+  position: absolute;
+  top: 4px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-width: 6px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--lt-color, var(--brand-blue));
+  color: var(--text-on-accent);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transform-origin: left center;
+  animation: lt-crecer var(--duration-slow) var(--ease-out-expo) both;
+}
+/* Sigue en uso: se desvanece hacia hoy */
+.lt-barra--abierta { background: linear-gradient(90deg, var(--lt-color, var(--brand-blue)) 55%, color-mix(in srgb, var(--lt-color, var(--brand-blue)) 35%, transparent)); }
+.lt-barra--vacia { opacity: 0.55; }
+.lt-barra__texto { overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.lt-texto-fuera { position: absolute; top: 9px; margin: 0 8px; font-size: var(--text-caption); font-weight: var(--weight-semibold); color: var(--text-secondary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lt-texto-fuera--izq { transform: translateX(-100%); margin-left: -8px; }
+.lt-sin-fechas { position: absolute; top: 9px; left: 0; font-size: var(--text-caption); }
+
+/* Detalle abierto */
+.lt-panel { grid-column: 1 / -1; padding: var(--space-1) var(--space-2) var(--space-2); }
+.lt-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-1) var(--space-2); margin: 0 0 var(--space-1); }
+.lt-datos div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lt-datos dt { margin: 0; }
+.lt-datos dd { margin: 0; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.lt-nota { margin: 0 0 var(--space-1); font-size: var(--text-caption); }
+
+@keyframes lt-crecer { from { transform: scaleX(0); opacity: 0; } to { transform: scaleX(1); } }
+
+/* Móvil: el nombre arriba y la barra debajo, a todo el ancho */
+@media (max-width: 767px) {
+  .lt-resumen { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
+  .lt-resumen .erp-stat-hint { display: none; }
+  .lt-resumen .erp-stat-value { font-size: 1.25rem; }
+  .lt-escala, .lt-fila { grid-template-columns: minmax(0, 1fr); }
+  .lt-escala__vacio { display: none; }
+  .lt-hoy span { display: none; } /* en pantalla angosta el «Hoy» se encimaría con el último año */
+  .lt-cabecera, .lt-pista { grid-column: 1; }
+  .lt-fila { row-gap: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .lt-barra { animation: none; } }

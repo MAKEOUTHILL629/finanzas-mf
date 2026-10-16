@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { HistorialTarjeta, PlasticoTarjeta, Tarjeta } from '../modelos/tarjeta';
-import { API, configurarTestBed, errorHttp, esperar, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, errorHttp, esperar, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { FormularioPlasticoComponent, cuerpoReemplazo, efectoDelReemplazo } from './formulario-plastico/formulario-plastico.component';
 import { HistorialTarjetaComponent, hayMas, resumenResponsables } from './historial-tarjeta/historial-tarjeta.component';
 import { ListaTarjetasComponent } from './lista-tarjetas/lista-tarjetas.component';
@@ -88,6 +88,7 @@ describe('Tarjetas · plásticos — pantallas', () => {
     configurarTestBed([ListaTarjetasComponent]);
     const f = TestBed.createComponent(ListaTarjetasComponent);
     f.detectChanges();
+    responderCatalogos({ cuentas: [] });
     responder('tarjetas', [amex(), { id: 1, franquicia: 'Mastercard', ultimos4Digitos: '9491', ultimos4Activo: '9491', plasticos: [plastico(7, '9491', { esActivo: true, tarjetaId: 1 })], plasticoActivo: plastico(7, '9491', { esActivo: true, tarjetaId: 1 }) }]);
     f.detectChanges();
     const el = f.nativeElement as HTMLElement;
@@ -96,15 +97,17 @@ describe('Tarjetas · plásticos — pantallas', () => {
     expect(texto).toContain('··0088');
     expect(texto).toContain('··9587');
     expect(texto).toContain('Plástico activo ··9491');
-    expect(el.querySelectorAll('.plastico-chip').length).toBe(2); // solo la Amex tiene plásticos anteriores
+    expect(el.querySelectorAll('.plastico').length).toBe(4); // todos los plásticos: los 3 de la Amex y el de la Mastercard
+    expect(el.querySelectorAll('.plastico--activo').length).toBe(2);
     expect(el.querySelectorAll('a[href="/tarjetas/4"]').length).toBe(1);
-    expect(texto).toContain('Reemplazo');
+    expect(texto).toContain('Plásticos');
   });
 
   it('registrar un reemplazo actualiza la tarjeta en la lista sin recargar y confirma que el historial no cambió', () => {
     configurarTestBed([ListaTarjetasComponent]);
     const f = TestBed.createComponent(ListaTarjetasComponent);
     f.detectChanges();
+    responderCatalogos({ cuentas: [] });
     responder('tarjetas', [amex()]);
     const c = f.componentInstance;
     c.registrarReemplazo(c.tarjetas[0]);

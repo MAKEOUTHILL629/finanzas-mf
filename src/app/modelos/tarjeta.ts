@@ -1,7 +1,12 @@
 /** Motivo por el que se reemplazó el plástico ANTERIOR de una tarjeta. */
 export type MotivoReemplazo = 'VENCIMIENTO' | 'PERDIDA' | 'ROBO' | 'DETERIORO' | 'FRAUDE' | 'CAMBIO_PRODUCTO' | 'OTRO';
 
-/** Un plástico (reposición/renovación) de una tarjeta de crédito: el banco cambia los últimos 4 dígitos, la línea de crédito sigue siendo la misma. */
+export type TipoTarjeta = 'CREDITO' | 'DEBITO';
+
+/** ACTIVA = vigente · REEMPLAZADA = la tarjeta siguió con otro plástico · INACTIVA = histórica sin continuidad. */
+export type EstadoPlastico = 'ACTIVA' | 'INACTIVA' | 'REEMPLAZADA';
+
+/** Un plástico (reposición/renovación) de una tarjeta: el banco cambia los últimos 4 dígitos, la línea sigue siendo la misma. */
 export interface PlasticoTarjeta {
   id: number;
   tarjetaId: number;
@@ -15,10 +20,23 @@ export interface PlasticoTarjeta {
   notas: string | null;
   /** Solo en `GET /tarjetas/:id/plasticos`: compras con este plástico guardado. */
   compras?: number;
+  estado?: EstadoPlastico;
+  /** Alias de `vigenteDesde` / `vigenteHasta` / `reemplazaAId` con los nombres del plan de producto. */
+  fechaInicioUso?: string | null;
+  fechaFinUso?: string | null;
+  tarjetaReemplazadaId?: number | null;
 }
 
 export interface Tarjeta{
   id?: number;
+  /** CREDITO | DEBITO (por defecto, crédito). */
+  tipo?: TipoTarjeta;
+  /** Cuenta a la que pertenece: obligatoria en débito; en crédito, la que la paga (opcional). */
+  cuentaId?: number | null;
+  /** Nombre corto para mostrar («Débito *3698»). */
+  alias?: string | null;
+  /** Producto «sin número»: recibe lo que el banco avisa sin los últimos 4 dígitos. */
+  esGenerica?: boolean;
   fechaCreacion?: Date;
   franquicia?: string;
   descripcion?: string;
@@ -42,6 +60,35 @@ export interface Tarjeta{
   plasticos?: PlasticoTarjeta[];
 }
 
+/** `POST /api/tarjetas`: una tarjeta nueva con su plástico o, con `plasticoAnteriorId`, el plástico que renueva a otro. */
+export interface CrearTarjeta {
+  tipo: TipoTarjeta;
+  cuentaId?: number;
+  ultimos4?: string;
+  franquicia?: string;
+  alias?: string;
+  descripcion?: string;
+  estado?: 'ACTIVA' | 'INACTIVA';
+  fechaInicioUso?: string;
+  fechaFinUso?: string;
+  plasticoAnteriorId?: number;
+  motivo?: MotivoReemplazo;
+  esGenerica?: boolean;
+  diaCorte?: number;
+  diaLimitePago?: number;
+  cupoTotal?: number | string;
+  notas?: string;
+}
+
+/** `POST /api/tarjetas/:id/plasticos`: agrega un plástico histórico sin cambiar el activo. */
+export interface AgregarPlastico {
+  ultimos4: string;
+  vigenteDesde?: string;
+  vigenteHasta?: string;
+  motivo?: MotivoReemplazo;
+  notas?: string;
+}
+
 export interface ReemplazarPlastico {
   ultimos4: string;
   /** `yyyy-MM-dd`; por defecto hoy. */
@@ -62,6 +109,8 @@ export interface ResultadoReemplazo {
   plasticoActivo: PlasticoTarjeta;
   plasticoAnterior: PlasticoTarjeta | null;
   plasticos: PlasticoTarjeta[];
+  /** Solo en el cliente: se agregó un plástico anterior y el vigente no cambió. */
+  historico?: boolean;
 }
 
 export interface FiltroHistorialTarjeta {

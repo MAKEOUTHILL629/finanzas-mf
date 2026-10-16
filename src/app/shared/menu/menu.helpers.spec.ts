@@ -109,7 +109,7 @@ describe('buscar', () => {
     expect(id(buscar(GRUPOS_MENU, 'nequi'))).toContain('cuentas');
     expect(id(buscar(GRUPOS_MENU, 'bancolombia'))).toContain('correos');
     expect(id(buscar(GRUPOS_MENU, 'movimientos'))).toContain('transacciones');
-    expect(id(buscar(GRUPOS_MENU, 'dinero'))).toEqual(['cuentas', 'categorias', 'transacciones', 'correos']);
+    expect(id(buscar(GRUPOS_MENU, 'dinero'))).toEqual(['cuentas', 'linea-tiempo', 'categorias', 'transacciones', 'correos']);
   });
 
   it('a igual relevancia respeta el orden del menú; una coincidencia exacta gana', () => {

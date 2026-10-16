@@ -21,6 +21,7 @@ export const routes: Routes = [
   { path: 'prestamos', loadChildren: () => import('./prestamos/prestamos.module').then((m) => m.RUTAS_PRESTAMOS) },
   { path: 'cortes-cobro', loadChildren: () => import('./prestamos/prestamos.module').then((m) => m.RUTAS_CORTES) },
   { path: 'tarjetas', loadChildren: () => import('./tarjetas/tarjetas.module').then((m) => m.RUTAS_TARJETAS) },
+  { path: 'linea-tiempo', loadChildren: () => import('./tarjetas/tarjetas.module').then((m) => m.RUTAS_LINEA_TIEMPO) },
   { path: 'extractos', loadChildren: () => import('./extractos/extractos.module').then((m) => m.RUTAS_EXTRACTOS) },
   { path: 'cuentas', loadChildren: () => import('./cuentas/cuentas.module').then((m) => m.RUTAS_CUENTAS) },
   { path: 'categorias', loadChildren: () => import('./cuentas/cuentas.module').then((m) => m.RUTAS_CATEGORIAS) },

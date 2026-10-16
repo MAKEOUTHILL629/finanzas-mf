@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ActualizarTarjeta, PagarExtracto, Periodo, ResultadoPagoExtracto, ResumenMensualTarjeta } from '../modelos/erp';
+import { LineaTiempo } from '../modelos/linea-tiempo';
 import {
   ActualizarPlastico,
+  AgregarPlastico,
+  CrearTarjeta,
   FiltroHistorialTarjeta,
   HistorialTarjeta,
   PlasticoTarjeta,
@@ -22,6 +25,19 @@ export class TarjetasService {
 
   getTarjetas(): Observable<Tarjeta[]> {
     return this.api.get<Tarjeta[]>(this.url);
+  }
+
+  /**
+   * Crea una tarjeta (crédito o débito, sin límite por cuenta ni franquicia) o, con `plasticoAnteriorId`, el plástico que renueva a otro
+   * (el anterior queda archivado con todo su historial).
+   */
+  crearTarjeta(cuerpo: CrearTarjeta): Observable<Tarjeta> {
+    return this.api.post<Tarjeta>(this.url, cuerpo);
+  }
+
+  /** Periodo de uso de cada tarjeta (por plástico) y cada cuenta, con sus movimientos. */
+  getLineaTiempo(): Observable<LineaTiempo> {
+    return this.api.get<LineaTiempo>('productos-financieros/linea-tiempo');
   }
 
   /**
@@ -60,6 +76,11 @@ export class TarjetasService {
    */
   reemplazarPlastico(tarjetaId: number, reemplazo: ReemplazarPlastico): Observable<ResultadoReemplazo> {
     return this.api.post<ResultadoReemplazo>(`${this.url}/${tarjetaId}/plasticos/reemplazar`, reemplazo);
+  }
+
+  /** Agrega un plástico anterior (histórico) sin cambiar el activo ni tocar compras. */
+  agregarPlastico(tarjetaId: number, plastico: AgregarPlastico): Observable<PlasticoTarjeta[]> {
+    return this.api.post<PlasticoTarjeta[]>(`${this.url}/${tarjetaId}/plasticos`, plastico);
   }
 
   actualizarPlastico(tarjetaId: number, plasticoId: number, cambios: ActualizarPlastico): Observable<PlasticoTarjeta[]> {

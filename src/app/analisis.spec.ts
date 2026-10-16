@@ -49,13 +49,14 @@ describe('Tarjetas', () => {
       { id: 1, tarjetaId: 4, ultimos4: '9587', esActivo: false, vigenteDesde: null, vigenteHasta: '2024-03-16', motivoReemplazo: null, reemplazaAId: null, notas: null },
     ] }));
     fixture.detectChanges();
+    responderCatalogos(); // el selector de cuenta pide el catálogo
     expect(Object.keys(fixture.componentInstance.form.controls)).not.toContain('ultimos4Digitos');
     const texto = (fixture.nativeElement as HTMLElement).textContent!.replace(/\s+/g, ' ');
     expect(texto).toContain('Plásticos de esta tarjeta');
     expect(texto).toContain('··1927');
-    expect(texto).toContain('Activo');
+    expect(texto).toContain('Activa');
     expect(texto).toContain('··9587');
-    expect(texto).toContain('Archivado');
+    expect(texto).toContain('Histórica');
   });
 
   it('cambiosDeTarjeta envía solo lo modificado y nunca valores vacíos', () => {
@@ -73,6 +74,7 @@ describe('Tarjetas', () => {
     const fixture = TestBed.createComponent(FormularioTarjetaComponent);
     fixture.componentRef.setInput('tarjeta', tarjeta());
     fixture.detectChanges();
+    responderCatalogos(); // el selector de cuenta pide el catálogo
     const c = fixture.componentInstance;
     c.enviar();
     expect(c.sinCambios).toBeTrue();
@@ -94,6 +96,7 @@ describe('Tarjetas', () => {
     configurarTestBed([ListaTarjetasComponent]);
     const fixture = TestBed.createComponent(ListaTarjetasComponent);
     fixture.detectChanges();
+    responderCatalogos(); // nombres de cuentas
     responder('tarjetas', [tarjeta(), tarjeta({ id: 5, franquicia: 'Master' })]);
     const c = fixture.componentInstance;
     expect(c.nombre(c.tarjetas[0])).toBe('Visa · Oro *1927');

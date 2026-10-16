@@ -1,5 +1,5 @@
 import { formatDateOnly } from '../shared/date-only.helper';
-import { MotivoReemplazo, PlasticoTarjeta } from '../modelos/tarjeta';
+import { EstadoPlastico, MotivoReemplazo, PlasticoTarjeta, TipoTarjeta } from '../modelos/tarjeta';
 
 /** Lo mínimo que se necesita de un plástico: lo comparten `PlasticoTarjeta` (API de tarjetas) y `ItemPlasticoCatalogo` (selectores). */
 export type PlasticoBasico = Pick<PlasticoTarjeta, 'id' | 'ultimos4' | 'esActivo' | 'vigenteDesde' | 'vigenteHasta'>;
@@ -33,10 +33,28 @@ export function terminacion(ultimos4: string | null | undefined): string {
   return ultimos4 ? `··${ultimos4}` : '';
 }
 
-/** Nombre de la línea de crédito: «American Express · Oro» o «Tarjeta #3». */
-export function nombreTarjeta(t: { id?: number; franquicia?: string | null; descripcion?: string | null } | null | undefined): string {
+/** Nombre de la tarjeta: el alias si lo tiene («Débito *3698») o «American Express · Oro» / «Tarjeta #3». */
+export function nombreTarjeta(t: { id?: number; franquicia?: string | null; descripcion?: string | null; alias?: string | null } | null | undefined): string {
   if (!t) return '';
-  return [t.franquicia, t.descripcion].filter((x) => !!x).join(' · ') || `Tarjeta #${t.id}`;
+  return t.alias?.trim() || [t.franquicia, t.descripcion].filter((x) => !!x).join(' · ') || `Tarjeta #${t.id}`;
+}
+
+export const ETIQUETA_TIPO_TARJETA: Record<TipoTarjeta, string> = { CREDITO: 'Crédito', DEBITO: 'Débito' };
+
+/** Tipo de una tarjeta; las que no lo declaran son de crédito (como todas las de antes). */
+export const tipoDe = (t: { tipo?: TipoTarjeta } | null | undefined): TipoTarjeta => t?.tipo ?? 'CREDITO';
+
+export const esDebito = (t: { tipo?: TipoTarjeta } | null | undefined): boolean => tipoDe(t) === 'DEBITO';
+
+/** «Activa» · «Reemplazada» · «Histórica» (un plástico archivado sin continuidad). Sin estado calculado se deduce de `esActivo`. */
+export function etiquetaEstadoPlastico(p: { estado?: EstadoPlastico; esActivo: boolean }): string {
+  const estado: EstadoPlastico = p.estado ?? (p.esActivo ? 'ACTIVA' : 'INACTIVA');
+  return estado === 'ACTIVA' ? 'Activa' : estado === 'REEMPLAZADA' ? 'Reemplazada' : 'Histórica';
+}
+
+export function tonoEstadoPlastico(p: { estado?: EstadoPlastico; esActivo: boolean }): 'success' | 'neutral' | 'info' {
+  const estado: EstadoPlastico = p.estado ?? (p.esActivo ? 'ACTIVA' : 'INACTIVA');
+  return estado === 'ACTIVA' ? 'success' : estado === 'REEMPLAZADA' ? 'info' : 'neutral';
 }
 
 /** Lo que se ofrece en los selectores de compras nuevas: la franquicia y el plástico ACTIVO («American Express ··1927»). */

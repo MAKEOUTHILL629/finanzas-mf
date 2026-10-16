@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, inject } 
 import { FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { MotivoReemplazo, PlasticoTarjeta, ReemplazarPlastico, ResultadoReemplazo, Tarjeta } from '../../modelos/tarjeta';
+import { AgregarPlastico, MotivoReemplazo, PlasticoTarjeta, ReemplazarPlastico, ResultadoReemplazo, Tarjeta } from '../../modelos/tarjeta';
 import { TarjetasService } from '../../services/tarjetas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { hoyIso } from '../../shared/periodo.helper';
@@ -30,6 +30,17 @@ export function cuerpoReemplazo(v: { ultimos4: string; vigenteDesde: string; mot
   };
 }
 
+/** Cuerpo del POST de un plástico anterior (histórico): las fechas y el motivo solo viajan si se llenaron. */
+export function cuerpoHistorico(v: { ultimos4: string; vigenteDesde: string; vigenteHasta: string; motivo: string; notas: string }): AgregarPlastico {
+  return {
+    ultimos4: v.ultimos4.trim(),
+    ...(v.vigenteDesde ? { vigenteDesde: v.vigenteDesde } : {}),
+    ...(v.vigenteHasta ? { vigenteHasta: v.vigenteHasta } : {}),
+    ...(v.motivo ? { motivo: v.motivo as MotivoReemplazo } : {}),
+    ...(v.notas.trim() ? { notas: v.notas.trim() } : {}),
+  };
+}
+
 @Component({
   selector: 'app-formulario-plastico',
   templateUrl: './formulario-plastico.component.html'
@@ -43,6 +54,8 @@ export class FormularioPlasticoComponent implements OnChanges, OnDestroy {
   readonly terminacion = terminacion;
   readonly nombre = nombreTarjeta;
 
+  /** `nuevo` = el plástico que reemplaza al vigente · `anterior` = uno histórico que faltaba (no cambia el vigente). */
+  modo: 'nuevo' | 'anterior' = 'nuevo';
   enviando = false;
   errorServidor: string | null = null;
 
@@ -52,6 +65,7 @@ export class FormularioPlasticoComponent implements OnChanges, OnDestroy {
   form = this.fb.nonNullable.group({
     ultimos4: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
     vigenteDesde: [hoyIso(), Validators.required],
+    vigenteHasta: [''],
     motivo: [''],
     notas: ['', Validators.maxLength(500)],
   });
@@ -59,8 +73,19 @@ export class FormularioPlasticoComponent implements OnChanges, OnDestroy {
   constructor(private tarjetasService: TarjetasService) {}
 
   ngOnChanges(): void {
-    this.form.reset({ ultimos4: '', vigenteDesde: hoyIso(), motivo: '', notas: '' });
+    this.form.reset({ ultimos4: '', vigenteDesde: hoyIso(), vigenteHasta: '', motivo: '', notas: '' });
+    this.modo = 'nuevo';
     this.errorServidor = null;
+  }
+
+  elegirModo(modo: 'nuevo' | 'anterior'): void {
+    this.modo = modo;
+    this.form.patchValue({ vigenteDesde: modo === 'nuevo' ? hoyIso() : '', vigenteHasta: '' });
+  }
+
+  get cierreAnteriorAlInicio(): boolean {
+    const { vigenteDesde, vigenteHasta } = this.form.getRawValue();
+    return this.modo === 'anterior' && !!vigenteDesde && !!vigenteHasta && vigenteHasta < vigenteDesde;
   }
 
   ngOnDestroy(): void {
@@ -73,10 +98,13 @@ export class FormularioPlasticoComponent implements OnChanges, OnDestroy {
   }
 
   get efecto(): EfectoReemplazo {
-    return efectoDelReemplazo(this.tarjeta.plasticos ?? [], this.form.controls.ultimos4.value.trim());
+    const e = efectoDelReemplazo(this.tarjeta.plasticos ?? [], this.form.controls.ultimos4.value.trim());
+    // Un plástico anterior no reactiva ni reemplaza nada: si ya existe, simplemente está repetido.
+    return this.modo === 'anterior' && e.tipo !== 'NUEVO' ? { tipo: 'YA_ACTIVO', plastico: e.plastico } : e;
   }
 
   get inicioAnteriorAlActivo(): boolean {
+    if (this.modo === 'anterior') return false;
     const desde = this.activo?.vigenteDesde;
     const inicio = this.form.controls.vigenteDesde.value;
     return !!desde && !!inicio && inicio < desde.slice(0, 10);
@@ -89,11 +117,28 @@ export class FormularioPlasticoComponent implements OnChanges, OnDestroy {
 
   enviar(): void {
     this.errorServidor = null;
-    if (this.form.invalid || this.efecto.tipo === 'YA_ACTIVO' || this.inicioAnteriorAlActivo) {
+    if (this.form.invalid || this.efecto.tipo === 'YA_ACTIVO' || this.inicioAnteriorAlActivo || this.cierreAnteriorAlInicio) {
       this.form.markAllAsTouched();
       return;
     }
     this.enviando = true;
+    if (this.modo === 'anterior') {
+      this.tarjetasService
+        .agregarPlastico(this.tarjeta.id as number, cuerpoHistorico(this.form.getRawValue()))
+        .pipe(
+          takeUntil(this.destroy$),
+          finalize(() => (this.enviando = false))
+        )
+        .subscribe({
+          // El plástico vigente no cambia: se devuelve con la misma forma que un reemplazo para que la pantalla se actualice igual.
+          next: (plasticos) => {
+            const activo = plasticos.find((p) => p.esActivo) ?? plasticos[0];
+            this.guardado.emit({ plasticoActivo: activo, plasticoAnterior: null, plasticos, historico: true });
+          },
+          error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudo registrar el plástico.'))
+        });
+      return;
+    }
     this.tarjetasService
       .reemplazarPlastico(this.tarjeta.id as number, cuerpoReemplazo(this.form.getRawValue()))
       .pipe(

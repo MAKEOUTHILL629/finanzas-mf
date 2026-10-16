@@ -465,6 +465,12 @@ export interface ResumenMensualTarjeta {
 
 /** `PUT /api/tarjetas/:id`: solo se envía lo que cambia. */
 export interface ActualizarTarjeta {
+  /** Solo una tarjeta sin compras a crédito puede pasar a DEBITO. */
+  tipo?: 'CREDITO' | 'DEBITO';
+  /** Cuenta a la que pertenece; obligatoria en débito, `null` la quita en crédito. */
+  cuentaId?: number | null;
+  /** Nombre corto para mostrar; vacío = quitarlo. */
+  alias?: string;
   franquicia?: string;
   /** Escribir aquí los últimos 4 dígitos (p. ej. `Oro *1927`) permite identificar la tarjeta en los correos del banco. */
   descripcion?: string;

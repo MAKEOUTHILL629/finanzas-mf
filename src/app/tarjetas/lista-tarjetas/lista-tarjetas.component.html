@@ -1,7 +1,9 @@
-<section class="erp-page" aria-labelledby="titulo-tarjetas">
-  <app-page-header titulo="Tarjetas" subtitulo="Configura el corte, el límite de pago, el cupo y las tasas de cada tarjeta." idTitulo="titulo-tarjetas">
-    <app-acciones [secundarias]="secundarias"></app-acciones>
+<section class="erp-page tarjetas" aria-labelledby="titulo-tarjetas">
+  <app-page-header titulo="Tarjetas" subtitulo="Tus tarjetas de crédito y de débito, con todos los plásticos que has usado. Configura el corte, el límite de pago, el cupo y las tasas." idTitulo="titulo-tarjetas">
+    <app-acciones [principal]="principal" [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
+
+  <app-filter-bar placeholder="Buscar por nombre, dígitos o cuenta…" [segmentos]="segmentos" [filtros]="definicionFiltros" [estado]="estadoFiltros" (estadoChange)="alFiltrar($event)"></app-filter-bar>
 
   <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando tarjetas">
     <div class="erp-skeleton" style="height: 240px"></div>
@@ -16,17 +18,27 @@
     </div>
   </div>
 
-  <app-empty-state *ngIf="!cargando && !error && tarjetas.length === 0" icon="credit_card_off" titulo="Aún no hay tarjetas" descripcion="Las tarjetas se registran en la base de datos; cuando existan aparecerán aquí para configurarlas."></app-empty-state>
+  <app-empty-state *ngIf="!cargando && !error && tarjetas.length === 0" icon="credit_card_off" titulo="Aún no hay tarjetas" descripcion="Registra tu primera tarjeta de crédito o de débito con «Nueva tarjeta».">
+    <button type="button" appButton="primary" (click)="nueva()">Nueva tarjeta</button>
+  </app-empty-state>
 
-  <div class="erp-grid" *ngIf="!cargando && !error && tarjetas.length > 0">
-    <article class="erp-card tarjeta" *ngFor="let t of tarjetas; trackBy: trackById" [attr.aria-label]="nombre(t)">
+  <app-empty-state *ngIf="!cargando && !error && tarjetas.length > 0 && visibles.length === 0" icon="search_off" titulo="Ninguna tarjeta coincide" descripcion="Prueba con otros filtros o límpialos."></app-empty-state>
+
+  <div class="erp-grid" *ngIf="!cargando && !error && visibles.length > 0">
+    <article class="erp-card tarjeta" *ngFor="let t of visibles; trackBy: trackById" [attr.aria-label]="nombre(t)" [class.tarjeta--historica]="!estaActiva(t)">
       <header class="tarjeta-cabecera">
-        <span class="tarjeta-icono" aria-hidden="true"><i class="material-icons">credit_card</i></span>
+        <span class="tarjeta-icono" [class.tarjeta-icono--debito]="esDebito(t)" aria-hidden="true"><i class="material-icons">{{ esDebito(t) ? 'account_balance_wallet' : 'credit_card' }}</i></span>
         <div class="tarjeta-titulo">
           <h2>{{ nombre(t) }}</h2>
+          <span class="tarjeta-meta">
+            <app-badge [tone]="esDebito(t) ? 'info' : 'neutral'">{{ etiquetaTipo[tipoDe(t)] }}</app-badge>
+            <app-badge tone="neutral" *ngIf="t.esGenerica">Sin número</app-badge>
+            <app-badge tone="neutral" *ngIf="!estaActiva(t)">Histórica</app-badge>
+          </span>
+          <span class="erp-muted" *ngIf="t.cuentaId">{{ esDebito(t) ? 'De la cuenta' : 'Se paga desde' }} <strong>{{ nombreCuenta(t.cuentaId) }}</strong></span>
           <span class="erp-muted" *ngIf="t.ultimos4Activo">Plástico activo <span class="plastico-activo erp-mono">{{ terminacion(t.ultimos4Activo) }}</span></span>
           <span class="erp-muted" *ngIf="!t.ultimos4Activo && t.ultimos4Digitos">Terminada en <span class="erp-mono">{{ t.ultimos4Digitos }}</span></span>
-          <span class="erp-muted" *ngIf="t.ultimaActualizacionTasas">Tasas actualizadas {{ t.ultimaActualizacionTasas | date: 'dd/MM/yyyy' }}</span>
+          <span class="erp-muted" *ngIf="!esDebito(t) && t.ultimaActualizacionTasas">Tasas actualizadas {{ t.ultimaActualizacionTasas | date: 'dd/MM/yyyy' }}</span>
         </div>
       </header>
 
@@ -35,15 +47,17 @@
         <span>Falta configurar: {{ pendientes(t).join(', ') }}.</span>
       </div>
 
-      <ul class="plasticos-archivados" *ngIf="archivados(t).length > 0" [attr.aria-label]="'Plásticos anteriores de ' + nombre(t)">
-        <li *ngFor="let p of archivados(t)" class="plastico-chip" [title]="motivo(p.motivoReemplazo) ? 'Reemplazado por ' + motivo(p.motivoReemplazo).toLowerCase() : 'Plástico anterior'">
-          <i class="material-icons" aria-hidden="true">history</i>
-          <span class="erp-mono">{{ terminacion(p.ultimos4) }}</span>
-          <span class="erp-muted">{{ vigencia(p) }}</span>
+      <!-- Todos los plásticos: nunca se pierde el historial -->
+      <ul class="plasticos" *ngIf="plasticosDe(t).length > 0" [attr.aria-label]="'Plásticos de ' + nombre(t)">
+        <li *ngFor="let p of plasticosDe(t)" class="plastico" [class.plastico--activo]="p.esActivo" [title]="p.motivoReemplazo ? 'Reemplazado por ' + motivo(p.motivoReemplazo).toLowerCase() : ''">
+          <i class="material-icons" aria-hidden="true">{{ p.esActivo ? 'credit_card' : 'history' }}</i>
+          <span class="erp-mono plastico__digitos">{{ terminacion(p.ultimos4) }}</span>
+          <app-badge [tone]="tonoEstado(p)">{{ etiquetaEstado(p) }}</app-badge>
+          <span class="erp-muted plastico__vigencia">{{ vigencia(p) }}</span>
         </li>
       </ul>
 
-      <dl class="cifras">
+      <dl class="cifras" *ngIf="!esDebito(t) && !t.esGenerica">
         <div><dt class="erp-overline">Día de corte</dt><dd class="erp-num">{{ t.diaCorte ?? '—' }}</dd></div>
         <div><dt class="erp-overline">Límite de pago</dt><dd class="erp-num">{{ t.diaLimitePago ?? '—' }}</dd></div>
         <div><dt class="erp-overline">Cupo total</dt><dd class="erp-num">{{ t.cupoTotal | moneda }}</dd></div>
@@ -53,17 +67,17 @@
       </dl>
 
       <footer class="tarjeta-acciones">
-        <span class="erp-badge" [class.erp-badge--info]="t.permiteDolares">{{ t.permiteDolares ? 'Acepta USD' : 'Solo COP' }}</span>
+        <span class="erp-badge" *ngIf="!esDebito(t) && !t.esGenerica" [class.erp-badge--info]="t.permiteDolares">{{ t.permiteDolares ? 'Acepta USD' : 'Solo COP' }}</span>
         <div class="tarjeta-botones">
-          <a appButton="ghost" size="sm" [routerLink]="['/tarjetas', t.id]">
+          <a appButton="ghost" size="sm" *ngIf="!esDebito(t)" [routerLink]="['/tarjetas', t.id]" appTooltip="Ver todas las compras de esta tarjeta, de todos sus plásticos">
             <i class="material-icons" aria-hidden="true">receipt_long</i>
             Historial
           </a>
-          <button type="button" appButton="ghost" size="sm" (click)="registrarReemplazo(t)">
+          <button type="button" appButton="ghost" size="sm" *ngIf="!t.esGenerica" (click)="registrarReemplazo(t)" appTooltip="Registrar un plástico nuevo (o uno anterior): el historial no cambia">
             <i class="material-icons" aria-hidden="true">autorenew</i>
-            Reemplazo
+            Plásticos
           </button>
-          <button type="button" appButton="secondary" size="sm" (click)="editar(t)">
+          <button type="button" appButton="secondary" size="sm" (click)="editar(t)" appTooltip="Cambiar el nombre, la cuenta y la configuración">
             <i class="material-icons" aria-hidden="true">tune</i>
             Configurar
           </button>
@@ -79,4 +93,8 @@
 
 <app-modal [modalId]="modalPlastico">
   <app-formulario-plastico *ngIf="reemplazando" [tarjeta]="reemplazando" (guardado)="onPlasticoGuardado($event)" (cancelar)="cerrar()"></app-formulario-plastico>
+</app-modal>
+
+<app-modal [modalId]="modalNueva">
+  <app-formulario-nueva-tarjeta *ngIf="creando" [tarjetas]="tarjetas" [tipoInicial]="tipoNueva" (creada)="onCreada($event)" (cancelar)="cerrar()"></app-formulario-nueva-tarjeta>
 </app-modal>

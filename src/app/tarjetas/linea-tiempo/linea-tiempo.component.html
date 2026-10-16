@@ -1,0 +1,90 @@
+<section class="erp-page lt" aria-labelledby="titulo-lt">
+  <app-page-header titulo="Línea de tiempo" [subtitulo]="datos ? 'Cuándo usaste cada tarjeta y cuenta, desde ' + (datos.desde | fechaCorta) + ' hasta hoy.' : 'Cuándo usaste cada tarjeta y cuenta.'" idTitulo="titulo-lt">
+    <app-acciones [secundarias]="secundarias"></app-acciones>
+  </app-page-header>
+
+  <div class="erp-grid erp-grid--stats lt-resumen" *ngIf="datos && !cargando" aria-label="Resumen de tus productos financieros">
+    <app-card class="erp-stat">
+      <span class="erp-overline">Productos</span>
+      <span class="erp-stat-value erp-num">{{ datos.totales.productos }}</span>
+      <span class="erp-stat-hint">Tarjetas, plásticos y cuentas</span>
+    </app-card>
+    <app-card class="erp-stat">
+      <span class="erp-overline">En uso hoy</span>
+      <span class="erp-stat-value erp-num erp-gain">{{ datos.totales.activos }}</span>
+      <span class="erp-stat-hint">El resto son históricos</span>
+    </app-card>
+    <app-card class="erp-stat">
+      <span class="erp-overline">Movimientos</span>
+      <span class="erp-stat-value erp-num">{{ datos.totales.movimientos | number }}</span>
+      <span class="erp-stat-hint">Compras, transacciones y avisos del banco</span>
+    </app-card>
+  </div>
+
+  <app-filter-bar placeholder="Buscar una tarjeta o cuenta…" [segmentos]="segmentos" [filtros]="definicionFiltros" [estado]="estadoFiltros" (estadoChange)="alFiltrar($event)"></app-filter-bar>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <app-card padding="sm" *ngIf="cargando" aria-busy="true" aria-label="Cargando la línea de tiempo">
+    <app-skeleton *ngFor="let _ of [1, 2, 3, 4, 5, 6]" alto="56px"></app-skeleton>
+  </app-card>
+
+  <app-empty-state *ngIf="!cargando && !error && datos && datos.productos.length === 0" icon="timeline" titulo="Aún no hay productos" descripcion="Cuando registres tarjetas y cuentas verás aquí cuándo usaste cada una."></app-empty-state>
+  <app-empty-state *ngIf="!cargando && !error && datos && datos.productos.length > 0 && visibles.length === 0" icon="search_off" titulo="Ningún producto coincide" descripcion="Prueba con otros filtros o límpialos."></app-empty-state>
+
+  <app-card padding="sm" class="lt-card" *ngIf="!cargando && !error && visibles.length > 0">
+    <div class="lt-escala" aria-hidden="true">
+      <span class="lt-escala__vacio"></span>
+      <span class="lt-escala__pista">
+        <span class="lt-marca" *ngFor="let m of marcas" [style.left.%]="m.posicion"><span>{{ m.anio }}</span></span>
+        <span class="lt-hoy" style="left: 100%"><span>Hoy</span></span>
+      </span>
+    </div>
+
+    <ol class="lt-filas">
+      <li class="lt-fila" *ngFor="let p of visibles; trackBy: trackClave" [class.lt-fila--abierta]="abierto(p)">
+        <button type="button" class="lt-cabecera" (click)="alternar(p)" [attr.aria-expanded]="abierto(p)" [attr.aria-label]="descripcion(p, datos!.hasta)">
+          <span class="lt-icono" [attr.data-tipo]="p.tipo" aria-hidden="true">
+            <i class="material-icons">{{ p.tipo === 'CUENTA' ? 'account_balance' : p.tipo === 'DEBITO' ? 'account_balance_wallet' : 'credit_card' }}</i>
+          </span>
+          <span class="lt-nombre">
+            <strong>{{ p.etiqueta }}</strong>
+            <small class="erp-muted">{{ p.detalle }}</small>
+          </span>
+          <app-badge class="lt-estado" [tone]="p.estado === 'ACTIVA' ? 'success' : p.estado === 'REEMPLAZADA' ? 'info' : 'neutral'">{{ etiquetaEstado[p.estado] }}</app-badge>
+        </button>
+
+        <div class="lt-pista" aria-hidden="true">
+          <span class="lt-linea" *ngFor="let m of marcas" [style.left.%]="m.posicion"></span>
+          <ng-container *ngIf="!barra(p).sinFechas; else sinFechas">
+            <span class="lt-barra" [attr.data-tipo]="p.tipo" [class.lt-barra--abierta]="barra(p).abierta" [class.lt-barra--vacia]="p.movimientos === 0" [style.left.%]="barra(p).izquierda" [style.width.%]="barra(p).ancho">
+              <span class="lt-barra__texto" *ngIf="!textoAfuera(p)">{{ textoBarra(p) }}</span>
+            </span>
+            <span class="lt-texto-fuera" *ngIf="textoAfuera(p)" [class.lt-texto-fuera--izq]="textoALaIzquierda(p)" [style.left.%]="textoALaIzquierda(p) ? barra(p).izquierda : barra(p).izquierda + barra(p).ancho">{{ textoBarra(p) }}</span>
+          </ng-container>
+          <ng-template #sinFechas><span class="lt-sin-fechas erp-muted">Sin fechas registradas</span></ng-template>
+        </div>
+
+        <div class="lt-panel" *ngIf="abierto(p)" @expandir>
+          <dl class="lt-datos">
+            <div><dt class="erp-overline">Periodo</dt><dd>{{ p.desde ? (p.desde | fechaCorta) : '—' }} → {{ p.hasta ? (p.hasta | fechaCorta) : 'hoy' }}</dd></div>
+            <div><dt class="erp-overline">Duración</dt><dd>{{ duracion(p.desde, p.hasta, datos!.hasta) || '—' }}</dd></div>
+            <div *ngIf="p.tipo === 'CREDITO'"><dt class="erp-overline">Compras registradas</dt><dd class="erp-num">{{ p.compras | number }}</dd></div>
+            <div *ngIf="p.tipo === 'CUENTA'"><dt class="erp-overline">Transacciones registradas</dt><dd class="erp-num">{{ p.transacciones | number }}</dd></div>
+            <div><dt class="erp-overline">Avisos del banco</dt><dd class="erp-num">{{ p.avisos | number }}</dd></div>
+            <div><dt class="erp-overline">Monto acumulado</dt><dd class="erp-num">{{ p.monto | moneda }}</dd></div>
+            <div><dt class="erp-overline">Primer / último uso</dt><dd>{{ p.primerUso ? (p.primerUso | fechaCorta) : '—' }} / {{ p.ultimoUso ? (p.ultimoUso | fechaCorta) : '—' }}</dd></div>
+          </dl>
+          <p class="erp-muted lt-nota" *ngIf="p.fuente === 'AVISOS'">Las cifras salen de los avisos del banco: todavía no están todos registrados como {{ p.tipo === 'CUENTA' ? 'transacciones' : 'compras' }}.</p>
+          <a appButton="ghost" size="sm" *ngIf="enlaceDe(p) as e" [routerLink]="e.ruta">{{ e.texto }}<i class="material-icons" aria-hidden="true">chevron_right</i></a>
+        </div>
+      </li>
+    </ol>
+  </app-card>
+</section>

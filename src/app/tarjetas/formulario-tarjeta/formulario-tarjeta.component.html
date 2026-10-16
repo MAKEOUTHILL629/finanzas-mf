@@ -24,12 +24,23 @@
       <input id="tj-descripcion" appInput type="text" formControlName="descripcion" maxlength="255" autocomplete="off" placeholder="Ej. Oro" />
     </div>
 
+    <div class="erp-field">
+      <label class="erp-label" for="tj-alias">Alias</label>
+      <input id="tj-alias" appInput type="text" formControlName="alias" maxlength="255" autocomplete="off" placeholder="Cómo quieres verla («Débito *3698»)" />
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="tj-cuenta">Cuenta asociada <span class="erp-req" *ngIf="esDebito">*</span></label>
+      <app-select inputId="tj-cuenta" catalogo="cuentas" formControlName="cuentaId" [soloActivas]="false" [permitirVacio]="!esDebito" [placeholder]="esDebito ? 'Elige la cuenta' : 'Sin cuenta'" [invalido]="esDebito && !form.controls.cuentaId.value && form.touched"></app-select>
+      <p class="erp-field-hint">{{ esDebito ? 'La tarjeta de débito mueve el saldo de esta cuenta.' : 'Opcional: la cuenta desde la que normalmente la pagas.' }}</p>
+    </div>
+
     <div class="erp-field erp-span-2" *ngIf="tarjeta?.plasticos?.length">
       <span class="erp-label" id="tj-plasticos">Plásticos de esta tarjeta</span>
       <ul class="plasticos-lista" aria-labelledby="tj-plasticos">
         <li *ngFor="let p of tarjeta.plasticos">
           <span class="erp-mono">{{ terminacion(p.ultimos4) }}</span>
-          <span class="erp-badge" [class.erp-badge--success]="p.esActivo">{{ p.esActivo ? 'Activo' : 'Archivado' }}</span>
+          <app-badge [tone]="tonoEstado(p)">{{ etiquetaEstado(p) }}</app-badge>
           <span class="erp-muted">{{ vigencia(p) }}</span>
         </li>
       </ul>
@@ -39,6 +50,7 @@
       </p>
     </div>
 
+    <ng-container *ngIf="!esDebito">
     <div class="erp-field">
       <label class="erp-label" for="tj-corte">Día de corte</label>
       <input id="tj-corte" appInput type="number" inputmode="numeric" min="1" max="31" step="1" formControlName="diaCorte" [attr.aria-invalid]="campoInvalido('diaCorte')" aria-describedby="tj-corte-ayuda" />
@@ -80,6 +92,7 @@
       <input type="checkbox" formControlName="permiteDolares" />
       <span>Permite compras en dólares</span>
     </label>
+    </ng-container>
   </div>
 
   <div class="erp-form-actions">

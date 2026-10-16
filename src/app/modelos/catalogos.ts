@@ -25,10 +25,19 @@ export interface ItemPlasticoCatalogo {
   esActivo: boolean;
   vigenteDesde: string | null;
   vigenteHasta: string | null;
+  /** ACTIVA · REEMPLAZADA · INACTIVA (sirve para agrupar «Activas» / «Históricas»). */
+  estado?: 'ACTIVA' | 'INACTIVA' | 'REEMPLAZADA';
 }
 
 export interface ItemTarjeta {
   id: number;
+  /** CREDITO | DEBITO: las compras a crédito, extractos y cupos solo admiten las de crédito. */
+  tipo?: 'CREDITO' | 'DEBITO';
+  cuentaId?: number | null;
+  /** Nombre corto («Débito *3698»). */
+  alias?: string | null;
+  /** Producto «sin número». */
+  esGenerica?: boolean;
   /** «American Express · Green» (nunca vacío). */
   nombre: string;
   franquicia: string | null;
@@ -56,6 +65,8 @@ export interface ItemCuenta {
   saldoActual: number;
   activa: boolean;
   esPrincipal: boolean;
+  /** Cuenta «sin número» que agrupa los avisos del banco que no traen cuenta. */
+  esGenerica?: boolean;
 }
 
 export interface ItemCategoria {
