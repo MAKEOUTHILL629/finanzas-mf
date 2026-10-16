@@ -59,7 +59,7 @@ export class LoginComponent implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.router.navigate(['/compras-credito']);
+          this.router.navigate(['/']);
         },
         error: (error) => {
           const status: number = error?.status ?? -1;

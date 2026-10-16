@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { ResultadoAbonoPersona } from '../../modelos/erp';
@@ -34,6 +35,7 @@ export class ListaPersonasComponent implements OnInit, OnDestroy {
   /** Persona a la que se registra un abono. */
   abonando: ResumenPersona | null = null;
 
+  private readonly ruta = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
   private segmentos = new Map<number, SegmentoTarjeta[]>();
 
@@ -44,6 +46,9 @@ export class ListaPersonasComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // El inicio enlaza con `?persona=ID`: esa persona llega con el desglose abierto.
+    const persona = Number(this.ruta.snapshot.queryParamMap.get('persona'));
+    if (Number.isInteger(persona) && persona > 0) this.abierta = persona;
     this.modalService.modalState$.pipe(takeUntil(this.destroy$)).subscribe((id) => {
       if (id !== this.modalId) this.abonando = null;
     });

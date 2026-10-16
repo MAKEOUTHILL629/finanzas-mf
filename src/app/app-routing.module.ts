@@ -25,6 +25,7 @@ import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.compone
 import { AportesCarroComponent } from './aportes-carro/aportes-carro.component';
 import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.component';
 import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
+import { HomeComponent } from './home/home.component';
 import { ListaPersonasComponent } from './personas/lista-personas/lista-personas.component';
 import { CobrosComponent } from './cobros/cobros.component';
 import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
@@ -64,8 +65,9 @@ export const routes: Routes = [
   { path: 'cruces-deuda', component: ListaCrucesComponent, canActivate: [authGuard] },
   { path: 'obligaciones', component: ListaObligacionesComponent, canActivate: [authGuard] },
   { path: 'obligaciones/:id', component: DetalleObligacionComponent, canActivate: [authGuard] },
-  { path: '', redirectTo: 'compras-credito', pathMatch: 'full' },
-  { path: '**', redirectTo: 'compras-credito' }
+  // La primera pantalla es el resumen ejecutivo
+  { path: '', component: HomeComponent, canActivate: [authGuard], pathMatch: 'full' },
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({

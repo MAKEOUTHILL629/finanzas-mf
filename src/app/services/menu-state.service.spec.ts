@@ -122,11 +122,11 @@ describe('MenuStateService', () => {
   it('favoritos: por defecto, fijar, quitar, persistir y respetar el máximo', () => {
     const s = crear();
     expect(s.favoritos$.value).toEqual(FAVORITOS_POR_DEFECTO);
-    expect(s.alternarFavorito('prestamos').favoritos).toEqual(['compras-credito', 'transacciones', 'liquidacion']);
-    expect(s.alternarFavorito('cuentas')).toEqual({ favoritos: ['compras-credito', 'transacciones', 'liquidacion', 'cuentas'], lleno: false });
+    expect(s.alternarFavorito('personas').favoritos).toEqual(['inicio', 'compras-credito', 'transacciones']);
+    expect(s.alternarFavorito('cuentas')).toEqual({ favoritos: ['inicio', 'compras-credito', 'transacciones', 'cuentas'], lleno: false });
     expect(s.alternarFavorito('correos').lleno).toBe(true);
     expect(s.favoritos$.value.length).toBe(4);
-    expect(crear().favoritos$.value).toEqual(['compras-credito', 'transacciones', 'liquidacion', 'cuentas']); // persistido
+    expect(crear().favoritos$.value).toEqual(['inicio', 'compras-credito', 'transacciones', 'cuentas']); // persistido
   });
 
   it('un valor corrupto en el almacenamiento se ignora y se usan los de por defecto', () => {
@@ -142,7 +142,7 @@ describe('MenuStateService', () => {
     spyOn(Storage.prototype, 'setItem').and.throwError('QuotaExceededError');
     expect(() => s.alternarColapsado()).not.toThrow();
     expect(s.colapsado$.value).toBe(true);
-    s.alternarFavorito('prestamos'); // libera un hueco (los 4 por defecto están ocupados)
+    s.alternarFavorito('personas'); // libera un hueco (los 4 por defecto están ocupados)
     expect(() => s.alternarFavorito('cuentas')).not.toThrow();
     expect(s.favoritos$.value).toContain('cuentas');
   });

@@ -1,0 +1,236 @@
+<section class="erp-page home" aria-labelledby="titulo-inicio">
+  <!-- Bienvenida -->
+  <header class="home-cabecera">
+    <div class="home-saludo">
+      <p class="erp-overline">{{ fecha }}</p>
+      <h1 id="titulo-inicio">{{ saludo }}<ng-container *ngIf="nombre">, {{ nombre }}</ng-container></h1>
+      <p class="home-frase" *ngIf="datos" aria-live="polite">{{ frase }}</p>
+      <div class="erp-skeleton home-frase-esqueleto" *ngIf="cargando && !datos" aria-hidden="true"></div>
+    </div>
+
+    <div class="home-controles">
+      <div class="erp-month-picker" role="group" aria-label="Elegir periodo">
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <input id="home-periodo" appInput type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" aria-label="Periodo" />
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+      </div>
+      <button type="button" appButton="ghost" size="sm" *ngIf="!esMesActual()" (click)="irAlMesActual()"><i class="material-icons" aria-hidden="true">today</i>Mes actual</button>
+    </div>
+
+    <nav class="home-acciones" aria-label="Acciones rápidas">
+      <a appButton="primary" routerLink="/compras-credito" [queryParams]="{ accion: 'nueva' }"><i class="material-icons" aria-hidden="true">add</i>Nueva compra</a>
+      <a appButton="secondary" routerLink="/extractos"><i class="material-icons" aria-hidden="true">payments</i>Registrar pago</a>
+      <a appButton="secondary" routerLink="/transacciones" [queryParams]="{ accion: 'nueva' }"><i class="material-icons" aria-hidden="true">swap_horiz</i>Movimiento</a>
+    </nav>
+  </header>
+
+  <!-- Error -->
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <!-- Cargando: misma geometría que el resultado -->
+  <div class="bento" *ngIf="cargando && !datos" aria-busy="true" aria-label="Cargando el resumen">
+    <div class="erp-skeleton w-liquidez bento-esqueleto"></div>
+    <div class="erp-skeleton w-tarjetas bento-esqueleto"></div>
+    <div class="erp-skeleton w-cobrar bento-esqueleto"></div>
+    <div class="erp-skeleton w-actividad bento-esqueleto"></div>
+  </div>
+
+  <ng-container *ngIf="datos as d">
+    <!-- Alertas que esperan una acción -->
+    <ul class="home-alertas" *ngIf="hayAlertas" aria-label="Pendientes por atender">
+      <li *ngIf="d.alertas.movimientosPorRevisar > 0">
+        <a routerLink="/transacciones"><i class="material-icons" aria-hidden="true">rule</i>{{ d.alertas.movimientosPorRevisar }} {{ d.alertas.movimientosPorRevisar === 1 ? 'movimiento por revisar' : 'movimientos por revisar' }}</a>
+      </li>
+      <li *ngIf="d.alertas.correosPendientes > 0">
+        <a routerLink="/correos"><i class="material-icons" aria-hidden="true">mark_email_unread</i>{{ d.alertas.correosPendientes }} {{ d.alertas.correosPendientes === 1 ? 'correo del banco sin conciliar' : 'correos del banco sin conciliar' }}</a>
+      </li>
+      <li *ngIf="d.alertas.pagosPorAprobar > 0">
+        <a routerLink="/cobros"><i class="material-icons" aria-hidden="true">task_alt</i>{{ d.alertas.pagosPorAprobar }} {{ d.alertas.pagosPorAprobar === 1 ? 'pago reportado por aprobar' : 'pagos reportados por aprobar' }}</a>
+      </li>
+    </ul>
+
+    <div class="bento" [class.bento--recargando]="cargando">
+      <!-- 1 · Balance general y liquidez -->
+      <app-card class="bento-item w-liquidez" style="--i: 0" aria-labelledby="w-liquidez">
+        <header class="widget-cabecera">
+          <h2 id="w-liquidez" class="widget-titulo"><i class="material-icons" aria-hidden="true">account_balance</i>Balance y liquidez</h2>
+          <a class="widget-enlace" routerLink="/cuentas">Cuentas<i class="material-icons" aria-hidden="true">chevron_right</i></a>
+        </header>
+
+        <p class="erp-overline">Disponible en cuentas</p>
+        <p class="cifra-grande erp-num" [class.erp-loss]="d.liquidez.total < 0">{{ d.liquidez.total | moneda }}</p>
+        <p class="erp-stat-hint">{{ d.liquidez.numeroCuentas }} {{ d.liquidez.numeroCuentas === 1 ? 'cuenta activa' : 'cuentas activas' }}
+          <ng-container *ngFor="let o of d.liquidez.otrasMonedas"> · {{ o.moneda }} {{ o.saldo | moneda }}</ng-container></p>
+
+        <div class="flujo" role="group" [attr.aria-label]="'Flujo de ' + nombrePeriodo(d.periodo)">
+          <div class="flujo-fila">
+            <span class="flujo-etiqueta">Ingresos</span>
+            <span class="flujo-barra"><span class="flujo-relleno flujo-relleno--ingresos" [style.width.%]="barras.ingresos"></span></span>
+            <span class="flujo-valor erp-num erp-gain">{{ d.flujoMes.ingresos | moneda }}</span>
+          </div>
+          <div class="flujo-fila">
+            <span class="flujo-etiqueta">Gastos propios</span>
+            <span class="flujo-barra"><span class="flujo-relleno flujo-relleno--gastos" [style.width.%]="barras.gastos"></span></span>
+            <span class="flujo-valor erp-num">{{ d.flujoMes.gastosPropios | moneda }}</span>
+          </div>
+          <p class="erp-stat-hint">Flujo libre estimado de {{ nombrePeriodo(d.periodo) }}:
+            <strong class="erp-num" [class.erp-loss]="d.flujoMes.flujoLibre < 0" [class.erp-gain]="d.flujoMes.flujoLibre > 0">{{ d.flujoMes.flujoLibre | moneda }}</strong></p>
+        </div>
+
+        <ul class="erp-list" *ngIf="cuentasVisibles.length > 0" aria-label="Cuentas con más saldo">
+          <li *ngFor="let c of cuentasVisibles; trackBy: trackId">
+            <span class="lista-principal"><strong>{{ c.nombre }}</strong><span class="erp-muted" *ngIf="c.esPrincipal">Principal</span></span>
+            <span class="erp-num" [class.erp-loss]="c.saldo < 0">{{ c.saldo | moneda }}</span>
+          </li>
+        </ul>
+        <p class="erp-stat-hint" *ngIf="cuentasOcultas > 0">y {{ cuentasOcultas }} {{ cuentasOcultas === 1 ? 'cuenta más' : 'cuentas más' }}</p>
+
+        <div class="patrimonio" title="Disponible + lo que te deben − lo que falta pagar de las tarjetas">
+          <span class="erp-overline">Patrimonio neto</span>
+          <span class="erp-num patrimonio-valor" [class.erp-loss]="d.liquidez.patrimonioNeto.valor < 0">{{ d.liquidez.patrimonioNeto.valor | moneda }}</span>
+          <span class="erp-stat-hint">{{ d.liquidez.patrimonioNeto.liquidez | moneda:'compacto' }} disponibles + {{ d.liquidez.patrimonioNeto.porCobrar | moneda:'compacto' }} por cobrar − {{ d.liquidez.patrimonioNeto.deudaTarjetas | moneda:'compacto' }} en tarjetas</span>
+        </div>
+      </app-card>
+
+      <!-- 2 · Tarjetas de crédito -->
+      <app-card class="bento-item w-tarjetas" style="--i: 1" aria-labelledby="w-tarjetas">
+        <header class="widget-cabecera">
+          <h2 id="w-tarjetas" class="widget-titulo"><i class="material-icons" aria-hidden="true">credit_card</i>Tarjetas de crédito</h2>
+          <a class="widget-enlace" routerLink="/extractos">Extractos<i class="material-icons" aria-hidden="true">chevron_right</i></a>
+        </header>
+
+        <ng-container *ngIf="d.tarjetas.items.length > 0; else sinTarjetas">
+          <p class="erp-overline">A pagar en {{ nombrePeriodo(d.periodo) }}</p>
+          <p class="cifra-grande erp-num">{{ d.tarjetas.totales.pagoDelMes | moneda }}</p>
+
+          <div class="reparto" *ngIf="d.tarjetas.totales.pagoDelMes > 0">
+            <div class="barra-doble" role="img" [attr.aria-label]="'Mi parte ' + porcentajeMiParte + ' % y el resto de terceros'">
+              <span class="barra-propia" [style.width.%]="porcentajeMiParte"></span>
+              <span class="barra-terceros" [style.width.%]="100 - porcentajeMiParte"></span>
+            </div>
+            <div class="reparto-leyenda">
+              <span><i class="punto punto--propio" aria-hidden="true"></i>Mi parte <strong class="erp-num">{{ d.tarjetas.totales.miParte | moneda }}</strong></span>
+              <span><i class="punto punto--terceros" aria-hidden="true"></i>De terceros <strong class="erp-num">{{ d.tarjetas.totales.terceros | moneda }}</strong></span>
+            </div>
+          </div>
+
+          <ul class="tarjetas-lista">
+            <li class="tarjeta-fila" *ngFor="let t of d.tarjetas.items; trackBy: trackId">
+              <div class="tarjeta-cabecera">
+                <strong class="tarjeta-nombre">{{ t.etiqueta }}</strong>
+                <app-badge *ngIf="t.proximoVencimiento as v" [tone]="tonoVencimiento(v.diasRestantes, v.vencido)" icon="event">{{ textoVencimiento(v) }}</app-badge>
+                <span class="erp-num tarjeta-monto">{{ t.pagoDelMes | moneda }}</span>
+              </div>
+              <div class="tarjeta-detalle erp-stat-hint">
+                <span *ngIf="t.pagoDelMes > 0">Mi parte {{ t.miParte | moneda:'compacto' }} · terceros {{ t.terceros | moneda:'compacto' }}</span>
+                <span *ngIf="t.pagoDelMes === 0">Sin cuotas este mes</span>
+                <span>Debes en total {{ t.deudaPendiente | moneda:'compacto' }}</span>
+              </div>
+              <div class="cupo" *ngIf="t.porcentajeCupo !== null" [attr.aria-label]="'Cupo utilizado ' + t.porcentajeCupo + ' %'">
+                <span class="erp-progress"><span class="erp-progress-bar" [style.width.%]="t.porcentajeCupo"></span></span>
+                <span class="erp-stat-hint">Cupo usado {{ t.porcentajeCupo }} % · {{ t.cupoUtilizado | moneda:'compacto' }} de {{ t.cupoTotal | moneda:'compacto' }}</span>
+              </div>
+              <div class="cupo" *ngIf="t.porcentajeCupo === null && t.cupoUtilizado > 0">
+                <span class="erp-stat-hint">Cupo utilizado {{ t.cupoUtilizado | moneda:'compacto' }} · <a routerLink="/tarjetas">registra el cupo</a> para ver el porcentaje</span>
+              </div>
+            </li>
+          </ul>
+
+          <p class="pie-widget">
+            Deuda total de tarjetas <strong class="erp-num">{{ d.tarjetas.totales.deudaPendiente | moneda }}</strong>
+            <ng-container *ngIf="d.tarjetas.totales.vencidoSinRegistrar > 0"> ·
+              <span class="erp-muted">{{ d.tarjetas.totales.vencidoSinRegistrar | moneda:'compacto' }} de meses anteriores sin marcar como pagados</span></ng-container>
+          </p>
+        </ng-container>
+        <ng-template #sinTarjetas>
+          <div class="vacio-widget">
+            <i class="material-icons" aria-hidden="true">credit_card_off</i>
+            <p>Aún no tienes tarjetas. Regístralas para ver tu cupo, tus extractos y lo que debes pagar cada mes.</p>
+            <a appButton="secondary" size="sm" routerLink="/tarjetas">Agregar una tarjeta</a>
+          </div>
+        </ng-template>
+      </app-card>
+
+      <!-- 3 · Cuentas por cobrar a personas -->
+      <app-card class="bento-item w-cobrar" style="--i: 2" aria-labelledby="w-cobrar">
+        <header class="widget-cabecera">
+          <h2 id="w-cobrar" class="widget-titulo"><i class="material-icons" aria-hidden="true">groups</i>Te deben</h2>
+          <a class="widget-enlace" routerLink="/personas">Personas<i class="material-icons" aria-hidden="true">chevron_right</i></a>
+        </header>
+
+        <p class="erp-overline">Por cobrar ahora</p>
+        <p class="cifra-grande erp-num">{{ d.porCobrar.aPagarAhora | moneda }}</p>
+        <p class="erp-stat-hint">Este mes {{ d.porCobrar.pagoDelMes | moneda }} · por vencer {{ d.porCobrar.porVencer | moneda }} · deuda total {{ d.porCobrar.deudaTotal | moneda }}</p>
+
+        <ul class="deudores" *ngIf="d.porCobrar.topDeudores.length > 0; else nadieDebe" aria-label="Quién te debe más">
+          <li *ngFor="let p of d.porCobrar.topDeudores; trackBy: trackPersona">
+            <a class="deudor" routerLink="/personas" [queryParams]="{ persona: p.personaId }" [attr.aria-label]="'Ver el detalle de ' + p.nombre">
+              <span class="avatar" [style.background]="p.color || 'var(--brand-blue)'" aria-hidden="true">{{ iniciales(p.nombre, p.iniciales) }}</span>
+              <span class="deudor-texto">
+                <strong>{{ p.nombre }}</strong>
+                <span class="erp-stat-hint">Este mes {{ p.pagoDelMes | moneda:'compacto' }}<ng-container *ngIf="p.porVencer > 0"> · por vencer {{ p.porVencer | moneda:'compacto' }}</ng-container></span>
+              </span>
+              <span class="deudor-monto erp-num">{{ p.deudaTotal | moneda }}</span>
+              <i class="material-icons deudor-flecha" aria-hidden="true">chevron_right</i>
+            </a>
+          </li>
+        </ul>
+        <ng-template #nadieDebe>
+          <div class="vacio-widget">
+            <i class="material-icons" aria-hidden="true">sentiment_satisfied</i>
+            <p>Nadie te debe nada en {{ nombrePeriodo(d.periodo) }}.</p>
+          </div>
+        </ng-template>
+
+        <p class="aviso-pie" *ngIf="d.porCobrar.historicoSinCargar.cuotas > 0">
+          <i class="material-icons" aria-hidden="true">history</i>
+          {{ d.porCobrar.historicoSinCargar.cuotas }} cuotas anteriores ({{ d.porCobrar.historicoSinCargar.monto | moneda:'compacto' }}) sin registrar; no se suman al saldo.
+        </p>
+      </app-card>
+
+      <!-- 4 · Actividad reciente y vencimientos -->
+      <app-card class="bento-item w-actividad" style="--i: 3" aria-labelledby="w-actividad">
+        <header class="widget-cabecera">
+          <h2 id="w-actividad" class="widget-titulo"><i class="material-icons" aria-hidden="true">notifications_active</i>Vencimientos y actividad</h2>
+          <a class="widget-enlace" routerLink="/transacciones">Movimientos<i class="material-icons" aria-hidden="true">chevron_right</i></a>
+        </header>
+
+        <h3 class="subtitulo">Próximos pagos de tarjeta</h3>
+        <ul class="erp-list" *ngIf="d.proximosVencimientos.length > 0; else sinVencimientos">
+          <li *ngFor="let v of d.proximosVencimientos; trackBy: trackVencimiento">
+            <span class="lista-principal">
+              <strong>{{ v.tarjeta }}</strong>
+              <span class="erp-muted">Extracto de {{ nombrePeriodo(v.periodo) }} · {{ v.fecha | fechaCorta }}</span>
+            </span>
+            <app-badge [tone]="tonoVencimiento(v.diasRestantes, v.vencido)">{{ textoVencimiento(v) }}</app-badge>
+            <span class="erp-num">{{ v.monto | moneda }}</span>
+          </li>
+        </ul>
+        <ng-template #sinVencimientos>
+          <p class="erp-muted vacio-linea">Sin pagos pendientes en los próximos 60 días. Define el «día límite de pago» de tus tarjetas para ver aquí cuándo vencen.</p>
+        </ng-template>
+
+        <h3 class="subtitulo">Actividad reciente</h3>
+        <ul class="erp-list" *ngIf="d.movimientosRecientes.length > 0; else sinMovimientos">
+          <li *ngFor="let m of d.movimientosRecientes; trackBy: trackId">
+            <i class="material-icons movimiento-icono" [class.movimiento-icono--entrada]="esEntrada(m)" aria-hidden="true">{{ iconoMovimiento(m.tipo) }}</i>
+            <span class="lista-principal">
+              <strong>{{ m.concepto }}</strong>
+              <span class="erp-muted">{{ dia(m) }}<ng-container *ngIf="m.cuenta"> · {{ m.cuenta }}</ng-container><ng-container *ngIf="m.estado === 'PENDIENTE_REVISION'"> · por revisar</ng-container></span>
+            </span>
+            <span class="erp-num" [class.erp-gain]="esEntrada(m)">{{ esEntrada(m) ? '+' : '' }}{{ m.monto | moneda }}</span>
+          </li>
+        </ul>
+        <ng-template #sinMovimientos>
+          <p class="erp-muted vacio-linea">Todavía no hay movimientos registrados.</p>
+        </ng-template>
+      </app-card>
+    </div>
+  </ng-container>
+</section>

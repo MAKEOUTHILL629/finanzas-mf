@@ -79,11 +79,17 @@
       <!-- Modo compacto: un botón por grupo que abre un menú emergente -->
       <ul class="rail" *ngIf="esCompacto">
         <li *ngFor="let g of grupos; trackBy: trackGrupo">
-          <button type="button" class="rail-btn rail-grupo" [class.activo]="grupoActivo(g)" [class.abierto]="flyout?.grupo?.id === g.id"
-                  (click)="abrirFlyout(g, $event)" aria-haspopup="true" [attr.aria-expanded]="flyout?.grupo?.id === g.id"
-                  [attr.aria-label]="g.titulo" [title]="g.titulo">
+          <a *ngIf="g.directo; else grupoRail" class="rail-btn rail-grupo" [routerLink]="g.items[0].ruta" [class.activo]="grupoActivo(g)"
+             [attr.aria-label]="g.titulo" [title]="g.titulo" [attr.aria-current]="grupoActivo(g) ? 'page' : null" (click)="alElegir()">
             <i class="material-icons" aria-hidden="true">{{ g.icono }}</i>
-          </button>
+          </a>
+          <ng-template #grupoRail>
+            <button type="button" class="rail-btn rail-grupo" [class.activo]="grupoActivo(g)" [class.abierto]="flyout?.grupo?.id === g.id"
+                    (click)="abrirFlyout(g, $event)" aria-haspopup="true" [attr.aria-expanded]="flyout?.grupo?.id === g.id"
+                    [attr.aria-label]="g.titulo" [title]="g.titulo">
+              <i class="material-icons" aria-hidden="true">{{ g.icono }}</i>
+            </button>
+          </ng-template>
         </li>
       </ul>
 
@@ -97,24 +103,34 @@
 
       <!-- Grupos: se despliega uno a la vez -->
       <div class="grupos" *ngIf="!esCompacto && !buscando">
-        <section class="grupo" *ngFor="let g of grupos; trackBy: trackGrupo"
-                 [class.abierto]="estaAbierto(g)" [class.grupo--activo]="grupoActivo(g)">
-          <h2 class="grupo-titulo">
-            <button type="button" class="grupo-btn" (click)="alternarGrupo(g)"
-                    [attr.aria-expanded]="estaAbierto(g)" [attr.aria-controls]="'grupo-' + g.id">
-              <i class="material-icons grupo-icono" aria-hidden="true">{{ g.icono }}</i>
-              <span class="grupo-nombre">{{ g.titulo }}</span>
-              <i class="material-icons chevron" aria-hidden="true">expand_more</i>
-            </button>
-          </h2>
-          <div class="grupo-lista" [id]="'grupo-' + g.id">
+        <ng-container *ngFor="let g of grupos; trackBy: trackGrupo">
+          <!-- Enlace suelto (Inicio): sin cabecera ni desplegable -->
+          <section class="grupo grupo--directo" *ngIf="g.directo" [class.grupo--activo]="grupoActivo(g)">
             <ul class="items">
               <ng-container *ngFor="let item of g.items; trackBy: trackItem">
                 <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: item }"></ng-container>
               </ng-container>
             </ul>
-          </div>
-        </section>
+          </section>
+          <section class="grupo" *ngIf="!g.directo"
+                   [class.abierto]="estaAbierto(g)" [class.grupo--activo]="grupoActivo(g)">
+            <h2 class="grupo-titulo">
+              <button type="button" class="grupo-btn" (click)="alternarGrupo(g)"
+                      [attr.aria-expanded]="estaAbierto(g)" [attr.aria-controls]="'grupo-' + g.id">
+                <i class="material-icons grupo-icono" aria-hidden="true">{{ g.icono }}</i>
+                <span class="grupo-nombre">{{ g.titulo }}</span>
+                <i class="material-icons chevron" aria-hidden="true">expand_more</i>
+              </button>
+            </h2>
+            <div class="grupo-lista" [id]="'grupo-' + g.id">
+              <ul class="items">
+                <ng-container *ngFor="let item of g.items; trackBy: trackItem">
+                  <ng-container *ngTemplateOutlet="itemTpl; context: { $implicit: item }"></ng-container>
+                </ng-container>
+              </ul>
+            </div>
+          </section>
+        </ng-container>
       </div>
     </div>
 

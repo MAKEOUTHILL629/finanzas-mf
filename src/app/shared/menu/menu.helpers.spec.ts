@@ -69,7 +69,7 @@ describe('itemActivo', () => {
   });
 
   it('sin coincidencia no hay sección activa', () => {
-    expect(activo('/')).toBeNull();
+    expect(activo('/')).toBe('inicio'); // la raíz es el Inicio, y solo ella
     expect(activo('/login')).toBeNull();
     expect(activo('/inexistente')).toBeNull();
   });

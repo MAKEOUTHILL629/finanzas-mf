@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { CompraDePersona, DesgloseTarjeta, DetalleEstadoCuentaPersona, EstadoCuentaPersonas, ResumenPersona } from '../modelos/estado-cuenta-personas';
 import { periodoActual } from '../shared/periodo.helper';
 import { API, configurarTestBed, errorHttp, http, verificarHttp } from '../testing/erp-testing';
@@ -149,6 +150,16 @@ describe('ListaPersonasComponent', () => {
     expect(texto).toContain('Celular');
     c.alternar(c.personas[0]);
     expect(c.abierta).toBeNull();
+  });
+
+  it('?persona=ID abre el desglose de esa persona (enlace desde el inicio)', () => {
+    configurarTestBed([ListaPersonasComponent, DetallePersonaComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({ persona: '2' }) } } }]);
+    const fixture = TestBed.createComponent(ListaPersonasComponent);
+    fixture.detectChanges();
+    http().expectOne((r) => r.url === `${API}/personas/estado-cuenta`).flush({ periodo: periodoActual(), personas: [resumen()], totales: totales() });
+    fixture.detectChanges();
+    expect(fixture.componentInstance.abierta).toBe(2);
+    http().expectOne((r) => r.url === `${API}/personas/2/estado-cuenta`).flush(detalle());
   });
 
   it('un error al cargar se explica y permite reintentar', () => {

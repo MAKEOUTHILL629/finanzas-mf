@@ -22,9 +22,18 @@ export interface GrupoMenu {
   titulo: string;
   icono: string;
   items: ItemMenu[];
+  /** Un enlace suelto (sin cabecera ni desplegable): su único ítem se muestra directamente. */
+  directo?: boolean;
 }
 
 export const GRUPOS_MENU: GrupoMenu[] = [
+  {
+    id: 'inicio',
+    titulo: 'Inicio',
+    icono: 'home',
+    directo: true,
+    items: [{ id: 'inicio', etiqueta: 'Inicio', icono: 'home', ruta: '/', palabras: 'inicio resumen dashboard bienvenida panel principal patrimonio' }],
+  },
   {
     id: 'cobros',
     titulo: 'Compras y cobros',
@@ -75,7 +84,7 @@ export const GRUPOS_MENU: GrupoMenu[] = [
 ];
 
 /** Accesos fijados la primera vez (también son los de la barra inferior del móvil). */
-export const FAVORITOS_POR_DEFECTO = ['compras-credito', 'prestamos', 'transacciones', 'liquidacion'];
+export const FAVORITOS_POR_DEFECTO = ['inicio', 'compras-credito', 'transacciones', 'personas'];
 
 /** La barra inferior del móvil tiene 4 huecos + «Más». */
 export const MAX_FAVORITOS = 4;

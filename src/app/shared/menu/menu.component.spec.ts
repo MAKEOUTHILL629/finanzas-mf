@@ -75,9 +75,9 @@ describe('MenuComponent', () => {
 
     it('muestra favoritos, buscador y los 4 grupos, con solo el de la sección actual desplegado', () => {
       expect(menu.layout).toBe('sidebar');
-      expect(etiquetas('.favoritos .fav')).toEqual(['Compras', 'Préstamos', 'Movimientos', 'Liquidación']);
+      expect(etiquetas('.favoritos .fav')).toEqual(['Inicio', 'Compras', 'Movimientos', 'Personas']);
       expect(q('.buscador-input')).not.toBeNull();
-      expect(qa('.grupo').length).toBe(4);
+      expect(qa('.grupo').length).toBe(5);
       expect(qa('.grupo.abierto').length).toBe(1);
       expect(texto('.grupo.abierto .grupo-nombre')).toBe('Pagos');
       expect(qa('.grupo-btn').map((b) => b.getAttribute('aria-expanded'))).toEqual(['false', 'true', 'false', 'false']);
@@ -235,15 +235,15 @@ describe('MenuComponent', () => {
 
     it('muestra un botón por grupo y marca el de la sección actual', () => {
       expect(menu.layout).toBe('rail');
-      expect(qa('.rail-grupo').length).toBe(4);
-      expect(qa('.rail-grupo').map((b) => b.getAttribute('aria-label'))).toEqual(['Compras y cobros', 'Pagos', 'Dinero', 'Análisis']);
+      expect(qa('.rail-grupo').length).toBe(5);
+      expect(qa('.rail-grupo').map((b) => b.getAttribute('aria-label'))).toEqual(['Inicio', 'Compras y cobros', 'Pagos', 'Dinero', 'Análisis']);
       expect(qa('.rail-grupo.activo').length).toBe(1);
       expect(q('.buscador-input')).toBeNull(); // el buscador es un botón de ícono
       expect(q('.rail-btn[aria-label^="Buscar"]')).not.toBeNull();
     });
 
     it('un grupo abre un menú emergente con sus secciones; Esc y el clic fuera lo cierran', () => {
-      (qa('.rail-grupo')[2] as HTMLButtonElement).click();
+      (qa('.rail-grupo')[3] as HTMLButtonElement).click();
       refrescar();
       expect(texto('.flyout .flyout-titulo')).toBe('Dinero');
       expect(qa('.flyout .item').map((i) => i.querySelector('.item-etiqueta')!.textContent)).toEqual(['Cuentas', 'Categorías', 'Transacciones', 'Correos']);
@@ -252,7 +252,7 @@ describe('MenuComponent', () => {
       refrescar();
       expect(q('.flyout')).toBeNull();
 
-      (qa('.rail-grupo')[0] as HTMLButtonElement).click();
+      (qa('.rail-grupo')[1] as HTMLButtonElement).click();
       refrescar();
       expect(q('.flyout')).not.toBeNull();
       document.body.click();
@@ -270,7 +270,7 @@ describe('MenuComponent', () => {
     });
 
     it('elegir una sección navega y cierra el menú emergente', async () => {
-      (qa('.rail-grupo')[3] as HTMLButtonElement).click();
+      (qa('.rail-grupo')[4] as HTMLButtonElement).click();
       refrescar();
       (qa('.flyout .item-enlace')[2] as HTMLAnchorElement).click();
       await fixture.whenStable();
@@ -372,7 +372,7 @@ describe('MenuComponent', () => {
 
     it('barra inferior con los 4 favoritos (etiquetas cortas) y «Más»', () => {
       expect(menu.layout).toBe('movil');
-      expect(etiquetas('.barra-inferior .barra-item')).toEqual(['Compras', 'Préstamos', 'Movimientos', 'Liquidación', 'Más']);
+      expect(etiquetas('.barra-inferior .barra-item')).toEqual(['Inicio', 'Compras', 'Movimientos', 'Personas', 'Más']);
       expect(q('.topbar')).not.toBeNull();
     });
 
@@ -381,9 +381,9 @@ describe('MenuComponent', () => {
     });
 
     it('un favorito activo se resalta y «Más» no', async () => {
-      await router.navigateByUrl('/prestamos');
+      await router.navigateByUrl('/transacciones');
       refrescar();
-      expect(etiquetas('.barra-inferior a.activo')).toEqual(['Préstamos']);
+      expect(etiquetas('.barra-inferior a.activo')).toEqual(['Movimientos']);
       expect(q('.barra-inferior button.barra-item')!.classList).not.toContain('activo');
     });
 
@@ -391,7 +391,7 @@ describe('MenuComponent', () => {
       (q('.barra-inferior button.barra-item') as HTMLButtonElement).click();
       refrescar();
       expect(menu.drawerAbierto).toBe(true);
-      expect(qa('.nav .grupo').length).toBe(4);
+      expect(qa('.nav .grupo').length).toBe(5);
     });
 
     it('al ensanchar la ventana la barra inferior desaparece y aparece la lateral', () => {

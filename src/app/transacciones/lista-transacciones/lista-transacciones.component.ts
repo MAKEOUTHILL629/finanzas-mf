@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
@@ -84,6 +85,8 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
   error: string | null = null;
 
   private destroy$ = new Subject<void>();
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   constructor(
     private transaccionesService: TransaccionesService,
@@ -93,6 +96,7 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.atenderAccionRapida();
     this.modalService.modalState$.pipe(takeUntil(this.destroy$)).subscribe((id) => {
       if (id !== this.modalId) {
         this.formularioAbierto = false;
@@ -179,6 +183,13 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
   }
 
   // ── alta / edición ──
+
+  /** El inicio enlaza con `?accion=nueva`: se abre el formulario y se limpia la URL para que recargar no lo reabra. */
+  private atenderAccionRapida(): void {
+    if (this.ruta.snapshot.queryParamMap.get('accion') !== 'nueva') return;
+    void this.router.navigate([], { queryParams: { accion: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    setTimeout(() => this.nueva());
+  }
 
   nueva(): void {
     this.editando = null;

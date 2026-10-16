@@ -582,3 +582,6 @@
 @media (prefers-reduced-motion: reduce) {
   .nav, .nav--panel, .velo, .grupo-lista, .chevron, .flyout, .barra-item .material-icons { transition: none; animation: none; }
 }
+
+/* Enlace suelto (Inicio): sin cabecera, un poco de aire antes del primer grupo */
+.grupo--directo { margin-bottom: var(--space-0); }

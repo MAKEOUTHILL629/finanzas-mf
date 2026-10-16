@@ -101,6 +101,8 @@ import { AprobarReporteComponent } from './cobros/aprobar-reporte/aprobar-report
 import { CompartirCobroComponent } from './cobros/compartir-cobro/compartir-cobro.component';
 import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
 
+// Dominio: Inicio (resumen ejecutivo)
+import { HomeComponent } from './home/home.component';
 // Dominio: Personas (lo que debe cada una)
 import { ListaPersonasComponent } from './personas/lista-personas/lista-personas.component';
 import { DetallePersonaComponent } from './personas/detalle-persona/detalle-persona.component';
@@ -220,6 +222,10 @@ const COBROS_DECLARATIONS = [
   CobroPublicoComponent
 ];
 
+const HOME_DECLARATIONS = [
+  HomeComponent
+];
+
 const PERSONAS_DECLARATIONS = [
   ListaPersonasComponent,
   DetallePersonaComponent
@@ -276,6 +282,7 @@ const CORE_PROVIDERS: (Provider | EnvironmentProviders)[] = [
     ...TRANSACCIONES_DECLARATIONS,
     ...CORREOS_DECLARATIONS,
     ...COBROS_DECLARATIONS,
+    ...HOME_DECLARATIONS,
     ...PERSONAS_DECLARATIONS,
     ...ANALISIS_DECLARATIONS
   ],

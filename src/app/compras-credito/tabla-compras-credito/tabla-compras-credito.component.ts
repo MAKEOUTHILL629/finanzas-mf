@@ -8,7 +8,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ApiServicesService } from '../../services/api-services.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ModalService } from '../../services/modal.service';
 import { capitalize, matchesSearchFields, normalizeSearchText } from '../../shared/utils';
 import { SharedListasService } from '../../services/shared-listas.service';
@@ -63,7 +63,8 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     private router: Router,
     private modalService: ModalService,
     private sharedListasService: SharedListasService,
-    private catalogos: CatalogosService
+    private catalogos: CatalogosService,
+    private ruta: ActivatedRoute
   ) {
     this.filterForm = this.fb.group({
       fechaCompraInicio: [''],
@@ -77,6 +78,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.atenderAccionRapida();
     this.loadTarjetas();
     this.loadPersonas();
     this.loadProducts();
@@ -327,6 +329,13 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     this.router.navigate(['/compra-credito-detalle', compra.id], {
       state: { compra: compra },
     });
+  }
+
+  /** El inicio enlaza con `?accion=nueva`: se abre el formulario y se limpia la URL para que recargar no lo reabra. */
+  private atenderAccionRapida(): void {
+    if (this.ruta.snapshot.queryParamMap.get('accion') !== 'nueva') return;
+    void this.router.navigate([], { queryParams: { accion: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    setTimeout(() => this.openCreditForm());
   }
 
   openCreditForm(): void {
