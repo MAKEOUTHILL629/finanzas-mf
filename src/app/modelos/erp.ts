@@ -238,10 +238,14 @@ export interface ConciliarNotificacion {
   concepto?: string;
   /** Corrección del monto (solo transacciones en COP). */
   monto?: number | string;
+  /** Día real del movimiento (`yyyy-MM-dd`) cuando el correo lo trae mal; solo al crearlo desde el correo. */
+  fecha?: string;
+  /** TRM (COP por unidad) de un correo en otra moneda que no trae tasa. */
+  tasaCambio?: number | string;
   notas?: string;
   /** Compras de tarjeta importadas: recalcula las cuotas (Regla 4). */
   numeroCuotas?: number;
-  /** Tarjeta, cuando el correo no la identificó: crea la compra a 1 cuota. */
+  /** Tarjeta, cuando el correo no la identificó: de crédito crea la compra a 1 cuota; de débito registra el movimiento en su cuenta. */
   tarjetaId?: number;
   responsables?: ResponsableConciliacion[];
   convertirEnPrestamo?: ConvertirEnPrestamo;

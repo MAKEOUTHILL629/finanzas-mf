@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import { AnalyticsFlujoCajaService } from './analytics-flujo-caja.service';
 import { ComprasCreditoService } from './compras-credito.service';
 import { CuentasFinancierasService } from './cuentas-financieras.service';
-import { limpiarParams } from './http-params.util';
+import { depurarCuerpo, limpiarParams } from './http-params.util';
 import { LedgerDeudasService } from './ledger-deudas.service';
 import { NotificacionesCorreoService } from './notificaciones-correo.service';
 import { ObligacionesMesService } from './obligaciones-mes.service';
@@ -33,6 +33,22 @@ describe('Servicios ERP (contrato con el backend NestJS)', () => {
     it('descarta undefined, null y cadenas vacías (HttpParams los convertiría en "undefined")', () => {
       expect(limpiarParams({ a: 1, b: undefined, c: null, d: '', e: false, f: 'x' })).toEqual({ a: 1, e: false, f: 'x' });
       expect(limpiarParams(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('depurarCuerpo', () => {
+    it('quita lo vacío (undefined, null, "" y en blanco), conserva false y 0 y no deja objetos vacíos', () => {
+      expect(depurarCuerpo<object>({ a: 1, b: undefined, c: null, d: '', e: '  ', f: false, g: 0, h: 'x', i: {}, j: { k: null, l: '' } })).toEqual({ a: 1, f: false, g: 0, h: 'x' });
+      expect(depurarCuerpo<object>({})).toEqual({});
+      expect(depurarCuerpo<object>({ lista: ['a', '', null], vacia: [null] })).toEqual({ lista: ['a'] });
+    });
+
+    it('envía como número los ids que llegaron como texto del <select> y respeta lo demás', () => {
+      expect(depurarCuerpo<object>({ tarjetaId: '12', id: '7', categoriaId: ' 3 ', ultimos4: '0088', monto: '35625.00', nota: '12' })).toEqual({
+        tarjetaId: 12, id: 7, categoriaId: 3, ultimos4: '0088', monto: '35625.00', nota: '12',
+      });
+      expect(depurarCuerpo<object>({ responsables: [{ personaId: '2', porcentajePago: '60' }, { personaId: '', porcentajePago: '' }] })).toEqual({ responsables: [{ personaId: 2, porcentajePago: '60' }] });
+      expect(depurarCuerpo<object>({ cuentaId: 'abc' })).toEqual({ cuentaId: 'abc' }); // lo no numérico se deja: lo rechazará el servidor
     });
   });
 
@@ -98,6 +114,14 @@ describe('Servicios ERP (contrato con el backend NestJS)', () => {
       s.conciliarNotificacion(9, cuerpo).subscribe();
       const req = esperar('PATCH', 'notificaciones-correo/9/conciliar').request;
       expect(req.body).toEqual(cuerpo);
+    });
+
+    it('conciliar y asignar no envían campos vacíos ni ids como texto (así el servidor no responde 400)', () => {
+      const s = TestBed.inject(NotificacionesCorreoService);
+      s.conciliarNotificacion(9, { accion: 'CONFIRMAR', concepto: '', categoriaId: null as never, cuentaId: '3' as never, tarjetaId: undefined, notas: '  ', tasaCambio: '4100.5' }).subscribe();
+      expect(esperar('PATCH', 'notificaciones-correo/9/conciliar').request.body).toEqual({ accion: 'CONFIRMAR', cuentaId: 3, tasaCambio: '4100.5' });
+      s.asignarProducto({ ultimos4: '0088', destino: 'TARJETA', id: '4' as never, nuevo: { franquicia: '', descripcion: '' } }).subscribe();
+      expect(esperar('POST', 'notificaciones-correo/productos/asignar').request.body).toEqual({ ultimos4: '0088', destino: 'TARJETA', id: 4 });
     });
 
     it('descartarNotificacion envía accion DESCARTAR', () => {

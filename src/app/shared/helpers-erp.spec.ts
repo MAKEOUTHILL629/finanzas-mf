@@ -97,6 +97,12 @@ describe('mensajeDeError', () => {
     expect(mensajeDeError({ error: 'texto plano', status: 400 })).toBe('texto plano');
   });
 
+  it('nombra los campos con las etiquetas dadas y deja tal cual los demás', () => {
+    const cuerpo = { error: { message: 'Datos inválidos', errors: { tasaCambio: ['falta la tasa'], otro: ['x'] } }, status: 400 };
+    expect(mensajeDeError(cuerpo)).toBe('tasaCambio: falta la tasa · otro: x');
+    expect(mensajeDeError(cuerpo, 'por defecto', { tasaCambio: 'TRM' })).toBe('TRM: falta la tasa · otro: x');
+  });
+
   it('casos de red, sesión y servidor', () => {
     expect(mensajeDeError({ status: 0, isNetworkError: true })).toContain('No hay conexión');
     expect(mensajeDeError({ isTimeout: true })).toContain('tardó demasiado');

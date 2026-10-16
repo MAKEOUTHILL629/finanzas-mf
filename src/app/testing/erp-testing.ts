@@ -24,13 +24,14 @@ import { FieldComponent, InputDirective } from '../shared/ui/field/field.compone
 import { LogoComponent } from '../shared/ui/logo/logo.component';
 import { PageHeaderComponent } from '../shared/ui/page-header/page-header.component';
 import { SelectComponent } from '../shared/ui/select/select.component';
+import { SelectProductoComponent } from '../shared/ui/select-producto/select-producto.component';
 import { TableDirective } from '../shared/ui/table/table.directive';
 import { ThemeToggleComponent } from '../shared/ui/theme-toggle/theme-toggle.component';
 import { TooltipDirective } from '../shared/ui/tooltip/tooltip.directive';
 
 /** Componentes base del sistema de diseño: las plantillas los usan, así que toda prueba de un componente debe declararlos. */
 export const COMPONENTES_UI: Type<unknown>[] = [
-  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SelectComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
+  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SelectComponent, SelectProductoComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
 ];
 /** Directivas independientes (standalone): van en `imports`, no en `declarations`. */
 export const DIRECTIVAS_UI = [TooltipDirective];

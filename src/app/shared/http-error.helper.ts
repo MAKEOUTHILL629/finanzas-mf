@@ -3,7 +3,12 @@
  * El backend responde con `{ message }`, `{ mensaje }`, `{ message, errors: { campo: [..] } }` (validación)
  * o `{ status: 'error', message }`; el interceptor añade `isTimeout` / `isNetworkError`.
  */
-export function mensajeDeError(error: unknown, porDefecto = 'No se pudo completar la operación. Inténtalo de nuevo.'): string {
+export function mensajeDeError(
+  error: unknown,
+  porDefecto = 'No se pudo completar la operación. Inténtalo de nuevo.',
+  /** Nombre legible de cada campo del formulario (`tasaCambio` → «TRM»); los que no estén se muestran tal cual. */
+  etiquetas?: Record<string, string>
+): string {
   const e = error as {
     status?: number;
     isTimeout?: boolean;
@@ -20,7 +25,7 @@ export function mensajeDeError(error: unknown, porDefecto = 'No se pudo completa
   if (typeof cuerpo === 'string' && cuerpo.trim()) return cuerpo.trim();
   if (cuerpo && typeof cuerpo === 'object') {
     const detalles = cuerpo.errors
-      ? Object.entries(cuerpo.errors).flatMap(([campo, v]) => (Array.isArray(v) ? v : [v]).map((m) => `${campo}: ${String(m)}`))
+      ? Object.entries(cuerpo.errors).flatMap(([campo, v]) => (Array.isArray(v) ? v : [v]).map((m) => `${etiquetas?.[campo] ?? campo}: ${String(m)}`))
       : [];
     if (detalles.length > 0) return detalles.slice(0, 3).join(' · ');
     const texto = cuerpo.message ?? cuerpo.mensaje;

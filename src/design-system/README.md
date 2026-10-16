@@ -40,9 +40,10 @@ Tipografía: `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text"
 | `<app-badge tone icon solid>` | Insignia de estado. |
 | `<app-field label for hint error required>` + `appInput` | Campo de formulario; `appInput` estiliza `input`, `select` y `textarea` nativos. |
 | `<app-select catalogo="…">` | Selector de catálogos (personas, tarjetas, cuentas, categorías) con carga, vacío y error. |
+| `<app-select-producto formControlName ultimos4 instrumento>` | Selector único de **tarjetas de crédito, de débito y cuentas** (grupos); entrega `t:ID` / `c:ID` y elige solo el producto de los últimos 4 dígitos dados. |
 | `<table appTable compact stack sticky>` | Tabla; en móvil cada fila se vuelve una tarjeta. |
 | `<app-empty-state icon titulo descripcion>` | Estado vacío con la acción para empezar. |
-| `<app-modal>` | Diálogo centrado en escritorio y **hoja inferior** en móvil (asa, zona segura, Escape cierra). |
+| `<app-modal ancho="amplio">` | Diálogo centrado en escritorio (`amplio`: hasta 1120 px, p. ej. dos columnas) y **hoja inferior** en móvil (asa, zona segura, Escape cierra). |
 | `<app-theme-toggle variant="segmented\|icon">` | Sistema · Claro · Oscuro, con indicador deslizante. |
 | `<app-logo size alt>` | Logo oficial (`public/brand/logo.svg`). Íconos de la app, favicon, manifest y *splash* salen del mismo archivo (`public/brand/`). |
 | `appTooltip="texto"` | Globo de ayuda (un único `TooltipService`). Todo botón de solo ícono (`appButton icon`) lo muestra solo, con su `aria-label`; los demás aceptan `appTooltip`. Escape lo cierra. |

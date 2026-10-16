@@ -14,6 +14,10 @@ export interface VistaCorreo {
   ruta: string | null;
   motivo: string | null;
   linkCorreo: string | null;
+  /** Día que dice el correo (`yyyy-MM-dd`), si lo trae. */
+  fecha: string | null;
+  /** Tasa de cambio que ya trae el correo (COP por unidad), si es en otra moneda. */
+  tasa: number | null;
 }
 
 /** Lee `datos_parseados` (que escribe el sync-batch o la ingesta) con valores por defecto seguros. */
@@ -33,8 +37,40 @@ export function interpretarCorreo(n: Pick<NotificacionCorreo, 'datos_parseados'>
     ruta: texto(d['ruta']),
     motivo: texto(d['motivo']),
     linkCorreo: texto(d['linkCorreo']),
+    fecha: /^\d{4}-\d{2}-\d{2}/.test(texto(d['fecha']) ?? '') ? (texto(d['fecha']) as string).slice(0, 10) : null,
+    tasa: Number.isFinite(Number(d['tasa_cambio'])) && Number(d['tasa_cambio']) > 0 ? Number(d['tasa_cambio']) : null,
   };
 }
+
+/**
+ * Día (`yyyy-MM-dd`) del movimiento que describe el correo: el que trae el aviso o, si no, el de su fecha de llegada en Bogotá
+ * (UTC-5, sin horario de verano).
+ */
+export function fechaDelCorreo(n: Pick<NotificacionCorreo, 'datos_parseados' | 'fecha_correo'>): string {
+  const propia = interpretarCorreo(n).fecha;
+  if (propia) return propia;
+  const t = Date.parse(n.fecha_correo);
+  return Number.isFinite(t) ? new Date(t - 5 * 3600_000).toISOString().slice(0, 10) : hoyIso();
+}
+
+/** Nombre legible de cada campo del cuerpo de conciliar / asignar, para los mensajes de error del servidor. */
+export const ETIQUETAS_CAMPOS_CORREO: Record<string, string> = {
+  tasaCambio: 'TRM',
+  tarjetaId: 'Tarjeta',
+  cuentaId: 'Cuenta',
+  categoriaId: 'Categoría',
+  monto: 'Monto',
+  fecha: 'Fecha',
+  concepto: 'Concepto',
+  notas: 'Notas',
+  numeroCuotas: 'Cuotas',
+  responsables: 'Responsables',
+  convertirEnPrestamo: 'Préstamo',
+  ultimos4: 'Dígitos',
+  destino: 'Destino',
+  id: 'Producto',
+  nuevo: 'Datos del producto',
+};
 
 /** Qué significa cada `motivo` que deja el backend cuando no pudo resolver el correo solo. */
 const MOTIVOS: Record<string, string> = {
@@ -58,6 +94,13 @@ const MOTIVOS: Record<string, string> = {
   historico_sin_registro_previo: 'Es anterior a la fecha de corte y no hay un registro equivalente: no se registró solo. Concílialo a mano si lo quieres.',
   pago_tarjeta_registrado: 'Se registró el pago de la tarjeta.',
 };
+
+/** Motivos que dicen «no se pudo identificar la tarjeta o cuenta»: dejan de aplicar en cuanto se elige el producto. */
+const MOTIVOS_DE_PRODUCTO = new Set(['tarjeta_no_identificada', 'cuenta_no_identificada', 'cuenta_origen_no_identificada']);
+
+export function esMotivoDeProducto(motivo: string | null | undefined): boolean {
+  return !!motivo && MOTIVOS_DE_PRODUCTO.has(motivo);
+}
 
 export function explicarMotivo(motivo: string | null | undefined): string | null {
   return motivo ? (MOTIVOS[motivo] ?? motivo) : null;

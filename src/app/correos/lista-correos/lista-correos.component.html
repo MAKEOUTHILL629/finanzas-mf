@@ -94,8 +94,8 @@
   </div>
 </section>
 
-<app-modal [modalId]="modalId">
-  <app-formulario-conciliar *ngIf="conciliando" [notificacion]="conciliando" (conciliada)="onConciliada($event)" (cancelar)="cerrarConciliar()"></app-formulario-conciliar>
+<app-modal [modalId]="modalId" titulo="Conciliar correo" ancho="amplio">
+  <app-conciliar-correo *ngIf="conciliando" [notificacion]="conciliando" (conciliada)="onConciliada($event)" (cancelar)="cerrarConciliar()"></app-conciliar-correo>
 </app-modal>
 
 <app-modal [modalId]="modalReproceso">

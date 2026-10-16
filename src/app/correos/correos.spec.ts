@@ -1,5 +1,6 @@
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { ProductoDetectado, ResumenReproceso } from '../modelos/correos-inteligentes';
+import { ItemPlasticoCatalogo } from '../modelos/catalogos';
 import { NotificacionCorreo } from '../modelos/erp';
 import { ModalService } from '../services/modal.service';
 import { ToastService } from '../shared/toast/toast.service';
@@ -15,6 +16,7 @@ import {
   etiquetaVinculo,
   explicarMotivo,
   fechaCorteSugerida,
+  fechaDelCorreo,
   interpretarCorreo,
   motivosOrdenados,
   porcentajeAvance,
@@ -23,7 +25,7 @@ import {
 } from './correos.constants';
 import { ProductosDetectadosComponent, asignacionDeSugerencia, construirAsignacion } from './productos-detectados/productos-detectados.component';
 import { ReprocesarCorreosComponent } from './reprocesar-correos/reprocesar-correos.component';
-import { FormularioConciliarComponent, ValoresConciliacion, construirConfirmacion, modoDe } from './formulario-conciliar/formulario-conciliar.component';
+import { FormularioConciliarComponent, ValoresConciliacion, construirConfirmacion, esTasaValida, modoDe } from './formulario-conciliar/formulario-conciliar.component';
 import { ListaCorreosComponent, contarPorEstado } from './lista-correos/lista-correos.component';
 
 function correo(extra: Partial<NotificacionCorreo> = {}): NotificacionCorreo {
@@ -36,7 +38,7 @@ function correo(extra: Partial<NotificacionCorreo> = {}): NotificacionCorreo {
 }
 
 const vacios = (): ValoresConciliacion => ({
-  concepto: '', categoriaId: null, cuentaId: null, tarjetaId: null, monto: null, notas: '', numeroCuotas: 1, responsables: [], convertir: false,
+  concepto: '', categoriaId: null, producto: null, fecha: '', tasaCambio: null, monto: null, notas: '', numeroCuotas: 1, responsables: [], convertir: false,
   prestamoResponsableId: null, prestamoFechaCobro: '', prestamoMetodo: null, prestamoComentarios: '',
 });
 
@@ -102,47 +104,188 @@ describe('construirConfirmacion (cuerpo de PATCH :id/conciliar)', () => {
     expect(construirConfirmacion(ingreso, v).convertirEnPrestamo).toBeUndefined();
   });
 
-  it('sin nada generado: tarjeta para una compra de TC, cuenta para lo demás', () => {
-    expect(construirConfirmacion(correo(), { ...vacios(), tarjetaId: 4, cuentaId: 9 })).toEqual({ accion: 'CONFIRMAR', tarjetaId: 4 });
-    const cuenta = correo({ datos_parseados: { monto: '10', instrumento: 'CUENTA', ruta: 'EGRESO' } });
-    expect(construirConfirmacion(cuenta, { ...vacios(), tarjetaId: 4, cuentaId: 9 })).toEqual({ accion: 'CONFIRMAR', cuentaId: 9 });
+  it('sin nada generado: la tarjeta (de crédito o de débito) viaja como tarjetaId y la cuenta como cuentaId', () => {
+    expect(construirConfirmacion(correo(), { ...vacios(), producto: 't:4' })).toEqual({ accion: 'CONFIRMAR', tarjetaId: 4 });
+    expect(construirConfirmacion(correo(), { ...vacios(), producto: 'c:9' })).toEqual({ accion: 'CONFIRMAR', cuentaId: 9 });
+    expect(construirConfirmacion(correo(), vacios())).toEqual({ accion: 'CONFIRMAR' });
+    expect(construirConfirmacion(correo(), { ...vacios(), producto: 'raro' })).toEqual({ accion: 'CONFIRMAR' });
+  });
+
+  it('la fecha solo se envía si el usuario la cambió (la del correo en Bogotá es la de partida)', () => {
+    const n = correo({ fecha_correo: '2026-10-14T03:30:00.000Z' }); // 13/10 22:30 en Bogotá
+    expect(fechaDelCorreo(n)).toBe('2026-10-13');
+    expect(construirConfirmacion(n, { ...vacios(), producto: 't:4', fecha: '2026-10-13' })).toEqual({ accion: 'CONFIRMAR', tarjetaId: 4 });
+    expect(construirConfirmacion(n, { ...vacios(), producto: 't:4', fecha: '2026-10-12' })).toEqual({ accion: 'CONFIRMAR', tarjetaId: 4, fecha: '2026-10-12' });
+    expect(fechaDelCorreo(correo({ datos_parseados: { fecha: '2026-10-15' } }))).toBe('2026-10-15');
+    // en un movimiento ya registrado no se manda
+    expect(construirConfirmacion(correo({ transaccion_generada_id: 3 }), { ...vacios(), fecha: '2026-01-01' }).fecha).toBeUndefined();
+  });
+
+  it('la TRM solo viaja en otra moneda y si es válida', () => {
+    const usd = correo({ datos_parseados: { monto: '0.99', moneda: 'USD', instrumento: 'CUENTA', ruta: 'EGRESO' } });
+    expect(construirConfirmacion(usd, { ...vacios(), producto: 'c:1', tasaCambio: '4100.5' })).toEqual({ accion: 'CONFIRMAR', cuentaId: 1, tasaCambio: '4100.5' });
+    expect(construirConfirmacion(usd, { ...vacios(), producto: 'c:1', tasaCambio: 4100 }).tasaCambio).toBe('4100');
+    for (const mala of [null, '', 0, '-3', 'abc', '1.23456']) expect(construirConfirmacion(usd, { ...vacios(), producto: 'c:1', tasaCambio: mala }).tasaCambio).toBeUndefined();
+    expect(construirConfirmacion(correo(), { ...vacios(), producto: 't:4', tasaCambio: '4100' }).tasaCambio).toBeUndefined(); // COP: no aplica
+    expect(esTasaValida('4100.5000')).toBeTrue();
   });
 });
 
 describe('FormularioConciliarComponent', () => {
   afterEach(() => verificarHttp());
 
-  function crear(n: NotificacionCorreo) {
+  const plastico = (id: number, ultimos4: string, esActivo = true): ItemPlasticoCatalogo => ({ id, ultimos4, esActivo, vigenteDesde: null, vigenteHasta: null });
+  const TARJETAS = [
+    tarjetaItem(10, 'Visa', { descripcion: 'Oro', nombre: 'Visa · Oro', etiqueta: 'Visa ··1111', ultimos4Activo: '1111', plasticos: [plastico(1, '1111')] }),
+    tarjetaItem(11, 'American Express', { nombre: 'American Express', etiqueta: 'American Express ··1927', ultimos4Activo: '1927', plasticos: [plastico(2, '1927'), plastico(3, '0088', false)] }),
+    tarjetaItem(12, 'Mastercard', { tipo: 'DEBITO', cuentaId: 2, nombre: 'Débito', etiqueta: 'Débito ··7992', ultimos4Activo: '7992', plasticos: [plastico(4, '7992')] }),
+  ];
+  const CUENTAS = [cuentaItem(1, 'Bancolombia', { ultimos4: '4248' }), cuentaItem(2, 'Ahorros', { ultimos4: '3698' })];
+
+  async function crear(n: NotificacionCorreo) {
+    TestBed.resetTestingModule(); // varias pruebas crean más de un formulario
     configurarTestBed([FormularioConciliarComponent]);
     const fixture = TestBed.createComponent(FormularioConciliarComponent);
     fixture.componentRef.setInput('notificacion', n);
     fixture.detectChanges();
-    responderCatalogos({
-      cuentas: [cuentaItem(1, 'Bancolombia'), cuentaItem(2, 'Nequi')],
-      categorias: [categoriaItem(4, 'Mercado')],
-      tarjetas: [tarjetaItem(10, 'Visa', { descripcion: 'Oro', nombre: 'Visa · Oro', etiqueta: 'Visa' }), tarjetaItem(11, 'Master', { descripcion: 'Black', nombre: 'Master · Black', etiqueta: 'Master' })],
-      personas: [persona(2, 'Andrés'), persona(3, 'Papá')],
-    });
+    responderCatalogos({ cuentas: CUENTAS, categorias: [categoriaItem(4, 'Mercado')], tarjetas: TARJETAS, personas: [persona(2, 'Andrés'), persona(3, 'Papá')] });
+    await fixture.whenStable(); // la elección automática del producto ocurre en una microtarea
+    fixture.detectChanges();
     return fixture.componentInstance;
   }
 
-  it('sin tarjeta identificada exige elegirla antes de confirmar', () => {
-    const c = crear(correo({ datos_parseados: { monto: '50000', instrumento: 'TC', ultimos_4: '0000', motivo: 'tarjeta_no_identificada' } }));
+  const respuestaVacia = () => ({ notificacion: correo(), transaccion: null, compra: null, prestamoId: null, responsablesCreados: 0 });
+
+  it('sin tarjeta identificada exige elegirla antes de confirmar', async () => {
+    const c = await crear(correo({ datos_parseados: { monto: '50000', instrumento: 'TC', ultimos_4: '0000', motivo: 'tarjeta_no_identificada' } }));
     expect(c.modo).toBe('nuevo');
     expect(c.esTarjeta).toBeTrue();
     expect(c.motivo).toContain('identificar la tarjeta');
+    expect(c.form.controls.producto.value).toBeNull(); // ··0000 no es de nadie: no adivina
     expect(c.faltaProducto).toBeTrue();
+    expect(c.motivoVisible).toContain('identificar la tarjeta');
     c.enviar();
     http().expectNone((r) => r.method === 'PATCH');
-    c.form.patchValue({ tarjetaId: 10 });
+    c.form.patchValue({ producto: 't:10' });
+    expect(c.destinoElegido).toBe('compra');
+    expect(c.motivoVisible).toBeNull(); // ya se eligió: el aviso de «no se pudo identificar» deja de aplicar
     c.enviar();
     const req = esperar('PATCH', 'notificaciones-correo/9/conciliar');
     expect(req.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'Compra EXITO', tarjetaId: 10 });
-    req.flush({ notificacion: correo(), transaccion: null, compra: null, prestamoId: null, responsablesCreados: 0 });
+    req.flush(respuestaVacia());
   });
 
-  it('una compra importada permite cuotas y responsables con tope de 100 %', () => {
-    const c = crear(correo({ compra_credito_generada_id: 5 }));
+  it('elige sola la tarjeta por los últimos 4 del correo, también si es de un plástico anterior', async () => {
+    const c = await crear(correo());
+    expect(c.form.controls.producto.value).toBe('t:11'); // ··1927
+    expect(c.avisoProducto).toContain('1927');
+    c.enviar();
+    const req = esperar('PATCH', 'notificaciones-correo/9/conciliar');
+    expect(req.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'EXITO', tarjetaId: 11 });
+    req.flush(respuestaVacia());
+
+    const d = await crear(correo({ datos_parseados: { monto: '10', instrumento: 'TC', ultimos_4: '0088', comercio: 'EXITO' } }));
+    expect(d.form.controls.producto.value).toBe('t:11'); // ··0088 es un plástico anterior de la misma Amex
+  });
+
+  it('una tarjeta de débito del correo se elige sola y se envía como tarjetaId; una cuenta como cuentaId', async () => {
+    const debito = await crear(correo({ datos_parseados: { monto: '9000', instrumento: 'CUENTA', ruta: 'EGRESO', ultimos_4: '7992', comercio: 'Tienda' } }));
+    expect(debito.form.controls.producto.value).toBe('t:12');
+    expect(debito.destinoElegido).toBe('movimiento');
+    debito.enviar();
+    const r1 = esperar('PATCH', 'notificaciones-correo/9/conciliar');
+    expect(r1.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'Tienda', tarjetaId: 12 });
+    r1.flush(respuestaVacia());
+
+    const cuenta = await crear(correo({ datos_parseados: { monto: '9000', instrumento: 'CUENTA', ruta: 'EGRESO', ultimos_4: '3698', comercio: 'Tienda' } }));
+    expect(cuenta.form.controls.producto.value).toBe('c:2');
+    cuenta.enviar();
+    const r2 = esperar('PATCH', 'notificaciones-correo/9/conciliar');
+    expect(r2.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'Tienda', cuentaId: 2 });
+    r2.flush(respuestaVacia());
+  });
+
+  it('un aviso en dólares sin tasa pide la TRM si va a una cuenta, y es opcional con tarjeta de crédito', async () => {
+    const c = await crear(correo({ datos_parseados: { monto: '0.99', moneda: 'USD', instrumento: 'CUENTA', ruta: 'EGRESO', ultimos_4: '3698', comercio: 'Audible' } }));
+    expect(c.pideTrm).toBeTrue();
+    expect(c.trmObligatoria).toBeTrue();
+    c.enviar();
+    http().expectNone((r) => r.method === 'PATCH'); // falta la TRM
+    expect(c.campoInvalido('tasaCambio')).toBeTrue();
+    c.form.patchValue({ tasaCambio: '4100.5' });
+    c.enviar();
+    const req = esperar('PATCH', 'notificaciones-correo/9/conciliar');
+    expect(req.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'Audible', cuentaId: 2, tasaCambio: '4100.5' });
+    req.flush(respuestaVacia());
+
+    const tc = await crear(correo({ datos_parseados: { monto: '0.99', moneda: 'USD', instrumento: 'TC', ultimos_4: '1927', comercio: 'Audible' } }));
+    expect(tc.pideTrm).toBeTrue();
+    expect(tc.trmObligatoria).toBeFalse();
+    tc.enviar();
+    const r2 = esperar('PATCH', 'notificaciones-correo/9/conciliar');
+    expect(r2.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'Audible', tarjetaId: 11 });
+    r2.flush(respuestaVacia());
+
+    const con = await crear(correo({ datos_parseados: { monto: '5', moneda: 'USD', tasa_cambio: 4000, instrumento: 'CUENTA', ultimos_4: '3698' } }));
+    expect(con.pideTrm).toBeFalse(); // el correo ya trae su tasa
+  });
+
+  it('el error del servidor nombra el campo con palabras del usuario y se acerca a la vista', async () => {
+    const c = await crear(correo({ datos_parseados: { monto: '0.99', moneda: 'USD', instrumento: 'CUENTA', ultimos_4: '3698' } }));
+    c.form.patchValue({ tasaCambio: 4100 });
+    c.enviar();
+    errorHttp(esperar('PATCH', 'notificaciones-correo/9/conciliar'), 400, { message: 'Datos inválidos', errors: { tasaCambio: ['El correo está en USD y no trae tasa de cambio'] } });
+    expect(c.errorServidor).toBe('TRM: El correo está en USD y no trae tasa de cambio');
+  });
+
+  it('la fecha parte de la del correo y solo se envía si se corrige', async () => {
+    const c = await crear(correo());
+    expect(c.form.controls.fecha.value).toBe('2026-10-13');
+    c.form.patchValue({ fecha: '2026-10-11' });
+    c.enviar();
+    const req = esperar('PATCH', 'notificaciones-correo/9/conciliar');
+    expect(req.request.body).toEqual({ accion: 'CONFIRMAR', concepto: 'EXITO', tarjetaId: 11, fecha: '2026-10-11' });
+    req.flush(respuestaVacia());
+  });
+
+  it('un resaltado o atajo del correo llena el campo que le corresponde y avisa qué pasó', async () => {
+    const n = correo({
+      cuerpo_extraido: 'Bancolombia: Compraste COP35.625,00 en EXITO, el 15/10/2026 a las 20:47. Esta compra esta asociada a T.Cred *1927. Si tienes dudas, llámanos.',
+      datos_parseados: { monto: '35625', instrumento: 'TC', ruta: 'COMPRA_TC', ultimos_4: '9999', comercio: 'EXITO' },
+    });
+    const c = await crear(n);
+    expect(c.atajos.map((a) => a.etiqueta)).toEqual(['Comercio', 'Monto', 'Fecha', 'Tarjeta', 'Descripción']);
+    expect(c.form.controls.producto.value).toBeNull(); // ··9999 no es de ningún producto
+
+    expect(c.aplicar({ tipo: 'ultimos4', valor: '1927' })).toContain('1927');
+    expect(c.form.controls.producto.value).toBe('t:11');
+    expect(c.aplicar({ tipo: 'ultimos4', valor: '5555' })).toContain('elígela en la lista');
+    expect(c.aplicar({ tipo: 'monto', valor: 40000 })).toContain('40,000.00');
+    expect(c.form.controls.monto.value).toBe(40000);
+    expect(c.aplicar({ tipo: 'fecha', valor: '2026-10-15' })).toContain('15/10/2026');
+    expect(c.form.controls.fecha.value).toBe('2026-10-15');
+    c.aplicar({ tipo: 'comercio', valor: 'Éxito Express' });
+    expect(c.form.controls.concepto.value).toBe('Éxito Express');
+
+    c.form.controls.notas.setValue('');
+    c.rellenarTodo();
+    expect(c.form.controls.notas.value).toContain('Compraste COP35.625,00 en EXITO');
+    expect(c.form.controls.concepto.value).toBe('EXITO');
+    expect(c.form.controls.monto.value).toBe(35625);
+    expect(c.avisoUso).toContain('Revísalo');
+  });
+
+  it('en una compra importada no se cambia el monto, la fecha ni la tarjeta con los resaltados', async () => {
+    const c = await crear(correo({ compra_credito_generada_id: 5 }));
+    expect(c.atajos.map((a) => a.etiqueta)).toEqual(['Comercio']);
+    expect(c.aplicar({ tipo: 'monto', valor: 10 })).toContain('no se cambia');
+    expect(c.aplicar({ tipo: 'fecha', valor: '2026-10-01' })).toContain('no se cambia');
+    expect(c.aplicar({ tipo: 'ultimos4', valor: '1927' })).toContain('ya tiene');
+    expect(c.aplicar({ tipo: 'descripcion', valor: 'x' })).toContain('no tiene notas');
+  });
+
+  it('una compra importada permite cuotas y responsables con tope de 100 %', async () => {
+    const c = await crear(correo({ compra_credito_generada_id: 5 }));
     expect(c.modo).toBe('compra');
     c.agregarResponsable();
     c.agregarResponsable();
@@ -162,8 +305,8 @@ describe('FormularioConciliarComponent', () => {
     req.flush({ notificacion: correo(), transaccion: null, compra: null, prestamoId: null, responsablesCreados: 2 });
   });
 
-  it('una transacción de egreso puede convertirse en préstamo y entonces exige la persona', () => {
-    const c = crear(correo({ transaccion_generada_id: 7, datos_parseados: { monto: '10000', instrumento: 'CUENTA', ruta: 'EGRESO', comercio: 'Domicilio' } }));
+  it('una transacción de egreso puede convertirse en préstamo y entonces exige la persona', async () => {
+    const c = await crear(correo({ transaccion_generada_id: 7, datos_parseados: { monto: '10000', instrumento: 'CUENTA', ruta: 'EGRESO', comercio: 'Domicilio' } }));
     expect(c.puedeConvertirEnPrestamo).toBeTrue();
     c.form.patchValue({ convertir: true });
     expect(c.form.controls.prestamoResponsableId.invalid).toBeTrue();
@@ -174,9 +317,9 @@ describe('FormularioConciliarComponent', () => {
     expect(esperar('PATCH', 'notificaciones-correo/9/conciliar').request.body.convertirEnPrestamo).toEqual(jasmine.objectContaining({ responsableId: 2 }));
   });
 
-  it('muestra el error del backend (p. ej. 409 si ya estaba conciliado)', () => {
-    const c = crear(correo({ datos_parseados: { monto: '10', instrumento: 'CUENTA' } }));
-    c.form.patchValue({ cuentaId: 1 });
+  it('muestra el error del backend (p. ej. 409 si ya estaba conciliado)', async () => {
+    const c = await crear(correo({ datos_parseados: { monto: '10', instrumento: 'CUENTA' } }));
+    c.form.patchValue({ producto: 'c:1' });
     c.enviar();
     errorHttp(esperar('PATCH', 'notificaciones-correo/9/conciliar'), 409, { message: 'La notificación ya fue conciliado' });
     expect(c.errorServidor).toBe('La notificación ya fue conciliado');

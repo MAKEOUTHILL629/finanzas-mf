@@ -8,7 +8,7 @@ import { CatalogosService } from '../../services/catalogos.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
-import { esAceptable, etiquetaProducto, sinAsignar, textoSugerencia } from '../correos.constants';
+import { ETIQUETAS_CAMPOS_CORREO, esAceptable, etiquetaProducto, sinAsignar, textoSugerencia } from '../correos.constants';
 
 /** Destinos del selector: `t:ID` tarjeta existente, `c:ID` cuenta existente, o crear una nueva. */
 export const NUEVA_TARJETA = 'nueva-tarjeta';
@@ -173,7 +173,7 @@ export class ProductosDetectadosComponent implements OnInit, OnDestroy {
           this.cargar();
           this.cambiado.emit();
         },
-        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudieron aceptar las sugerencias.'))
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudieron aceptar las sugerencias.', ETIQUETAS_CAMPOS_CORREO))
       });
   }
 
@@ -234,7 +234,7 @@ export class ProductosDetectadosComponent implements OnInit, OnDestroy {
           this.cambiado.emit();
         },
         error: (err) => {
-          this.errorAsignar = mensajeDeError(err, 'No se pudo asignar el producto.');
+          this.errorAsignar = mensajeDeError(err, 'No se pudo asignar el producto.', ETIQUETAS_CAMPOS_CORREO);
           if (!this.asignando) this.toast.error(this.errorAsignar);
         }
       });

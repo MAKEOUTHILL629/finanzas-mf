@@ -1,0 +1,39 @@
+<article class="visor" aria-label="Correo recibido">
+  <header class="visor-cabecera">
+    <span class="visor-avatar" aria-hidden="true">{{ inicial }}</span>
+    <div class="visor-meta">
+      <strong class="visor-de">{{ remitente }}</strong>
+      <span class="visor-fecha">{{ notificacion.fecha_correo | date: 'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+    <a class="visor-abrir" *ngIf="vista.linkCorreo" [href]="vista.linkCorreo" target="_blank" rel="noopener noreferrer" aria-label="Abrir el correo original" appTooltip="Abrir el correo original">
+      <i class="material-icons" aria-hidden="true">open_in_new</i>
+    </a>
+  </header>
+
+  <h3 class="visor-asunto">{{ notificacion.asunto || 'Sin asunto' }}</h3>
+
+  <div class="visor-cuerpo">
+    <p class="visor-texto" *ngIf="cuerpo.principal">
+      <ng-container *ngFor="let s of segmentos; trackBy: trackSegmento"><button *ngIf="s.token as t; else plano" type="button" class="marca" [ngClass]="'marca--' + t.tipo" [class.marca--usada]="esUsado(t)" [appTooltip]="t.accion" [attr.aria-label]="t.accion + ': ' + s.texto" (click)="tocar(t)">{{ s.texto }}</button><ng-template #plano>{{ s.texto }}</ng-template></ng-container>
+    </p>
+
+    <details class="visor-resto" *ngIf="cuerpo.resto">
+      <summary>Ver el resto del correo</summary>
+      <p>{{ cuerpo.resto }}</p>
+    </details>
+
+    <p class="visor-vacio" *ngIf="!cuerpo.principal">
+      Este correo no guardó su contenido. Concilia con lo que se leyó de él: {{ vista.comercio || 'sin comercio' }}<ng-container *ngIf="vista.monto !== null"> · {{ vista.monto | moneda }}</ng-container>.
+    </p>
+
+    <p class="visor-nota" *ngIf="cuerpo.recortado">El correo se guardó recortado (los primeros 1.500 caracteres).</p>
+  </div>
+
+  <footer class="visor-leyenda" *ngIf="segmentos.length > 0" aria-label="Qué significan los resaltados">
+    <span class="visor-leyenda-texto">Toca lo resaltado para llenar el formulario:</span>
+    <span class="marca marca--monto marca--leyenda" *ngIf="hay.monto">Monto</span>
+    <span class="marca marca--fecha marca--leyenda" *ngIf="hay.fecha">Fecha</span>
+    <span class="marca marca--comercio marca--leyenda" *ngIf="hay.comercio">Comercio</span>
+    <span class="marca marca--ultimos4 marca--leyenda" *ngIf="hay.ultimos4">Tarjeta o cuenta</span>
+  </footer>
+</article>

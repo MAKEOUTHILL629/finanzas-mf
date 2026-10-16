@@ -18,7 +18,7 @@ import {
   TrabajoReproceso,
 } from '../modelos/correos-inteligentes';
 import { ApiServicesService } from './api-services.service';
-import { limpiarParams } from './http-params.util';
+import { depurarCuerpo, limpiarParams } from './http-params.util';
 
 /**
  * Bandeja de conciliación de correos bancarios (`/api/notificaciones-correo`).
@@ -51,9 +51,10 @@ export class NotificacionesCorreoService {
    *  - indicar `categoriaId`, `concepto`, `monto` (transacciones) o `cuentaId`/`tarjetaId` (si no se identificó),
    *  - `convertirEnPrestamo` (egresos).
    * Todo ocurre en una sola transacción de BD. Devuelve 409 si el correo ya estaba conciliado/ignorado.
+   * El cuerpo se depura antes de enviarlo: lo vacío (`""`, `null`) no viaja y los ids van como número.
    */
   conciliarNotificacion(id: number, datos: ConciliarNotificacion = {}): Observable<ResultadoConciliacion> {
-    return this.api.patch<ResultadoConciliacion>(`${this.url}/${id}/conciliar`, datos);
+    return this.api.patch<ResultadoConciliacion>(`${this.url}/${id}/conciliar`, depurarCuerpo(datos));
   }
 
   /** Atajo para ignorar un correo (anula la transacción pendiente / elimina la compra importada). */
@@ -74,7 +75,7 @@ export class NotificacionesCorreoService {
   }
 
   asignarProducto(datos: AsignarProducto): Observable<ResultadoAsignacion> {
-    return this.api.post<ResultadoAsignacion>(`${this.url}/productos/asignar`, datos);
+    return this.api.post<ResultadoAsignacion>(`${this.url}/productos/asignar`, depurarCuerpo(datos));
   }
 
   /** Acepta las sugerencias (todas o solo las de estas terminaciones). */

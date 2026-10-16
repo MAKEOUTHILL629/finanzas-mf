@@ -35,6 +35,8 @@ export class ModalComponent implements OnInit, OnDestroy  {
   @Input() modalId: string = 'compra-credito-form'; // ID por defecto para retrocompatibilidad
   /** Nombre accesible del diálogo (lo anuncian los lectores de pantalla). */
   @Input() titulo = 'Formulario';
+  /** `amplio`: diálogo más ancho en escritorio (p. ej. dos columnas: el correo y su formulario). */
+  @Input() ancho: 'normal' | 'amplio' = 'normal';
   isOpen = false;
 
   /** Cómo entra según el ancho (la hoja inferior del móvil o el diálogo centrado del escritorio). */

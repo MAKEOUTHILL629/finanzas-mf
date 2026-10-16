@@ -60,6 +60,12 @@ Convenciones:
 - **Productos detectados** (`correos/productos-detectados`): los correos traen solo los últimos 4 dígitos. El panel los agrupa, propone a cuál de tus cuentas o tarjetas pertenece cada uno
   (las tarjetas, por las compras que ya tienes con igual fecha y monto) y permite aceptar todo o asignar a mano. `Reprocesar pendientes` (`correos/reprocesar-correos`) primero **simula**
   —cuántas compras se enlazan, cuántas se crean con tus valores habituales, cuántos avisos repetidos— y solo escribe al confirmar; la fecha de corte evita registrar historial viejo.
+- **Conciliar viendo el correo** (`correos/conciliar-correo`, plan V2 fase 3): diálogo ancho con el correo a la izquierda (`visor-correo`: remitente, fecha, asunto y cuerpo limpio —sin enlaces de
+  imágenes— con **montos, fechas, comercio y `*XXXX` resaltados**) y el formulario a la derecha; en pantallas angostas son dos pestañas. Tocar un resaltado —o un atajo «Usar lo que dice el correo» /
+  «Rellenar todo»— lo copia al campo que corresponde (concepto, monto, fecha, tarjeta/cuenta, notas). Las funciones puras viven en `visor-correo.helpers.ts` (`parsearMonto` entiende `COP35.625,00` y `USD0,99`).
+  El **selector único** `<app-select-producto>` (`shared/ui/select-producto`) agrupa tarjetas de crédito, de débito y cuentas, y elige solo el producto por los últimos 4 del correo mirando también
+  los plásticos anteriores (`productoPorUltimos4`); una tarjeta de débito se manda como `tarjetaId` y el servidor registra el movimiento en su cuenta. Un aviso en dólares sin tasa pide la **TRM**;
+  `fecha` corrige el día. Los cuerpos de `PATCH conciliar` y `POST asignar` pasan por `depurarCuerpo` (sin `""`/`null`, ids como número) y los errores del servidor nombran el campo (`TRM: …`).
 - **Cobros** (`cobros/`): `FormularioCobroComponent` calcula en vivo cuánto le toca a cada uno (misma aritmética en centavos que el backend, en `cobros.constants.ts`);
   `CompartirCobroComponent` genera el enlace (copiar o WhatsApp) y `AprobarReporteComponent` registra el pago reportado: enlazando el ingreso que ya llegó por correo, creándolo en una cuenta o solo anotándolo.
 - **Página pública** (`cobros/cobro-publico`): `app-menu` no se muestra en `/p/…` aunque haya sesión (`MenuStateService.rutaPublica$`). Las fotos del comprobante se reducen en el navegador

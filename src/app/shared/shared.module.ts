@@ -17,6 +17,7 @@ import { FieldComponent, InputDirective } from './ui/field/field.component';
 import { LogoComponent } from './ui/logo/logo.component';
 import { PageHeaderComponent } from './ui/page-header/page-header.component';
 import { SelectComponent } from './ui/select/select.component';
+import { SelectProductoComponent } from './ui/select-producto/select-producto.component';
 import { SkeletonComponent } from './ui/skeleton/skeleton.component';
 import { TableDirective } from './ui/table/table.directive';
 import { ThemeToggleComponent } from './ui/theme-toggle/theme-toggle.component';
@@ -35,6 +36,7 @@ const UI = [
   ModalComponent,
   PageHeaderComponent,
   SelectComponent,
+  SelectProductoComponent,
   SkeletonComponent,
   TableDirective,
   ThemeToggleComponent,

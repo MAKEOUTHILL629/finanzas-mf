@@ -1,5 +1,5 @@
-<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-conciliar">
-  <div>
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate [attr.aria-labelledby]="conCabecera ? 'titulo-conciliar' : null" [attr.aria-label]="conCabecera ? null : 'Conciliar el correo'">
+  <div *ngIf="conCabecera">
     <h2 class="erp-form-title" id="titulo-conciliar">Conciliar correo</h2>
     <p class="erp-subtitle">{{ notificacion.asunto }}</p>
   </div>
@@ -12,12 +12,28 @@
     <div><dt class="erp-overline">Fecha</dt><dd>{{ notificacion.fecha_correo | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
   </dl>
 
-  <div class="erp-alert erp-alert--warning" *ngIf="motivo">
+  <div class="erp-alert erp-alert--warning" *ngIf="motivoVisible as texto">
     <i class="material-icons" aria-hidden="true">help</i>
-    <span>{{ motivo }}</span>
+    <span>{{ texto }}</span>
   </div>
 
-  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+  <!-- Llenar con un clic lo que el correo ya sabe -->
+  <section class="atajos" *ngIf="atajos.length > 0" aria-label="Usar lo que dice el correo">
+    <div class="atajos-cabecera">
+      <span class="erp-overline">Usar lo que dice el correo</span>
+      <button type="button" appButton="ghost" size="sm" (click)="rellenarTodo()"><i class="material-icons" aria-hidden="true">auto_fix_high</i>Rellenar todo</button>
+    </div>
+    <div class="atajos-lista">
+      <button type="button" class="atajo" *ngFor="let a of atajos" (click)="aplicar(a)" [appTooltip]="'Usar ' + a.etiqueta.toLowerCase() + ' en el formulario'">
+        <i class="material-icons" aria-hidden="true">{{ a.icono }}</i>
+        <span class="atajo-etiqueta">{{ a.etiqueta }}</span>
+        <span class="atajo-valor">{{ a.texto }}</span>
+      </button>
+    </div>
+    <p class="atajos-aviso" role="status" aria-live="polite" *ngIf="avisoUso">{{ avisoUso }}</p>
+  </section>
+
+  <div #alertaError class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
     <i class="material-icons" aria-hidden="true">error</i>
     <span>{{ errorServidor }}</span>
   </div>
@@ -28,17 +44,33 @@
       <input id="co-concepto" appInput type="text" formControlName="concepto" maxlength="255" autocomplete="off" />
     </div>
 
-    <!-- Sin nada generado: elegir el producto -->
-    <div class="erp-field erp-span-2" *ngIf="modo === 'nuevo' && esTarjeta">
-      <label class="erp-label" for="co-tarjeta">Tarjeta de crédito<span class="erp-req" aria-hidden="true">*</span></label>
-      <app-select inputId="co-tarjeta" catalogo="tarjetas" formControlName="tarjetaId" placeholder="Selecciona la tarjeta" [permitirVacio]="false" [enlaceCrear]="{ texto: 'Ir a Tarjetas', ruta: '/tarjetas' }"></app-select>
-      <p class="erp-field-hint">Se creará una compra a 1 cuota; luego puedes cambiar las cuotas y asignar responsables.</p>
+    <!-- Sin nada generado: elegir la tarjeta (de crédito o de débito) o la cuenta -->
+    <div class="erp-field erp-span-2" *ngIf="modo === 'nuevo'">
+      <label class="erp-label" for="co-producto">Tarjeta o cuenta<span class="erp-req" aria-hidden="true">*</span></label>
+      <app-select-producto inputId="co-producto" formControlName="producto" [ultimos4]="vista.ultimos4" [instrumento]="vista.instrumento" [invalido]="campoInvalido('producto') || (faltaProducto && form.touched)" ariaDescribedby="co-producto-ayuda" (autoseleccionado)="alAutoseleccionar($event)"></app-select-producto>
+      <p class="erp-field-hint" id="co-producto-ayuda">
+        <ng-container [ngSwitch]="destinoElegido">
+          <ng-container *ngSwitchCase="'compra'">Se creará una compra a 1 cuota; luego puedes cambiar las cuotas y asignar responsables.</ng-container>
+          <ng-container *ngSwitchCase="'movimiento'">Se registrará la transacción confirmada en esa cuenta (la tarjeta de débito usa la suya).</ng-container>
+          <ng-container *ngSwitchDefault>Elige a qué producto pertenece este movimiento{{ vista.ultimos4 ? ' (el correo trae ··' + vista.ultimos4 + ')' : '' }}.</ng-container>
+        </ng-container>
+        <span class="aviso-producto" *ngIf="avisoProducto"> {{ avisoProducto }}</span>
+      </p>
     </div>
 
-    <div class="erp-field erp-span-2" *ngIf="modo === 'nuevo' && !esTarjeta">
-      <label class="erp-label" for="co-cuenta">Cuenta<span class="erp-req" aria-hidden="true">*</span></label>
-      <app-select inputId="co-cuenta" catalogo="cuentas" [etiquetar]="etiquetaCuenta" formControlName="cuentaId" placeholder="Selecciona la cuenta" [permitirVacio]="false" [enlaceCrear]="{ texto: 'Crear una cuenta', ruta: '/cuentas' }"></app-select>
-      <p class="erp-field-hint">Se registrará la transacción confirmada en esta cuenta.</p>
+    <!-- Movimiento nuevo: el día real -->
+    <div class="erp-field" *ngIf="modo === 'nuevo'">
+      <label class="erp-label" for="co-fecha">Fecha</label>
+      <input id="co-fecha" appInput type="date" formControlName="fecha" />
+      <p class="erp-field-hint">Corrígela solo si el correo la trae mal.</p>
+    </div>
+
+    <!-- Otra moneda sin tasa: la TRM -->
+    <div class="erp-field" *ngIf="pideTrm">
+      <label class="erp-label" for="co-trm">TRM ({{ vista.moneda }} → COP)<span class="erp-req" aria-hidden="true" *ngIf="trmObligatoria">*</span></label>
+      <input id="co-trm" appInput type="number" inputmode="decimal" min="0.0001" step="0.0001" formControlName="tasaCambio" placeholder="Ej. 4100.50" [attr.aria-invalid]="campoInvalido('tasaCambio')" aria-describedby="co-trm-ayuda" />
+      <p class="erp-field-hint" id="co-trm-ayuda">{{ trmObligatoria ? 'El correo está en ' + vista.moneda + ' y no trae la tasa: escribe cuántos pesos vale 1 ' + vista.moneda + ' ese día.' : 'Opcional: si la dejas vacía se usa la TRM de tu última compra en dólares.' }}</p>
+      <p class="erp-field-error" *ngIf="campoInvalido('tasaCambio')">{{ form.controls.tasaCambio.errors?.['required'] ? 'Indica la TRM para registrar el movimiento.' : 'Un número mayor a 0 con máximo 4 decimales.' }}</p>
     </div>
 
     <!-- Transacción (existente o nueva) -->

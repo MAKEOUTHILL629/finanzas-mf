@@ -1,5 +1,5 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()" [@fadeIn]>
-  <div class="modal-content" role="dialog" aria-modal="true" [attr.aria-label]="titulo" (click)="$event.stopPropagation()" [@slideUp]="entrada">
+  <div class="modal-content" [class.modal-content--amplio]="ancho === 'amplio'" role="dialog" aria-modal="true" [attr.aria-label]="titulo" (click)="$event.stopPropagation()" [@slideUp]="entrada">
     <button type="button" class="close-button" (click)="closeModal()" aria-label="Cerrar">
       <i class="material-icons" aria-hidden="true">close</i>
     </button>

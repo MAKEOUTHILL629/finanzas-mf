@@ -110,4 +110,6 @@ export interface OpcionSelect {
   /** Texto secundario (saldo, vigencia…) que algunos selectores muestran junto a la etiqueta. */
   detalle?: string;
   deshabilitada?: boolean;
+  /** Encabezado del grupo (`<optgroup>`) al que pertenece, en los selectores que agrupan sus opciones. */
+  grupo?: string;
 }

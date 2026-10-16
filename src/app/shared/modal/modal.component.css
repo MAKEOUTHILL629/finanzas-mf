@@ -107,6 +107,7 @@
     border-bottom: 1px solid var(--border-glass);
     border-radius: var(--radius-xl);
   }
+  .modal-content--amplio { max-width: 1120px; }
   .modal-content::before { display: none; }
   .close-button { top: var(--space-2); right: var(--space-2); }
   .modal-body { padding: calc(var(--space-6) + var(--space-1)) var(--space-4) var(--space-4); }

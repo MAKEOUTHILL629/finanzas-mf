@@ -2,6 +2,35 @@
 .resumen-correo div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .resumen-correo dt { margin: 0; }
 .resumen-correo dd { margin: 0; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.resumen-correo dd .erp-muted { margin-left: 4px; font-weight: var(--weight-regular); }
+
+/* Atajos: copiar con un clic lo que el correo ya sabe */
+.atajos { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); }
+.atajos-cabecera { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); flex-wrap: wrap; }
+.atajos-lista { display: flex; flex-wrap: wrap; gap: var(--space-1); min-width: 0; }
+.atajo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out), border-color var(--duration-fast) var(--ease-in-out);
+}
+.atajo:hover { background: var(--bg-input-hover); border-color: var(--border-strong); }
+.atajo:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.atajo .material-icons { font-size: 18px; color: var(--text-link); flex: 0 0 auto; }
+.atajo-etiqueta { color: var(--text-secondary); flex: 0 0 auto; }
+.atajo-valor { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--weight-semibold); }
+.atajos-aviso { margin: 0; color: var(--text-secondary); font-size: var(--text-caption); }
+.aviso-producto { color: var(--text-secondary); }
 
 .responsables { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; border: none; min-width: 0; }
 .responsables legend { padding: 0; margin-bottom: var(--space-1); }
@@ -11,3 +40,4 @@
 @media (max-width: 480px) {
   .responsable { grid-template-columns: minmax(0, 1fr) 90px auto; }
 }
+@media (prefers-reduced-motion: reduce) { .atajo { transition: none; } }

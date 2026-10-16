@@ -1,0 +1,30 @@
+<section class="conciliar" aria-labelledby="titulo-conciliar">
+  <header class="conciliar-cabecera">
+    <h2 class="erp-form-title" id="titulo-conciliar">Conciliar correo</h2>
+    <p class="erp-subtitle">{{ notificacion.asunto }}</p>
+  </header>
+
+  <!-- Pantallas angostas: el correo y el formulario son dos pestañas -->
+  <div class="conciliar-pestanas" role="tablist" aria-label="Qué ver">
+    <button type="button" role="tab" id="tab-correo" class="conciliar-pestana" [class.conciliar-pestana--activa]="pestana === 'correo'" [attr.aria-selected]="pestana === 'correo'" aria-controls="panel-correo" (click)="elegir('correo')">
+      <i class="material-icons" aria-hidden="true">mail</i>Correo
+    </button>
+    <button type="button" role="tab" id="tab-formulario" class="conciliar-pestana" [class.conciliar-pestana--activa]="pestana === 'formulario'" [attr.aria-selected]="pestana === 'formulario'" aria-controls="panel-formulario" (click)="elegir('formulario')">
+      <i class="material-icons" aria-hidden="true">task_alt</i>Conciliar
+    </button>
+  </div>
+
+  <div class="conciliar-cuerpo">
+    <div class="conciliar-panel conciliar-panel--correo" id="panel-correo" role="tabpanel" aria-labelledby="tab-correo" [class.conciliar-panel--oculto]="pestana !== 'correo'">
+      <app-visor-correo [notificacion]="notificacion" (usar)="alUsar($event)"></app-visor-correo>
+      <p class="conciliar-aviso" role="status" aria-live="polite" *ngIf="aviso">
+        <i class="material-icons" aria-hidden="true">check_circle</i>{{ aviso }}
+        <button type="button" class="conciliar-ver" (click)="elegir('formulario')">Ver formulario</button>
+      </p>
+    </div>
+
+    <div class="conciliar-panel conciliar-panel--formulario" id="panel-formulario" role="tabpanel" aria-labelledby="tab-formulario" [class.conciliar-panel--oculto]="pestana !== 'formulario'">
+      <app-formulario-conciliar [notificacion]="notificacion" [conCabecera]="false" (conciliada)="conciliada.emit($event)" (cancelar)="cancelar.emit()"></app-formulario-conciliar>
+    </div>
+  </div>
+</section>
