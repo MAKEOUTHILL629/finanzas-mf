@@ -1,13 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-cuentas">
   <app-page-header titulo="Cuentas" subtitulo="Tus cuentas bancarias, billeteras y efectivo. El saldo lo mueven las transacciones confirmadas." idTitulo="titulo-cuentas">
-    <a appButton="ghost" routerLink="/categorias">
-      <i class="material-icons" aria-hidden="true">category</i>
-      Categorías
-    </a>
-    <button type="button" appButton="primary" (click)="nueva()">
-      <i class="material-icons" aria-hidden="true">add</i>
-      Nueva cuenta
-    </button>
+    <app-acciones [principal]="principal" [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <!-- Saldo total por moneda -->

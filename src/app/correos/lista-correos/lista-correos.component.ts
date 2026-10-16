@@ -10,6 +10,7 @@ import { CatalogosService } from '../../services/catalogos.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ESTADOS_CORREO, VistaCorreo, admiteDeshacer, claseEstadoCorreo, etiquetaEstadoCorreo, etiquetaVinculo, explicarMotivo, interpretarCorreo } from '../correos.constants';
+import { AccionUI, ListaAcciones } from '../../shared/ui/acciones/acciones.component';
 
 export const MODAL_CONCILIAR = 'correo-conciliar';
 export const MODAL_REPROCESAR = 'correos-reprocesar';
@@ -28,6 +29,17 @@ export function contarPorEstado(correos: NotificacionCorreo[]): Record<string, n
   styleUrl: './lista-correos.component.css'
 })
 export class ListaCorreosComponent implements OnInit, OnDestroy {
+  private readonly accSecundarias = new ListaAcciones();
+  get secundarias(): AccionUI[] {
+    return this.accSecundarias.obtener(String(this.cargando), () => [
+      { id: 'actualizar', etiqueta: this.cargando ? 'Actualizando…' : 'Actualizar', icono: this.cargando ? 'sync' : 'refresh', variante: 'ghost', tooltip: 'Volver a pedir los correos', cargando: this.cargando },
+    ]);
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'actualizar') this.cargar();
+  }
+
   readonly modalId = MODAL_CONCILIAR;
   readonly modalReproceso = MODAL_REPROCESAR;
   readonly pestanas = ESTADOS_CORREO;

@@ -1,9 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-obligaciones">
   <app-page-header titulo="Obligaciones del mes" subtitulo="Cuotas con meta mensual (carro, casa…) y los aportes diarios que las van cubriendo." idTitulo="titulo-obligaciones">
-    <button type="button" appButton="primary" (click)="abrirFormulario()">
-      <i class="material-icons" aria-hidden="true">add</i>
-      Nueva obligación
-    </button>
+    <app-acciones [principal]="principal" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <!-- Filtros -->

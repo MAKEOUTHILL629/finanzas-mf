@@ -1,5 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
@@ -13,6 +12,9 @@ import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { claseEstadoPrestamo, estaPendiente, resumirAprobaciones, saldoDe } from '../prestamos.constants';
+import { AccionUI } from '../../shared/ui/acciones/acciones.component';
+import { ColumnaTabla } from '../../shared/ui/apple-table/apple-table.types';
+import { DefinicionFiltro, EstadoFiltros, RangoFechas, SegmentoFiltro, estadoVacio } from '../../shared/ui/filter-bar/filter-bar.types';
 
 export const MODAL_PRESTAMO = 'prestamo-form';
 
@@ -57,25 +59,65 @@ export function ordenarPrestamos(prestamos: PrestamoDetalle[]): PrestamoDetalle[
   );
 }
 
+/** Estados rápidos de la barra de filtros: `valor` es el estado tal como lo guarda la base («todos» = sin filtro). */
+export const SEGMENTOS_PRESTAMOS = [
+  { valor: 'todos', etiqueta: 'Todos' },
+  { valor: 'Pendiente', etiqueta: 'Pendientes' },
+  { valor: 'Pagado', etiqueta: 'Pagados' },
+  { valor: 'Anulado', etiqueta: 'Anulados' },
+] as const;
+
+/** Traduce lo que eligió la barra de filtros a los filtros de `filtrarPrestamos`. */
+export function filtrosDeBarra(e: EstadoFiltros): FiltrosPrestamos {
+  const rango = e.valores['cobro'] as RangoFechas | null | undefined;
+  const escalar = (v: unknown) => (v === undefined || v === null || Array.isArray(v) ? '' : String(v));
+  return {
+    texto: e.busqueda ?? '',
+    estado: !e.segmento || e.segmento === 'todos' ? '' : e.segmento,
+    responsable: escalar(e.valores['responsable']),
+    corte: escalar(e.valores['corte']),
+    desde: rango?.desde ?? '',
+    hasta: rango?.hasta ?? '',
+  };
+}
+
 @Component({
   selector: 'app-tabla-prestamos',
   templateUrl: './tabla-prestamos.component.html',
   styleUrl: './tabla-prestamos.component.css'
 })
 export class TablaPrestamosComponent implements OnInit, OnDestroy {
+  readonly principal: AccionUI = { id: 'nuevo', etiqueta: 'Nuevo préstamo', icono: 'add', tooltip: 'Registrar un préstamo a una persona' };
+  readonly secundarias: AccionUI[] = [{ id: 'cortes', etiqueta: 'Cortes de cobro', icono: 'event_repeat', enlace: '/cortes-cobro', tooltip: 'Ver los cortes en los que se cobran las cuotas' }];
+
+  alAccionar(id: string): void {
+    if (id === 'nuevo') this.abrirFormulario();
+  }
+
   readonly modalId = MODAL_PRESTAMO;
   readonly claseEstado = claseEstadoPrestamo;
   readonly resumirAprobaciones = resumirAprobaciones;
-  readonly TAM_PAGINA = 40;
-
-  private fb = inject(FormBuilder);
-  filtros = this.fb.nonNullable.group({ ...FILTROS_VACIOS });
 
   prestamos: PrestamoDetalle[] = [];
   visibles: PrestamoDetalle[] = [];
   personas: ItemPersona[] = [];
   cortes: CorteCobro[] = [];
-  limite = this.TAM_PAGINA;
+
+  /** Barra de filtros: buscador, estados rápidos y chips (todo en memoria: son decenas de filas). */
+  estadoFiltros: EstadoFiltros = estadoVacio('todos');
+  segmentos: SegmentoFiltro[] = SEGMENTOS_PRESTAMOS.map((s) => ({ valor: s.valor, etiqueta: s.etiqueta, cantidad: 0 }));
+  definicionFiltros: DefinicionFiltro[] = [];
+
+  readonly columnas: ColumnaTabla<PrestamoDetalle>[] = [
+    { id: 'concepto', titulo: 'Concepto', valor: (p) => p.concepto, prioridad: 1, anchoMin: 190 },
+    { id: 'responsable', titulo: 'Responsable', valor: (p) => this.nombrePersona(p.responsable), prioridad: 2, anchoMin: 120 },
+    { id: 'valor', titulo: 'Valor', valor: (p) => p.valorPrestado, formato: 'moneda', prioridad: 2, anchoMin: 110 },
+    { id: 'saldo', titulo: 'Saldo', valor: (p) => saldoDe(p), formato: 'moneda', prioridad: 1, anchoMin: 110 },
+    { id: 'cobro', titulo: 'Cobro', valor: (p) => (p.fechaCobro === null ? null : new Date(p.fechaCobro)), formato: 'fechaCorta', prioridad: 2, anchoMin: 100 },
+    { id: 'corte', titulo: 'Corte', valor: (p) => this.nombreCorte(p.corteId), prioridad: 3, truncar: true, anchoMin: 140 },
+    { id: 'estado', titulo: 'Estado', valor: (p) => p.estado, prioridad: 1, anchoMin: 100 },
+    { id: 'aprobaciones', titulo: 'Aprobaciones', valor: (p) => resumirAprobaciones(p).pendientes, prioridad: 2, anchoMin: 130 },
+  ];
 
   totales = { saldoPorCobrar: 0, pendientes: 0, aprobacionesPendientes: 0, pagados: 0 };
 
@@ -95,12 +137,11 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Nombres y filtro de personas: catálogo compartido (un fallo ahí no impide ver los préstamos).
-    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
-    this.catalogos.asegurar(['personas']);
-    this.filtros.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.limite = this.TAM_PAGINA;
-      this.aplicarFiltros();
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.personas = e.datos;
+      this.armarFiltros();
     });
+    this.catalogos.asegurar(['personas']);
     this.cargar();
   }
 
@@ -125,6 +166,7 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
         next: ({ prestamos, cortes }) => {
           this.prestamos = ordenarPrestamos(prestamos ?? []);
           this.cortes = cortes;
+          this.armarFiltros();
           this.calcularTotales();
           this.aplicarFiltros();
         },
@@ -136,24 +178,28 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
       });
   }
 
+  private armarFiltros(): void {
+    this.definicionFiltros = [
+      { id: 'responsable', tipo: 'seleccion', etiqueta: 'Responsable', icono: 'person', buscable: true, opciones: this.personas.map((p) => ({ valor: p.id, etiqueta: p.nombre })) },
+      { id: 'corte', tipo: 'seleccion', etiqueta: 'Corte', icono: 'event_repeat', opciones: [{ valor: 'sin', etiqueta: 'Sin corte' }, ...this.cortes.map((c) => ({ valor: c.id, etiqueta: c.concepto }))] },
+      { id: 'cobro', tipo: 'fechas', etiqueta: 'Fecha de cobro', icono: 'event' },
+    ];
+  }
+
+  alFiltrar(estado: EstadoFiltros): void {
+    this.estadoFiltros = estado;
+    this.aplicarFiltros();
+  }
+
   aplicarFiltros(): void {
-    this.visibles = filtrarPrestamos(this.prestamos, this.filtros.getRawValue());
-  }
-
-  get hayFiltros(): boolean {
-    return Object.values(this.filtros.getRawValue()).some((v) => !!v);
-  }
-
-  reiniciarFiltros(): void {
-    this.filtros.reset({ ...FILTROS_VACIOS });
-  }
-
-  verMas(): void {
-    this.limite += this.TAM_PAGINA;
-  }
-
-  get filasMostradas(): PrestamoDetalle[] {
-    return this.visibles.slice(0, this.limite);
+    const f = filtrosDeBarra(this.estadoFiltros);
+    this.visibles = filtrarPrestamos(this.prestamos, f);
+    // cada contador respeta el resto de filtros, no el estado que se está viendo
+    this.segmentos = SEGMENTOS_PRESTAMOS.map((s) => ({
+      valor: s.valor,
+      etiqueta: s.etiqueta,
+      cantidad: filtrarPrestamos(this.prestamos, { ...f, estado: s.valor === 'todos' ? '' : s.valor }).length,
+    }));
   }
 
   private calcularTotales(): void {
@@ -194,9 +240,5 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
 
   saldo(p: PrestamoDetalle): number {
     return saldoDe(p);
-  }
-
-  trackById(_: number, p: PrestamoDetalle): number {
-    return p.id;
   }
 }

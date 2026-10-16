@@ -24,6 +24,7 @@ import {
   textoEstadoPeriodo,
 } from './aportes-carro.constants';
 import { iniciales } from '../deudas/deudas.constants';
+import { AccionUI, ListaAcciones } from '../shared/ui/acciones/acciones.component';
 
 export const MODAL_APORTE_CARRO = 'aporte-carro-form';
 export const MODAL_PERIODO_CARRO = 'aporte-carro-periodo';
@@ -35,6 +36,23 @@ export const MODAL_EXCEDENTE_CARRO = 'aporte-carro-excedente';
   styleUrl: './aportes-carro.component.css'
 })
 export class AportesCarroComponent implements OnInit, OnDestroy {
+  readonly secundarias: AccionUI[] = [
+    { id: 'liquidacion', etiqueta: 'Liquidación', icono: 'fact_check', enlace: '/liquidacion', variante: 'ghost', tooltip: 'Ver la liquidación de fin de mes' },
+    { id: 'periodo', etiqueta: 'Configurar cuota mensual', icono: 'tune', tooltip: 'Definir la cuota que se debe cubrir cada mes' },
+  ];
+  private readonly accPrincipal = new ListaAcciones();
+  /** Se bloquea mientras carga o si falló la carga. */
+  get principal(): AccionUI {
+    return this.accPrincipal.obtener(String(this.cargando || !!this.error), () => [
+      { id: 'aporte', etiqueta: 'Agregar aporte', icono: 'add', tooltip: 'Registrar un aporte diario a la cuota del mes', deshabilitada: this.cargando || !!this.error },
+    ])[0];
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'periodo') this.abrirPeriodo();
+    else if (id === 'aporte') this.abrirAporte();
+  }
+
   readonly modalAporte = MODAL_APORTE_CARRO;
   readonly modalPeriodo = MODAL_PERIODO_CARRO;
   readonly modalExcedente = MODAL_EXCEDENTE_CARRO;

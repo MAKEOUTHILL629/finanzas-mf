@@ -2,10 +2,13 @@
   <!-- Bienvenida -->
   <header class="home-cabecera">
     <div class="home-saludo">
-      <p class="erp-overline">{{ fecha }}</p>
-      <h1 id="titulo-inicio">{{ saludo }}<ng-container *ngIf="nombre">, {{ nombre }}</ng-container></h1>
-      <p class="home-frase" *ngIf="datos" aria-live="polite">{{ frase }}</p>
-      <app-skeleton class="home-frase-esqueleto" *ngIf="cargando && !datos" ancho="min(100%, 520px)" alto="28px"></app-skeleton>
+      <app-logo class="home-logo" size="64"></app-logo>
+      <div class="home-saludo__texto">
+        <p class="erp-overline">{{ fecha }}</p>
+        <h1 id="titulo-inicio">{{ saludo }}<ng-container *ngIf="nombre">, {{ nombre }}</ng-container></h1>
+        <p class="home-frase" *ngIf="datos" aria-live="polite">{{ frase }}</p>
+        <app-skeleton class="home-frase-esqueleto" *ngIf="cargando && !datos" ancho="min(100%, 520px)" alto="28px"></app-skeleton>
+      </div>
     </div>
 
     <div class="home-controles">

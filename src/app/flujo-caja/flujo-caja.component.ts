@@ -10,6 +10,7 @@ import { aCentavos } from '../shared/dinero.helper';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { moneda } from '../shared/moneda.util';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../shared/periodo.helper';
+import { ACCION_MES_ACTUAL, AccionUI, ListaAcciones } from '../shared/ui/acciones/acciones.component';
 
 export interface PiezaDesembolso {
   clave: 'egresos' | 'tarjetas' | 'recurrentes';
@@ -50,6 +51,17 @@ export function estaVacio(f: FlujoCaja): boolean {
   styleUrl: './flujo-caja.component.css'
 })
 export class FlujoCajaComponent implements OnInit, OnDestroy {
+  private readonly accSecundarias = new ListaAcciones();
+  get secundarias(): AccionUI[] {
+    return this.accSecundarias.obtener(String(this.esMesActual()), () => [
+      ...(this.esMesActual() ? [] : [ACCION_MES_ACTUAL]),
+    ]);
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'mes-actual') this.irAlMesActual();
+  }
+
   periodo: Periodo = periodoActual();
   flujo: FlujoCaja | null = null;
   piezas: PiezaDesembolso[] = [];

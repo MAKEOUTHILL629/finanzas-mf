@@ -1,3 +1,4 @@
+import { TooltipBaseDirective } from '../tooltip/tooltip.directive';
 import { ChangeDetectionStrategy, Component, ElementRef, HostBinding, Input, OnDestroy, booleanAttribute } from '@angular/core';
 
 export type VarianteBoton = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -11,7 +12,9 @@ export type TamanoBoton = 'sm' | 'md' | 'lg';
 @Component({
   selector: 'button[appButton], a[appButton]',
   template: '<ng-content></ng-content>',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  // los botones de solo ícono explican lo que hacen con su `aria-label`; con `appTooltip="…"` cualquier botón puede añadir su ayuda
+  hostDirectives: [{ directive: TooltipBaseDirective, inputs: ['appTooltip', 'tooltipPosicion', 'tooltipRetardo'] }]
 })
 export class ButtonComponent implements OnDestroy {
   @Input('appButton') variant: VarianteBoton | '' = 'primary';

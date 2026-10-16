@@ -7,6 +7,7 @@ import { TarjetasService } from '../../services/tarjetas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { etiquetaMotivo, nombreTarjeta, plasticosArchivados, terminacion, vigenciaLegible } from '../tarjetas.constants';
+import { AccionUI } from '../../shared/ui/acciones/acciones.component';
 
 export const MODAL_TARJETA = 'tarjeta-form';
 export const MODAL_PLASTICO = 'tarjeta-plastico';
@@ -27,6 +28,8 @@ export function pendientesDeConfigurar(t: Tarjeta): string[] {
   styleUrl: './lista-tarjetas.component.css'
 })
 export class ListaTarjetasComponent implements OnInit, OnDestroy {
+  readonly secundarias: AccionUI[] = [{ id: 'extractos', etiqueta: 'Ver extractos', icono: 'receipt_long', enlace: '/extractos', tooltip: 'Ver lo que cobra el banco en cada periodo' }];
+
   readonly modalId = MODAL_TARJETA;
   readonly modalPlastico = MODAL_PLASTICO;
   readonly pendientes = pendientesDeConfigurar;

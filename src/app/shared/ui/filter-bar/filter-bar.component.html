@@ -1,0 +1,111 @@
+<div class="fb" role="search">
+  <!-- Buscador -->
+  <div class="fb-buscador">
+    <i class="material-icons fb-buscador__icono" aria-hidden="true">search</i>
+    <input
+      type="search"
+      class="fb-buscador__input"
+      [placeholder]="placeholder"
+      [attr.aria-label]="placeholder"
+      autocomplete="off"
+      spellcheck="false"
+      [value]="textoBusqueda"
+      (input)="alEscribir($any($event.target).value)"
+      (keydown.escape)="limpiarBusqueda()"
+    />
+    <button type="button" class="fb-buscador__limpiar" *ngIf="textoBusqueda" (click)="limpiarBusqueda()" aria-label="Borrar la búsqueda" appTooltip="Borrar la búsqueda">
+      <i class="material-icons" aria-hidden="true">close</i>
+    </button>
+  </div>
+
+  <!-- Estados rápidos -->
+  <div
+    class="erp-segmented fb-segmentos"
+    *ngIf="segmentos.length > 1"
+    role="radiogroup"
+    [attr.aria-label]="etiquetaSegmentos"
+    [style.--seg-count]="segmentos.length"
+    [style.--seg-index]="indiceSegmento"
+  >
+    <button
+      type="button"
+      class="erp-segmented__item"
+      role="radio"
+      *ngFor="let s of segmentos; trackBy: trackSegmento"
+      [attr.aria-checked]="s.valor === estado.segmento"
+      (click)="elegirSegmento(s.valor)"
+    >
+      {{ s.etiqueta }}<span class="fb-cantidad erp-num" *ngIf="s.cantidad !== undefined">{{ s.cantidad }}</span>
+    </button>
+  </div>
+
+  <!-- Chips de filtro -->
+  <div class="fb-chips">
+    <div class="fb-chip-envoltorio" *ngFor="let f of filtros; trackBy: trackId">
+      <button
+        type="button"
+        class="fb-chip"
+        [class.fb-chip--activo]="activo(f)"
+        [class.fb-chip--abierto]="abierto === f.id"
+        aria-haspopup="true"
+        [attr.aria-expanded]="abierto === f.id"
+        (click)="alternarPanel(f, $event)"
+      >
+        <i class="material-icons fb-chip__icono" aria-hidden="true" *ngIf="f.icono">{{ f.icono }}</i>
+        <span class="fb-chip__texto">{{ f.etiqueta }}<ng-container *ngIf="activo(f)">: <strong>{{ resumen(f) }}</strong></ng-container></span>
+        <i class="material-icons fb-chip__flecha" aria-hidden="true" *ngIf="!activo(f)">expand_more</i>
+      </button>
+      <button type="button" class="fb-chip__quitar" *ngIf="activo(f)" (click)="limpiarFiltro(f, $event)" [attr.aria-label]="'Quitar el filtro ' + f.etiqueta" [appTooltip]="'Quitar el filtro ' + f.etiqueta">
+        <i class="material-icons" aria-hidden="true">close</i>
+      </button>
+
+      <!-- Panel del filtro -->
+      <div class="fb-panel" role="dialog" [attr.aria-label]="f.etiqueta" *ngIf="abierto === f.id" (click)="$event.stopPropagation()">
+        <ng-container [ngSwitch]="f.tipo">
+          <ng-container *ngSwitchCase="'seleccion'">
+            <ng-container *ngIf="$any(f) as sel">
+              <input type="search" class="fb-panel__buscar" *ngIf="sel.buscable !== false && sel.opciones.length > 6" [(ngModel)]="busquedaOpciones" placeholder="Buscar…" aria-label="Buscar en las opciones" autocomplete="off" />
+              <div class="fb-panel__lista" role="listbox" [attr.aria-multiselectable]="sel.multiple ? 'true' : null">
+                <ng-container *ngFor="let g of opcionesVisibles(sel); trackBy: trackGrupo">
+                  <p class="fb-panel__grupo" *ngIf="g.titulo">{{ g.titulo }}</p>
+                  <button type="button" class="fb-opcion" role="option" *ngFor="let o of g.opciones; trackBy: trackOpcion" [attr.aria-selected]="elegida(sel, o)" [class.fb-opcion--elegida]="elegida(sel, o)" (click)="alternarOpcion(sel, o)">
+                    <i class="material-icons fb-opcion__marca" aria-hidden="true">{{ sel.multiple ? (elegida(sel, o) ? 'check_box' : 'check_box_outline_blank') : (elegida(sel, o) ? 'radio_button_checked' : 'radio_button_unchecked') }}</i>
+                    <span class="fb-opcion__texto">{{ o.etiqueta }}<small *ngIf="o.detalle">{{ o.detalle }}</small></span>
+                  </button>
+                </ng-container>
+                <p class="fb-panel__vacio" *ngIf="opcionesVisibles(sel).length === 0">Nada coincide con «{{ busquedaOpciones }}».</p>
+              </div>
+            </ng-container>
+          </ng-container>
+
+          <div class="fb-panel__fechas" *ngSwitchCase="'fechas'">
+            <label>Desde<input type="date" [value]="rango(f).desde ?? ''" (change)="cambiarFecha(f, 'desde', $any($event.target).value)" /></label>
+            <label>Hasta<input type="date" [value]="rango(f).hasta ?? ''" (change)="cambiarFecha(f, 'hasta', $any($event.target).value)" /></label>
+          </div>
+
+          <label class="fb-panel__interruptor" *ngSwitchCase="'interruptor'">
+            <input type="checkbox" [checked]="activo(f)" (change)="fijar(f, $any($event.target).checked)" />
+            <span>{{ f.etiqueta }}</span>
+          </label>
+
+          <label class="fb-panel__numero" *ngSwitchCase="'numero'">
+            {{ f.etiqueta }}
+            <input type="number" inputmode="numeric" min="0" [value]="valorDe(f) ?? ''" (change)="cambiarNumero(f, $any($event.target).value)" [placeholder]="$any(f).placeholder ?? ''" />
+          </label>
+        </ng-container>
+        <div class="fb-panel__pie">
+          <button type="button" class="fb-panel__accion" *ngIf="activo(f)" (click)="limpiarFiltro(f)">Quitar</button>
+          <button type="button" class="fb-panel__accion fb-panel__accion--primaria" (click)="cerrarPanel()">Listo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado de los filtros -->
+  <div class="fb-resumen" *ngIf="totalActivos > 0" aria-live="polite">
+    <span class="fb-resumen__texto">{{ totalActivos }} {{ totalActivos === 1 ? 'filtro activo' : 'filtros activos' }}</span>
+    <button type="button" class="fb-resumen__limpiar" (click)="limpiarTodo()">
+      <i class="material-icons" aria-hidden="true">filter_alt_off</i>Limpiar filtros
+    </button>
+  </div>
+</div>

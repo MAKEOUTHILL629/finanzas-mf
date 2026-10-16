@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Squircle Drop Shadow -->
+    <filter id="squircle-shadow" x="-12%" y="-10%" width="124%" height="124%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#040A14" flood-opacity="0.38"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#040A14" flood-opacity="0.22"/>
+    </filter>
+
+    <!-- Soft Elevation Shadow for Glass Cards -->
+    <filter id="card-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#020710" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- Soft Ambient Glow Filter -->
+    <filter id="glow-blur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+
+    <!-- Outer Metallic Silver-Blue Bezel -->
+    <linearGradient id="bezel-outer" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#C2D1E5"/>
+      <stop offset="30%" stop-color="#94A8C4"/>
+      <stop offset="65%" stop-color="#5B6E8A"/>
+      <stop offset="100%" stop-color="#485870"/>
+    </linearGradient>
+
+    <!-- Inner Dark Metallic Rim -->
+    <linearGradient id="bezel-inner" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#293952"/>
+      <stop offset="50%" stop-color="#131E30"/>
+      <stop offset="100%" stop-color="#354763"/>
+    </linearGradient>
+
+    <!-- Deep Obsidian-Navy Squircle Background -->
+    <radialGradient id="bg-navy" cx="68%" cy="22%" r="82%">
+      <stop offset="0%" stop-color="#182F54"/>
+      <stop offset="48%" stop-color="#0B182E"/>
+      <stop offset="100%" stop-color="#050C18"/>
+    </radialGradient>
+
+    <!-- Lower-Left Wing (Muted Slate-Teal Frosted Glass) -->
+    <linearGradient id="grad-lower-left" x1="0%" y1="20%" x2="80%" y2="90%">
+      <stop offset="0%" stop-color="#689894" stop-opacity="0.58"/>
+      <stop offset="50%" stop-color="#2E6F8E" stop-opacity="0.72"/>
+      <stop offset="100%" stop-color="#1E6091" stop-opacity="0.85"/>
+    </linearGradient>
+
+    <linearGradient id="border-lower-left" x1="0%" y1="20%" x2="80%" y2="90%">
+      <stop offset="0%" stop-color="#A7C7C5" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#4895EF" stop-opacity="0.4"/>
+    </linearGradient>
+
+    <!-- Lower-Right Wing & Base (Deep Ocean Blue -> Teal Glass) -->
+    <linearGradient id="grad-lower-right" x1="20%" y1="15%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#2A6F97" stop-opacity="0.65"/>
+      <stop offset="45%" stop-color="#1D70B8" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#2692D4" stop-opacity="0.92"/>
+    </linearGradient>
+
+    <linearGradient id="border-lower-right" x1="20%" y1="10%" x2="90%" y2="95%">
+      <stop offset="0%" stop-color="#72EFDD" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#56CFE1" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#4EA8DE" stop-opacity="0.75"/>
+    </linearGradient>
+
+    <!-- Upper-Right Smart Card (Translucent Sapphire Blue) -->
+    <linearGradient id="grad-upper-right" x1="25%" y1="5%" x2="85%" y2="85%">
+      <stop offset="0%" stop-color="#5B9BD5" stop-opacity="0.65"/>
+      <stop offset="50%" stop-color="#367BC4" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="#2B86D9" stop-opacity="0.88"/>
+    </linearGradient>
+
+    <linearGradient id="border-upper-right" x1="20%" y1="0%" x2="95%" y2="90%">
+      <stop offset="0%" stop-color="#CBE3FF" stop-opacity="0.72"/>
+      <stop offset="55%" stop-color="#7CC2FF" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.45"/>
+    </linearGradient>
+
+    <!-- Upper-Left Smart Card (Glowing Mint Green -> Aqua Blue) -->
+    <linearGradient id="grad-upper-left" x1="8%" y1="12%" x2="88%" y2="88%">
+      <stop offset="0%" stop-color="#72F6BC" stop-opacity="0.95"/>
+      <stop offset="38%" stop-color="#69E6B3" stop-opacity="0.86"/>
+      <stop offset="72%" stop-color="#58B8CE" stop-opacity="0.78"/>
+      <stop offset="100%" stop-color="#4599D1" stop-opacity="0.82"/>
+    </linearGradient>
+
+    <linearGradient id="border-upper-left" x1="0%" y1="8%" x2="95%" y2="92%">
+      <stop offset="0%" stop-color="#ECFFF6" stop-opacity="0.95"/>
+      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.88"/>
+      <stop offset="75%" stop-color="#99F6E4" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#BAE6FD" stop-opacity="0.8"/>
+    </linearGradient>
+
+    <!-- Center Inner Core Diamond (Frosted Pearl / Cyan Luminescence) -->
+    <linearGradient id="grad-inner-core" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#E0F7FA" stop-opacity="0.78"/>
+      <stop offset="45%" stop-color="#89DFD8" stop-opacity="0.58"/>
+      <stop offset="100%" stop-color="#56B4D3" stop-opacity="0.68"/>
+    </linearGradient>
+
+    <linearGradient id="border-inner-core" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#A5F3FC" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ================= SQUIRCLE CONTAINER ================= -->
+  <g filter="url(#squircle-shadow)">
+    <!-- Outer Metallic Bezel -->
+    <rect x="36" y="36" width="440" height="440" rx="102" fill="url(#bezel-outer)"/>
+    <!-- Inner Dark Bezel Step -->
+    <rect x="44" y="44" width="424" height="424" rx="95" fill="url(#bezel-inner)"/>
+    <!-- Deep Obsidian-Navy Inner Surface -->
+    <rect x="49" y="49" width="414" height="414" rx="91" fill="url(#bg-navy)"/>
+    <!-- Crisp Specular Inner Rim -->
+    <rect x="49.75" y="49.75" width="412.5" height="412.5" rx="90.25" fill="none" stroke="#7A9CC6" stroke-opacity="0.32" stroke-width="1.5"/>
+  </g>
+
+  <!-- Subtle Ambient Backlight Glow -->
+  <g filter="url(#glow-blur)" opacity="0.4">
+    <circle cx="205" cy="220" r="65" fill="#5EEAD4"/>
+    <circle cx="285" cy="295" r="75" fill="#0284C7"/>
+  </g>
+
+  <!-- ================= OVERLAPPING FROSTED GLASS LAYERS ================= -->
+  <g filter="url(#card-shadow)">
+
+    <!-- 1. LOWER-LEFT BASE CARD (Slate-Teal Glass) -->
+    <rect x="172.36" y="206.08" width="127.28" height="183.85" rx="22"
+          transform="rotate(-45 236 298)"
+          fill="url(#grad-lower-left)"
+          stroke="url(#border-lower-left)"
+          stroke-width="1.8"/>
+
+    <!-- 2. LOWER-RIGHT BASE CARD (Deep Ocean Blue Glass) -->
+    <rect x="212.36" y="206.08" width="127.28" height="183.85" rx="22"
+          transform="rotate(45 276 298)"
+          fill="url(#grad-lower-right)"
+          stroke="url(#border-lower-right)"
+          stroke-width="1.8"/>
+
+    <!-- 3. UPPER-RIGHT SMART CARD (Sapphire Blue Glass) -->
+    <rect x="212.36" y="154.08" width="127.28" height="183.85" rx="22"
+          transform="rotate(45 276 246)"
+          fill="url(#grad-upper-right)"
+          stroke="url(#border-upper-right)"
+          stroke-width="2"/>
+
+    <!-- 4. UPPER-LEFT SMART CARD (Mint Green -> Aqua Glass) -->
+    <rect x="172.36" y="154.08" width="127.28" height="183.85" rx="22"
+          transform="rotate(-45 236 246)"
+          fill="url(#grad-upper-left)"
+          stroke="url(#border-upper-left)"
+          stroke-width="2.2"/>
+
+    <!-- 5. CENTER INNER LUMINESCENT DIAMOND -->
+    <rect x="210.04" y="245.04" width="91.92" height="91.92" rx="18"
+          transform="rotate(45 256 291)"
+          fill="url(#grad-inner-core)"
+          stroke="url(#border-inner-core)"
+          stroke-width="1.6"/>
+
+    <!-- 6. SPECULAR GLASS REFRACTION EDGE (Upper-Right Card Inner Seam) -->
+    <path d="M 256 176 L 176 256"
+          stroke="#FFFFFF"
+          stroke-opacity="0.72"
+          stroke-width="2"
+          stroke-linecap="round"/>
+  </g>
+</svg>

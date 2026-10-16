@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { ExtractosTarjetasComponent } from './extractos-tarjetas/extractos-tarjetas.component';
 import { FormularioPagarExtractoComponent } from './formulario-pagar-extracto/formulario-pagar-extracto.component';
 
@@ -12,6 +12,6 @@ export const RUTAS_EXTRACTOS: Routes = [
 
 @NgModule({
   declarations: [ExtractosTarjetasComponent, FormularioPagarExtractoComponent],
-  imports: [SharedModule]
+  imports: [DatosUiModule]
 })
 export class ExtractosModule {}

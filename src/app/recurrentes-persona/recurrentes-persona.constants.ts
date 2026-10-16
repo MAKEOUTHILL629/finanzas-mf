@@ -7,6 +7,8 @@ import {
   RecurrentePersona,
 } from '../modelos/aportes';
 import { desplazarPeriodo } from '../shared/periodo.helper';
+import { EstadoFiltros } from '../shared/ui/filter-bar/filter-bar.types';
+import { normalizeSearchText } from '../shared/utils';
 
 export function etiquetaNaturaleza(n: NaturalezaRecurrentePersona | string): string {
   return n === 'ABONO_A_FAVOR' ? 'Saldo a favor / descuento mensual' : 'Me debe pagar cada mes';
@@ -93,6 +95,40 @@ export function filtrarRecurrentes(lista: RecurrentePersona[], f: FiltroRecurren
       (f.activo === null || f.activo === undefined || r.activo === f.activo) &&
       (f.modalidadDuracion === null || f.modalidadDuracion === undefined || r.modalidadDuracion === f.modalidadDuracion)
   );
+}
+
+export const SEGMENTOS_RECURRENTES = ['todos', 'activo', 'pausado', 'finalizado'] as const;
+
+/**
+ * Aplica la barra de filtros: estado rápido (según `estadoVisual`), persona, duración y búsqueda por persona, concepto, notas o valor
+ * (sin tildes ni mayúsculas, todas las palabras).
+ */
+export function filtrarRecurrentesConBarra(lista: RecurrentePersona[], e: EstadoFiltros): RecurrentePersona[] {
+  const persona = e.valores['persona'];
+  const duracion = e.valores['duracion'];
+  const base = filtrarRecurrentes(lista, {
+    personaId: persona === undefined || persona === null || persona === '' || Array.isArray(persona) ? null : Number(persona),
+    activo: null,
+    modalidadDuracion: duracion === 'INDEFINIDO' || duracion === 'PLAZO_FIJO' ? duracion : null,
+  });
+  const palabras = normalizeSearchText(e.busqueda ?? '').split(/\s+/).filter(Boolean);
+  return base.filter((r) => {
+    if (e.segmento && e.segmento !== 'todos' && estadoVisual(r) !== e.segmento) return false;
+    if (palabras.length === 0) return true;
+    const texto = normalizeSearchText([r.personaNombre, r.concepto, r.notas, r.valorMensual, etiquetaNaturalezaCorta(r.naturaleza), r.vitalicio ? 'vitalicio' : ''].join(' '));
+    return palabras.every((w) => texto.includes(w));
+  });
+}
+
+/** Cuántos recurrentes caen en cada estado rápido con el resto de filtros aplicados. */
+export function conteoRecurrentes(lista: RecurrentePersona[], e: EstadoFiltros): Record<(typeof SEGMENTOS_RECURRENTES)[number], number> {
+  const sin = filtrarRecurrentesConBarra(lista, { ...e, segmento: 'todos' });
+  return {
+    todos: sin.length,
+    activo: sin.filter((r) => estadoVisual(r) === 'activo').length,
+    pausado: sin.filter((r) => estadoVisual(r) === 'pausado').length,
+    finalizado: sin.filter((r) => estadoVisual(r) === 'finalizado').length,
+  };
 }
 
 /** Lo que cobran (+) o descuentan (−) cada mes los recurrentes activos: para el resumen de la pantalla. */

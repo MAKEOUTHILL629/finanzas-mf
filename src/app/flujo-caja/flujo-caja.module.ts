@@ -3,7 +3,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
 import { PROVEEDOR_GRAFICAS } from '../shared/charts';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { FlujoCajaComponent } from './flujo-caja.component';
 
 /** Rutas de `RUTAS_FLUJO_CAJA` (se cargan de forma diferida desde `app-routing.module.ts`). */
@@ -13,6 +13,6 @@ export const RUTAS_FLUJO_CAJA: Routes = [
 
 @NgModule({
   declarations: [FlujoCajaComponent],
-  imports: [SharedModule, BaseChartDirective]
+  imports: [DatosUiModule, BaseChartDirective]
 })
 export class FlujoCajaModule {}

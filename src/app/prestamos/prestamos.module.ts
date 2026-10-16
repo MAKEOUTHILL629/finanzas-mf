@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { TablaPrestamosComponent } from './tabla-prestamos/tabla-prestamos.component';
 import { FormularioPrestamosComponent } from './formulario-prestamos/formulario-prestamos.component';
 import { DetallePrestamoComponent } from './detalle-prestamo/detalle-prestamo.component';
@@ -22,6 +22,6 @@ export const RUTAS_CORTES: Routes = [
 
 @NgModule({
   declarations: [TablaPrestamosComponent, FormularioPrestamosComponent, DetallePrestamoComponent, FormularioEditarPrestamoComponent, ListaCortesComponent, FormularioCorteComponent],
-  imports: [SharedModule]
+  imports: [DatosUiModule]
 })
 export class PrestamosModule {}

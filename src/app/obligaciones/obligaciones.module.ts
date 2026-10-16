@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { ListaObligacionesComponent } from './lista-obligaciones/lista-obligaciones.component';
 import { FormularioObligacionComponent } from './formulario-obligacion/formulario-obligacion.component';
 import { DetalleObligacionComponent } from './detalle-obligacion/detalle-obligacion.component';
@@ -15,6 +15,6 @@ export const RUTAS_OBLIGACIONES: Routes = [
 
 @NgModule({
   declarations: [ListaObligacionesComponent, FormularioObligacionComponent, DetalleObligacionComponent, FormularioAportesComponent],
-  imports: [SharedModule]
+  imports: [DatosUiModule]
 })
 export class ObligacionesModule {}

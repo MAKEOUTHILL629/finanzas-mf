@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { ListaCorreosComponent } from './lista-correos/lista-correos.component';
 import { FormularioConciliarComponent } from './formulario-conciliar/formulario-conciliar.component';
 import { ProductosDetectadosComponent } from './productos-detectados/productos-detectados.component';
@@ -14,6 +14,6 @@ export const RUTAS_CORREOS: Routes = [
 
 @NgModule({
   declarations: [ListaCorreosComponent, FormularioConciliarComponent, ProductosDetectadosComponent, ReprocesarCorreosComponent],
-  imports: [SharedModule]
+  imports: [DatosUiModule]
 })
 export class CorreosModule {}

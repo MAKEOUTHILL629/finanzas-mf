@@ -82,6 +82,16 @@ Una prueba verifica que cada enlace del menú existe en el enrutador.
 - **Búsqueda:** ignora tildes y mayúsculas, exige todas las palabras y ordena por relevancia (`↑ ↓` recorren, `Enter` abre, `Esc` limpia).
 - El estado (ancho, barra contraída, panel abierto, favoritos) está en `MenuStateService`; el layout de la página lo lee de ahí (`layout-sidebar | layout-rail | layout-drawer | layout-movil | layout-invitado`).
 
+## Listas, filtros y acciones (plan V2)
+
+Todas las pantallas de listas comparten la misma anatomía (ver `src/design-system/README.md`):
+`<app-page-header>` + `<app-acciones>` (botón flotante en móvil) → resumen → `<app-filter-bar>` (buscador, estados rápidos y chips) → `<app-apple-table>`.
+Convertidas hasta ahora: Compras a crédito, Transacciones, Préstamos, Estado de cuenta, Cruces de deuda y Recurrentes por persona; las demás
+cabeceras ya usan `<app-acciones>`. Quedan con `appTable` (ya responsivo con `stack`) las sub-tablas de detalle: desglose de aportes del carro,
+compras de una persona, aportes por día de una obligación y muestras de reproceso de correos; el historial de tarjeta se rehace en la fase 2.
+Los filtros son funciones puras por pantalla (`compras-filtros.ts`, `transacciones-filtros.ts`, `filtrarPrestamos`, `filtrarRecurrentesConBarra`) con sus pruebas.
+Marca: el logo (`public/brand/logo.svg`) genera favicon, íconos PWA, `manifest.webmanifest`, *splash* de arranque y `<app-logo>`.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { NO_ERRORS_SCHEMA, Provider, Type } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -10,6 +10,10 @@ import { FormatoFechaCortaPipe } from '../pipes/formato-fecha-corta.pipe';
 import { FormatoFechaPipe } from '../pipes/formato-fecha.pipe';
 import { FormatoMonedaPipe } from '../pipes/formato-moneda.pipe';
 import { Catalogos, ItemCategoria, ItemCuenta, ItemPersona, ItemTarjeta } from '../modelos/catalogos';
+import { AccionesComponent } from '../shared/ui/acciones/acciones.component';
+import { AppleTableComponent } from '../shared/ui/apple-table/apple-table.component';
+import { AccionesFilaDirective, CeldaTablaDirective, TarjetaFilaDirective } from '../shared/ui/apple-table/apple-table.types';
+import { FilterBarComponent } from '../shared/ui/filter-bar/filter-bar.component';
 import { BadgeComponent } from '../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../shared/ui/button/button.component';
 import { CardComponent } from '../shared/ui/card/card.component';
@@ -17,23 +21,51 @@ import { ContadorComponent } from '../shared/ui/contador/contador.component';
 import { SkeletonComponent } from '../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../shared/ui/empty-state/empty-state.component';
 import { FieldComponent, InputDirective } from '../shared/ui/field/field.component';
+import { LogoComponent } from '../shared/ui/logo/logo.component';
 import { PageHeaderComponent } from '../shared/ui/page-header/page-header.component';
 import { SelectComponent } from '../shared/ui/select/select.component';
 import { TableDirective } from '../shared/ui/table/table.directive';
 import { ThemeToggleComponent } from '../shared/ui/theme-toggle/theme-toggle.component';
+import { TooltipDirective } from '../shared/ui/tooltip/tooltip.directive';
 
 /** Componentes base del sistema de diseño: las plantillas los usan, así que toda prueba de un componente debe declararlos. */
 export const COMPONENTES_UI: Type<unknown>[] = [
-  BadgeComponent, ButtonComponent, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, PageHeaderComponent, SelectComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
+  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SelectComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
 ];
+/** Directivas independientes (standalone): van en `imports`, no en `declarations`. */
+export const DIRECTIVAS_UI = [TooltipDirective];
+
+/** Da ancho de escritorio al componente: la tabla Apple oculta columnas (a propósito) cuando no caben y la ventana de Karma es angosta. */
+export function anchoEscritorio(f: ComponentFixture<unknown>, px = 1400): void {
+  (f.nativeElement as HTMLElement).style.cssText = `display:block;width:${px}px`;
+}
+
+/** Espera a que la tabla Apple mida su ancho (ResizeObserver) y vuelve a pintar. */
+export async function esperarTabla(f: ComponentFixture<unknown>): Promise<void> {
+  await new Promise((r) => setTimeout(r, 80));
+  f.detectChanges();
+}
 
 export const API = environment.apiUrl;
 
+/**
+ * En Karma no se carga la fuente de íconos: sin esto cada ícono se pinta como texto largo («pause_circle») y las tablas parecen mucho más
+ * anchas de lo que son. Cada ícono pasa a ser un cuadrado de 24 px, como con la fuente real.
+ */
+export function estilosDePrueba(): void {
+  if (document.getElementById('estilos-de-prueba')) return;
+  const estilo = document.createElement('style');
+  estilo.id = 'estilos-de-prueba';
+  estilo.textContent = '.material-icons{display:inline-block;width:24px;height:24px;overflow:hidden;font-size:0!important;vertical-align:middle}';
+  document.head.appendChild(estilo);
+}
+
 /** Configura TestBed para un componente del módulo ERP: pipes propios, formularios, router y HTTP simulado. */
 export function configurarTestBed(declarations: Type<unknown>[], providers: Provider[] = []): void {
+  estilosDePrueba();
   TestBed.configureTestingModule({
     declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe, ...COMPONENTES_UI],
-    imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([])],
+    imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([]), ...DIRECTIVAS_UI],
     providers: [provideHttpClient(), provideHttpClientTesting(), provideNoopAnimations(), ...providers],
     schemas: [NO_ERRORS_SCHEMA],
   });

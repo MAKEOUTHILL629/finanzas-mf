@@ -1,17 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-aportes-carro">
   <app-page-header titulo="Aportes del carro" subtitulo="Lo que se aporta día a día a la cuota de cada mes, con sus cruces de cuentas y el saldo a favor." idTitulo="titulo-aportes-carro">
-    <a appButton="ghost" routerLink="/liquidacion">
-      <i class="material-icons" aria-hidden="true">fact_check</i>
-      Liquidación
-    </a>
-    <button type="button" appButton="secondary" (click)="abrirPeriodo()">
-      <i class="material-icons" aria-hidden="true">tune</i>
-      Configurar cuota mensual
-    </button>
-    <button type="button" appButton="primary" (click)="abrirAporte()" [disabled]="cargando || !!error">
-      <i class="material-icons" aria-hidden="true">add</i>
-      Agregar aporte
-    </button>
+    <app-acciones [principal]="principal" [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <!-- Carga -->
@@ -68,7 +57,7 @@
       <app-card class="erp-stat">
         <span class="erp-overline">Estado del mes</span>
         <span class="estado-mes">
-          <app-badge class="claseEstado(k.estado) }}">{{ etiquetaEstado(k.estado) }}</app-badge>
+          <app-badge [tone]="claseEstado(k.estado)">{{ etiquetaEstado(k.estado) }}</app-badge>
         </span>
         <span class="erp-stat-value erp-num" [class.erp-loss]="k.saldoPendiente > 0" [class.erp-gain]="k.saldoAFavorDisponible > 0">
           {{ (k.saldoPendiente > 0 ? k.saldoPendiente : k.saldoAFavorGenerado) | moneda }}
@@ -153,7 +142,7 @@
             <i class="material-icons chevron" [class.chevron--abierto]="estaAbierto(p)" aria-hidden="true">chevron_right</i>
             <span class="periodo-nombre">{{ p.concepto }}</span>
             <app-badge tone="info" class="periodo-total"><i class="material-icons" aria-hidden="true">payments</i>{{ p.montoAbonado | moneda }}</app-badge>
-            <app-badge class="claseEstado(p.estado) }}">{{ textoEstado(p) }}</app-badge>
+            <app-badge [tone]="claseEstado(p.estado)">{{ textoEstado(p) }}</app-badge>
           </button>
         </h2>
 

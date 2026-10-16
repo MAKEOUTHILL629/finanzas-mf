@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { ListaTarjetasComponent } from './lista-tarjetas/lista-tarjetas.component';
 import { FormularioTarjetaComponent } from './formulario-tarjeta/formulario-tarjeta.component';
 import { FormularioPlasticoComponent } from './formulario-plastico/formulario-plastico.component';
@@ -15,6 +15,6 @@ export const RUTAS_TARJETAS: Routes = [
 
 @NgModule({
   declarations: [ListaTarjetasComponent, FormularioTarjetaComponent, FormularioPlasticoComponent, HistorialTarjetaComponent],
-  imports: [SharedModule]
+  imports: [DatosUiModule]
 })
 export class TarjetasModule {}

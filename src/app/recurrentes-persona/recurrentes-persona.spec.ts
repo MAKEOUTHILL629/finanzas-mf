@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RecurrentePersona } from '../modelos/aportes';
 import { RecurrentesPersonaService } from '../services/recurrentes-persona.service';
-import { API, configurarTestBed, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
+import { API, anchoEscritorio, configurarTestBed, errorHttp, esperar, esperarTabla, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
+import { estadoVacio } from '../shared/ui/filter-bar/filter-bar.types';
 import { FormularioRecurrentePersonaComponent, plazoCoherente } from './formulario-recurrente-persona/formulario-recurrente-persona.component';
 import { ListaRecurrentesPersonaComponent } from './lista-recurrentes-persona/lista-recurrentes-persona.component';
 import {
@@ -12,8 +13,10 @@ import {
   construirRecurrente,
   estadoVisual,
   etiquetaNaturaleza,
+  conteoRecurrentes,
   etiquetaNaturalezaCorta,
   filtrarRecurrentes,
+  filtrarRecurrentesConBarra,
   mesFinPrevisto,
   textoProgreso,
   totalMensual,
@@ -81,6 +84,22 @@ describe('Recurrentes por persona — lógica', () => {
     expect(totalMensual(lista)).toEqual({ cobros: 65000, favores: 10000 });
   });
 
+  it('la barra de filtros: estado rápido, persona, duración y búsqueda sin tildes, con contadores', () => {
+    const lista = [recurrente(), vitalicio(), recurrente({ id: 5, activo: false, valorMensual: 1000, concepto: 'Gimnasio' }), recurrente({ id: 6, estado: 'FINALIZADO', valorMensual: 2000, personaId: 4, personaNombre: 'Luis Fernando' })];
+    const ids = (e: object) => filtrarRecurrentesConBarra(lista, { ...estadoVacio('todos'), ...e }).map((r) => r.id);
+    expect(ids({})).toEqual([3, 4, 5, 6]);
+    expect(ids({ segmento: 'activo' })).toEqual([3, 4]);
+    expect(ids({ segmento: 'pausado' })).toEqual([5]);
+    expect(ids({ segmento: 'finalizado' })).toEqual([6]);
+    expect(ids({ valores: { persona: 4 } })).toEqual([4, 6]);
+    expect(ids({ valores: { duracion: 'INDEFINIDO' } })).toEqual([4]);
+    expect(ids({ busqueda: 'andres gimnasio' })).toEqual([5]);
+    expect(ids({ busqueda: 'vitalicio' })).toEqual([4]);
+    expect(ids({ busqueda: '65000' })).toEqual([3]);
+    expect(conteoRecurrentes(lista, estadoVacio('finalizado'))).toEqual({ todos: 4, activo: 2, pausado: 1, finalizado: 1 });
+    expect(conteoRecurrentes(lista, { ...estadoVacio('todos'), valores: { persona: 4 } })).toEqual({ todos: 2, activo: 1, pausado: 0, finalizado: 1 });
+  });
+
   it('plazoCoherente: con plazo fijo exige un entero entre 1 y 600; de por vida no valida el plazo', () => {
     const grupo = (modalidadDuracion: string, numeroMeses: unknown) =>
       new FormGroup({ modalidadDuracion: new FormControl(modalidadDuracion), numeroMeses: new FormControl(numeroMeses) });
@@ -122,6 +141,7 @@ describe('ListaRecurrentesPersonaComponent', () => {
   function montar(lista: RecurrentePersona[] = [recurrente(), vitalicio()]) {
     configurarTestBed([ListaRecurrentesPersonaComponent]);
     const f = TestBed.createComponent(ListaRecurrentesPersonaComponent);
+    anchoEscritorio(f);
     f.detectChanges();
     responder('recurrentes-persona', lista);
     responderCatalogos({ personas });
@@ -133,8 +153,9 @@ describe('ListaRecurrentesPersonaComponent', () => {
     return (f.nativeElement as HTMLElement).textContent!.replace(/\s+/g, ' ');
   };
 
-  it('tabla con persona, tipo, valor, progreso k/X o distintivo vitalicio y totales mensuales', () => {
+  it('tabla con persona, tipo, valor, progreso k/X o distintivo vitalicio y totales mensuales', async () => {
     const f = montar();
+    await esperarTabla(f);
     const t = texto(f);
     for (const esperado of ['Recurrentes por persona', 'Andrés Gómez', 'Plan de celular', '$65,000.00', '3 / 6 meses', 'Vitalicio', 'Descuento', 'A cobrar', 'A favor', 'Se cobra cada mes', 'Se descuenta cada mes', 'Desde Agosto 2026 hasta Enero 2027']) {
       expect(t).toContain(esperado);
@@ -143,17 +164,19 @@ describe('ListaRecurrentesPersonaComponent', () => {
     expect(f.nativeElement.querySelector('[role=progressbar]').getAttribute('aria-valuenow')).toBe('50');
   });
 
-  it('filtrar por duración y quitar filtros', () => {
+  it('la barra de filtros recorta por duración y persona, y «sin coincidencias» lo dice', async () => {
     const f = montar();
-    f.componentInstance.cambiarFiltro('modalidadDuracion', 'INDEFINIDO');
+    const c = f.componentInstance;
+    c.alFiltrar({ ...estadoVacio('todos'), valores: { duracion: 'INDEFINIDO' } });
     f.detectChanges();
     expect(f.nativeElement.querySelectorAll('tbody tr').length).toBe(1);
-    f.componentInstance.cambiarFiltro('personaId', 2);
-    f.detectChanges();
+    c.alFiltrar({ ...estadoVacio('todos'), valores: { duracion: 'INDEFINIDO', persona: 2 } });
+    await esperarTabla(f);
     expect(texto(f)).toContain('Ningún recurrente coincide');
-    f.componentInstance.reiniciarFiltros();
+    c.alFiltrar(estadoVacio('todos'));
     f.detectChanges();
     expect(f.nativeElement.querySelectorAll('tbody tr').length).toBe(2);
+    expect(c.definicionFiltros.map((d) => d.id)).toEqual(['persona', 'duracion']);
   });
 
   it('pausar llama a PATCH activo=false y recarga', () => {
@@ -184,6 +207,7 @@ describe('ListaRecurrentesPersonaComponent', () => {
   it('vacío invita a crear el primero; el error ofrece reintentar', () => {
     const vacio = montar([]);
     expect(texto(vacio)).toContain('Aún no hay recurrentes por persona');
+    expect(texto(vacio)).toContain('Nuevo recurrente');
     TestBed.resetTestingModule();
 
     configurarTestBed([ListaRecurrentesPersonaComponent]);

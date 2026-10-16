@@ -1,9 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-flujo">
   <app-page-header titulo="Flujo de caja" subtitulo="Lo que entra, lo que sale y lo que te queda libre en el mes, descontando lo que te devuelven los demás." idTitulo="titulo-flujo">
-    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-      <i class="material-icons" aria-hidden="true">today</i>
-      Mes actual
-    </button>
+    <app-acciones [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">

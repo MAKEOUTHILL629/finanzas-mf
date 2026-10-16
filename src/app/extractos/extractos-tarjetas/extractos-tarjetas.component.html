@@ -1,9 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-extractos">
   <app-page-header titulo="Extractos de tarjetas" subtitulo="Lo que cobra el banco en cada periodo, cuánto es tuyo y cuánto de terceros. Desde aquí pagas el extracto." idTitulo="titulo-extractos">
-    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-      <i class="material-icons" aria-hidden="true">today</i>
-      Mes actual
-    </button>
+    <app-acciones [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">

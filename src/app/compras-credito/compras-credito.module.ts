@@ -6,6 +6,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
 import { PROVEEDOR_GRAFICAS } from '../shared/charts';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { SharedModule } from '../shared/shared.module';
 import { TablaComprasCreditoComponent } from './tabla-compras-credito/tabla-compras-credito.component';
 import { FormularioComprasCreditoComponent } from './formulario-compras-credito/formulario-compras-credito.component';
@@ -34,6 +35,6 @@ export const RUTAS_PAGOS_MES: Routes = [
 
 @NgModule({
   declarations: [TablaComprasCreditoComponent, FormularioComprasCreditoComponent, FormularioCsvComprasComponent, DetalleComprasCreditoComponent, ResponsableCreditoComponent, PagosMesTarjetasComponent, PagosMesTarjetasDetalleComponent, BalanceMesComponent],
-  imports: [SharedModule, MatAutocompleteModule, MatInputModule, MatProgressSpinnerModule, BaseChartDirective]
+  imports: [SharedModule, DatosUiModule, MatAutocompleteModule, MatInputModule, MatProgressSpinnerModule, BaseChartDirective]
 })
 export class ComprasCreditoModule {}

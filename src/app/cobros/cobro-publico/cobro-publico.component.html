@@ -1,4 +1,6 @@
 <main class="pub" aria-live="polite">
+  <div class="pub-marca"><app-logo size="40" alt=""></app-logo><span>Finanzas Make</span></div>
+
   <!-- Carga -->
   <div class="pub-hoja" *ngIf="cargando" aria-busy="true" aria-label="Cargando">
     <div class="erp-skeleton" style="height: 48px; width: 60%"></div>
@@ -153,7 +155,7 @@
             <span class="pub-item-detalle" *ngIf="r.estado === 'RECHAZADO' && r.motivoRechazo">Motivo: {{ r.motivoRechazo }}</span>
             <span class="pub-item-detalle" *ngIf="r.estado === 'APROBADO' && r.montoAprobado !== null && r.montoAprobado !== r.monto">Se abonaron {{ r.montoAprobado | moneda }}</span>
           </div>
-          <app-badge class="claseEstado(r.estado) === 'neutral' ? '' : claseEstado(r.estado) }}">{{ estado(r.estado) }}</app-badge>
+          <app-badge [tone]="claseEstado(r.estado)">{{ estado(r.estado) }}</app-badge>
         </li>
       </ul>
     </section>

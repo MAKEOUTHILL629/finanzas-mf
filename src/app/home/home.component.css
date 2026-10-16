@@ -6,6 +6,9 @@
   gap: var(--space-2) var(--space-3);
   align-items: end;
 }
+.home-saludo { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.home-saludo__texto { min-width: 0; }
+.home-logo { margin-top: 4px; filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--brand-blue) 30%, transparent)); }
 .home-saludo h1 { margin: 0; font-size: var(--text-hero); font-weight: var(--weight-bold); letter-spacing: -0.03em; line-height: 1.05; }
 .home-saludo .erp-overline { margin: 0 0 var(--space-1); }
 .home-frase { margin: var(--space-1) 0 0; max-width: 60ch; font-size: var(--text-h3); line-height: 1.35; color: var(--text-secondary); font-weight: var(--weight-medium); }
@@ -47,6 +50,8 @@
   .home-controles { justify-content: flex-start; }
 }
 @media (max-width: 640px) {
+  .home-logo { width: 44px; height: 44px; }
+  .home-logo img { width: 44px; height: 44px; }
   .home-saludo h1 { font-size: var(--text-h1); }
   .home-frase { font-size: var(--text-body); }
   .home-acciones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }

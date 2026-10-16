@@ -1,0 +1,123 @@
+/* Tabla Apple: sin scroll horizontal, columnas por prioridad, tarjetas en móvil. Solo usa tokens del sistema de diseño. */
+:host { display: block; min-width: 0; }
+.apt { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+
+/* ── Barra ── */
+.apt-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1); }
+.apt-barra__izq, .apt-barra__der { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); min-width: 0; }
+.apt-contador { font-size: var(--text-body-sm); color: var(--text-secondary); }
+.apt-orden { display: flex; align-items: center; gap: 4px; }
+.apt-orden__select { width: auto; min-width: 150px; }
+.apt-chevron { font-size: 18px !important; margin-left: -4px; }
+
+.apt-columnas { position: relative; }
+.apt-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-height: 340px;
+  padding: var(--space-1);
+  overflow-y: auto;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  box-shadow: var(--shadow-dropdown);
+}
+.apt-menu__opcion { display: flex; align-items: center; gap: var(--space-1); min-height: var(--touch-target); padding: 0 var(--space-1); border-radius: var(--radius-sm); font-size: var(--text-body-sm); cursor: pointer; }
+.apt-menu__opcion:hover { background: var(--bg-input); }
+.apt-menu__opcion input { width: 18px; height: 18px; accent-color: var(--brand-blue); }
+.apt-menu__restablecer { margin-top: 4px; min-height: 36px; border: none; border-top: 1px solid var(--divider); background: transparent; color: var(--text-link); font: inherit; font-size: var(--text-caption); font-weight: var(--weight-semibold); cursor: pointer; }
+
+.apt-aviso { display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--text-caption); color: var(--text-tertiary); }
+.apt-aviso .material-icons { font-size: 16px; }
+
+.apt-esqueleto { display: flex; flex-direction: column; gap: var(--space-1); }
+.apt-vacio { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-5) var(--space-2); text-align: center; }
+.apt-vacio__texto { margin: 0; color: var(--text-secondary); font-size: var(--text-body-sm); max-width: 46ch; line-height: 1.5; }
+
+/* ── Escritorio ──
+   `overflow-x: clip` (no `auto`): nunca aparece una barra de desplazamiento horizontal; lo que no cabe se oculta por prioridad. */
+.apt-contenedor { overflow-x: clip; border-radius: var(--radius-md); }
+.apt-tabla { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-body-sm); }
+.apt-tabla th {
+  box-sizing: border-box; /* el min-width de la columna (anchoMin) incluye el relleno: así la suma de anchoMin es el ancho real de la tabla */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0 var(--space-2);
+  height: 40px;
+  text-align: left;
+  white-space: nowrap;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--table-header-bg);
+  border-bottom: 1px solid var(--table-border);
+}
+.apt-tabla td { padding: 12px var(--space-2); border-bottom: 1px solid var(--table-border); vertical-align: middle; }
+.apt-tabla tfoot td { border-bottom: none; border-top: 2px solid var(--table-border); background: var(--bg-input); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+.apt-tabla tbody tr { transition: background var(--duration-fast) var(--ease-in-out); }
+.apt-tabla tbody tr:hover { background: var(--table-row-hover); }
+.apt-fila--clicable { cursor: pointer; }
+/* Fila atenuada (p. ej. anulada): la pantalla marca con .apt-tachado lo que debe tacharse. */
+.apt-fila--tenue { opacity: 0.55; }
+.apt-tabla tbody tr.apt-fila--activa, .apt-item.apt-fila--activa { background: var(--brand-blue-light); }
+.apt-fila--tenue ::ng-deep .apt-tachado { text-decoration: line-through; }
+.apt-fila--clicable:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.apt-fin { text-align: right !important; font-variant-numeric: tabular-nums; }
+.apt-centro { text-align: center !important; }
+.apt-fin .apt-th { margin-left: auto; }
+.apt-truncar { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apt-tabla td:not(.apt-truncar) { overflow-wrap: anywhere; }
+.apt-th-acciones, .apt-td-acciones { width: 1%; white-space: nowrap; text-align: right; }
+.apt-td-acciones { display: table-cell; }
+
+.apt-th { display: inline-flex; align-items: center; gap: 2px; min-height: 40px; padding: 0; border: none; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.apt-th--fijo { cursor: default; }
+.apt-th:hover:not(.apt-th--fijo) { color: var(--text-primary); }
+.apt-th__icono { font-size: 16px; opacity: 0.35; transition: opacity var(--duration-fast) var(--ease-in-out), transform var(--duration-normal) var(--ease-spring); }
+.apt-th:hover .apt-th__icono { opacity: 0.7; }
+.apt-th__icono--activo { opacity: 1 !important; color: var(--text-link); }
+
+/* ── Móvil: tarjetas ── */
+.apt-lista { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.apt-item { border: 1px solid var(--border-glass); border-radius: var(--radius-md); background: var(--bg-surface); overflow: hidden; }
+.apt-item__resumen { display: flex; flex-direction: column; gap: 6px; padding: var(--space-2); }
+.apt-item__resumen[tabindex] { cursor: pointer; }
+.apt-item__titulo { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-1); }
+.apt-item__nombre { font-size: var(--text-body); font-weight: var(--weight-semibold); letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
+.apt-item__meta { display: flex; flex-wrap: wrap; gap: 4px var(--space-3); margin: 0; }
+.apt-item__meta > div { display: flex; flex-direction: column; min-width: 0; }
+/* en la tarjeta todo va alineado a la izquierda, también las cifras */
+.apt-item__meta .apt-fin { text-align: left !important; }
+.apt-item__meta dt, .apt-item__lista dt { font-size: var(--text-overline); font-weight: var(--weight-semibold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+.apt-item__meta dd, .apt-item__lista dd { margin: 0; font-size: var(--text-body-sm); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.apt-item__mas { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: var(--touch-target); border: none; border-top: 1px solid var(--divider); background: transparent; color: var(--text-link); font: inherit; font-size: var(--text-caption); font-weight: var(--weight-semibold); cursor: pointer; }
+.apt-item__mas .material-icons { font-size: 20px; }
+.apt-item__detalle { padding: 0 var(--space-2) var(--space-2); border-top: 1px solid var(--divider); }
+.apt-item__lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--space-1) var(--space-2); margin: var(--space-2) 0 0; }
+.apt-item__lista > div { min-width: 0; }
+.apt-item__acciones { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+
+/* ── Paginación ── */
+.apt-paginacion { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-2); padding-top: var(--space-1); }
+.apt-paginacion__rango { margin: 0; font-size: var(--text-body-sm); color: var(--text-secondary); }
+.apt-paginacion__tamano { display: flex; align-items: center; gap: 6px; font-size: var(--text-body-sm); color: var(--text-secondary); }
+.apt-paginacion__tamano select { width: auto; min-height: 36px; padding: 0 var(--space-1); }
+.apt-paginacion__botones { display: flex; align-items: center; gap: 2px; }
+.apt-pag { min-width: 36px; height: 36px; padding: 0 6px; border: none; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font: inherit; font-size: var(--text-body-sm); font-variant-numeric: tabular-nums; cursor: pointer; transition: background var(--duration-fast) var(--ease-in-out), color var(--duration-fast) var(--ease-in-out); }
+.apt-pag:hover { background: var(--bg-input-hover); color: var(--text-primary); }
+.apt-pag--activa { background: var(--brand-blue); color: var(--text-on-accent); font-weight: var(--weight-semibold); }
+.apt-pag-texto { padding: 0 var(--space-1); font-size: var(--text-body-sm); color: var(--text-secondary); }
+
+@media (pointer: coarse) { .apt-pag { min-width: var(--touch-target); height: var(--touch-target); } }
+@media (max-width: 640px) {
+  .apt-paginacion { justify-content: center; }
+  .apt-paginacion__rango { width: 100%; text-align: center; }
+}

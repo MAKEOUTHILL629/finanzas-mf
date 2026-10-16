@@ -44,6 +44,22 @@ Tipografía: `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text"
 | `<app-empty-state icon titulo descripcion>` | Estado vacío con la acción para empezar. |
 | `<app-modal>` | Diálogo centrado en escritorio y **hoja inferior** en móvil (asa, zona segura, Escape cierra). |
 | `<app-theme-toggle variant="segmented\|icon">` | Sistema · Claro · Oscuro, con indicador deslizante. |
+| `<app-logo size alt>` | Logo oficial (`public/brand/logo.svg`). Íconos de la app, favicon, manifest y *splash* salen del mismo archivo (`public/brand/`). |
+| `appTooltip="texto"` | Globo de ayuda (un único `TooltipService`). Todo botón de solo ícono (`appButton icon`) lo muestra solo, con su `aria-label`; los demás aceptan `appTooltip`. Escape lo cierra. |
+| `<app-apple-table [columnas] [filas] clave …>` | **Tabla de datos estándar** (ver abajo). |
+| `<app-filter-bar [segmentos] [filtros] [estado] (estadoChange)>` | Buscador + estados rápidos con contador + chips de filtro (selección simple/múltiple con buscador y grupos, rango de fechas, número, interruptor). El estado es un objeto serializable; el filtrado lo hace una función pura de la pantalla. |
+| `<app-acciones [principal] [secundarias] (accion)>` | **Acciones de cabecera unificadas**: escritorio = botones (la principal destacada); móvil = un único botón flotante con la principal y las demás en «Más acciones». Todas con globo de ayuda. `ListaAcciones` memoriza listas que cambian con el estado de la pantalla. |
+
+### Tabla de datos (`<app-apple-table>`)
+
+- Columnas declarativas (`ColumnaTabla`: `id`, `titulo`, `valor`, `formato`, `prioridad` 1–3, `anchoMin`, `truncar`, `comparar`…); celdas propias con
+  `<ng-template appCelda="id" let-fila>`, acciones por fila con `appAccionesFila` y fila de totales al pie con `[pie]`.
+- **Ordenar** por cualquier columna (números por magnitud, fechas por tiempo, texto sin tildes), **paginación** con contador y tamaño de página,
+  **columnas visibles** elegibles y recordadas por tabla (`almacenamiento`), modo servidor (`[servidor] [total] (paginaChange)`).
+- **Sin scroll horizontal**: si la tabla no cabe se ocultan primero las columnas de prioridad 3 y luego las de 2 (se comprueba con el ancho real
+  pintado); en pantallas < 640 px cada fila es una **tarjeta** con las columnas de prioridad 1 (`columnaTitulo` elige el título) y «Ver más».
+- Un clic en la fila emite `(filaClick)`; los enlaces y botones de dentro hacen lo suyo y no la abren. `filaClase` marca filas (`apt-fila--tenue`, `apt-fila--activa`).
+- `DatosUiModule` (en `shared/`) agrupa tabla, barra de filtros y acciones: lo importan los módulos con listas (no el paquete inicial).
 
 ## Móvil
 

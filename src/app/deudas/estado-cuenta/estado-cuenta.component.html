@@ -1,13 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-estado-cuenta">
   <app-page-header titulo="Estado de cuenta" subtitulo="Lo que cada persona te debe por cuotas de tarjeta, gastos compartidos, préstamos y cruces, y lo que ya te ha abonado." idTitulo="titulo-estado-cuenta">
-    <a appButton="secondary" routerLink="/cruces-deuda">
-      <i class="material-icons" aria-hidden="true">swap_horiz</i>
-      Cruces de deuda
-    </a>
-    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-      <i class="material-icons" aria-hidden="true">today</i>
-      Mes actual
-    </button>
+    <app-acciones [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
@@ -44,10 +37,6 @@
     </app-card>
   </div>
 
-  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando estado de cuenta">
-    <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3, 4]"></div>
-  </app-card>
-
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
@@ -56,62 +45,38 @@
     </div>
   </div>
 
-  <app-empty-state *ngIf="!cargando && !error && visibles.length === 0" icon="groups" titulo="Sin movimientos en {{ nombrePeriodo(periodo) }}" descripcion="Aquí aparece lo que cada persona debe cuando hay cuotas de tarjeta compartidas, préstamos o gastos recurrentes asignados. Prueba con otro mes."></app-empty-state>
+  <app-card padding="sm" class="tabla-card" *ngIf="!error">
+    <app-apple-table
+      [columnas]="columnas"
+      [filas]="visibles"
+      clave="persona_id"
+      etiqueta="Estado de cuenta por persona"
+      almacenamiento="estado-cuenta"
+      [cargando]="cargando"
+      [anchoAcciones]="150"
+      [filaClicable]="true"
+      [filaClase]="claseFila"
+      [pie]="pie"
+      [unidad]="['persona', 'personas']"
+      [textoVacio]="'Sin movimientos en ' + nombrePeriodo(periodo) + '. Aquí aparece lo que cada persona debe cuando hay cuotas de tarjeta compartidas, préstamos o gastos recurrentes asignados. Prueba con otro mes.'"
+      (filaClick)="seleccionar($event)"
+    >
+      <ng-template appCelda="persona" let-f>
+        <span class="persona">
+          <span class="avatar" [style.background]="f.color_representativo || 'var(--brand-blue)'" aria-hidden="true">{{ iniciales(f.nombre, f.iniciales_nombre) }}</span>
+          <button type="button" class="persona-nombre" (click)="seleccionar(f)" [attr.aria-expanded]="seleccionada?.persona_id === f.persona_id">{{ f.nombre }}</button>
+        </span>
+      </ng-template>
 
-  <app-card class="tabla-card" *ngIf="!cargando && !error && visibles.length > 0">
-    <div class="erp-table-wrap">
-      <table appTable compact stack sticky>
-        <caption class="erp-sr-only">Estado de cuenta por persona en {{ nombrePeriodo(periodo) }}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Persona</th>
-            <th scope="col" class="num">Cuotas TC</th>
-            <th scope="col" class="num">Recurrentes</th>
-            <th scope="col" class="num">Préstamos</th>
-            <th scope="col" class="num">Cruces</th>
-            <th scope="col" class="num">Abonos</th>
-            <th scope="col" class="num">Neto del mes</th>
-            <th scope="col" class="num">Saldo acumulado</th>
-            <th scope="col"><span class="erp-sr-only">Acciones</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let f of visibles; trackBy: trackById" class="fila" [class.fila--activa]="seleccionada?.persona_id === f.persona_id" (click)="seleccionar(f)">
-            <td data-label="Persona">
-              <span class="persona">
-                <span class="avatar" [style.background]="f.color_representativo || 'var(--brand-blue)'" aria-hidden="true">{{ iniciales(f.nombre, f.iniciales_nombre) }}</span>
-                <button type="button" class="persona-nombre" (click)="seleccionar(f); $event.stopPropagation()" [attr.aria-expanded]="seleccionada?.persona_id === f.persona_id">{{ f.nombre }}</button>
-              </span>
-            </td>
-            <td data-label="Cuotas TC" class="num">{{ f.cuotas_tc_mes | moneda }}</td>
-            <td data-label="Recurrentes" class="num">{{ f.recurrentes_compartidos_mes | moneda }}</td>
-            <td data-label="Préstamos" class="num">{{ f.prestamos_mes | moneda }}</td>
-            <td data-label="Cruces" class="num">{{ f.cruces_asumidos_mes | moneda }}</td>
-            <td data-label="Abonos" class="num erp-gain">{{ f.abonos_recibidos_mes | moneda }}</td>
-            <td data-label="Neto del mes" class="num">{{ f.saldo_neto_mes | moneda }}</td>
-            <td data-label="Saldo acumulado" class="num saldo" [class.erp-loss]="(f.saldo_total_acumulado ?? 0) > 0">{{ f.saldo_total_acumulado | moneda }}</td>
-            <td data-label="Acciones" class="acciones">
-              <button type="button" appButton="secondary" size="sm" (click)="abrirAbono(f); $event.stopPropagation()" [attr.aria-label]="'Registrar abono de ' + f.nombre">
-                <i class="material-icons" aria-hidden="true">savings</i>Abonar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td data-label="Total">Total</td>
-            <td data-label="Cuotas TC" class="num">{{ totales.cuotasTc | moneda }}</td>
-            <td data-label="Recurrentes" class="num">{{ totales.recurrentes | moneda }}</td>
-            <td data-label="Préstamos" class="num">{{ totales.prestamos | moneda }}</td>
-            <td data-label="Cruces" class="num">{{ totales.cruces | moneda }}</td>
-            <td data-label="Abonos" class="num">{{ totales.abonos | moneda }}</td>
-            <td data-label="Neto del mes" class="num">{{ totales.netoMes | moneda }}</td>
-            <td data-label="Saldo acumulado" class="num">{{ totales.saldoAcumulado | moneda }}</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+      <ng-template appCelda="abonos" let-f><span class="erp-gain">{{ f.abonos_recibidos_mes | moneda }}</span></ng-template>
+      <ng-template appCelda="saldo" let-f><span class="saldo" [class.erp-loss]="(f.saldo_total_acumulado ?? 0) > 0">{{ f.saldo_total_acumulado | moneda }}</span></ng-template>
+
+      <ng-template appAccionesFila let-f>
+        <button type="button" appButton="secondary" size="sm" (click)="abrirAbono(f)" [attr.aria-label]="'Registrar abono de ' + f.nombre" [appTooltip]="'Registrar un abono de ' + f.nombre">
+          <i class="material-icons" aria-hidden="true">savings</i>Abonar
+        </button>
+      </ng-template>
+    </app-apple-table>
   </app-card>
 
   <!-- Extracto de la persona elegida -->

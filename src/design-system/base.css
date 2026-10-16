@@ -96,6 +96,8 @@ select option {
   padding: calc(56px + env(safe-area-inset-top) + var(--space-2)) var(--space-2) calc(64px + env(safe-area-inset-bottom) + var(--space-3));
 }
 .layout-invitado .main-content { padding: var(--space-3); }
+/* con un botón flotante de acción, el contenido deja espacio para que no tape la paginación ni la última fila */
+.layout-movil .main-content:has(.acc__fab) { padding-bottom: calc(64px + env(safe-area-inset-bottom) + 96px); }
 /* los avisos no quedan tapados por la barra inferior del móvil */
 .layout-movil { --toast-offset-inferior: calc(64px + env(safe-area-inset-bottom)); }
 

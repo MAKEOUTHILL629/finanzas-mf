@@ -1,12 +1,18 @@
+/* Transacciones: la estructura (cabecera, filtros, tabla, acciones) viene de los componentes del sistema de diseño. */
+.tx { gap: var(--space-2); }
+.tx-periodo { margin-bottom: 0; }
 .aviso-texto { margin: 4px 0 var(--space-1); }
-.tabla-card { padding: var(--space-1) var(--space-2) var(--space-2); }
 
-.fecha { white-space: nowrap; font-feature-settings: "tnum" on; font-variant-numeric: tabular-nums; }
-.celda-concepto { display: flex; flex-direction: column; gap: 2px; min-width: 180px; }
-.concepto { font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
-.detalle { font-size: var(--text-caption); }
-.anulada { opacity: 0.55; }
-.anulada .concepto { text-decoration: line-through; }
-.acciones { white-space: nowrap; text-align: right; }
+.fecha { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.concepto { display: block; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.detalle { display: block; font-size: var(--text-caption); }
+.monto { font-variant-numeric: tabular-nums; font-weight: var(--weight-semibold); }
 
-.paginacion { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-top: var(--space-2); }
+@media (max-width: 640px) {
+  .erp-grid--stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); }
+  .erp-grid--stats .erp-stat:last-child { grid-column: 1 / -1; }
+  .erp-grid--stats .erp-stat-hint { display: none; }
+  .erp-grid--stats .erp-stat-value { font-size: 1.25rem; }
+}
+
+.acc-confirmar { color: var(--green-success); }

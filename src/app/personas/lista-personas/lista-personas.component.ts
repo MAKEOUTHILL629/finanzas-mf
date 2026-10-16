@@ -12,6 +12,7 @@ import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from 
 import { ToastService } from '../../shared/toast/toast.service';
 import { EXPANDIR } from '../../shared/motion';
 import { MODAL_ABONO_PERSONA, SegmentoTarjeta, aPersonaDeAbono, claseEstadoDeuda, etiquetaEstadoDeuda, iniciales, segmentosPorTarjeta } from '../personas.constants';
+import { ACCION_MES_ACTUAL, AccionUI, ListaAcciones } from '../../shared/ui/acciones/acciones.component';
 
 @Component({
   selector: 'app-lista-personas',
@@ -20,6 +21,18 @@ import { MODAL_ABONO_PERSONA, SegmentoTarjeta, aPersonaDeAbono, claseEstadoDeuda
   animations: [EXPANDIR]
 })
 export class ListaPersonasComponent implements OnInit, OnDestroy {
+  private readonly accSecundarias = new ListaAcciones();
+  get secundarias(): AccionUI[] {
+    return this.accSecundarias.obtener(String(this.esMesActual()), () => [
+      { id: 'cobros', etiqueta: 'Cobros', icono: 'request_quote', enlace: '/cobros', tooltip: 'Repartir gastos y compartir el cobro con cada persona' },
+      ...(this.esMesActual() ? [] : [ACCION_MES_ACTUAL]),
+    ]);
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'mes-actual') this.irAlMesActual();
+  }
+
   readonly modalId = MODAL_ABONO_PERSONA;
   readonly iniciales = iniciales;
   readonly etiquetaEstado = etiquetaEstadoDeuda;

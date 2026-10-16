@@ -1,17 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-liquidacion">
   <app-page-header titulo="Liquidación de fin de mes" subtitulo="Cuánto te debe cada persona al cierre del mes: tarjetas, préstamos, recurrentes, cruces de cuentas y la cuota del carro, menos lo que ya abonó." idTitulo="titulo-liquidacion">
-    <a appButton="ghost" routerLink="/aportes-carro">
-      <i class="material-icons" aria-hidden="true">directions_car</i>
-      Aportes del carro
-    </a>
-    <a appButton="secondary" routerLink="/recurrentes-persona">
-      <i class="material-icons" aria-hidden="true">autorenew</i>
-      Recurrentes por persona
-    </a>
-    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-      <i class="material-icons" aria-hidden="true">today</i>
-      Mes actual
-    </button>
+    <app-acciones [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo y persona">
@@ -82,7 +71,7 @@
             <span class="persona-nombre">{{ l.persona.nombre }}</span>
             <span class="persona-mensaje" [class.erp-loss]="l.resumenNeto.estado === 'DEBE'" [class.erp-gain]="l.resumenNeto.estado === 'A_FAVOR'">{{ mensaje(l.persona.nombre, l.resumenNeto.saldoNetoFinal, l.resumenNeto.estado) }}</span>
           </span>
-          <app-badge class="claseEstado(l.resumenNeto.estado) }}">{{ etiquetaEstado(l.resumenNeto.estado) }}</app-badge>
+          <app-badge [tone]="claseEstado(l.resumenNeto.estado)">{{ etiquetaEstado(l.resumenNeto.estado) }}</app-badge>
           <span class="persona-neto erp-num" [class.erp-loss]="l.resumenNeto.estado === 'DEBE'" [class.erp-gain]="l.resumenNeto.estado === 'A_FAVOR'">{{ l.resumenNeto.saldoNetoFinal | moneda }}</span>
           <i class="material-icons chevron" [class.chevron--abierto]="estaAbierta(l)" aria-hidden="true">expand_more</i>
         </button>
@@ -101,7 +90,7 @@
         <div class="carro" *ngIf="l.estadoAporteCarro as c">
           <div class="carro-cabecera">
             <span class="erp-overline"><i class="material-icons" aria-hidden="true">directions_car</i> {{ c.concepto }}</span>
-            <app-badge class="claseEstadoPeriodo(c.estado) }}">{{ etiquetaEstadoPeriodo(c.estado) }}</app-badge>
+            <app-badge [tone]="claseEstadoPeriodo(c.estado)">{{ etiquetaEstadoPeriodo(c.estado) }}</app-badge>
           </div>
           <div class="erp-progress" [class.erp-progress--done]="c.estado === 'COMPLETADO' || c.estado === 'CON_SALDO_A_FAVOR'" role="progressbar" [attr.aria-valuenow]="c.progresoPorcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Avance de ' + c.concepto">
             <div class="erp-progress-bar" [style.width.%]="c.progresoPorcentaje"></div>

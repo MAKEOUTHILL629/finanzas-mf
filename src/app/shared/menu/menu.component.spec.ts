@@ -6,6 +6,7 @@ import { AuthServiceService } from '../../services/auth-service.service';
 import { MenuStateService } from '../../services/menu-state.service';
 import { ThemeService } from '../../services/theme.service';
 import { ThemeToggleComponent } from '../ui/theme-toggle/theme-toggle.component';
+import { LogoComponent } from '../ui/logo/logo.component';
 import { ToastService } from '../toast/toast.service';
 import { MenuComponent } from './menu.component';
 
@@ -35,7 +36,7 @@ describe('MenuComponent', () => {
     toast = { info: jasmine.createSpy('info') };
     await TestBed.configureTestingModule({
       imports: [RouterModule.forRoot([{ path: '**', children: [] }])],
-      declarations: [MenuComponent, ThemeToggleComponent],
+      declarations: [MenuComponent, ThemeToggleComponent, LogoComponent],
       providers: [
         { provide: AuthServiceService, useValue: auth },
         { provide: ToastService, useValue: toast },

@@ -10,6 +10,7 @@ import { porcentajeAvance, sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../../shared/periodo.helper';
 import { TIPOS_OBLIGACION, etiquetaTipoObligacion, iconoTipoObligacion } from '../obligaciones.constants';
+import { AccionUI } from '../../shared/ui/acciones/acciones.component';
 
 export interface GrupoPeriodo {
   periodo: Periodo;
@@ -25,6 +26,12 @@ export const MODAL_OBLIGACION = 'obligacion-form';
   styleUrl: './lista-obligaciones.component.css'
 })
 export class ListaObligacionesComponent implements OnInit, OnDestroy {
+  readonly principal: AccionUI = { id: 'nueva', etiqueta: 'Nueva obligación', icono: 'add', tooltip: 'Crear una cuota con meta mensual (carro, casa…)' };
+
+  alAccionar(id: string): void {
+    if (id === 'nueva') this.abrirFormulario();
+  }
+
   readonly modalId = MODAL_OBLIGACION;
   readonly tipos = TIPOS_OBLIGACION;
   readonly etiquetaTipo = etiquetaTipoObligacion;

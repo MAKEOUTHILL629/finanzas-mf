@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { EstadoCuentaComponent } from './estado-cuenta/estado-cuenta.component';
 import { ListaCrucesComponent } from './lista-cruces/lista-cruces.component';
 import { AbonoModule } from './abono.module';
@@ -19,6 +19,6 @@ export const RUTAS_CRUCES: Routes = [
 
 @NgModule({
   declarations: [EstadoCuentaComponent, ListaCrucesComponent],
-  imports: [SharedModule, AbonoModule, CruceModule]
+  imports: [DatosUiModule, AbonoModule, CruceModule]
 })
 export class DeudasModule {}

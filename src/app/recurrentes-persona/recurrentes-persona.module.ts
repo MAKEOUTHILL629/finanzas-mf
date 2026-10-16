@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { ListaRecurrentesPersonaComponent } from './lista-recurrentes-persona/lista-recurrentes-persona.component';
 import { FormularioRecurrentePersonaComponent } from './formulario-recurrente-persona/formulario-recurrente-persona.component';
 
@@ -12,6 +12,6 @@ export const RUTAS_RECURRENTES: Routes = [
 
 @NgModule({
   declarations: [ListaRecurrentesPersonaComponent, FormularioRecurrentePersonaComponent],
-  imports: [SharedModule]
+  imports: [DatosUiModule]
 })
 export class RecurrentesPersonaModule {}

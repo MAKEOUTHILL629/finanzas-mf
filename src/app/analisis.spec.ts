@@ -286,5 +286,12 @@ describe('Estado de cuenta y cruces', () => {
     expect(c.nombre(c.cruces[0], 'abona')).toBe('Papá');
     expect(c.nombre(c.cruces[0], 'asume')).toBe('Andrés');
     expect(c.destino(c.cruces[0])).toBe('Préstamo #30');
+    // el buscador mira personas, concepto, destino y monto
+    c.alFiltrar({ busqueda: 'papa cuota', segmento: '', valores: {} });
+    expect(c.visibles.length).toBe(1);
+    c.alFiltrar({ busqueda: 'prestamo #30', segmento: '', valores: {} });
+    expect(c.visibles.length).toBe(1);
+    c.alFiltrar({ busqueda: 'inexistente', segmento: '', valores: {} });
+    expect(c.visibles.length).toBe(0);
   });
 });

@@ -9,6 +9,9 @@ import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
 import { TransaccionesService } from '../../services/transacciones.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
+import { AccionUI } from '../../shared/ui/acciones/acciones.component';
+import { ColumnaTabla, OrdenTabla } from '../../shared/ui/apple-table/apple-table.types';
+import { DefinicionFiltro, EstadoFiltros, SegmentoFiltro, estadoVacio } from '../../shared/ui/filter-bar/filter-bar.types';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../../shared/periodo.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import {
@@ -21,32 +24,31 @@ import {
   reglasDeTipo,
   totalesDe,
 } from '../transacciones.constants';
+import { ContextoTransacciones, SEGMENTOS_TX, conteoPorSegmentoTx, filtrarTransacciones } from '../transacciones-filtros';
 
 export const MODAL_TRANSACCION = 'transaccion-form';
 /** El backend admite hasta 500 por página; con un filtro mensual alcanza de sobra. */
 export const LIMITE_CONSULTA = 500;
-export const TAM_PAGINA = 25;
 
 export interface FiltrosTransaccion {
   /** `YYYY-MM`; vacío = todos los periodos */
   periodo: string;
-  tipo: string;
-  estado: string;
-  cuenta: string;
-  categoria: string;
 }
 
-/** Traduce los filtros de pantalla a los parámetros del backend (sin enviar los vacíos). */
+/** Lo único que se pide al servidor es el periodo; tipo, estado, cuenta, categoría y texto se filtran en pantalla (son a lo sumo 500 filas). */
 export function filtroDeConsulta(f: FiltrosTransaccion): FiltroTransacciones {
   return {
     ...(esPeriodoValido(f.periodo) ? { periodo: f.periodo } : {}),
-    ...(f.tipo ? { tipo: f.tipo as FiltroTransacciones['tipo'] } : {}),
-    ...(f.estado ? { estado: f.estado as FiltroTransacciones['estado'] } : {}),
-    ...(f.cuenta ? { cuentaId: Number(f.cuenta) } : {}),
-    ...(f.categoria ? { categoriaId: Number(f.categoria) } : {}),
     limit: LIMITE_CONSULTA,
   };
 }
+
+const ETIQUETA_SEGMENTO: Record<(typeof SEGMENTOS_TX)[number], string> = {
+  todas: 'Todas',
+  confirmadas: 'Confirmadas',
+  revision: 'Por revisar',
+  anuladas: 'Anuladas',
+};
 
 @Component({
   selector: 'app-lista-transacciones',
@@ -61,15 +63,33 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
   readonly etiquetaEstado = etiquetaEstadoTransaccion;
   readonly reglas = reglasDeTipo;
   readonly efecto = efectoDe;
-  readonly TAM_PAGINA = TAM_PAGINA;
 
   private fb = inject(FormBuilder);
-  filtros = this.fb.nonNullable.group({ periodo: periodoActual(), tipo: '', estado: '', cuenta: '', categoria: '' });
+  filtros = this.fb.nonNullable.group({ periodo: periodoActual() });
 
   items: Transaccion[] = [];
+  /** Lo que queda tras la barra de filtros (alimenta la tabla y los totales). */
+  filtradas: Transaccion[] = [];
   total = 0;
   totales: TotalesTransacciones = { ingresos: 0, egresos: 0, neto: 0, pendientesRevision: 0 };
-  pagina = 0;
+
+  /** Barra de filtros: buscador, estados rápidos y chips (todo en memoria). */
+  estadoFiltros: EstadoFiltros = estadoVacio('todas');
+  segmentos: SegmentoFiltro[] = SEGMENTOS_TX.map((s) => ({ valor: s, etiqueta: ETIQUETA_SEGMENTO[s], cantidad: 0 }));
+  definicionFiltros: DefinicionFiltro[] = [];
+
+  readonly ordenInicial: OrdenTabla = { columna: 'fecha', direccion: 'desc' };
+  readonly columnas: ColumnaTabla<Transaccion>[] = [
+    { id: 'fecha', titulo: 'Fecha', valor: (t) => new Date(t.fecha_transaccion), formato: 'fecha', prioridad: 1, anchoMin: 135 },
+    { id: 'concepto', titulo: 'Concepto', valor: (t) => t.concepto, prioridad: 1, anchoMin: 200 },
+    { id: 'cuentas', titulo: 'Cuentas', valor: (t) => this.cuentasDe(t), prioridad: 2, truncar: true, anchoMin: 150 },
+    { id: 'tipo', titulo: 'Tipo', valor: (t) => reglasDeTipo(t.tipo_transaccion).etiqueta, prioridad: 3, anchoMin: 135 },
+    { id: 'estado', titulo: 'Estado', valor: (t) => etiquetaEstadoTransaccion(t.estado), prioridad: 1, anchoMin: 140 },
+    { id: 'monto', titulo: 'Monto', valor: (t) => Number(t.monto_cop), formato: 'moneda', prioridad: 1, anchoMin: 120 },
+  ];
+
+  readonly principal: AccionUI = { id: 'nueva', etiqueta: 'Nueva transacción', icono: 'add', tooltip: 'Registrar un ingreso, egreso, transferencia o pago' };
+  readonly secundarias: AccionUI[] = [{ id: 'correos', etiqueta: 'Correos', icono: 'mark_email_unread', tooltip: 'Revisar los correos del banco por conciliar', enlace: '/correos' }];
 
   /** Para los nombres de la tabla y los filtros (catálogos compartidos). */
   cuentas: ItemCuenta[] = [];
@@ -104,14 +124,17 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
       }
     });
     // Listas de los filtros y de los nombres de la tabla: del catálogo compartido (cada selector muestra su propio error con «Reintentar»).
-    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.cuentas = e.datos));
-    this.catalogos.estado$('categorias').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.categorias = e.datos));
+    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.cuentas = e.datos;
+      this.armarFiltros();
+    });
+    this.catalogos.estado$('categorias').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.categorias = e.datos;
+      this.armarFiltros();
+    });
     this.catalogos.asegurar(['cuentas', 'categorias']);
 
-    this.filtros.valueChanges.pipe(debounceTime(150), takeUntil(this.destroy$)).subscribe(() => {
-      this.pagina = 0;
-      this.cargar();
-    });
+    this.filtros.valueChanges.pipe(debounceTime(150), takeUntil(this.destroy$)).subscribe(() => this.cargar());
     this.cargar();
   }
 
@@ -133,12 +156,12 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
         next: (r) => {
           this.items = r.items;
           this.total = r.total;
-          this.totales = totalesDe(r.items);
+          this.aplicar();
         },
         error: (err) => {
           this.items = [];
           this.total = 0;
-          this.totales = totalesDe([]);
+          this.aplicar();
           this.error = mensajeDeError(err, 'No se pudieron cargar las transacciones.');
         }
       });
@@ -155,27 +178,45 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
     return nombrePeriodo(p);
   }
 
-  get hayFiltros(): boolean {
-    const f = this.filtros.getRawValue();
-    return !!(f.tipo || f.estado || f.cuenta || f.categoria);
+  // ── filtros en pantalla ──
+
+  private readonly contexto: ContextoTransacciones = {
+    nombreCuenta: (id) => this.nombreCuenta(id),
+    nombreCategoria: (id) => this.nombreCategoria(id),
+  };
+
+  private armarFiltros(): void {
+    this.definicionFiltros = [
+      { id: 'tipos', tipo: 'seleccion', etiqueta: 'Tipo', icono: 'swap_vert', multiple: true, opciones: this.tipos.map((t) => ({ valor: t.valor, etiqueta: t.etiqueta })) },
+      { id: 'cuentas', tipo: 'seleccion', etiqueta: 'Cuenta', icono: 'account_balance', multiple: true, buscable: true, opciones: this.cuentas.map((c) => ({ valor: c.id, etiqueta: c.nombre, grupo: c.activa === false ? 'Históricas' : undefined })) },
+      { id: 'categorias', tipo: 'seleccion', etiqueta: 'Categoría', icono: 'sell', multiple: true, buscable: true, opciones: this.categorias.map((c) => ({ valor: c.id, etiqueta: c.nombre })) },
+      { id: 'origen', tipo: 'seleccion', etiqueta: 'Origen', icono: 'input', multiple: true, opciones: [{ valor: 'MANUAL', etiqueta: 'Manual' }, { valor: 'EMAIL_AUTO', etiqueta: 'Desde correo' }] },
+      { id: 'fechas', tipo: 'fechas', etiqueta: 'Fecha', icono: 'event' },
+    ];
   }
 
-  quitarFiltros(): void {
-    this.filtros.patchValue({ tipo: '', estado: '', cuenta: '', categoria: '' });
+  alFiltrar(estado: EstadoFiltros): void {
+    this.estadoFiltros = estado;
+    this.aplicar();
   }
 
-  // ── paginación en memoria ──
-
-  get filasPagina(): Transaccion[] {
-    return this.items.slice(this.pagina * TAM_PAGINA, (this.pagina + 1) * TAM_PAGINA);
+  private aplicar(): void {
+    this.filtradas = filtrarTransacciones(this.items, this.estadoFiltros, this.contexto);
+    this.totales = totalesDe(this.filtradas);
+    const c = conteoPorSegmentoTx(this.items, this.estadoFiltros, this.contexto);
+    this.segmentos = SEGMENTOS_TX.map((s) => ({ valor: s, etiqueta: ETIQUETA_SEGMENTO[s], cantidad: c[s] }));
   }
 
-  get totalPaginas(): number {
-    return Math.max(1, Math.ceil(this.items.length / TAM_PAGINA));
+  /** Las anuladas se ven atenuadas y tachadas. */
+  readonly claseFila = (t: Transaccion): string => (t.estado === 'ANULADO' ? 'apt-fila--tenue' : '');
+
+  alAccionar(id: string): void {
+    if (id === 'nueva') this.nueva();
   }
 
-  irPagina(delta: number): void {
-    this.pagina = Math.min(this.totalPaginas - 1, Math.max(0, this.pagina + delta));
+  /** Un clic en la fila abre la edición (las anuladas ya no se editan). */
+  abrir(t: Transaccion): void {
+    if (this.puedeEditar(t)) this.editar(t);
   }
 
   get truncado(): boolean {
@@ -283,9 +324,5 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
 
   puedeEditar(t: Transaccion): boolean {
     return t.estado !== 'ANULADO';
-  }
-
-  trackById(_: number, t: Transaccion): number {
-    return t.id;
   }
 }

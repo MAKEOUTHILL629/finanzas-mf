@@ -56,7 +56,7 @@
     <article class="erp-card corte" *ngFor="let c of visibles; trackBy: trackById" [attr.aria-label]="'Corte ' + c.concepto">
       <header class="corte-cabecera">
         <h2>{{ c.concepto }}</h2>
-        <app-badge class="claseEstado(c.estado) }}">{{ etiquetaEstado(c.estado) }}</app-badge>
+        <app-badge [tone]="claseEstado(c.estado)">{{ etiquetaEstado(c.estado) }}</app-badge>
       </header>
       <p class="rango erp-num">
         <i class="material-icons" aria-hidden="true">date_range</i>

@@ -1,13 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-personas">
   <app-page-header titulo="Personas" subtitulo="Lo que cada persona debe pagar este mes y lo que te debe en total: cuotas de tus tarjetas, préstamos, gastos compartidos y cruces, menos lo que ya abonó." idTitulo="titulo-personas">
-    <a appButton="secondary" routerLink="/cobros">
-      <i class="material-icons" aria-hidden="true">request_quote</i>
-      Cobros
-    </a>
-    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-      <i class="material-icons" aria-hidden="true">today</i>
-      Mes actual
-    </button>
+    <app-acciones [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">

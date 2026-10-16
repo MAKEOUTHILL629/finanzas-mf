@@ -8,6 +8,7 @@ import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { enmascarar4, etiquetaTipoCuenta, iconoTipoCuenta } from '../cuentas.constants';
+import { AccionUI } from '../../shared/ui/acciones/acciones.component';
 
 export const MODAL_CUENTA = 'cuenta-form';
 
@@ -26,6 +27,13 @@ export function saldosPorMoneda(cuentas: CuentaFinanciera[]): Array<{ moneda: st
   styleUrl: './lista-cuentas.component.css'
 })
 export class ListaCuentasComponent implements OnInit, OnDestroy {
+  readonly principal: AccionUI = { id: 'nueva', etiqueta: 'Nueva cuenta', icono: 'add', tooltip: 'Registrar una cuenta bancaria, billetera o efectivo' };
+  readonly secundarias: AccionUI[] = [{ id: 'categorias', etiqueta: 'Categorías', icono: 'category', enlace: '/categorias', variante: 'ghost', tooltip: 'Administrar las categorías de tus transacciones' }];
+
+  alAccionar(id: string): void {
+    if (id === 'nueva') this.nueva();
+  }
+
   readonly modalId = MODAL_CUENTA;
   readonly etiquetaTipo = etiquetaTipoCuenta;
   readonly iconoTipo = iconoTipoCuenta;

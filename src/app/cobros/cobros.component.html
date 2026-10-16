@@ -1,13 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-cobros">
   <app-page-header titulo="Cobros a personas" subtitulo="Reparte gastos entre varias personas (la luz, el mercado, una fiesta), comparte con cada una el detalle de lo que debe y aprueba los pagos que te reportan." idTitulo="titulo-cobros">
-    <a appButton="ghost" routerLink="/liquidacion">
-      <i class="material-icons" aria-hidden="true">fact_check</i>
-      Liquidación
-    </a>
-    <button type="button" appButton="primary" (click)="abrirNuevo()">
-      <i class="material-icons" aria-hidden="true">call_split</i>
-      Repartir un gasto
-    </button>
+    <app-acciones [principal]="principal" [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
@@ -127,7 +120,7 @@
             <h2>{{ r.persona }}</h2>
             <span class="erp-muted">Cobro de {{ nombrePeriodo(r.periodo) }} · pagó el {{ r.fechaPago | fechaCorta }}</span>
           </div>
-          <app-badge class="claseReporte(r.estado) === 'neutral' ? '' : claseReporte(r.estado) }}">{{ estadoReporte(r.estado) }}</app-badge>
+          <app-badge [tone]="claseReporte(r.estado)">{{ estadoReporte(r.estado) }}</app-badge>
         </header>
 
         <div class="cobro-montos">

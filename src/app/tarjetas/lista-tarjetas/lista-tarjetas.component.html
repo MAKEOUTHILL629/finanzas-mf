@@ -1,9 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-tarjetas">
   <app-page-header titulo="Tarjetas" subtitulo="Configura el corte, el límite de pago, el cupo y las tasas de cada tarjeta." idTitulo="titulo-tarjetas">
-    <a appButton="secondary" routerLink="/extractos">
-      <i class="material-icons" aria-hidden="true">receipt_long</i>
-      Ver extractos
-    </a>
+    <app-acciones [secundarias]="secundarias"></app-acciones>
   </app-page-header>
 
   <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando tarjetas">

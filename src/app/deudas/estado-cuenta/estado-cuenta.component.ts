@@ -9,6 +9,8 @@ import { moneda } from '../../shared/moneda.util';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../../shared/periodo.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { TotalesEstadoCuenta, esAbono, etiquetaMovimiento, iniciales, tieneActividad, totalesEstadoCuenta } from '../deudas.constants';
+import { ACCION_MES_ACTUAL, AccionUI, ListaAcciones } from '../../shared/ui/acciones/acciones.component';
+import { ColumnaTabla } from '../../shared/ui/apple-table/apple-table.types';
 
 export const MODAL_ABONO = 'abono-form';
 
@@ -18,6 +20,18 @@ export const MODAL_ABONO = 'abono-form';
   styleUrl: './estado-cuenta.component.css'
 })
 export class EstadoCuentaComponent implements OnInit, OnDestroy {
+  private readonly accSecundarias = new ListaAcciones();
+  get secundarias(): AccionUI[] {
+    return this.accSecundarias.obtener(String(this.esMesActual()), () => [
+      { id: 'cruces', etiqueta: 'Cruces de deuda', icono: 'swap_horiz', enlace: '/cruces-deuda', tooltip: 'Ver los cruces de cuentas entre personas' },
+      ...(this.esMesActual() ? [] : [ACCION_MES_ACTUAL]),
+    ]);
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'mes-actual') this.irAlMesActual();
+  }
+
   readonly modalId = MODAL_ABONO;
   readonly etiquetaMovimiento = etiquetaMovimiento;
   readonly esAbono = esAbono;
@@ -26,7 +40,34 @@ export class EstadoCuentaComponent implements OnInit, OnDestroy {
   periodo: Periodo = periodoActual();
   filas: EstadoCuentaPersona[] = [];
   totales: TotalesEstadoCuenta = totalesEstadoCuenta([]);
-  verTodas = false;
+  /** Mostrar también a quien no tuvo actividad en el mes. */
+  private _verTodas = false;
+  get verTodas(): boolean {
+    return this._verTodas;
+  }
+  set verTodas(v: boolean) {
+    this._verTodas = v;
+    this.recalcular();
+  }
+  /** Lo que se ve en la tabla según `verTodas`. */
+  visibles: EstadoCuentaPersona[] = [];
+
+  readonly columnas: ColumnaTabla<EstadoCuentaPersona>[] = [
+    { id: 'persona', titulo: 'Persona', valor: (f) => f.nombre, prioridad: 1, anchoMin: 160 },
+    { id: 'cuotasTc', titulo: 'Cuotas TC', valor: (f) => f.cuotas_tc_mes, formato: 'moneda', prioridad: 2, anchoMin: 110 },
+    { id: 'recurrentes', titulo: 'Recurrentes', valor: (f) => f.recurrentes_compartidos_mes, formato: 'moneda', prioridad: 2, anchoMin: 120 },
+    { id: 'prestamos', titulo: 'Préstamos', valor: (f) => f.prestamos_mes, formato: 'moneda', prioridad: 2, anchoMin: 110 },
+    { id: 'cruces', titulo: 'Cruces', valor: (f) => f.cruces_asumidos_mes, formato: 'moneda', prioridad: 3, anchoMin: 100 },
+    { id: 'abonos', titulo: 'Abonos', valor: (f) => f.abonos_recibidos_mes, formato: 'moneda', prioridad: 2, anchoMin: 100 },
+    { id: 'neto', titulo: 'Neto del mes', valor: (f) => f.saldo_neto_mes, formato: 'moneda', prioridad: 1, anchoMin: 120 },
+    { id: 'saldo', titulo: 'Saldo acumulado', valor: (f) => f.saldo_total_acumulado, formato: 'moneda', prioridad: 1, anchoMin: 130 },
+  ];
+
+  /** Totales al pie de la tabla (null si no hay filas). */
+  pie: Record<string, string> | null = null;
+
+  /** La fila de la persona seleccionada se resalta. */
+  readonly claseFila = (f: EstadoCuentaPersona): string => (this.seleccionada?.persona_id === f.persona_id ? 'apt-fila--activa' : '');
 
   /** Persona cuyo extracto se muestra. */
   seleccionada: EstadoCuentaPersona | null = null;
@@ -73,6 +114,7 @@ export class EstadoCuentaComponent implements OnInit, OnDestroy {
         next: (f) => {
           this.filas = f;
           this.totales = totalesEstadoCuenta(f);
+          this.recalcular();
           // si la persona seleccionada sigue en la lista, se refresca su extracto
           const sigue = this.seleccionada ? f.find((x) => x.persona_id === this.seleccionada?.persona_id) : undefined;
           this.seleccionada = sigue ?? null;
@@ -81,14 +123,17 @@ export class EstadoCuentaComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.filas = [];
           this.totales = totalesEstadoCuenta([]);
+          this.recalcular();
           this.seleccionada = null;
           this.error = mensajeDeError(err, 'No se pudo cargar el estado de cuenta.');
         }
       });
   }
 
-  get visibles(): EstadoCuentaPersona[] {
-    return this.verTodas ? this.filas : this.filas.filter(tieneActividad);
+  private recalcular(): void {
+    this.visibles = this._verTodas ? this.filas : this.filas.filter(tieneActividad);
+    const t = this.totales;
+    this.pie = this.visibles.length === 0 ? null : { persona: 'Total', cuotasTc: moneda(t.cuotasTc), recurrentes: moneda(t.recurrentes), prestamos: moneda(t.prestamos), cruces: moneda(t.cruces), abonos: moneda(t.abonos), neto: moneda(t.netoMes), saldo: moneda(t.saldoAcumulado) };
   }
 
   get ocultas(): number {

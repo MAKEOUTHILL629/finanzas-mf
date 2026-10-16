@@ -10,7 +10,9 @@ import {
   construirAlta,
   valoresDeTransaccion,
 } from './formulario-transaccion/formulario-transaccion.component';
-import { LIMITE_CONSULTA, ListaTransaccionesComponent, TAM_PAGINA, filtroDeConsulta } from './lista-transacciones/lista-transacciones.component';
+import { LIMITE_CONSULTA, ListaTransaccionesComponent, filtroDeConsulta } from './lista-transacciones/lista-transacciones.component';
+import { estadoVacio } from '../shared/ui/filter-bar/filter-bar.types';
+import { conteoPorSegmentoTx, filtrarTransacciones, segmentoDeTx, textoBuscableTx } from './transacciones-filtros';
 import { claseEstadoTransaccion, efectoDe, etiquetaEstadoTransaccion, reglasDeTipo, totalesDe } from './transacciones.constants';
 
 function tx(extra: Partial<Transaccion> = {}): Transaccion {
@@ -212,11 +214,10 @@ describe('ListaTransaccionesComponent', () => {
     return c;
   }
 
-  it('filtroDeConsulta no envía filtros vacíos y siempre pide el máximo', () => {
-    expect(filtroDeConsulta({ periodo: '2026-10', tipo: '', estado: '', cuenta: '', categoria: '' })).toEqual({ periodo: '2026-10', limit: LIMITE_CONSULTA });
-    expect(filtroDeConsulta({ periodo: '', tipo: 'EGRESO', estado: 'CONFIRMADO', cuenta: '3', categoria: '5' })).toEqual({
-      tipo: 'EGRESO', estado: 'CONFIRMADO', cuentaId: 3, categoriaId: 5, limit: LIMITE_CONSULTA,
-    });
+  it('filtroDeConsulta solo envía el periodo (válido) y siempre pide el máximo', () => {
+    expect(filtroDeConsulta({ periodo: '2026-10' })).toEqual({ periodo: '2026-10', limit: LIMITE_CONSULTA });
+    expect(filtroDeConsulta({ periodo: '' })).toEqual({ limit: LIMITE_CONSULTA });
+    expect(filtroDeConsulta({ periodo: 'basura' })).toEqual({ limit: LIMITE_CONSULTA });
   });
 
   it('pide el mes actual al abrir y calcula totales y nombres', () => {
@@ -228,32 +229,58 @@ describe('ListaTransaccionesComponent', () => {
     expect(c.cuentasDe(tx({ cuenta_origen_id: 3, cuenta_destino_id: 3 }))).toBe('Bancolombia → Bancolombia');
   });
 
-  it('cambiar un filtro vuelve a consultar con esos parámetros (con la paginación reiniciada)', (done) => {
+  it('cambiar el periodo vuelve a consultar con ese mes', (done) => {
     const c = iniciar([]);
-    c.pagina = 3;
-    c.filtros.patchValue({ tipo: 'EGRESO' });
+    c.filtros.patchValue({ periodo: '2026-09' });
     setTimeout(() => {
-      const req = http().expectOne((r) => r.url === `${API}/transacciones` && r.params.get('tipo') === 'EGRESO');
+      const req = http().expectOne((r) => r.url === `${API}/transacciones` && r.params.get('periodo') === '2026-09');
       expect(req.request.params.get('limit')).toBe(String(LIMITE_CONSULTA));
       req.flush({ total: 0, limit: LIMITE_CONSULTA, offset: 0, items: [] });
-      expect(c.pagina).toBe(0);
-      expect(c.hayFiltros).toBeTrue();
       done();
     }, 250);
   });
 
-  it('pagina en memoria y avisa cuando hay más de lo que se pudo traer', () => {
-    const muchas = Array.from({ length: TAM_PAGINA + 5 }, (_, i) => tx({ id: i + 1 }));
+  it('la barra de filtros recorta lo cargado SIN volver a consultar y los totales siguen a lo visible', () => {
+    const c = iniciar([
+      tx({ id: 1, tipo_transaccion: 'INGRESO', cuenta_origen_id: null, cuenta_destino_id: 3, monto_cop: 1000, categoria_id: 5, concepto: 'Salario' }),
+      tx({ id: 2, monto_cop: 400, concepto: 'Mercado' }),
+      tx({ id: 3, monto_cop: 50, estado: 'PENDIENTE_REVISION', concepto: 'Café' }),
+    ]);
+    expect(c.filtradas.length).toBe(3);
+    expect(c.segmentos.map((s) => [s.valor, s.cantidad])).toEqual([['todas', 3], ['confirmadas', 2], ['revision', 1], ['anuladas', 0]]);
+    c.alFiltrar({ ...estadoVacio('todas'), valores: { tipos: ['EGRESO'] } });
+    expect(c.filtradas.map((t) => t.id)).toEqual([2, 3]);
+    expect(c.totales).toEqual({ ingresos: 0, egresos: 400, neto: -400, pendientesRevision: 1 });
+    http().expectNone((r) => r.url === `${API}/transacciones`);
+  });
+
+  it('arma los chips de filtro con los catálogos', () => {
+    const c = iniciar([]);
+    expect(c.definicionFiltros.map((f) => f.id)).toEqual(['tipos', 'cuentas', 'categorias', 'origen', 'fechas']);
+    const cuentas = c.definicionFiltros.find((f) => f.id === 'cuentas');
+    expect(cuentas && cuentas.tipo === 'seleccion' ? cuentas.opciones.map((o) => o.etiqueta) : []).toEqual(['Bancolombia']);
+  });
+
+  it('avisa cuando hay más de lo que se pudo traer', () => {
+    const muchas = Array.from({ length: 30 }, (_, i) => tx({ id: i + 1 }));
     const c = iniciar(muchas, 900);
-    expect(c.filasPagina.length).toBe(TAM_PAGINA);
-    expect(c.totalPaginas).toBe(2);
-    c.irPagina(1);
-    expect(c.filasPagina.length).toBe(5);
-    c.irPagina(5);
-    expect(c.pagina).toBe(1);
-    c.irPagina(-9);
-    expect(c.pagina).toBe(0);
     expect(c.truncado).toBeTrue();
+    expect(c.filtradas.length).toBe(30);
+  });
+
+  it('el clic en una fila abre la edición, salvo en las anuladas', () => {
+    const c = iniciar([tx({ id: 1 }), tx({ id: 2, estado: 'ANULADO' })]);
+    c.abrir(c.items[1]);
+    expect(c.formularioAbierto).toBeFalse();
+    c.abrir(c.items[0]);
+    expect(c.formularioAbierto).toBeTrue();
+    expect(c.editando?.id).toBe(1);
+  });
+
+  it('las anuladas se atenúan', () => {
+    const c = iniciar([]);
+    expect(c.claseFila(tx({ estado: 'ANULADO' }))).toBe('apt-fila--tenue');
+    expect(c.claseFila(tx())).toBe('');
   });
 
   it('confirmar una pendiente envía PATCH { estado: CONFIRMADO } y recarga', () => {
@@ -297,5 +324,65 @@ describe('ListaTransaccionesComponent', () => {
     errorHttp(http().expectOne((r) => r.url === `${API}/transacciones`), 500, {});
     expect(fixture.componentInstance.error).toContain('problema');
     expect(fixture.componentInstance.items).toEqual([]);
+  });
+});
+
+describe('filtros de Transacciones', () => {
+  const ctx = {
+    nombreCuenta: (id: number | null) => (id === 3 ? 'Bancolombia' : id === 4 ? 'Nequi' : ''),
+    nombreCategoria: (id: number | null) => (id === 5 ? 'Alimentación' : id === 6 ? 'Transporte' : ''),
+  };
+  const datos = [
+    tx({ id: 1, concepto: 'Mercado Éxito', categoria_id: 5, monto_cop: 120000, fecha_transaccion: '2026-10-05T15:30:00.000Z' }),
+    tx({ id: 2, tipo_transaccion: 'INGRESO', cuenta_origen_id: null, cuenta_destino_id: 4, concepto: 'Salario', monto_cop: 3000000, fecha_transaccion: '2026-10-01T05:30:00.000Z', origen_registro: 'EMAIL_AUTO' }),
+    tx({ id: 3, concepto: 'Taxi', categoria_id: 6, estado: 'PENDIENTE_REVISION', cuenta_origen_id: 4, fecha_transaccion: '2026-10-31T04:30:00.000Z', notas: 'aeropuerto' }),
+    tx({ id: 4, concepto: 'Compra anulada', estado: 'ANULADO' }),
+  ];
+  const ids = (l: Transaccion[]) => l.map((t) => t.id);
+  const con = (extra: object) => ids(filtrarTransacciones(datos, { ...estadoVacio('todas'), ...extra }, ctx));
+
+  it('segmentoDeTx mapea el estado', () => {
+    expect(segmentoDeTx({ estado: 'CONFIRMADO' })).toBe('confirmadas');
+    expect(segmentoDeTx({ estado: 'PENDIENTE_REVISION' })).toBe('revision');
+    expect(segmentoDeTx({ estado: 'ANULADO' })).toBe('anuladas');
+    expect(segmentoDeTx({ estado: null })).toBeNull();
+  });
+
+  it('el segmento filtra por estado', () => {
+    expect(ids(filtrarTransacciones(datos, estadoVacio('revision'), ctx))).toEqual([3]);
+    expect(ids(filtrarTransacciones(datos, estadoVacio('anuladas'), ctx))).toEqual([4]);
+    expect(ids(filtrarTransacciones(datos, estadoVacio('confirmadas'), ctx))).toEqual([1, 2]);
+  });
+
+  it('el buscador mira concepto, categoría, cuenta, tipo, estado, notas y monto, sin tildes', () => {
+    expect(con({ busqueda: 'exito' })).toEqual([1]);
+    expect(con({ busqueda: 'alimentacion' })).toEqual([1]);
+    expect(con({ busqueda: 'nequi' })).toEqual([2, 3]);
+    expect(con({ busqueda: 'ingreso' })).toEqual([2]);
+    expect(con({ busqueda: 'aeropuerto' })).toEqual([3]);
+    expect(con({ busqueda: 'correo' })).toEqual([2]);
+    expect(con({ busqueda: '3000000' })).toEqual([2]);
+    expect(con({ busqueda: 'pendiente revision' })).toEqual([3]);
+    expect(textoBuscableTx(datos[0], ctx)).toContain('bancolombia');
+  });
+
+  it('filtra por tipo, cuenta (origen o destino), categoría y origen', () => {
+    expect(con({ valores: { tipos: ['INGRESO'] } })).toEqual([2]);
+    expect(con({ valores: { cuentas: [4] } })).toEqual([2, 3]);
+    expect(con({ valores: { cuentas: [3] } })).toEqual([1, 4]);
+    expect(con({ valores: { categorias: [5, 6] } })).toEqual([1, 3]);
+    expect(con({ valores: { origen: ['EMAIL_AUTO'] } })).toEqual([2]);
+    expect(con({ valores: { cuentas: [4], tipos: ['EGRESO'] } })).toEqual([3]);
+  });
+
+  it('el rango de fechas se mide por día de Bogotá e incluye el último día', () => {
+    expect(con({ valores: { fechas: { desde: '2026-10-05', hasta: '2026-10-05' } } })).toEqual([1, 4]);
+    expect(con({ valores: { fechas: { desde: '2026-10-30', hasta: null } } })).toEqual([3]); // 04:30Z = 23:30 del 30 en Bogotá
+    expect(con({ valores: { fechas: { desde: null, hasta: '2026-10-01' } } })).toEqual([2]); // 05:30Z del 1 = 00:30 del 1 en Bogotá: el último día se incluye
+  });
+
+  it('los contadores por segmento respetan el resto de filtros', () => {
+    expect(conteoPorSegmentoTx(datos, estadoVacio('todas'), ctx)).toEqual({ todas: 4, confirmadas: 2, revision: 1, anuladas: 1 });
+    expect(conteoPorSegmentoTx(datos, { ...estadoVacio('anuladas'), valores: { cuentas: [4] } }, ctx)).toEqual({ todas: 2, confirmadas: 1, revision: 1, anuladas: 0 });
   });
 });

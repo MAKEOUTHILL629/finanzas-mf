@@ -1,18 +1,45 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-  ColumnasCompraCredito,
-  ComprasCredito,
-  SortableFields,
-} from '../../modelos/compras-credito';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
-import { CatalogosService } from '../../services/catalogos.service';
-import { ApiServicesService } from '../../services/api-services.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModalService } from '../../services/modal.service';
-import { capitalize, matchesSearchFields, normalizeSearchText } from '../../shared/utils';
-import { SharedListasService } from '../../services/shared-listas.service';
 import { Subject, takeUntil } from 'rxjs';
+import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
+import { ComprasCredito } from '../../modelos/compras-credito';
+import { ApiServicesService } from '../../services/api-services.service';
+import { CatalogosService } from '../../services/catalogos.service';
+import { ModalService } from '../../services/modal.service';
+import { SharedListasService } from '../../services/shared-listas.service';
+import { sumarMonedas } from '../../shared/dinero.helper';
+import { mensajeDeError } from '../../shared/http-error.helper';
+import { AccionUI } from '../../shared/ui/acciones/acciones.component';
+import { ColumnaTabla, OrdenTabla } from '../../shared/ui/apple-table/apple-table.types';
+import { DefinicionFiltro, EstadoFiltros, SegmentoFiltro, estadoVacio } from '../../shared/ui/filter-bar/filter-bar.types';
+import { ContextoCompras, SEGMENTOS_COMPRAS, conteoPorSegmento, filtrarCompras, idsResponsables, segmentoDe } from './compras-filtros';
+
+interface ResponsableVista {
+  iniciales: string;
+  color: string;
+  nombre: string;
+}
+
+const ETIQUETA_SEGMENTO: Record<(typeof SEGMENTOS_COMPRAS)[number], string> = {
+  todas: 'Todas',
+  pendientes: 'Pendientes',
+  pagadas: 'Pagadas',
+  refinanciadas: 'Refinanciadas',
+};
+
+/** Tono de la insignia de estado de una compra. */
+export function tonoEstadoCompra(estado: string | undefined): 'success' | 'warning' | 'info' | 'neutral' {
+  switch (segmentoDe({ estado })) {
+    case 'pagadas':
+      return 'success';
+    case 'pendientes':
+      return 'warning';
+    case 'refinanciadas':
+      return 'info';
+    default:
+      return 'neutral';
+  }
+}
 
 @Component({
   selector: 'app-tabla-compras-credito',
@@ -20,45 +47,45 @@ import { Subject, takeUntil } from 'rxjs';
   styleUrl: './tabla-compras-credito.component.css',
 })
 export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
+  readonly tonoEstado = tonoEstadoCompra;
+
   comprasCredito: ComprasCredito[] = [];
+  filtradas: ComprasCredito[] = [];
   isLoading = false;
   isRefreshing = false;
   error: string | null = null;
-  private destroy$ = new Subject<void>();
 
-  filteredPurchases: ComprasCredito[] = [];
-  filterForm: FormGroup;
-  sortColumn: SortableFields = 'fechaCompra';
-  sortDirection: 'asc' | 'desc' = 'desc'; // Descendente por defecto (más reciente primero)
+  /** Filtros: buscador, estados rápidos y chips. */
+  estadoFiltros: EstadoFiltros = estadoVacio('todas');
+  segmentos: SegmentoFiltro[] = SEGMENTOS_COMPRAS.map((s) => ({ valor: s, etiqueta: ETIQUETA_SEGMENTO[s], cantidad: 0 }));
+  filtros: DefinicionFiltro[] = [];
 
-  estados: string[] = ['Pendiente', 'Pagado', 'Cancelado'];
-
-  // Multiselect states
-  selectedEstados: Set<string> = new Set();
-  selectedTarjetas: Set<number> = new Set();
-  showEstadosDropdown = false;
-  showTarjetasDropdown = false;
-
-  sortableColumns: ColumnasCompraCredito[] = [
-    { titulo: 'Concepto', columna: 'concepto' },
-    { titulo: 'Valor compra', columna: 'valorCompra' },
-    { titulo: 'Fecha Compra', columna: 'fechaCompra' },
-    { titulo: 'Numero cuotas', columna: 'numeroCuotas' },
-    { titulo: 'Fecha ultima cuota', columna: 'fechaUltimaCuota' },
-    { titulo: 'Pago mensual', columna: 'pagoMensual' },
-    { titulo: 'Interes', columna: 'interes' },
-    { titulo: 'Responsables', columna: 'responsables' },
-    { titulo: 'Estado', columna: 'estado' },
-    { titulo: 'Tarjeta', columna: 'tarjeta' },
+  readonly ordenInicial: OrdenTabla = { columna: 'fechaCompra', direccion: 'desc' };
+  readonly columnas: ColumnaTabla<ComprasCredito>[] = [
+    { id: 'concepto', titulo: 'Concepto', valor: (c) => c.concepto, prioridad: 1, truncar: true, anchoMin: 220 },
+    { id: 'valorCompra', titulo: 'Valor compra', valor: (c) => c.valorCompra, formato: 'moneda', prioridad: 1, anchoMin: 130 },
+    { id: 'fechaCompra', titulo: 'Fecha compra', valor: (c) => (c.fechaCompra ? new Date(c.fechaCompra) : null), formato: 'fechaCorta', prioridad: 2, anchoMin: 120 },
+    { id: 'numeroCuotas', titulo: 'Cuotas', valor: (c) => c.numeroCuotas, formato: 'numero', prioridad: 2, anchoMin: 80 },
+    { id: 'pagoMensual', titulo: 'Pago mensual', valor: (c) => c.pagoMensual, formato: 'moneda', prioridad: 2, anchoMin: 130 },
+    { id: 'responsables', titulo: 'Responsables', valor: (c) => c.porcentajePago ?? 0, prioridad: 2, anchoMin: 150 },
+    { id: 'estado', titulo: 'Estado', valor: (c) => c.estado, prioridad: 1, anchoMin: 110 },
+    { id: 'tarjeta', titulo: 'Tarjeta', valor: (c) => this.nombreTarjeta(c.tarjeta), prioridad: 2, truncar: true, anchoMin: 150 },
+    { id: 'fechaUltimaCuota', titulo: 'Última cuota', valor: (c) => (c.fechaUltimaCuota ? new Date(c.fechaUltimaCuota) : null), formato: 'fechaCorta', prioridad: 3, anchoMin: 120 },
+    { id: 'interes', titulo: 'Interés', valor: (c) => c.interes, formato: 'porcentaje', prioridad: 3, anchoMin: 90 },
   ];
+
+  readonly principal: AccionUI = { id: 'nueva', etiqueta: 'Nueva compra', icono: 'add', tooltip: 'Registrar una compra a crédito' };
+  secundarias: AccionUI[] = [];
 
   tarjetas: ItemTarjeta[] = [];
   personas: ItemPersona[] = [];
   /** Si los catálogos no cargaron se avisa (antes un fallo se veía como «No hay tarjetas disponibles»). */
   errorCatalogos: string | null = null;
 
+  private destroy$ = new Subject<void>();
+  private cache = new Map<number, ResponsableVista[]>();
+
   constructor(
-    private fb: FormBuilder,
     private apiService: ApiServicesService,
     private router: Router,
     private modalService: ModalService,
@@ -66,15 +93,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     private catalogos: CatalogosService,
     private ruta: ActivatedRoute
   ) {
-    this.filterForm = this.fb.group({
-      fechaCompraInicio: [''],
-      fechaCompraFin: [''],
-      numeroCuotas: [''],
-      fechaUltimaCuotaInicio: [''],
-      fechaUltimaCuotaFin: [''],
-      concepto: [''],
-      soloSinResponsablesCompletos: [false],
-    });
+    this.refrescarAcciones();
   }
 
   ngOnInit(): void {
@@ -83,19 +102,8 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     this.loadPersonas();
     this.loadProducts();
 
-    // Suscribirse a cambios en el formulario
-    this.filterForm.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.applyFilters());
-
     // Suscribirse a notificaciones de compras creadas
-    this.modalService.compraCreated$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.refreshCompras();
-      });
-
-    this.applyFilters();
+    this.modalService.compraCreated$.pipe(takeUntil(this.destroy$)).subscribe(() => this.refreshCompras());
   }
 
   ngOnDestroy(): void {
@@ -103,14 +111,39 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ───────── contexto para los filtros ─────────
+
+  private readonly contexto: ContextoCompras = {
+    nombreTarjeta: (id) => this.nombreTarjeta(id),
+    nombrePersona: (id) => this.sharedListasService.getNombrePersonaById(id),
+  };
+
+  nombreTarjeta(id: number | null | undefined): string {
+    if (id === null || id === undefined) return '';
+    return this.tarjetas.find((t) => t.id === id)?.etiqueta ?? (this.sharedListasService.getNombreTarjetaById(id) || '');
+  }
+
+  // ───────── carga ─────────
+
   /** Tarjetas del filtro: catálogo compartido (esqueleto/vacío/error en un solo lugar; no se repite si otra pantalla ya lo cargó). */
   loadTarjetas(): void {
     this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
       this.tarjetas = e.datos;
       this.errorCatalogos = e.error ?? this.errorCatalogos;
       if (e.cargado && !e.error) this.errorCatalogos = null;
+      this.armarFiltros();
     });
     this.catalogos.asegurar(['tarjetas']);
+  }
+
+  loadPersonas(): void {
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.personas = e.datos;
+      if (e.error) this.errorCatalogos = e.error;
+      this.cache.clear();
+      this.armarFiltros();
+    });
+    this.catalogos.asegurar(['personas']);
   }
 
   reintentarCatalogos(): void {
@@ -118,211 +151,114 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     this.catalogos.recargar(['tarjetas', 'personas']);
   }
 
-  obtenerTarjeta(id: number): string {
-    return this.sharedListasService.getNombreTarjetaById(id) || 'N/A';
-  }
-
   loadProducts(): void {
     this.isLoading = true;
     this.error = null;
-    this.apiService.get<ComprasCredito[]>('compras-credito')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          this.comprasCredito = data;
-          this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
-          this.isLoading = false;
-          this.applyFilters();
-        },
-        error: () => {
-          this.error = 'Error al cargar los productos. Por favor, intente de nuevo.';
-          this.isLoading = false;
-        },
-      });
+    this.apiService.get<ComprasCredito[]>('compras-credito').pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => {
+        this.comprasCredito = data;
+        this.isLoading = false;
+        this.aplicar();
+      },
+      error: (err) => {
+        this.error = mensajeDeError(err, 'Error al cargar las compras. Por favor, intente de nuevo.');
+        this.isLoading = false;
+      },
+    });
   }
 
   refreshCompras(): void {
     this.isRefreshing = true;
-    this.apiService.get<ComprasCredito[]>('compras-credito')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          this.comprasCredito = data;
-          this.estados = Array.from(new Set(this.comprasCredito.map((compra) => capitalize(compra.estado || 'Todos'))));
-          this.isRefreshing = false;
-          this.applyFilters();
-        },
-        error: (err) => {
-          void err;
-          this.isRefreshing = false;
-        },
-      });
-  }
-
-  applyFilters(): void {
-    const filters = this.filterForm.value;
-
-    this.filteredPurchases = this.comprasCredito.filter((purchase) => {
-      let matchesFilter = true;
-
-      // Filtro de fecha de compra inicio
-      if (filters.fechaCompraInicio && purchase.fechaCompra) {
-        const filterDate = new Date(filters.fechaCompraInicio);
-        matchesFilter = matchesFilter && new Date(purchase.fechaCompra) >= filterDate;
-      }
-
-      // Filtro de fecha de compra fin
-      if (filters.fechaCompraFin && purchase.fechaCompra) {
-        const filterDate = new Date(filters.fechaCompraFin);
-        matchesFilter = matchesFilter && new Date(purchase.fechaCompra) <= filterDate;
-      }
-
-      // Filtro de número de cuotas
-      if (filters.numeroCuotas && purchase.numeroCuotas !== undefined) {
-        matchesFilter =
-          matchesFilter &&
-          purchase.numeroCuotas === parseInt(filters.numeroCuotas, 10);
-      }
-
-      // Filtro de fecha última cuota inicio
-      if (filters.fechaUltimaCuotaInicio && purchase.fechaUltimaCuota) {
-        const filterDate = new Date(filters.fechaUltimaCuotaInicio);
-        matchesFilter =
-          matchesFilter && new Date(purchase.fechaUltimaCuota) >= filterDate;
-      }
-
-      // Filtro de fecha última cuota fin
-      if (filters.fechaUltimaCuotaFin && purchase.fechaUltimaCuota) {
-        const filterDate = new Date(filters.fechaUltimaCuotaFin);
-        matchesFilter =
-          matchesFilter && new Date(purchase.fechaUltimaCuota) <= filterDate;
-      }
-
-      // Filtro multiselect de tarjetas
-      if (this.selectedTarjetas.size > 0 && purchase.tarjeta) {
-        matchesFilter = matchesFilter && this.selectedTarjetas.has(purchase.tarjeta);
-      }
-
-      // Filtro de concepto normalizado
-      if (filters.concepto) {
-        matchesFilter = matchesFilter && matchesSearchFields(filters.concepto, [purchase.concepto, purchase.descripcion]);
-      }
-
-      // Filtro multiselect de estados
-      if (this.selectedEstados.size > 0 && purchase.estado) {
-        const estadoNorm = normalizeSearchText(purchase.estado);
-        matchesFilter =
-          matchesFilter &&
-          Array.from(this.selectedEstados).some(selected =>
-            normalizeSearchText(selected) === estadoNorm
-          );
-      }
-
-      // Filtro de responsables incompletos
-      if (filters.soloSinResponsablesCompletos) {
-        const porcentaje = purchase.porcentajePago || 0;
-        matchesFilter = matchesFilter && porcentaje < 100;
-      }
-
-      return matchesFilter;
-    });
-
-    this.sortByMostRecent();
-  }
-
-  sortByMostRecent(): void {
-    this.filteredPurchases.sort((a, b) => {
-      const aFecha = new Date(a.fechaCompra || 0).getTime();
-      const bFecha = new Date(b.fechaCompra || 0).getTime();
-      return bFecha - aFecha;
-    });
-    this.sortColumn = 'fechaCompra';
-    this.sortDirection = 'desc';
-  }
-
-  sortData(column: SortableFields): void {
-    this.sortColumn = column;
-    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-
-    this.filteredPurchases.sort((a, b) => {
-      const aValue = a[column];
-      const bValue = b[column];
-
-      if (aValue === undefined && bValue === undefined) return 0;
-      if (aValue === undefined) return this.sortDirection === 'asc' ? 1 : -1;
-      if (bValue === undefined) return this.sortDirection === 'asc' ? -1 : 1;
-
-      if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
-      return 0;
+    this.refrescarAcciones();
+    this.apiService.get<ComprasCredito[]>('compras-credito').pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data) => {
+        this.comprasCredito = data;
+        this.isRefreshing = false;
+        this.refrescarAcciones();
+        this.aplicar();
+      },
+      error: () => {
+        this.isRefreshing = false;
+        this.refrescarAcciones();
+      },
     });
   }
 
-  resetFilters(): void {
-    this.filterForm.reset();
-    this.selectedEstados.clear();
-    this.selectedTarjetas.clear();
-    this.loadProducts();
+  // ───────── filtros ─────────
+
+  private armarFiltros(): void {
+    this.filtros = [
+      {
+        id: 'personas',
+        tipo: 'seleccion',
+        etiqueta: 'Persona',
+        icono: 'person',
+        multiple: true,
+        buscable: true,
+        opciones: this.personas.map((p) => ({ valor: p.id, etiqueta: p.nombre })),
+      },
+      {
+        id: 'tarjetas',
+        tipo: 'seleccion',
+        etiqueta: 'Tarjeta',
+        icono: 'credit_card',
+        multiple: true,
+        buscable: true,
+        opciones: this.tarjetas.map((t) => ({ valor: t.id, etiqueta: t.etiqueta, detalle: t.nombre !== t.etiqueta ? t.nombre : undefined })),
+      },
+      { id: 'fechaCompra', tipo: 'fechas', etiqueta: 'Fecha de compra', icono: 'event' },
+      { id: 'fechaUltimaCuota', tipo: 'fechas', etiqueta: 'Última cuota', icono: 'event_available' },
+      { id: 'cuotas', tipo: 'numero', etiqueta: 'Cuotas', icono: 'pin', placeholder: 'Ej: 12' },
+      { id: 'sinResponsables', tipo: 'interruptor', etiqueta: 'Sin responsables completos', icono: 'person_off' },
+    ];
   }
 
-  // Métodos para multiselect de estados
-  toggleEstadosDropdown(event: Event): void {
-    event.stopPropagation();
-    this.showEstadosDropdown = !this.showEstadosDropdown;
-    this.showTarjetasDropdown = false;
+  alFiltrar(estado: EstadoFiltros): void {
+    this.estadoFiltros = estado;
+    this.aplicar();
   }
 
-  toggleEstado(estado: string): void {
-    if (this.selectedEstados.has(estado)) {
-      this.selectedEstados.delete(estado);
-    } else {
-      this.selectedEstados.add(estado);
-    }
-    this.applyFilters();
+  private aplicar(): void {
+    this.filtradas = filtrarCompras(this.comprasCredito, this.estadoFiltros, this.contexto);
+    const c = conteoPorSegmento(this.comprasCredito, this.estadoFiltros, this.contexto);
+    this.segmentos = SEGMENTOS_COMPRAS.map((s) => ({ valor: s, etiqueta: ETIQUETA_SEGMENTO[s], cantidad: c[s] }));
   }
 
-  isEstadoSelected(estado: string): boolean {
-    return this.selectedEstados.has(estado);
+  // ───────── resumen ─────────
+
+  get totalValor(): number {
+    return sumarMonedas(this.filtradas.map((c) => c.valorCompra));
   }
 
-  getSelectedEstadosText(): string {
-    if (this.selectedEstados.size === 0) return 'Todos los estados';
-    if (this.selectedEstados.size === 1) return Array.from(this.selectedEstados)[0];
-    return `${this.selectedEstados.size} estados seleccionados`;
+  get totalMensual(): number {
+    return sumarMonedas(this.filtradas.filter((c) => segmentoDe(c) === 'pendientes').map((c) => c.pagoMensual));
   }
 
-  // Métodos para multiselect de tarjetas
-  toggleTarjetasDropdown(event: Event): void {
-    event.stopPropagation();
-    this.showTarjetasDropdown = !this.showTarjetasDropdown;
-    this.showEstadosDropdown = false;
+  get pendientes(): number {
+    return this.filtradas.filter((c) => segmentoDe(c) === 'pendientes').length;
   }
 
-  toggleTarjeta(tarjetaId: number): void {
-    if (this.selectedTarjetas.has(tarjetaId)) {
-      this.selectedTarjetas.delete(tarjetaId);
-    } else {
-      this.selectedTarjetas.add(tarjetaId);
-    }
-    this.applyFilters();
+  // ───────── acciones ─────────
+
+  private refrescarAcciones(): void {
+    this.secundarias = [
+      { id: 'pagar', etiqueta: 'Procesar pagos', icono: 'paid', tooltip: 'Marcar como pagadas las cuotas que ya vencieron' },
+      { id: 'csv', etiqueta: 'Carga masiva', icono: 'upload_file', tooltip: 'Cargar varias compras desde un archivo CSV' },
+      {
+        id: 'refrescar',
+        etiqueta: this.isRefreshing ? 'Actualizando…' : 'Actualizar',
+        icono: this.isRefreshing ? 'sync' : 'refresh',
+        tooltip: 'Volver a pedir la lista de compras',
+        cargando: this.isRefreshing,
+      },
+    ];
   }
 
-  isTarjetaSelected(tarjetaId: number): boolean {
-    return this.selectedTarjetas.has(tarjetaId);
-  }
-
-  getSelectedTarjetasText(): string {
-    if (this.selectedTarjetas.size === 0) return 'Todas las tarjetas';
-    if (this.selectedTarjetas.size === 1) {
-      const tarjetaId = Array.from(this.selectedTarjetas)[0];
-      return this.obtenerTarjeta(tarjetaId);
-    }
-    return `${this.selectedTarjetas.size} tarjetas seleccionadas`;
-  }
-
-  closeDropdowns(): void {
-    this.showEstadosDropdown = false;
-    this.showTarjetasDropdown = false;
+  alAccionar(id: string): void {
+    if (id === 'nueva') this.openCreditForm();
+    else if (id === 'pagar') this.pagarProductosTarjetaCredito();
+    else if (id === 'csv') this.openCSVUploadForm();
+    else if (id === 'refrescar') this.refreshCompras();
   }
 
   irDetalleCompra(compra: ComprasCredito): void {
@@ -351,36 +287,29 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
       .post<string>('compras-credito/pagar-productos', {})
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
-          this.loadProducts();
-        },
+        next: () => this.loadProducts(),
         error: (err) => {
           void err;
         },
       });
   }
 
-  cargarResponsables(responsables: string): { iniciales: string; color: string; nombre: string }[] {
-    if (!responsables) return [];
+  // ───────── celdas ─────────
 
-    const listaResponsables = responsables.split(',').filter(r => r.trim().length > 0);
-    return listaResponsables.map((responsable) => {
-      const personaId = parseInt(responsable.trim(), 10);
+  responsablesDe(compra: ComprasCredito): ResponsableVista[] {
+    const id = compra.id ?? -1;
+    const guardado = this.cache.get(id);
+    if (guardado) return guardado;
+    const lista = idsResponsables(compra).map((personaId) => {
       const persona = this.sharedListasService.findPersonaFast(personaId);
-
-      return {
-        iniciales: persona?.inicialesNombre || '',
-        color: persona?.colorRepresentativo || '',
-        nombre: persona?.nombre || '',
-      };
+      return { iniciales: persona?.inicialesNombre || '', color: persona?.colorRepresentativo || '', nombre: persona?.nombre || '' };
     });
+    if (compra.id !== undefined && this.personas.length > 0) this.cache.set(id, lista);
+    return lista;
   }
 
-  loadPersonas(): void {
-    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
-      this.personas = e.datos;
-      if (e.error) this.errorCatalogos = e.error;
-    });
-    this.catalogos.asegurar(['personas']);
+  clasePorcentaje(p: number | undefined): string {
+    const v = p ?? 0;
+    return v >= 100 ? 'completo' : v > 0 ? 'parcial' : 'vacio';
   }
 }

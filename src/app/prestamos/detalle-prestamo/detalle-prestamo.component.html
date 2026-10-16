@@ -25,7 +25,7 @@
       <div>
         <h1 id="titulo-detalle-prestamo">{{ p.concepto }}</h1>
         <p class="erp-subtitle">
-          <app-badge class="claseEstado(p.estado) }}">{{ p.estado }}</app-badge>
+          <app-badge [tone]="claseEstado(p.estado)">{{ p.estado }}</app-badge>
           <span class="meta-linea">{{ p.direccionPrestamo === 'POR_PAGAR' ? 'Por pagar a' : 'Por cobrar a' }} {{ nombrePersona(p.responsable) }}</span>
         </p>
       </div>
@@ -106,7 +106,7 @@
         <li class="aprobacion" *ngFor="let a of p.aprobaciones; trackBy: trackByAprobacion">
           <div class="aprobacion-cabecera">
             <strong>{{ a.persona || nombrePersona(a.personaId) }}</strong>
-            <app-badge class="claseAprobacion(a.estado) }}">{{ a.estado }}</app-badge>
+            <app-badge [tone]="claseAprobacion(a.estado)">{{ a.estado }}</app-badge>
             <span class="erp-muted fecha-aprobacion" *ngIf="a.fechaAprobacion && a.estado !== 'Pendiente'">{{ a.fechaAprobacion | date: 'dd/MM/yyyy HH:mm' }}</span>
           </div>
           <p class="erp-muted aprobacion-comentario" *ngIf="a.comentarios">{{ a.comentarios }}</p>

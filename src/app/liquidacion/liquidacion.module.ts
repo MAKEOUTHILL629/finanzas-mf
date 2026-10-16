@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
-import { SharedModule } from '../shared/shared.module';
+import { DatosUiModule } from '../shared/datos-ui.module';
 import { LiquidacionMensualComponent } from './liquidacion-mensual.component';
 import { CompartirCobroModule } from '../cobros/compartir-cobro.module';
 import { AbonoModule } from '../deudas/abono.module';
@@ -15,6 +15,6 @@ export const RUTAS_LIQUIDACION: Routes = [
 
 @NgModule({
   declarations: [LiquidacionMensualComponent],
-  imports: [SharedModule, CompartirCobroModule, AbonoModule, CruceModule, ExcedenteModule]
+  imports: [DatosUiModule, CompartirCobroModule, AbonoModule, CruceModule, ExcedenteModule]
 })
 export class LiquidacionModule {}

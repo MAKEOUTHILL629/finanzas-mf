@@ -11,7 +11,8 @@ import { FormularioCorteComponent } from './formulario-corte/formulario-corte.co
 import { FormularioEditarPrestamoComponent } from './formulario-editar-prestamo/formulario-editar-prestamo.component';
 import { FormularioPrestamosComponent } from './formulario-prestamos/formulario-prestamos.component';
 import { ListaCortesComponent } from './lista-cortes/lista-cortes.component';
-import { TablaPrestamosComponent } from './tabla-prestamos/tabla-prestamos.component';
+import { TablaPrestamosComponent, filtrosDeBarra } from './tabla-prestamos/tabla-prestamos.component';
+import { estadoVacio } from '../shared/ui/filter-bar/filter-bar.types';
 
 const dia = (iso: string) => Date.parse(iso);
 
@@ -140,11 +141,18 @@ describe('TablaPrestamosComponent', () => {
     expect(c.nombreCorte(5)).toBe('Corte octubre');
     expect(c.nombrePersona(2)).toBe('Andrés');
 
-    c.filtros.patchValue({ estado: 'Pagado' });
+    c.alFiltrar({ ...estadoVacio('Pagado') });
     expect(c.visibles.map((p) => p.id)).toEqual([1]);
-    expect(c.hayFiltros).toBeTrue();
-    c.reiniciarFiltros();
+    expect(c.segmentos.map((s) => [s.valor, s.cantidad])).toEqual([['todos', 3], ['Pendiente', 2], ['Pagado', 1], ['Anulado', 0]]);
+    c.alFiltrar({ ...estadoVacio('todos'), valores: { corte: 'sin' } });
+    expect(c.visibles.length).toBe(c.prestamos.filter((p) => p.corteId === null).length);
+    c.alFiltrar(estadoVacio('todos'));
     expect(c.visibles.length).toBe(3);
+    expect(c.definicionFiltros.map((f) => f.id)).toEqual(['responsable', 'corte', 'cobro']);
+    expect(filtrosDeBarra({ busqueda: 'luz', segmento: 'Pendiente', valores: { responsable: 2, corte: 5, cobro: { desde: '2026-10-01', hasta: null } } })).toEqual({
+      texto: 'luz', estado: 'Pendiente', responsable: '2', corte: '5', desde: '2026-10-01', hasta: '',
+    });
+    expect(filtrosDeBarra(estadoVacio('todos'))).toEqual({ texto: '', estado: '', responsable: '', corte: '', desde: '', hasta: '' });
   });
 
   it('muestra el error y permite reintentar', () => {

@@ -25,6 +25,7 @@ import {
   urlPublica,
   vencimientoLegible,
 } from './cobros.constants';
+import { AccionUI } from '../shared/ui/acciones/acciones.component';
 
 export type PestanaCobros = 'gastos' | 'reportes' | 'ingresos' | 'enlaces';
 export const MODAL_COBRO = 'cobro-form';
@@ -48,6 +49,13 @@ export function ordenarReportes(reportes: ReportePago[]): ReportePago[] {
   styleUrl: './cobros.component.css'
 })
 export class CobrosComponent implements OnInit, OnDestroy {
+  readonly principal: AccionUI = { id: 'nuevo', etiqueta: 'Repartir un gasto', icono: 'call_split', tooltip: 'Dividir un gasto entre varias personas y generar el cobro' };
+  readonly secundarias: AccionUI[] = [{ id: 'liquidacion', etiqueta: 'Liquidación', icono: 'fact_check', enlace: '/liquidacion', variante: 'ghost', tooltip: 'Ver la liquidación de fin de mes' }];
+
+  alAccionar(id: string): void {
+    if (id === 'nuevo') this.abrirNuevo();
+  }
+
   readonly modalCobro = MODAL_COBRO;
   readonly modalAprobar = MODAL_APROBAR;
   readonly modalCompartir = MODAL_COMPARTIR_COBRO;

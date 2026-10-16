@@ -1,9 +1,6 @@
 <section class="erp-page" aria-labelledby="titulo-correos">
   <app-page-header titulo="Correos del banco" subtitulo="Los correos de Bancolombia llegan solos y se convierten en movimientos. Aquí revisas los que necesitan tu decisión." idTitulo="titulo-correos">
-    <button type="button" appButton="ghost" (click)="cargar()" [disabled]="cargando">
-      <i class="material-icons" aria-hidden="true">refresh</i>
-      Actualizar
-    </button>
+    <app-acciones [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
   <app-productos-detectados (cambiado)="cargar()" (reprocesar)="abrirReproceso()"></app-productos-detectados>
@@ -55,7 +52,7 @@
           <h2>{{ vista(n).comercio || n.asunto }}</h2>
           <span class="erp-muted">{{ n.fecha_correo | date: 'dd/MM/yyyy HH:mm' }}<ng-container *ngIf="vista(n).tipo"> · {{ vista(n).tipo }}<ng-container *ngIf="vista(n).metodo"> · {{ vista(n).metodo }}</ng-container></ng-container></span>
         </div>
-        <app-badge class="claseEstado(n.estado_procesamiento) }}">{{ etiquetaEstado(n.estado_procesamiento) }}</app-badge>
+        <app-badge [tone]="claseEstado(n.estado_procesamiento)">{{ etiquetaEstado(n.estado_procesamiento) }}</app-badge>
       </header>
 
       <div class="correo-monto">
@@ -65,7 +62,7 @@
       </div>
 
       <div class="correo-marcas" *ngIf="vinculo(n.vinculo, vista(n).motivo) as v">
-        <app-badge class="v.clase === 'neutral' ? '' : v.clase }}"><i class="material-icons" aria-hidden="true">{{ v.icono }}</i>{{ v.texto }}</app-badge>
+        <app-badge [tone]="v.clase"><i class="material-icons" aria-hidden="true">{{ v.icono }}</i>{{ v.texto }}</app-badge>
         <app-badge *ngIf="nombrePersona(n.persona_id) as quien"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</app-badge>
       </div>
       <div class="correo-marcas" *ngIf="!n.vinculo && nombrePersona(n.persona_id) as quien">

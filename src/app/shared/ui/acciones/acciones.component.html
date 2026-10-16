@@ -1,0 +1,56 @@
+<!-- Escritorio: secundarias con ícono y texto + la principal destacada -->
+<div class="acc acc--escritorio">
+  <ng-container *ngFor="let a of secundarias; trackBy: trackId">
+    <a *ngIf="a.enlace; else botonSec" [appButton]="a.variante ?? 'secondary'" [routerLink]="a.enlace" [appTooltip]="tip(a)" [class.acc__solo-icono]="compacto" [attr.aria-label]="compacto ? a.etiqueta : null">
+      <i class="material-icons" aria-hidden="true">{{ a.icono }}</i><span [class.erp-sr-only]="compacto">{{ a.etiqueta }}</span>
+    </a>
+    <ng-template #botonSec>
+      <button type="button" [appButton]="a.variante ?? 'secondary'" [appTooltip]="tip(a)" [loading]="!!a.cargando" [disabled]="!!a.deshabilitada" [class.acc__solo-icono]="compacto" [attr.aria-label]="compacto ? a.etiqueta : null" (click)="disparar(a)">
+        <i class="material-icons" [class.acc__girar]="a.cargando" aria-hidden="true">{{ a.icono }}</i><span [class.erp-sr-only]="compacto">{{ a.etiqueta }}</span>
+      </button>
+    </ng-template>
+  </ng-container>
+
+  <ng-container *ngIf="principal as p">
+    <a *ngIf="p.enlace; else botonPrincipal" appButton="primary" [routerLink]="p.enlace" [appTooltip]="tip(p)">
+      <i class="material-icons" aria-hidden="true">{{ p.icono }}</i>{{ p.etiqueta }}
+    </a>
+    <ng-template #botonPrincipal>
+      <button type="button" appButton="primary" [appTooltip]="tip(p)" [loading]="!!p.cargando" [disabled]="!!p.deshabilitada" (click)="disparar(p)">
+        <i class="material-icons" aria-hidden="true">{{ p.icono }}</i>{{ p.etiqueta }}
+      </button>
+    </ng-template>
+  </ng-container>
+</div>
+
+<!-- Móvil: «Más acciones» + un único botón flotante con la acción principal -->
+<div class="acc acc--movil">
+  <div class="acc__mas" *ngIf="secundarias.length > 0">
+    <button type="button" appButton="secondary" icon aria-label="Más acciones" aria-haspopup="true" [attr.aria-expanded]="menuAbierto" appTooltip="Más acciones" (click)="alternarMenu($event)">
+      <i class="material-icons" aria-hidden="true">more_horiz</i>
+    </button>
+    <div class="acc__menu" role="menu" *ngIf="menuAbierto" (click)="$event.stopPropagation()">
+      <ng-container *ngFor="let a of secundarias; trackBy: trackId">
+        <a *ngIf="a.enlace; else botonMenu" role="menuitem" class="acc__item" [routerLink]="a.enlace" (click)="menuAbierto = false">
+          <i class="material-icons" aria-hidden="true">{{ a.icono }}</i>{{ a.etiqueta }}
+        </a>
+        <ng-template #botonMenu>
+          <button type="button" role="menuitem" class="acc__item" [disabled]="!!a.deshabilitada || !!a.cargando" (click)="disparar(a)">
+            <i class="material-icons" [class.acc__girar]="a.cargando" aria-hidden="true">{{ a.icono }}</i>{{ a.etiqueta }}
+          </button>
+        </ng-template>
+      </ng-container>
+    </div>
+  </div>
+
+  <ng-container *ngIf="principal as p">
+    <a *ngIf="p.enlace; else fabBoton" class="acc__fab" [routerLink]="p.enlace" [attr.aria-label]="p.etiqueta" [appTooltip]="tip(p)">
+      <i class="material-icons" aria-hidden="true">{{ p.icono }}</i>
+    </a>
+    <ng-template #fabBoton>
+      <button type="button" class="acc__fab" [attr.aria-label]="p.etiqueta" [appTooltip]="tip(p)" [disabled]="!!p.deshabilitada" (click)="disparar(p)">
+        <i class="material-icons" aria-hidden="true">{{ p.icono }}</i>
+      </button>
+    </ng-template>
+  </ng-container>
+</div>

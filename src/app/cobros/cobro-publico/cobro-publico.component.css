@@ -1,4 +1,5 @@
-.pub { display: flex; justify-content: center; padding: var(--space-3) var(--space-2) calc(var(--space-6, 48px) + env(safe-area-inset-bottom)); min-height: 100%; }
+.pub { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-2) calc(var(--space-6, 48px) + env(safe-area-inset-bottom)); min-height: 100%; }
+.pub-marca { display: inline-flex; align-items: center; gap: 10px; font-size: var(--text-body-sm); font-weight: var(--weight-semibold); letter-spacing: -0.01em; color: var(--text-secondary); }
 .pub-hoja { width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: var(--space-3); }
 
 .pub-error { align-items: center; text-align: center; padding: var(--space-6, 48px) var(--space-2); }

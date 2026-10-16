@@ -14,11 +14,13 @@ import { CardComponent } from './ui/card/card.component';
 import { ContadorComponent } from './ui/contador/contador.component';
 import { EmptyStateComponent } from './ui/empty-state/empty-state.component';
 import { FieldComponent, InputDirective } from './ui/field/field.component';
+import { LogoComponent } from './ui/logo/logo.component';
 import { PageHeaderComponent } from './ui/page-header/page-header.component';
 import { SelectComponent } from './ui/select/select.component';
 import { SkeletonComponent } from './ui/skeleton/skeleton.component';
 import { TableDirective } from './ui/table/table.directive';
 import { ThemeToggleComponent } from './ui/theme-toggle/theme-toggle.component';
+import { TooltipDirective } from './ui/tooltip/tooltip.directive';
 
 /** Biblioteca de componentes base del sistema de diseño (`shared/ui`): las pantallas solo usan estos. */
 const UI = [
@@ -29,6 +31,7 @@ const UI = [
   EmptyStateComponent,
   FieldComponent,
   InputDirective,
+  LogoComponent,
   ModalComponent,
   PageHeaderComponent,
   SelectComponent,
@@ -46,7 +49,7 @@ const PIPES = [FormatoFechaPipe, FormatoFechaCortaPipe, FormatoMonedaPipe, Forma
  */
 @NgModule({
   declarations: [...UI, ...PIPES],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
-  exports: [...UI, ...PIPES, CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, TooltipDirective],
+  exports: [...UI, ...PIPES, CommonModule, FormsModule, ReactiveFormsModule, RouterModule, TooltipDirective],
 })
 export class SharedModule {}

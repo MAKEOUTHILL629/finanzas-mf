@@ -27,6 +27,7 @@ import {
   etiquetaOrigen,
   mensajeLiquidacion,
 } from './liquidacion.constants';
+import { ACCION_MES_ACTUAL, AccionUI, ListaAcciones } from '../shared/ui/acciones/acciones.component';
 
 export const MODAL_ABONO_LIQUIDACION = 'liquidacion-abono';
 export const MODAL_CRUCE_LIQUIDACION = 'liquidacion-cruce';
@@ -39,6 +40,19 @@ export const MODAL_COMPARTIR_LIQUIDACION = 'liquidacion-compartir';
   styleUrl: './liquidacion-mensual.component.css'
 })
 export class LiquidacionMensualComponent implements OnInit, OnDestroy {
+  private readonly accSecundarias = new ListaAcciones();
+  get secundarias(): AccionUI[] {
+    return this.accSecundarias.obtener(String(this.esMesActual()), () => [
+      { id: 'aportes', etiqueta: 'Aportes del carro', icono: 'directions_car', enlace: '/aportes-carro', variante: 'ghost', tooltip: 'Ver los aportes diarios a la cuota del carro' },
+      { id: 'recurrentes', etiqueta: 'Recurrentes por persona', icono: 'autorenew', enlace: '/recurrentes-persona', tooltip: 'Cargos o descuentos que se repiten cada mes' },
+      ...(this.esMesActual() ? [] : [ACCION_MES_ACTUAL]),
+    ]);
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'mes-actual') this.irAlMesActual();
+  }
+
   readonly modalAbono = MODAL_ABONO_LIQUIDACION;
   readonly modalCruce = MODAL_CRUCE_LIQUIDACION;
   readonly modalExcedente = MODAL_EXCEDENTE_LIQUIDACION;

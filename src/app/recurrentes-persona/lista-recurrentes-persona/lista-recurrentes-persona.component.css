@@ -1,10 +1,9 @@
-.tabla-card { padding: var(--space-1) var(--space-2) var(--space-2); }
 .acciones-confirmacion { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
 
 .persona { display: inline-flex; align-items: center; gap: 10px; font-weight: var(--weight-semibold); }
 .avatar { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--text-on-accent); font-size: 0.7rem; font-weight: var(--weight-bold); flex: none; }
+.sub { display: block; font-size: var(--text-caption); color: var(--text-secondary); }
 
 .progreso-texto { display: block; font-size: var(--text-caption); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
-td .erp-progress { min-width: 90px; max-width: 140px; }
-.acciones { white-space: nowrap; text-align: right; }
-.peligro:hover { color: var(--red-danger, var(--red-danger)); }
+.erp-progress { min-width: 90px; max-width: 140px; }
+.peligro:hover { color: var(--red-danger); }

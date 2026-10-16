@@ -9,6 +9,7 @@ import { mensajeDeError } from '../../shared/http-error.helper';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../../shared/periodo.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { moneda } from '../../shared/moneda.util';
+import { ACCION_MES_ACTUAL, AccionUI, ListaAcciones } from '../../shared/ui/acciones/acciones.component';
 
 export const MODAL_PAGO_EXTRACTO = 'pagar-extracto-form';
 
@@ -18,6 +19,17 @@ export const MODAL_PAGO_EXTRACTO = 'pagar-extracto-form';
   styleUrl: './extractos-tarjetas.component.css'
 })
 export class ExtractosTarjetasComponent implements OnInit, OnDestroy {
+  private readonly accSecundarias = new ListaAcciones();
+  get secundarias(): AccionUI[] {
+    return this.accSecundarias.obtener(String(this.esMesActual()), () => [
+      ...(this.esMesActual() ? [] : [ACCION_MES_ACTUAL]),
+    ]);
+  }
+
+  alAccionar(id: string): void {
+    if (id === 'mes-actual') this.irAlMesActual();
+  }
+
   readonly modalId = MODAL_PAGO_EXTRACTO;
 
   periodo: Periodo = periodoActual();

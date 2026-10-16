@@ -24,7 +24,7 @@ import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.comp
 import { FormularioCobroComponent } from './cobros/formulario-cobro/formulario-cobro.component';
 import { CompartirCobroComponent } from './cobros/compartir-cobro/compartir-cobro.component';
 import { ProductosDetectadosComponent } from './correos/productos-detectados/productos-detectados.component';
-import { API, categoriaItem, configurarTestBed, cuentaItem, http, persona, responder, responderCatalogos, tarjetaItem, verificarHttp } from './testing/erp-testing';
+import { API, anchoEscritorio, categoriaItem, configurarTestBed, cuentaItem, esperarTabla, http, persona, responder, responderCatalogos, tarjetaItem, verificarHttp } from './testing/erp-testing';
 
 /**
  * Humo de renderizado: monta cada pantalla con datos realistas y comprueba lo que se pinta.
@@ -49,13 +49,15 @@ const ruta = (id: string) => ({ provide: ActivatedRoute, useValue: { paramMap: o
 describe('Renderizado de las pantallas (humo)', () => {
   afterEach(() => verificarHttp());
 
-  it('Préstamos: tabla con totales, estado y aprobaciones pendientes', () => {
+  it('Préstamos: tabla con totales, estado y aprobaciones pendientes', async () => {
     configurarTestBed([TablaPrestamosComponent]);
     const f = TestBed.createComponent(TablaPrestamosComponent);
+    anchoEscritorio(f);
     f.detectChanges();
     responder('prestamos', [prestamo(), prestamo({ id: 8, concepto: 'Domicilio', estado: 'Pagado', saldoPendiente: 0, aprobaciones: [] })]);
     responderCatalogos({ personas });
     responder('cortes-cobro', [corte]);
+    await esperarTabla(f);
     const t = texto(f);
     expect(t).toContain('Por cobrar');
     expect(t).toContain('$120,000.50');
@@ -168,17 +170,20 @@ describe('Renderizado de las pantallas (humo)', () => {
     for (const esperado of ['Egresos', 'Ingresos', 'Transporte', 'Sistema', 'Salario']) expect(t).toContain(esperado);
   });
 
-  it('Transacciones: tabla con totales, tipo, estado y monto', () => {
+  it('Transacciones: tabla con totales, tipo, estado y monto', async () => {
     configurarTestBed([ListaTransaccionesComponent]);
     const f = TestBed.createComponent(ListaTransaccionesComponent);
+    anchoEscritorio(f);
     f.detectChanges();
     responderCatalogos({ cuentas: [cuentaItem(3, 'Bancolombia')], categorias: [categoriaItem(5, 'Alimentación')] });
     http().expectOne((r) => r.url === `${API}/transacciones`).flush({ total: 2, limit: 500, offset: 0, items: [
       { id: 1, owner_user_id: 1, tipo_transaccion: 'INGRESO', cuenta_origen_id: null, cuenta_destino_id: 3, tarjeta_pagada_id: null, categoria_id: null, fecha_transaccion: '2026-10-05T15:30:00.000Z', concepto: 'Nómina', moneda_original: 'COP', monto_original: 3500000, tasa_cambio: 1, monto_cop: 3500000, origen_registro: 'EMAIL_AUTO', estado: 'CONFIRMADO', notas: null, created_at: null },
       { id: 2, owner_user_id: 1, tipo_transaccion: 'EGRESO', cuenta_origen_id: 3, cuenta_destino_id: null, tarjeta_pagada_id: null, categoria_id: 5, fecha_transaccion: '2026-10-06T15:30:00.000Z', concepto: 'Mercado', moneda_original: 'USD', monto_original: 20, tasa_cambio: 4000, monto_cop: 80000, origen_registro: 'MANUAL', estado: 'PENDIENTE_REVISION', notas: null, created_at: null },
     ] });
+    await esperarTabla(f);
     const t = texto(f);
-    for (const esperado of ['Ingresos', '$3,500,000.00', 'Nómina', 'desde correo', 'Bancolombia', 'Alimentación', '20.00 USD', 'Pendiente de revisión', 'Confirmar', 'Nueva transacción']) expect(t).toContain(esperado);
+    for (const esperado of ['Ingresos', '$3,500,000.00', 'Nómina', 'desde correo', 'Bancolombia', 'Alimentación', '20.00 USD', 'Pendiente de revisión', 'Nueva transacción']) expect(t).toContain(esperado);
+    expect((f.nativeElement as HTMLElement).querySelector('tbody button[aria-label^="Confirmar"]')).not.toBeNull(); // la pendiente se confirma con un botón de ícono
     expect((f.nativeElement as HTMLElement).querySelectorAll('tbody tr').length).toBe(2);
   });
 
@@ -236,25 +241,30 @@ describe('Renderizado de las pantallas (humo)', () => {
     expect((f.nativeElement as HTMLElement).querySelectorAll('canvas').length).toBe(2);
   });
 
-  it('Estado de cuenta: tabla con totales, saldo y extracto de la persona elegida', () => {
+  it('Estado de cuenta: tabla con totales, saldo y extracto de la persona elegida', async () => {
     configurarTestBed([EstadoCuentaComponent]);
     const f = TestBed.createComponent(EstadoCuentaComponent);
+    anchoEscritorio(f);
     f.detectChanges();
     http().expectOne((r) => r.url === `${API}/ledger/estado-cuenta`).flush([{ persona_id: 2, nombre: 'Andrés Gómez', iniciales_nombre: 'AG', color_representativo: '#0071E3', cuotas_tc_mes: 100000, recurrentes_compartidos_mes: 0, prestamos_mes: 50000, cruces_asumidos_mes: 0, abonos_recibidos_mes: 30000, saldo_neto_mes: 120000, saldo_total_acumulado: 500000.2 }]);
+    await esperarTabla(f);
     let t = texto(f);
-    for (const esperado of ['Saldo total por cobrar', 'Andrés Gómez', 'AG', '$500,000.20', 'Abonar']) expect(t).toContain(esperado);
+    for (const esperado of ['Saldo total por cobrar', 'Andrés Gómez', 'AG', '$500,000.20', 'Abonar', 'Total']) expect(t).toContain(esperado);
+    expect((f.nativeElement as HTMLElement).querySelectorAll('tfoot td').length).toBeGreaterThan(1); // fila de totales
     f.componentInstance.seleccionar(f.componentInstance.filas[0]);
     http().expectOne((r) => r.url === `${API}/ledger/personas/2/extracto`).flush([{ id: 1, fecha_movimiento: '2026-10-05T00:00:00.000Z', periodo_imputacion: '2026-10', tipo_movimiento: 'CARGO_CUOTA_TC', concepto: 'Cuota 3/12 Nevera', signo: 1, monto: 100000, impacto_saldo: 100000, estado: 'CONFIRMADO' }]);
     t = texto(f);
     for (const esperado of ['Extracto de Andrés Gómez', 'Cuota 3/12 Nevera', 'Cuota de tarjeta', 'Registrar abono']) expect(t).toContain(esperado);
   });
 
-  it('Cruces de deuda: tabla con nombres y destino', () => {
+  it('Cruces de deuda: tabla con nombres y destino', async () => {
     configurarTestBed([ListaCrucesComponent]);
     const f = TestBed.createComponent(ListaCrucesComponent);
+    anchoEscritorio(f);
     f.detectChanges();
     responder('cruces-deuda', [{ id: 1, fecha_cruce: '2026-10-05T00:00:00.000Z', persona_que_abona_id: 3, persona_que_asume_deuda_id: 2, monto: 100000, prestamo_destino_id: 30, periodo_recurrente_destino_id: null, concepto: 'Cuota casa', comentarios: null }]);
     responderCatalogos({ personas });
+    await esperarTabla(f);
     const t = texto(f);
     for (const esperado of ['Cruces de deuda', 'Papá', 'Andrés', 'Cuota casa', 'Préstamo #30', '$100,000.00']) expect(t).toContain(esperado);
   });

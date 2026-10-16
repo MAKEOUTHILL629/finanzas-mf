@@ -1,56 +1,23 @@
-<section class="erp-page" aria-labelledby="titulo-transacciones">
+<section class="erp-page tx" aria-labelledby="titulo-transacciones">
   <app-page-header titulo="Transacciones" subtitulo="Tu libro diario: ingresos, egresos, transferencias y pagos. Las confirmadas ajustan el saldo de tus cuentas." idTitulo="titulo-transacciones">
-    <a appButton="ghost" routerLink="/correos">
-      <i class="material-icons" aria-hidden="true">mark_email_unread</i>
-      Correos
-    </a>
-    <button type="button" appButton="primary" (click)="nueva()">
-      <i class="material-icons" aria-hidden="true">add</i>
-      Nueva transacción
-    </button>
+    <app-acciones [principal]="principal" [secundarias]="secundarias" (accion)="alAccionar($event)"></app-acciones>
   </app-page-header>
 
-  <!-- Filtros -->
-  <form class="erp-toolbar" [formGroup]="filtros" role="search" aria-label="Filtrar transacciones" (submit)="$event.preventDefault()">
+  <!-- Periodo: lo único que se pide al servidor -->
+  <form class="erp-toolbar tx-periodo" [formGroup]="filtros" role="search" aria-label="Elegir el periodo" (submit)="$event.preventDefault()">
     <div class="erp-field">
       <label class="erp-label" for="tx-f-periodo">Periodo</label>
       <div class="erp-month-picker">
-        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior" appTooltip="Ir al mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
         <input id="tx-f-periodo" appInput type="month" formControlName="periodo" />
-        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente" appTooltip="Ir al mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
       </div>
       <span class="erp-field-hint">{{ filtros.controls.periodo.value ? nombrePeriodo(filtros.controls.periodo.value) : 'Todos los periodos' }}</span>
     </div>
-    <div class="erp-field">
-      <label class="erp-label" for="tx-f-tipo">Tipo</label>
-      <select id="tx-f-tipo" appInput formControlName="tipo">
-        <option value="">Todos</option>
-        <option *ngFor="let t of tipos" [value]="t.valor">{{ t.etiqueta }}</option>
-      </select>
-    </div>
-    <div class="erp-field">
-      <label class="erp-label" for="tx-f-estado">Estado</label>
-      <select id="tx-f-estado" appInput formControlName="estado">
-        <option value="">Todos</option>
-        <option *ngFor="let e of estados" [value]="e.valor">{{ e.etiqueta }}</option>
-      </select>
-    </div>
-    <div class="erp-field">
-      <label class="erp-label" for="tx-f-cuenta">Cuenta</label>
-      <app-select inputId="tx-f-cuenta" catalogo="cuentas" formControlName="cuenta" placeholder="Todas" [soloActivas]="false"></app-select>
-    </div>
-    <div class="erp-field">
-      <label class="erp-label" for="tx-f-categoria">Categoría</label>
-      <app-select inputId="tx-f-categoria" catalogo="categorias" formControlName="categoria" placeholder="Todas"></app-select>
-    </div>
-    <button type="button" appButton="ghost" *ngIf="hayFiltros" (click)="quitarFiltros()">
-      <i class="material-icons" aria-hidden="true">filter_alt_off</i>
-      Quitar filtros
-    </button>
   </form>
 
-  <!-- Totales -->
-  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error" aria-label="Totales">
+  <!-- Totales de lo que se ve -->
+  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error" aria-label="Totales de las transacciones que se muestran">
     <app-card class="erp-stat">
       <span class="erp-overline">Ingresos</span>
       <span class="erp-stat-value erp-num erp-gain">{{ totales.ingresos | moneda }}</span>
@@ -67,6 +34,9 @@
     </app-card>
   </div>
 
+  <!-- Filtros -->
+  <app-filter-bar placeholder="Buscar por concepto, categoría, cuenta o monto…" [segmentos]="segmentos" [filtros]="definicionFiltros" [estado]="estadoFiltros" (estadoChange)="alFiltrar($event)"></app-filter-bar>
+
   <!-- Confirmación de anulación -->
   <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="anular-titulo" *ngIf="confirmandoAnular">
     <i class="material-icons" aria-hidden="true">warning</i>
@@ -82,12 +52,8 @@
 
   <div class="erp-alert erp-alert--info" *ngIf="!cargando && !error && truncado">
     <i class="material-icons" aria-hidden="true">info</i>
-    <span>Hay {{ total }} transacciones con estos filtros; se muestran las {{ items.length }} más recientes. Acota el periodo para ver el resto.</span>
+    <span>Hay {{ total }} transacciones en este periodo; se muestran las {{ items.length }} más recientes. Acota el periodo para ver el resto.</span>
   </div>
-
-  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando transacciones">
-    <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3, 4, 5]"></div>
-  </app-card>
 
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
@@ -97,57 +63,51 @@
     </div>
   </div>
 
-  <app-empty-state *ngIf="!cargando && !error && items.length === 0" icon="receipt_long" titulo="No hay transacciones{{ filtros.controls.periodo.value ? ' en ' + nombrePeriodo(filtros.controls.periodo.value) : '' }}" descripcion="Registra una con «Nueva transacción» o revisa tus correos del banco para conciliarlos."></app-empty-state>
+  <!-- Tabla -->
+  <app-card padding="sm" class="tabla-card" *ngIf="!error">
+    <app-apple-table
+      [columnas]="columnas"
+      [filas]="filtradas"
+      clave="id"
+      etiqueta="Transacciones"
+      almacenamiento="transacciones"
+      [ordenInicial]="ordenInicial"
+      [cargando]="cargando"
+      columnaTitulo="concepto"
+      [anchoAcciones]="140"
+      [filaClicable]="true"
+      [filaClase]="claseFila"
+      [unidad]="['transacción', 'transacciones']"
+      [textoVacio]="items.length === 0 ? 'No hay transacciones' + (filtros.controls.periodo.value ? ' en ' + nombrePeriodo(filtros.controls.periodo.value) : '') + '. Registra una con «Nueva transacción» o revisa tus correos del banco para conciliarlos.' : 'Ninguna transacción coincide con los filtros. Prueba con otros o límpialos.'"
+      (filaClick)="abrir($event)"
+    >
+      <ng-template appCelda="fecha" let-t><span class="fecha">{{ t.fecha_transaccion | date: 'dd/MM/yyyy HH:mm' }}</span></ng-template>
 
-  <app-card class="tabla-card" *ngIf="!cargando && !error && items.length > 0">
-    <div class="erp-table-wrap">
-      <table appTable stack>
-        <caption class="erp-sr-only">Transacciones ({{ items.length }})</caption>
-        <thead>
-          <tr>
-            <th scope="col">Fecha</th>
-            <th scope="col">Concepto</th>
-            <th scope="col">Cuentas</th>
-            <th scope="col">Tipo</th>
-            <th scope="col">Estado</th>
-            <th scope="col" class="num">Monto</th>
-            <th scope="col"><span class="erp-sr-only">Acciones</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let t of filasPagina; trackBy: trackById" [class.anulada]="t.estado === 'ANULADO'">
-            <td data-label="Fecha" class="fecha">{{ t.fecha_transaccion | date: 'dd/MM/yyyy HH:mm' }}</td>
-            <td data-label="Concepto" class="celda-concepto">
-              <span class="concepto">{{ t.concepto }}</span>
-              <span class="erp-muted detalle">
-                <ng-container *ngIf="nombreCategoria(t.categoria_id)">{{ nombreCategoria(t.categoria_id) }}</ng-container>
-                <ng-container *ngIf="t.origen_registro === 'EMAIL_AUTO'"> · desde correo</ng-container>
-                <ng-container *ngIf="t.moneda_original !== 'COP'"> · {{ t.monto_original | number: '1.2-2' }} {{ t.moneda_original }}</ng-container>
-              </span>
-            </td>
-            <td data-label="Cuentas">{{ cuentasDe(t) }}</td>
-            <td data-label="Tipo"><app-badge><i class="material-icons" aria-hidden="true">{{ reglas(t.tipo_transaccion).icono }}</i>{{ reglas(t.tipo_transaccion).etiqueta }}</app-badge></td>
-            <td data-label="Estado"><app-badge class="claseEstado(t.estado) }}">{{ etiquetaEstado(t.estado) }}</app-badge></td>
-            <td data-label="Monto" class="num" [class.erp-gain]="efecto(t) > 0 && t.estado !== 'ANULADO'" [class.erp-loss]="efecto(t) < 0 && t.estado !== 'ANULADO'">
-              {{ t.monto_cop | moneda }}
-            </td>
-            <td data-label="Acciones" class="acciones">
-              <button type="button" appButton="ghost" size="sm" *ngIf="t.estado === 'PENDIENTE_REVISION'" (click)="confirmar(t)" [disabled]="trabajando">
-                <i class="material-icons" aria-hidden="true">check_circle</i>Confirmar
-              </button>
-              <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t)" (click)="editar(t)" [attr.aria-label]="'Editar ' + t.concepto"><i class="material-icons" aria-hidden="true">edit</i></button>
-              <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t)" (click)="pedirAnular(t)" [attr.aria-label]="'Anular ' + t.concepto"><i class="material-icons" aria-hidden="true">block</i></button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <ng-template appCelda="concepto" let-t>
+        <span class="concepto apt-tachado">{{ t.concepto }}</span>
+        <span class="erp-muted detalle">
+          <ng-container *ngIf="nombreCategoria(t.categoria_id)">{{ nombreCategoria(t.categoria_id) }}</ng-container>
+          <ng-container *ngIf="t.origen_registro === 'EMAIL_AUTO'"> · desde correo</ng-container>
+          <ng-container *ngIf="t.moneda_original !== 'COP'"> · {{ t.monto_original | number: '1.2-2' }} {{ t.moneda_original }}</ng-container>
+        </span>
+      </ng-template>
 
-    <nav class="paginacion" *ngIf="items.length > TAM_PAGINA" aria-label="Paginación">
-      <button type="button" appButton="ghost" size="sm" (click)="irPagina(-1)" [disabled]="pagina === 0"><i class="material-icons" aria-hidden="true">chevron_left</i>Anterior</button>
-      <span class="erp-muted erp-num">Página {{ pagina + 1 }} de {{ totalPaginas }}</span>
-      <button type="button" appButton="ghost" size="sm" (click)="irPagina(1)" [disabled]="pagina >= totalPaginas - 1">Siguiente<i class="material-icons" aria-hidden="true">chevron_right</i></button>
-    </nav>
+      <ng-template appCelda="tipo" let-t><app-badge><i class="material-icons" aria-hidden="true">{{ reglas(t.tipo_transaccion).icono }}</i>{{ reglas(t.tipo_transaccion).etiqueta }}</app-badge></ng-template>
+
+      <ng-template appCelda="estado" let-t><app-badge [tone]="claseEstado(t.estado)">{{ etiquetaEstado(t.estado) }}</app-badge></ng-template>
+
+      <ng-template appCelda="monto" let-t>
+        <span class="monto apt-tachado" [class.erp-gain]="efecto(t) > 0 && t.estado !== 'ANULADO'" [class.erp-loss]="efecto(t) < 0 && t.estado !== 'ANULADO'">{{ t.monto_cop | moneda }}</span>
+      </ng-template>
+
+      <ng-template appAccionesFila let-t>
+        <button type="button" appButton="ghost" size="sm" icon *ngIf="t.estado === 'PENDIENTE_REVISION'" (click)="confirmar(t)" [disabled]="trabajando" [attr.aria-label]="'Confirmar ' + t.concepto" [appTooltip]="'Confirmar «' + t.concepto + '»: el saldo de la cuenta se actualiza'">
+          <i class="material-icons acc-confirmar" aria-hidden="true">check_circle</i>
+        </button>
+        <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t)" (click)="editar(t)" [attr.aria-label]="'Editar ' + t.concepto" [appTooltip]="'Editar ' + t.concepto"><i class="material-icons" aria-hidden="true">edit</i></button>
+        <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t)" (click)="pedirAnular(t)" [attr.aria-label]="'Anular ' + t.concepto" [appTooltip]="'Anular ' + t.concepto"><i class="material-icons" aria-hidden="true">block</i></button>
+      </ng-template>
+    </app-apple-table>
   </app-card>
 </section>
 

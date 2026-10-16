@@ -1,9 +1,4 @@
-.tabla-card { padding: var(--space-1) var(--space-2) var(--space-2); }
-
-.fila { cursor: pointer; }
-.fila--activa { background: var(--brand-blue-light); }
 .saldo { font-weight: var(--weight-bold); }
-.acciones { text-align: right; white-space: nowrap; }
 
 .persona { display: inline-flex; align-items: center; gap: var(--space-1); }
 .avatar {

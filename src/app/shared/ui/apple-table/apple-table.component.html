@@ -1,0 +1,167 @@
+<div #raiz class="apt" [class.apt--movil]="movil" [attr.aria-busy]="cargando ? 'true' : null">
+  <!-- Barra: contador, orden (móvil) y columnas (escritorio) -->
+  <div class="apt-barra" *ngIf="!sinBarra">
+    <div class="apt-barra__izq">
+      <ng-content select="[tablaIzquierda]"></ng-content>
+      <span class="apt-contador erp-num" *ngIf="!cargando" aria-live="polite">{{ textoContador }}</span>
+    </div>
+    <div class="apt-barra__der">
+      <ng-content select="[tablaDerecha]"></ng-content>
+
+      <!-- En móvil no hay encabezados: el orden se elige aquí -->
+      <div class="apt-orden" *ngIf="movil && ordenables.length > 0">
+        <label class="erp-sr-only" [attr.for]="uid + '-orden'">Ordenar por</label>
+        <select appInput [id]="uid + '-orden'" class="apt-orden__select" [value]="orden?.columna ?? ''" (change)="ordenarPorId($any($event.target).value)">
+          <option value="">Orden original</option>
+          <option *ngFor="let c of ordenables; trackBy: trackColumna" [value]="c.id">{{ c.etiquetaMovil ?? c.titulo }}</option>
+        </select>
+        <button type="button" appButton="ghost" size="sm" icon *ngIf="orden" (click)="invertirOrden()" [attr.aria-label]="orden.direccion === 'asc' ? 'Cambiar a orden descendente' : 'Cambiar a orden ascendente'">
+          <i class="material-icons" aria-hidden="true">{{ orden.direccion === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</i>
+        </button>
+      </div>
+
+      <!-- Columnas visibles -->
+      <div class="apt-columnas" *ngIf="!movil && configurables.length > 0">
+        <button type="button" appButton="ghost" size="sm" appTooltip="Elegir qué columnas se muestran" aria-haspopup="true" [attr.aria-expanded]="menuColumnas" (click)="alternarMenuColumnas($event)">
+          <i class="material-icons" aria-hidden="true">view_column</i>Columnas<i class="material-icons apt-chevron" aria-hidden="true">expand_more</i>
+        </button>
+        <div class="apt-menu" role="group" aria-label="Columnas visibles" *ngIf="menuColumnas" (click)="$event.stopPropagation()">
+          <label class="apt-menu__opcion" *ngFor="let c of configurables; trackBy: trackColumna">
+            <input type="checkbox" [checked]="estaVisible(c)" (change)="alternarColumna(c)" />
+            <span>{{ c.titulo }}</span>
+          </label>
+          <button type="button" class="apt-menu__restablecer" (click)="restablecerColumnas()">Restablecer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Aviso de columnas ocultas por falta de espacio -->
+  <p class="apt-aviso" *ngIf="!movil && ocultasPorEspacio > 0 && !cargando">
+    <i class="material-icons" aria-hidden="true">info</i>
+    {{ ocultasPorEspacio }} {{ ocultasPorEspacio === 1 ? 'columna oculta' : 'columnas ocultas' }} por falta de espacio. Amplía la ventana o contrae el menú lateral para verlas.
+  </p>
+
+  <!-- Cargando -->
+  <div class="apt-esqueleto" *ngIf="cargando" role="status" aria-label="Cargando datos">
+    <app-skeleton *ngFor="let _ of [1, 2, 3, 4, 5, 6]" alto="48px"></app-skeleton>
+  </div>
+
+  <ng-container *ngIf="!cargando">
+    <!-- Vacío -->
+    <div class="apt-vacio" *ngIf="filasPagina.length === 0 && totalRegistros === 0">
+      <ng-content select="[tablaVacia]"></ng-content>
+      <p class="apt-vacio__texto">{{ textoVacio }}</p>
+    </div>
+
+    <!-- Escritorio -->
+    <div class="apt-contenedor" *ngIf="!movil && filasPagina.length > 0">
+      <table class="apt-tabla" [attr.aria-label]="etiqueta">
+        <thead>
+          <tr>
+            <th *ngFor="let c of mostradas; trackBy: trackColumna" scope="col" [ngClass]="alineacionDe(c)" [attr.aria-sort]="ariaSort(c)" [style.min-width.px]="c.anchoMin ?? null">
+              <button type="button" class="apt-th" *ngIf="esOrdenable(c); else soloTitulo" (click)="ordenar(c)" [appTooltip]="'Ordenar por ' + c.titulo.toLowerCase()">
+                <span>{{ c.titulo }}</span>
+                <i class="material-icons apt-th__icono" [class.apt-th__icono--activo]="direccionDe(c)" aria-hidden="true">{{ direccionDe(c) === 'desc' ? 'arrow_downward' : direccionDe(c) === 'asc' ? 'arrow_upward' : 'unfold_more' }}</i>
+              </button>
+              <ng-template #soloTitulo><span class="apt-th apt-th--fijo">{{ c.titulo }}</span></ng-template>
+            </th>
+            <th *ngIf="acciones" scope="col" class="apt-th-acciones"><span class="erp-sr-only">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let f of filasPagina; trackBy: trackFila"
+            [ngClass]="clasesFila(f)"
+            [attr.tabindex]="filaClicable ? 0 : null"
+            (click)="clicEnFila(f, $event)"
+            (keydown)="teclaEnFila($event, f)"
+          >
+            <td *ngFor="let c of mostradas; trackBy: trackColumna" [ngClass]="[alineacionDe(c), c.truncar ? 'apt-truncar' : '']" [attr.title]="c.truncar ? textoDe(c, f) : null">
+              <ng-container *ngIf="plantillaDe(c) as t; else textoSimple">
+                <ng-container *ngTemplateOutlet="t; context: { $implicit: f, valor: valorDe(c, f), columna: c }"></ng-container>
+              </ng-container>
+              <ng-template #textoSimple>{{ textoDe(c, f) }}</ng-template>
+            </td>
+            <td *ngIf="acciones" class="apt-td-acciones" (click)="$event.stopPropagation()">
+              <ng-container *ngTemplateOutlet="acciones.plantilla; context: { $implicit: f }"></ng-container>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="pie">
+          <tr>
+            <td *ngFor="let c of mostradas; trackBy: trackColumna" [ngClass]="alineacionDe(c)">{{ pie[c.id] || '' }}</td>
+            <td *ngIf="acciones"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Móvil: cada fila es una tarjeta -->
+    <ul class="apt-lista" *ngIf="movil && filasPagina.length > 0" [attr.aria-label]="etiqueta">
+      <li class="apt-item" *ngFor="let f of filasPagina; trackBy: trackFila" [ngClass]="clasesFila(f)">
+        <div class="apt-item__resumen" (click)="clicEnFila(f, $event)" [attr.tabindex]="filaClicable ? 0 : null" (keydown)="teclaEnFila($event, f)">
+          <ng-container *ngIf="tarjeta; else resumenAuto">
+            <ng-container *ngTemplateOutlet="tarjeta.plantilla; context: { $implicit: f }"></ng-container>
+          </ng-container>
+          <ng-template #resumenAuto>
+            <div class="apt-item__titulo" *ngIf="tituloMovil as t">
+              <span class="apt-item__nombre">
+                <ng-container *ngIf="plantillaDe(t) as p; else tituloTexto"><ng-container *ngTemplateOutlet="p; context: { $implicit: f, valor: valorDe(t, f), columna: t }"></ng-container></ng-container>
+                <ng-template #tituloTexto>{{ textoDe(t, f) }}</ng-template>
+              </span>
+            </div>
+            <dl class="apt-item__meta">
+              <div *ngFor="let c of metaMovil; trackBy: trackColumna" [ngClass]="alineacionDe(c)">
+                <dt>{{ c.etiquetaMovil ?? c.titulo }}</dt>
+                <dd>
+                  <ng-container *ngIf="plantillaDe(c) as p; else metaTexto"><ng-container *ngTemplateOutlet="p; context: { $implicit: f, valor: valorDe(c, f), columna: c }"></ng-container></ng-container>
+                  <ng-template #metaTexto>{{ textoDe(c, f) }}</ng-template>
+                </dd>
+              </div>
+            </dl>
+          </ng-template>
+        </div>
+        <button type="button" class="apt-item__mas" *ngIf="detalleMovil.length > 0 || acciones" (click)="alternarExpandida(f, $event)" [attr.aria-expanded]="estaExpandida(f)" [appTooltip]="estaExpandida(f) ? 'Ver menos' : 'Ver más datos'">
+          <i class="material-icons" aria-hidden="true">{{ estaExpandida(f) ? 'expand_less' : 'expand_more' }}</i>
+          <span>{{ estaExpandida(f) ? 'Ver menos' : 'Ver más' }}</span>
+        </button>
+        <div class="apt-item__detalle" *ngIf="estaExpandida(f)" @expandir>
+          <dl class="apt-item__lista">
+            <div *ngFor="let c of detalleMovil; trackBy: trackColumna">
+              <dt>{{ c.etiquetaMovil ?? c.titulo }}</dt>
+              <dd>
+                <ng-container *ngIf="plantillaDe(c) as p; else detalleTexto"><ng-container *ngTemplateOutlet="p; context: { $implicit: f, valor: valorDe(c, f), columna: c }"></ng-container></ng-container>
+                <ng-template #detalleTexto>{{ textoDe(c, f) }}</ng-template>
+              </dd>
+            </div>
+          </dl>
+          <div class="apt-item__acciones" *ngIf="acciones"><ng-container *ngTemplateOutlet="acciones.plantilla; context: { $implicit: f }"></ng-container></div>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Paginación -->
+    <nav class="apt-paginacion" *ngIf="totalRegistros > 0" aria-label="Paginación">
+      <p class="apt-paginacion__rango erp-num">Mostrando {{ desde }}–{{ hasta }} de {{ totalRegistros.toLocaleString('es-CO') }}</p>
+
+      <div class="apt-paginacion__tamano">
+        <label [attr.for]="uid + '-tam'">Filas</label>
+        <select appInput [id]="uid + '-tam'" [value]="tamanoVisible" (change)="cambiarTamano($any($event.target).value)">
+          <option *ngFor="let t of tamanosPagina" [value]="t" [selected]="t === tamanoVisible">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="apt-paginacion__botones" *ngIf="totalPaginas > 1">
+        <button type="button" appButton="ghost" size="sm" icon (click)="irAPagina(0)" [disabled]="paginaVisible === 0" aria-label="Primera página"><i class="material-icons" aria-hidden="true">first_page</i></button>
+        <button type="button" appButton="ghost" size="sm" icon (click)="irAPagina(paginaVisible - 1)" [disabled]="paginaVisible === 0" aria-label="Página anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <ng-container *ngIf="!movil; else paginaMovil">
+          <button type="button" class="apt-pag" *ngFor="let n of numerosPagina" [class.apt-pag--activa]="n === paginaVisible" (click)="irAPagina(n)" [attr.aria-current]="n === paginaVisible ? 'page' : null" [attr.aria-label]="'Página ' + (n + 1)">{{ n + 1 }}</button>
+        </ng-container>
+        <ng-template #paginaMovil><span class="apt-pag-texto erp-num">{{ paginaVisible + 1 }} / {{ totalPaginas }}</span></ng-template>
+        <button type="button" appButton="ghost" size="sm" icon (click)="irAPagina(paginaVisible + 1)" [disabled]="paginaVisible >= totalPaginas - 1" aria-label="Página siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+        <button type="button" appButton="ghost" size="sm" icon (click)="irAPagina(totalPaginas - 1)" [disabled]="paginaVisible >= totalPaginas - 1" aria-label="Última página"><i class="material-icons" aria-hidden="true">last_page</i></button>
+      </div>
+    </nav>
+  </ng-container>
+</div>

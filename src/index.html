@@ -2,12 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>FinanzasMf</title>
+  <title>Finanzas Make</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F5F5F7">
   <meta name="color-scheme" content="light dark">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="description" content="Tus finanzas personales: tarjetas, cuentas, deudas con otras personas y cobros, en un solo lugar.">
+  <link rel="icon" type="image/svg+xml" href="brand/logo.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" sizes="180x180" href="brand/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Finanzas Make">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <!-- El tema se fija ANTES de pintar el primer cuadro (sin destello claro/oscuro): preferencia guardada o, si no hay, la del sistema. -->
   <script>
     (function () {
@@ -27,8 +36,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    /* Crítico: la pantalla de arranque no depende de la hoja de estilos de la app (que aún no llegó) */
+    html { background: #F5F5F7; }
+    html[data-theme="dark"] { background: #000; }
+    .splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; font: 600 17px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif; letter-spacing: -0.01em; color: #1D1D1F; }
+    html[data-theme="dark"] .splash { color: #F5F5F7; }
+    .splash__logo { animation: splash-entra 600ms cubic-bezier(0.16, 1, 0.3, 1) both; filter: drop-shadow(0 14px 30px rgba(0, 113, 227, 0.28)); }
+    .splash__nombre { opacity: 0.85; animation: splash-entra 600ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .splash__barra { position: relative; width: 96px; height: 3px; overflow: hidden; border-radius: 3px; background: rgba(128, 128, 128, 0.25); }
+    .splash__barra::after { content: ""; position: absolute; inset: 0; width: 40%; border-radius: 3px; background: #0A84FF; animation: splash-barra 1.1s ease-in-out infinite; }
+    @keyframes splash-entra { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
+    @keyframes splash-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+    @media (prefers-reduced-motion: reduce) { .splash__logo, .splash__nombre, .splash__barra::after { animation: none; } }
+  </style>
 </head>
 <body>
-  <app-root></app-root>
+  <app-root>
+    <!-- Pantalla de arranque: se ve mientras se descarga Angular y la reemplaza la aplicación -->
+    <div class="splash" role="status" aria-label="Cargando Finanzas Make">
+      <img class="splash__logo" src="brand/logo.svg" width="112" height="112" alt="" />
+      <span class="splash__nombre">Finanzas Make</span>
+      <span class="splash__barra" aria-hidden="true"></span>
+    </div>
+  </app-root>
 </body>
 </html>
