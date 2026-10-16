@@ -4,8 +4,10 @@
      tokens.css      colores, tipografía, radios, sombras y movimiento (Claro/Oscuro)
      base.css        tipografía global, enfoque, estructura de página (AppLayout)
      components.css  clases de los componentes base: tarjeta, botón, campo, insignia, tabla…
+     motion.css      entradas escalonadas y transición de página
    Las pantallas NO definen colores propios: usan estos tokens y componentes.
    ============================================================== */
 @import './design-system/tokens.css';
 @import './design-system/base.css';
 @import './design-system/components.css';
+@import './design-system/motion.css';

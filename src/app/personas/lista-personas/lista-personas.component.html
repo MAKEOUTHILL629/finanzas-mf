@@ -134,7 +134,7 @@
         </button>
       </footer>
 
-      <div class="persona-detalle" [id]="'detalle-' + p.persona.id" *ngIf="abierta === p.persona.id">
+      <div class="persona-detalle" [id]="'detalle-' + p.persona.id" *ngIf="abierta === p.persona.id" @expandir>
         <app-detalle-persona [personaId]="p.persona.id" [periodo]="periodo"></app-detalle-persona>
       </div>
     </article>

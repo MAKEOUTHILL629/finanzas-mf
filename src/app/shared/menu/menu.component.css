@@ -535,10 +535,21 @@
 }
 .barra-item.activo { color: var(--text-link); }
 .barra-item.activo .material-icons { transform: translateY(-2px) scale(1.08); filter: drop-shadow(0 4px 10px var(--brand-blue-glow)); }
-.barra-item.activo::before {
-  content: '';
+/* Indicador de la pestaña activa: una sola pieza que se desliza con resorte (en vez de aparecer y desaparecer en cada ítem) */
+.barra-indicador {
   position: absolute;
   top: 0;
+  left: var(--space-1);
+  width: calc((100% - 2 * var(--space-1)) / var(--n, 5));
+  height: 3px;
+  display: flex;
+  justify-content: center;
+  transform: translateX(calc(100% * var(--idx, 0)));
+  transition: transform var(--duration-slow) var(--ease-spring), opacity var(--duration-fast) linear;
+  pointer-events: none;
+}
+.barra-indicador::before {
+  content: '';
   width: 28px;
   height: 3px;
   border-radius: 0 0 3px 3px;
@@ -580,7 +591,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav, .nav--panel, .velo, .grupo-lista, .chevron, .flyout, .barra-item .material-icons { transition: none; animation: none; }
+  .nav, .nav--panel, .velo, .grupo-lista, .chevron, .flyout, .barra-item .material-icons, .barra-indicador { transition: none; animation: none; }
 }
 
 /* Enlace suelto (Inicio): sin cabecera, un poco de aire antes del primer grupo */

@@ -1,0 +1,17 @@
+import { NgModule } from '@angular/core';
+import { Routes } from '@angular/router';
+import { authGuard } from '../core/guards/auth.guard';
+import { SharedModule } from '../shared/shared.module';
+import { ListaRecurrentesPersonaComponent } from './lista-recurrentes-persona/lista-recurrentes-persona.component';
+import { FormularioRecurrentePersonaComponent } from './formulario-recurrente-persona/formulario-recurrente-persona.component';
+
+/** Rutas de `RUTAS_RECURRENTES` (se cargan de forma diferida desde `app-routing.module.ts`). */
+export const RUTAS_RECURRENTES: Routes = [
+  { path: '', component: ListaRecurrentesPersonaComponent, canActivate: [authGuard] },
+];
+
+@NgModule({
+  declarations: [ListaRecurrentesPersonaComponent, FormularioRecurrentePersonaComponent],
+  imports: [SharedModule]
+})
+export class RecurrentesPersonaModule {}

@@ -107,3 +107,15 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 `../finanzas/docker-compose.local.yml` construye esta imagen (`Dockerfile`, con `nginx.local.conf`: sirve la SPA y reenvía `/api`
 a la API NestJS) y la API, y con `docker compose -f docker-compose.local.yml watch` (ejecutado desde `../finanzas`) las reconstruye al guardar cambios.
 Frontend en http://localhost:8085. Detalles en `finanzas/backend-nestjs/README.md` ("Docker local con reconstrucción automática").
+
+## Rendimiento de carga
+
+- **Carga diferida por pantalla**: `app-routing.module.ts` solo trae el armazón (menú, avisos) y el inicio de sesión; cada sección es un módulo
+  (`*.module.ts` junto a sus componentes) que exporta sus rutas y se descarga al entrar. Paquete inicial: **659 kB** (157 kB comprimido), antes **1,93 MB** (378 kB).
+- **Precarga inteligente**: pasados 1,5 s se traen en segundo plano los demás módulos, salvo con «ahorro de datos» o conexión 2G/3G (`PrecargaInteligente`).
+- **Librerías pesadas aparte**: Chart.js (solo las piezas usadas) viaja con Flujo de caja y el detalle de una compra; Angular Material solo con los formularios de compras.
+- **Peticiones**: las lecturas idénticas simultáneas comparten una sola (`deduplicarGetInterceptor`); los catálogos y el resumen del inicio usan
+  *stale-while-revalidate* (se pintan al instante lo ya visto y se actualizan por detrás; se olvidan al cambiar de sesión).
+- **Esqueletos** con la geometría del contenido (`<app-skeleton>`) en vez de spinners: sin saltos de diseño al llegar los datos.
+- **Presupuestos de build** (`angular.json`): inicial 800 kB (aviso) / 1,5 MB (error); cualquier paquete 400 kB / 800 kB; estilos de componente 40 kB / 80 kB.
+- **Servidor**: `nginx.conf` comprime (gzip) y cachea los paquetes con hash un año (`immutable`); `index.html` nunca se cachea. En Vercel, `vercel.json` hace lo mismo.

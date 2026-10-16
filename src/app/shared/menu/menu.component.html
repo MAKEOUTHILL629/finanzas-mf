@@ -155,6 +155,8 @@
 
   <!-- Barra inferior del móvil: los favoritos y «Más» -->
   <nav class="barra-inferior" *ngIf="layout === 'movil'" aria-label="Accesos rápidos">
+    <!-- Indicador deslizante: se desplaza con un resorte hasta la pestaña activa -->
+    <span class="barra-indicador" aria-hidden="true" [style.--n]="itemsFavoritos.length + 1" [style.--idx]="indiceBarra < 0 ? 0 : indiceBarra" [style.opacity]="indiceBarra < 0 ? 0 : 1"></span>
     <a *ngFor="let f of itemsFavoritos; trackBy: trackItem" class="barra-item" [routerLink]="f.item.ruta" [class.activo]="esActivo(f.item)"
        [attr.aria-current]="esActivo(f.item) ? 'page' : null" (click)="alElegir()">
       <i class="material-icons" aria-hidden="true">{{ f.item.icono }}</i>

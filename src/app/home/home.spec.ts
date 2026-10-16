@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { ResumenDashboard } from '../modelos/dashboard';
 import { periodoActual } from '../shared/periodo.helper';
 import { API, configurarTestBed, errorHttp, http, verificarHttp } from '../testing/erp-testing';
+import { limpiarCachesDeSesion } from '../core/cache-sesion';
+import { DashboardService } from '../services/dashboard.service';
 import { HomeComponent } from './home.component';
 import { barrasFlujo, diaDeMovimiento, esEntrada, fraseEjecutiva, iconoMovimiento, porcentaje, primerNombre, saludoSegunHora, textoDias, tonoVencimiento } from './home.constants';
 
@@ -183,6 +185,36 @@ describe('HomeComponent', () => {
     expect(t).toContain('Sin pagos pendientes');
     expect(t).toContain('Todavía no hay movimientos');
     expect(t).not.toContain('Pendientes por atender');
+  });
+
+  it('al volver con un resumen ya visto se pinta al instante (sin esqueletos) y se actualiza por detrás', () => {
+    iniciar(resumen());
+    const f2 = TestBed.createComponent(HomeComponent);
+    f2.detectChanges();
+    expect(f2.componentInstance.datos).not.toBeNull();
+    expect(f2.componentInstance.cargando).toBeFalse();
+    expect(f2.componentInstance.actualizando).toBeTrue();
+    expect(texto(f2)).toContain('Balance y liquidez');
+    http().expectOne((r) => r.url === `${API}/dashboard/summary`).flush(resumen({ liquidez: { ...resumen().liquidez, total: 1 } }));
+    expect(f2.componentInstance.actualizando).toBeFalse();
+    expect(f2.componentInstance.datos?.liquidez.total).toBe(1);
+  });
+
+  it('al cambiar de sesión el resumen guardado se olvida (nunca se ve el de otro usuario)', () => {
+    iniciar(resumen());
+    const servicio = TestBed.inject(DashboardService);
+    expect(servicio.resumenReciente(periodoActual())).not.toBeNull();
+    limpiarCachesDeSesion();
+    expect(servicio.resumenReciente(periodoActual())).toBeNull();
+  });
+
+  it('un fallo al actualizar no borra lo que ya se ve', () => {
+    iniciar(resumen());
+    const f2 = TestBed.createComponent(HomeComponent);
+    f2.detectChanges();
+    errorHttp(http().expectOne((r) => r.url === `${API}/dashboard/summary`), 500, { message: 'Sin conexión' });
+    expect(f2.componentInstance.datos).not.toBeNull();
+    expect(f2.componentInstance.error).toBe('Sin conexión');
   });
 
   it('un error se explica y se puede reintentar', () => {

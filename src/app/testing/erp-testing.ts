@@ -3,6 +3,7 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { NO_ERRORS_SCHEMA, Provider, Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { FormatoFechaCortaPipe } from '../pipes/formato-fecha-corta.pipe';
@@ -12,6 +13,8 @@ import { Catalogos, ItemCategoria, ItemCuenta, ItemPersona, ItemTarjeta } from '
 import { BadgeComponent } from '../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../shared/ui/button/button.component';
 import { CardComponent } from '../shared/ui/card/card.component';
+import { ContadorComponent } from '../shared/ui/contador/contador.component';
+import { SkeletonComponent } from '../shared/ui/skeleton/skeleton.component';
 import { EmptyStateComponent } from '../shared/ui/empty-state/empty-state.component';
 import { FieldComponent, InputDirective } from '../shared/ui/field/field.component';
 import { PageHeaderComponent } from '../shared/ui/page-header/page-header.component';
@@ -21,7 +24,7 @@ import { ThemeToggleComponent } from '../shared/ui/theme-toggle/theme-toggle.com
 
 /** Componentes base del sistema de diseño: las plantillas los usan, así que toda prueba de un componente debe declararlos. */
 export const COMPONENTES_UI: Type<unknown>[] = [
-  BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, FieldComponent, InputDirective, PageHeaderComponent, SelectComponent, TableDirective, ThemeToggleComponent,
+  BadgeComponent, ButtonComponent, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, PageHeaderComponent, SelectComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
 ];
 
 export const API = environment.apiUrl;
@@ -31,7 +34,7 @@ export function configurarTestBed(declarations: Type<unknown>[], providers: Prov
   TestBed.configureTestingModule({
     declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe, ...COMPONENTES_UI],
     imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([])],
-    providers: [provideHttpClient(), provideHttpClientTesting(), ...providers],
+    providers: [provideHttpClient(), provideHttpClientTesting(), provideNoopAnimations(), ...providers],
     schemas: [NO_ERRORS_SCHEMA],
   });
 }

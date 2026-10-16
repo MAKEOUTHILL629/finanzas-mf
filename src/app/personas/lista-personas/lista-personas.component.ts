@@ -10,12 +10,14 @@ import { mensajeDeError } from '../../shared/http-error.helper';
 import { moneda } from '../../shared/moneda.util';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../../shared/periodo.helper';
 import { ToastService } from '../../shared/toast/toast.service';
+import { EXPANDIR } from '../../shared/motion';
 import { MODAL_ABONO_PERSONA, SegmentoTarjeta, aPersonaDeAbono, claseEstadoDeuda, etiquetaEstadoDeuda, iniciales, segmentosPorTarjeta } from '../personas.constants';
 
 @Component({
   selector: 'app-lista-personas',
   templateUrl: './lista-personas.component.html',
-  styleUrl: './lista-personas.component.css'
+  styleUrl: './lista-personas.component.css',
+  animations: [EXPANDIR]
 })
 export class ListaPersonasComponent implements OnInit, OnDestroy {
   readonly modalId = MODAL_ABONO_PERSONA;

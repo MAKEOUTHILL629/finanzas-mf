@@ -288,6 +288,13 @@ export class MenuComponent implements OnInit, OnDestroy {
     if (dx < -70 && dy < 60) this.cerrarDrawer();
   }
 
+  /** Posición de la pestaña activa en la barra inferior (los favoritos y, al final, «Más»); -1 si ninguna sección está activa. */
+  get indiceBarra(): number {
+    const i = this.itemsFavoritos.findIndex((f) => this.esActivo(f.item));
+    if (i >= 0) return i;
+    return this.activo ? this.itemsFavoritos.length : -1;
+  }
+
   // ── tema y sesión ──
 
   toggleTheme(): void {

@@ -8,6 +8,7 @@ en escritorio y móvil. Todo sale de **una sola fuente de verdad**.
 | `tokens.css` | Colores (primitivas → semánticos → alias heredados), tipografía, espaciado, radios, sombras, movimiento. Todo lo que cambia con el tema vive aquí. |
 | `base.css` | Tipografía global (`tabular-nums` en todas las cifras), enfoque, barras de desplazamiento, estructura de página (`AppLayout`), listas flotantes de Material. |
 | `components.css` | Clases de los componentes base: tarjeta, botón, campo, insignia, tabla, alerta, esqueleto, control segmentado… |
+| `motion.css` | Entrada escalonada (*fade-up*) de rejillas y del Bento, transición de página. |
 
 ## Reglas
 
@@ -48,3 +49,15 @@ Tipografía: `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text"
 
 Barra de pestañas inferior estilo iOS (`safe-area-inset-bottom`), tarjetas al 100 % de ancho, modales como hoja inferior y
 controles táctiles de al menos 44 × 44 px (`pointer: coarse` o ancho ≤ 640 px).
+
+## Movimiento y rendimiento
+
+- **Entradas escalonadas**: las hijas de `.erp-grid` y los `.bento-item` suben y aparecen una tras otra (`motion.css`).
+- **Resortes** (`shared/motion.ts`): `EXPANDIR` (acordeones de desglose), hoja inferior y diálogo del modal, indicador deslizante del selector de
+  tema y de la barra inferior del móvil. Todos respetan `prefers-reduced-motion` (CSS en `base.css`; `duracion()` para las de Angular).
+- **`<app-contador [valor]>`**: cifra con conteo animado (fuera de la zona de Angular; el lector de pantalla lee siempre el valor final).
+- **`<app-skeleton>`** y `.erp-skeleton`: esqueleto con la geometría del contenido (CLS ≈ 0); el brillo se mueve con `transform`.
+- **Carga**: cada pantalla es un módulo de carga diferida (`app-routing.module.ts`); el resto se precarga en tiempo ocioso salvo con
+  «ahorro de datos» o conexión 2G/3G (`PrecargaInteligente`). Chart.js, Angular Material y los formularios pesados viajan solo con la
+  pantalla que los usa. Las lecturas idénticas simultáneas comparten una petición (`deduplicarGetInterceptor`) y los catálogos usan
+  *stale-while-revalidate* (`CatalogosService`).

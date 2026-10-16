@@ -60,7 +60,7 @@
         </span>
       </button>
 
-      <div class="erp-table-wrap" [id]="'tarjeta-' + personaId + '-' + claveTarjeta(t)" *ngIf="estaAbierta(t)">
+      <div class="erp-table-wrap" [id]="'tarjeta-' + personaId + '-' + claveTarjeta(t)" *ngIf="estaAbierta(t)" @expandir>
         <table appTable compact stack>
           <caption class="erp-sr-only">Compras con {{ nombreTarjeta(t) }} que le tocan a {{ d.persona.nombre }}</caption>
           <thead>

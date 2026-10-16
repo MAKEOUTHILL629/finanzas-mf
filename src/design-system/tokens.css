@@ -143,6 +143,10 @@
   --select-option-bg:    #FFFFFF;
   --select-option-hover: #F5F5F7;
   --select-option-text:  #1D1D1F;
+
+  /* Brillo del esqueleto de carga (shimmer) */
+  --skeleton-base:    rgba(0, 0, 0, 0.06);
+  --skeleton-shimmer: rgba(255, 255, 255, 0.65);
 }
 
 /* ── 3 · TEMA OSCURO ── */
@@ -197,6 +201,9 @@
   --select-option-bg:    #1C1C1E;
   --select-option-hover: #2C2C2E;
   --select-option-text:  #F5F5F7;
+
+  --skeleton-base:    rgba(255, 255, 255, 0.07);
+  --skeleton-shimmer: rgba(255, 255, 255, 0.10);
 }
 
 /* Si el script de arranque no pudo fijar `data-theme`, se respeta la preferencia del sistema operativo. */
@@ -213,7 +220,7 @@
     --border-strong: rgba(255, 255, 255, 0.18); --divider: rgba(255, 255, 255, 0.08);
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.30), 0 10px 24px -8px rgba(0, 0, 0, 0.45); --specular-light: rgba(255, 255, 255, 0.08);
     --overlay-bg: rgba(0, 0, 0, 0.62); --table-header-bg: rgba(28, 28, 30, 0.92); --table-row-hover: rgba(10, 132, 255, 0.08);
-    --table-border: rgba(255, 255, 255, 0.06); --select-option-bg: #1C1C1E; --select-option-hover: #2C2C2E; --select-option-text: #F5F5F7;
+    --table-border: rgba(255, 255, 255, 0.06); --skeleton-base: rgba(255, 255, 255, 0.07); --skeleton-shimmer: rgba(255, 255, 255, 0.10); --select-option-bg: #1C1C1E; --select-option-hover: #2C2C2E; --select-option-text: #F5F5F7;
   }
 }
 

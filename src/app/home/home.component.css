@@ -9,7 +9,7 @@
 .home-saludo h1 { margin: 0; font-size: var(--text-hero); font-weight: var(--weight-bold); letter-spacing: -0.03em; line-height: 1.05; }
 .home-saludo .erp-overline { margin: 0 0 var(--space-1); }
 .home-frase { margin: var(--space-1) 0 0; max-width: 60ch; font-size: var(--text-h3); line-height: 1.35; color: var(--text-secondary); font-weight: var(--weight-medium); }
-.home-frase-esqueleto { height: 28px; width: min(100%, 520px); margin-top: var(--space-1); }
+.home-frase-esqueleto { margin-top: var(--space-1); }
 .home-controles { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-1); }
 .home-acciones { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .home-acciones a { text-decoration: none; }
@@ -40,7 +40,6 @@
 .w-tarjetas { grid-column: span 7; }
 .w-cobrar { grid-column: span 5; }
 .w-actividad { grid-column: span 7; }
-.bento-esqueleto { min-height: 360px; border-radius: var(--radius-lg); }
 .bento-item { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 @media (max-width: 1024px) {
   .w-liquidez, .w-tarjetas, .w-cobrar, .w-actividad { grid-column: 1 / -1; }
@@ -53,7 +52,6 @@
   .home-acciones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .home-acciones a { padding: 0 var(--space-1); font-size: var(--text-caption); }
   .home-acciones .material-icons { display: none; }
-  .bento-esqueleto { min-height: 240px; }
   .tarjeta-cabecera { flex-wrap: wrap; row-gap: 4px; }
   .tarjeta-nombre { flex-basis: 100%; }
   .tarjeta-cabecera app-badge { margin-right: auto; }

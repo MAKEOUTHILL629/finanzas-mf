@@ -400,13 +400,26 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 .erp-empty h2 { margin: 0; font-size: var(--text-h3); font-weight: var(--weight-semibold); color: var(--text-primary); }
 .erp-empty p { margin: 0; max-width: 46ch; font-size: var(--text-body-sm); line-height: 1.5; }
 
+/* Esqueleto de carga con la misma geometría que el contenido final (evita el salto de diseño, CLS).
+   El brillo se mueve con `transform` (lo resuelve la GPU), no con `background-position`. */
 .erp-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
   border-radius: var(--radius-md);
-  background: linear-gradient(90deg, var(--bg-input) 25%, var(--bg-input-hover) 37%, var(--bg-input) 63%);
-  background-size: 400% 100%;
-  animation: erp-shimmer 1.4s ease infinite;
+  background: var(--skeleton-base);
 }
-@keyframes erp-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.erp-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%);
+  animation: erp-shimmer 1.4s ease-in-out infinite;
+}
+.erp-skeleton--linea { height: 1em; border-radius: var(--radius-xs); }
+.erp-skeleton--circulo { border-radius: 50%; }
+@keyframes erp-shimmer { 100% { transform: translateX(100%); } }
 
 .erp-sr-only {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
@@ -428,7 +441,7 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .erp-btn, .erp-card--clickable, .erp-progress-bar { transition: none; }
-  .erp-skeleton { animation: none; }
+  .erp-skeleton::after { animation: none; display: none; }
 }
 
 /* Grupos de opciones (radios) dentro de un formulario */

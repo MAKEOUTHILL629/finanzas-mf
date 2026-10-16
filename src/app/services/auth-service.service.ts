@@ -1,3 +1,4 @@
+import { limpiarCachesDeSesion } from '../core/cache-sesion';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -77,6 +78,7 @@ export class AuthServiceService {
         tap(response => {
           if (response && response.token) {
              this.catalogos.limpiar(); // sesión nueva = catálogos nuevos
+             limpiarCachesDeSesion();
              localStorage.setItem(this.TOKEN_KEY, response.token);
              this.loggedIn.next(true);
           } else {
@@ -158,6 +160,7 @@ export class AuthServiceService {
           clearAllFilterStates();
           // Los catálogos (personas, cuentas…) son de ESTE usuario: no deben verse en la sesión de otro.
           this.catalogos.limpiar();
+          limpiarCachesDeSesion();
           localStorage.removeItem(this.TOKEN_KEY);
           this.loggedIn.next(false);
           this.router.navigate(['/login']);

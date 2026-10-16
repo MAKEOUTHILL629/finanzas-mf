@@ -5,7 +5,7 @@
       <p class="erp-overline">{{ fecha }}</p>
       <h1 id="titulo-inicio">{{ saludo }}<ng-container *ngIf="nombre">, {{ nombre }}</ng-container></h1>
       <p class="home-frase" *ngIf="datos" aria-live="polite">{{ frase }}</p>
-      <div class="erp-skeleton home-frase-esqueleto" *ngIf="cargando && !datos" aria-hidden="true"></div>
+      <app-skeleton class="home-frase-esqueleto" *ngIf="cargando && !datos" ancho="min(100%, 520px)" alto="28px"></app-skeleton>
     </div>
 
     <div class="home-controles">
@@ -33,12 +33,38 @@
     </div>
   </div>
 
-  <!-- Cargando: misma geometría que el resultado -->
+  <!-- Cargando: esqueletos con la misma geometría que el resultado (sin saltos al llegar los datos) -->
   <div class="bento" *ngIf="cargando && !datos" aria-busy="true" aria-label="Cargando el resumen">
-    <div class="erp-skeleton w-liquidez bento-esqueleto"></div>
-    <div class="erp-skeleton w-tarjetas bento-esqueleto"></div>
-    <div class="erp-skeleton w-cobrar bento-esqueleto"></div>
-    <div class="erp-skeleton w-actividad bento-esqueleto"></div>
+    <div class="erp-card bento-item w-liquidez" style="--i: 0">
+      <app-skeleton variante="linea" ancho="8rem"></app-skeleton>
+      <app-skeleton ancho="70%" alto="2.75rem"></app-skeleton>
+      <app-skeleton variante="linea" ancho="40%"></app-skeleton>
+      <app-skeleton alto="108px"></app-skeleton>
+      <app-skeleton variante="linea" ancho="100%" alto="2.5rem"></app-skeleton>
+      <app-skeleton variante="linea" ancho="100%" alto="2.5rem"></app-skeleton>
+      <app-skeleton variante="linea" ancho="60%" alto="2rem"></app-skeleton>
+    </div>
+    <div class="erp-card bento-item w-tarjetas" style="--i: 1">
+      <app-skeleton variante="linea" ancho="9rem"></app-skeleton>
+      <app-skeleton ancho="55%" alto="2.75rem"></app-skeleton>
+      <app-skeleton variante="linea" ancho="100%" alto="10px"></app-skeleton>
+      <app-skeleton alto="64px"></app-skeleton>
+      <app-skeleton alto="64px"></app-skeleton>
+      <app-skeleton alto="64px"></app-skeleton>
+    </div>
+    <div class="erp-card bento-item w-cobrar" style="--i: 2">
+      <app-skeleton variante="linea" ancho="7rem"></app-skeleton>
+      <app-skeleton ancho="60%" alto="2.75rem"></app-skeleton>
+      <app-skeleton variante="circulo" ancho="40px" alto="40px"></app-skeleton>
+      <app-skeleton variante="circulo" ancho="40px" alto="40px"></app-skeleton>
+    </div>
+    <div class="erp-card bento-item w-actividad" style="--i: 3">
+      <app-skeleton variante="linea" ancho="10rem"></app-skeleton>
+      <app-skeleton alto="52px"></app-skeleton>
+      <app-skeleton alto="52px"></app-skeleton>
+      <app-skeleton alto="52px"></app-skeleton>
+      <app-skeleton alto="52px"></app-skeleton>
+    </div>
   </div>
 
   <ng-container *ngIf="datos as d">
@@ -55,7 +81,7 @@
       </li>
     </ul>
 
-    <div class="bento" [class.bento--recargando]="cargando">
+    <div class="bento" [class.bento--recargando]="cargando || actualizando">
       <!-- 1 · Balance general y liquidez -->
       <app-card class="bento-item w-liquidez" style="--i: 0" aria-labelledby="w-liquidez">
         <header class="widget-cabecera">
@@ -64,7 +90,7 @@
         </header>
 
         <p class="erp-overline">Disponible en cuentas</p>
-        <p class="cifra-grande erp-num" [class.erp-loss]="d.liquidez.total < 0">{{ d.liquidez.total | moneda }}</p>
+        <p class="cifra-grande erp-num" [class.erp-loss]="d.liquidez.total < 0"><app-contador [valor]="d.liquidez.total"></app-contador></p>
         <p class="erp-stat-hint">{{ d.liquidez.numeroCuentas }} {{ d.liquidez.numeroCuentas === 1 ? 'cuenta activa' : 'cuentas activas' }}
           <ng-container *ngFor="let o of d.liquidez.otrasMonedas"> · {{ o.moneda }} {{ o.saldo | moneda }}</ng-container></p>
 
@@ -72,12 +98,12 @@
           <div class="flujo-fila">
             <span class="flujo-etiqueta">Ingresos</span>
             <span class="flujo-barra"><span class="flujo-relleno flujo-relleno--ingresos" [style.width.%]="barras.ingresos"></span></span>
-            <span class="flujo-valor erp-num erp-gain">{{ d.flujoMes.ingresos | moneda }}</span>
+            <span class="flujo-valor erp-num erp-gain"><app-contador [valor]="d.flujoMes.ingresos"></app-contador></span>
           </div>
           <div class="flujo-fila">
             <span class="flujo-etiqueta">Gastos propios</span>
             <span class="flujo-barra"><span class="flujo-relleno flujo-relleno--gastos" [style.width.%]="barras.gastos"></span></span>
-            <span class="flujo-valor erp-num">{{ d.flujoMes.gastosPropios | moneda }}</span>
+            <span class="flujo-valor erp-num"><app-contador [valor]="d.flujoMes.gastosPropios"></app-contador></span>
           </div>
           <p class="erp-stat-hint">Flujo libre estimado de {{ nombrePeriodo(d.periodo) }}:
             <strong class="erp-num" [class.erp-loss]="d.flujoMes.flujoLibre < 0" [class.erp-gain]="d.flujoMes.flujoLibre > 0">{{ d.flujoMes.flujoLibre | moneda }}</strong></p>
@@ -93,7 +119,7 @@
 
         <div class="patrimonio" title="Disponible + lo que te deben − lo que falta pagar de las tarjetas">
           <span class="erp-overline">Patrimonio neto</span>
-          <span class="erp-num patrimonio-valor" [class.erp-loss]="d.liquidez.patrimonioNeto.valor < 0">{{ d.liquidez.patrimonioNeto.valor | moneda }}</span>
+          <span class="erp-num patrimonio-valor" [class.erp-loss]="d.liquidez.patrimonioNeto.valor < 0"><app-contador [valor]="d.liquidez.patrimonioNeto.valor"></app-contador></span>
           <span class="erp-stat-hint">{{ d.liquidez.patrimonioNeto.liquidez | moneda:'compacto' }} disponibles + {{ d.liquidez.patrimonioNeto.porCobrar | moneda:'compacto' }} por cobrar − {{ d.liquidez.patrimonioNeto.deudaTarjetas | moneda:'compacto' }} en tarjetas</span>
         </div>
       </app-card>
@@ -107,7 +133,7 @@
 
         <ng-container *ngIf="d.tarjetas.items.length > 0; else sinTarjetas">
           <p class="erp-overline">A pagar en {{ nombrePeriodo(d.periodo) }}</p>
-          <p class="cifra-grande erp-num">{{ d.tarjetas.totales.pagoDelMes | moneda }}</p>
+          <p class="cifra-grande erp-num"><app-contador [valor]="d.tarjetas.totales.pagoDelMes"></app-contador></p>
 
           <div class="reparto" *ngIf="d.tarjetas.totales.pagoDelMes > 0">
             <div class="barra-doble" role="img" [attr.aria-label]="'Mi parte ' + porcentajeMiParte + ' % y el resto de terceros'">
@@ -165,7 +191,7 @@
         </header>
 
         <p class="erp-overline">Por cobrar ahora</p>
-        <p class="cifra-grande erp-num">{{ d.porCobrar.aPagarAhora | moneda }}</p>
+        <p class="cifra-grande erp-num"><app-contador [valor]="d.porCobrar.aPagarAhora"></app-contador></p>
         <p class="erp-stat-hint">Este mes {{ d.porCobrar.pagoDelMes | moneda }} · por vencer {{ d.porCobrar.porVencer | moneda }} · deuda total {{ d.porCobrar.deudaTotal | moneda }}</p>
 
         <ul class="deudores" *ngIf="d.porCobrar.topDeudores.length > 0; else nadieDebe" aria-label="Quién te debe más">

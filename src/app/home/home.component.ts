@@ -24,7 +24,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   periodo = periodoActual();
   datos: ResumenDashboard | null = null;
+  /** Primera carga (sin nada que mostrar todavía): se pintan los esqueletos. */
   cargando = true;
+  /** Hay datos a la vista y se están refrescando por detrás. */
+  actualizando = false;
   error: string | null = null;
 
   /** Se fija al montar: el saludo y «Hoy/Ayer» no deben cambiar en cada ciclo de detección. */
@@ -33,6 +36,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fecha = fechaLarga(this.ahora);
 
   private destroy$ = new Subject<void>();
+  private pedido$ = new Subject<void>();
 
   constructor(private dashboard: DashboardService) {}
 
@@ -46,18 +50,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   cargar(): void {
-    this.cargando = true;
+    // Si ya se vio este periodo en la sesión se pinta al instante y se actualiza por detrás; si no, esqueletos.
+    const reciente = this.dashboard.resumenReciente(this.periodo);
+    if (reciente) this.datos = reciente;
+    this.cargando = !this.datos;
+    this.actualizando = !!this.datos;
     this.error = null;
+    this.pedido$.next(); // una respuesta tardía de otro periodo no pisa a la nueva
     this.dashboard
       .getResumen(this.periodo)
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => (this.cargando = false))
+        takeUntil(this.pedido$),
+        finalize(() => {
+          this.cargando = false;
+          this.actualizando = false;
+        })
       )
       .subscribe({
         next: (d) => (this.datos = d),
         error: (err) => {
-          this.datos = null;
+          // con datos a la vista un fallo de actualización no los borra: se avisa y se puede reintentar
+          if (!reciente) this.datos = null;
           this.error = mensajeDeError(err, 'No se pudo cargar el resumen.');
         }
       });

@@ -1,77 +1,48 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { TablaComprasCreditoComponent } from './compras-credito/tabla-compras-credito/tabla-compras-credito.component';
-import { DetalleComprasCreditoComponent } from './compras-credito/detalle-compras-credito/detalle-compras-credito.component';
-import { TablaPrestamosComponent } from './prestamos/tabla-prestamos/tabla-prestamos.component';
-import { PagosMesTarjetasComponent } from './compras-credito/pagos-mes-tarjetas/pagos-mes-tarjetas.component';
-import { PagoPersonaMesComponent } from './pagos-mensuales/pago-persona-mes/pago-persona-mes.component';
-import { PagoPersonaMesDetalleComponent } from './pagos-mensuales/pago-persona-mes-detalle/pago-persona-mes-detalle.component';
-import { PagosMesTarjetasDetalleComponent } from './compras-credito/pagos-mes-tarjetas-detalle/pagos-mes-tarjetas-detalle.component';
+import { PrecargaInteligente } from './core/precarga-inteligente.strategy';
 import { LoginComponent } from './login/login.component';
-import { ListaObligacionesComponent } from './obligaciones/lista-obligaciones/lista-obligaciones.component';
-import { DetalleObligacionComponent } from './obligaciones/detalle-obligacion/detalle-obligacion.component';
-import { ExtractosTarjetasComponent } from './extractos/extractos-tarjetas/extractos-tarjetas.component';
-import { DetallePrestamoComponent } from './prestamos/detalle-prestamo/detalle-prestamo.component';
-import { ListaCortesComponent } from './prestamos/lista-cortes/lista-cortes.component';
-import { ListaTarjetasComponent } from './tarjetas/lista-tarjetas/lista-tarjetas.component';
-import { HistorialTarjetaComponent } from './tarjetas/historial-tarjeta/historial-tarjeta.component';
-import { ListaCuentasComponent } from './cuentas/lista-cuentas/lista-cuentas.component';
-import { ListaCategoriasComponent } from './cuentas/lista-categorias/lista-categorias.component';
-import { ListaTransaccionesComponent } from './transacciones/lista-transacciones/lista-transacciones.component';
-import { ListaCorreosComponent } from './correos/lista-correos/lista-correos.component';
-import { FlujoCajaComponent } from './flujo-caja/flujo-caja.component';
-import { EstadoCuentaComponent } from './deudas/estado-cuenta/estado-cuenta.component';
-import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.component';
-import { AportesCarroComponent } from './aportes-carro/aportes-carro.component';
-import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.component';
-import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
-import { HomeComponent } from './home/home.component';
-import { ListaPersonasComponent } from './personas/lista-personas/lista-personas.component';
-import { CobrosComponent } from './cobros/cobros.component';
-import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
-import { authGuard } from './core/guards/auth.guard';
 
+/**
+ * Todas las pantallas se cargan de forma diferida: el navegador solo descarga el armazón y el inicio de sesión, y trae el paquete de
+ * cada sección cuando se entra en ella (y, con la red libre, el resto en segundo plano: ver `PrecargaInteligente`).
+ * Cada módulo de funcionalidad exporta sus rutas (con la guardia de sesión) junto a sus componentes.
+ */
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   // Página pública del enlace de cobro: la abre la persona a la que se le cobra, sin iniciar sesión (sin guard y sin menú).
-  { path: 'p/:token', component: CobroPublicoComponent },
-  { path: 'compras-credito', component: TablaComprasCreditoComponent, canActivate: [authGuard] },
-  {
-    path: 'compra-credito-detalle/:id',
-    component: DetalleComprasCreditoComponent,
-    canActivate: [authGuard]
-  },
-  { path: 'prestamos', component: TablaPrestamosComponent, canActivate: [authGuard] },
-  { path: 'prestamos/:id', component: DetallePrestamoComponent, canActivate: [authGuard] },
-  { path: 'cortes-cobro', component: ListaCortesComponent, canActivate: [authGuard] },
-  { path: 'pagos-mes', component: PagosMesTarjetasComponent, canActivate: [authGuard] },
-  { path: 'pagos-mes-personas', component: PagoPersonaMesComponent, canActivate: [authGuard] },
-  { path: 'pagos-mes-personas-detalle/:id', component: PagoPersonaMesDetalleComponent, canActivate: [authGuard] },
-  { path: 'pagos-mes/:id', component: PagosMesTarjetasDetalleComponent, canActivate: [authGuard] },
-  { path: 'tarjetas', component: ListaTarjetasComponent, canActivate: [authGuard] },
-  { path: 'tarjetas/:id', component: HistorialTarjetaComponent, canActivate: [authGuard] },
-  { path: 'extractos', component: ExtractosTarjetasComponent, canActivate: [authGuard] },
-  { path: 'cuentas', component: ListaCuentasComponent, canActivate: [authGuard] },
-  { path: 'categorias', component: ListaCategoriasComponent, canActivate: [authGuard] },
-  { path: 'transacciones', component: ListaTransaccionesComponent, canActivate: [authGuard] },
-  { path: 'correos', component: ListaCorreosComponent, canActivate: [authGuard] },
-  { path: 'flujo-caja', component: FlujoCajaComponent, canActivate: [authGuard] },
-  { path: 'estado-cuenta', component: EstadoCuentaComponent, canActivate: [authGuard] },
-  { path: 'aportes-carro', component: AportesCarroComponent, canActivate: [authGuard] },
-  { path: 'liquidacion', component: LiquidacionMensualComponent, canActivate: [authGuard] },
-  { path: 'personas', component: ListaPersonasComponent, canActivate: [authGuard] },
-  { path: 'cobros', component: CobrosComponent, canActivate: [authGuard] },
-  { path: 'recurrentes-persona', component: ListaRecurrentesPersonaComponent, canActivate: [authGuard] },
-  { path: 'cruces-deuda', component: ListaCrucesComponent, canActivate: [authGuard] },
-  { path: 'obligaciones', component: ListaObligacionesComponent, canActivate: [authGuard] },
-  { path: 'obligaciones/:id', component: DetalleObligacionComponent, canActivate: [authGuard] },
+  { path: 'p', loadChildren: () => import('./cobros/cobro-publico.module').then((m) => m.RUTAS_COBRO_PUBLICO) },
+
+  { path: 'compras-credito', loadChildren: () => import('./compras-credito/compras-credito.module').then((m) => m.RUTAS_COMPRAS) },
+  { path: 'compra-credito-detalle', loadChildren: () => import('./compras-credito/compras-credito.module').then((m) => m.RUTAS_COMPRA_DETALLE) },
+  { path: 'pagos-mes', loadChildren: () => import('./compras-credito/compras-credito.module').then((m) => m.RUTAS_PAGOS_MES) },
+  { path: 'pagos-mes-personas', loadChildren: () => import('./pagos-mensuales/pagos-mensuales.module').then((m) => m.RUTAS_PAGOS_PERSONAS) },
+  { path: 'pagos-mes-personas-detalle', loadChildren: () => import('./pagos-mensuales/pagos-mensuales.module').then((m) => m.RUTAS_PAGOS_PERSONAS_DETALLE) },
+  { path: 'prestamos', loadChildren: () => import('./prestamos/prestamos.module').then((m) => m.RUTAS_PRESTAMOS) },
+  { path: 'cortes-cobro', loadChildren: () => import('./prestamos/prestamos.module').then((m) => m.RUTAS_CORTES) },
+  { path: 'tarjetas', loadChildren: () => import('./tarjetas/tarjetas.module').then((m) => m.RUTAS_TARJETAS) },
+  { path: 'extractos', loadChildren: () => import('./extractos/extractos.module').then((m) => m.RUTAS_EXTRACTOS) },
+  { path: 'cuentas', loadChildren: () => import('./cuentas/cuentas.module').then((m) => m.RUTAS_CUENTAS) },
+  { path: 'categorias', loadChildren: () => import('./cuentas/cuentas.module').then((m) => m.RUTAS_CATEGORIAS) },
+  { path: 'transacciones', loadChildren: () => import('./transacciones/transacciones.module').then((m) => m.RUTAS_TRANSACCIONES) },
+  { path: 'correos', loadChildren: () => import('./correos/correos.module').then((m) => m.RUTAS_CORREOS) },
+  { path: 'flujo-caja', loadChildren: () => import('./flujo-caja/flujo-caja.module').then((m) => m.RUTAS_FLUJO_CAJA) },
+  { path: 'estado-cuenta', loadChildren: () => import('./deudas/deudas.module').then((m) => m.RUTAS_ESTADO_CUENTA) },
+  { path: 'cruces-deuda', loadChildren: () => import('./deudas/deudas.module').then((m) => m.RUTAS_CRUCES) },
+  { path: 'aportes-carro', loadChildren: () => import('./aportes-carro/aportes-carro.module').then((m) => m.RUTAS_APORTES_CARRO) },
+  { path: 'liquidacion', loadChildren: () => import('./liquidacion/liquidacion.module').then((m) => m.RUTAS_LIQUIDACION) },
+  { path: 'personas', loadChildren: () => import('./personas/personas.module').then((m) => m.RUTAS_PERSONAS) },
+  { path: 'cobros', loadChildren: () => import('./cobros/cobros.module').then((m) => m.RUTAS_COBROS) },
+  { path: 'recurrentes-persona', loadChildren: () => import('./recurrentes-persona/recurrentes-persona.module').then((m) => m.RUTAS_RECURRENTES) },
+  { path: 'obligaciones', loadChildren: () => import('./obligaciones/obligaciones.module').then((m) => m.RUTAS_OBLIGACIONES) },
+
   // La primera pantalla es el resumen ejecutivo
-  { path: '', component: HomeComponent, canActivate: [authGuard], pathMatch: 'full' },
+  { path: '', pathMatch: 'full', loadChildren: () => import('./home/home.module').then((m) => m.RUTAS_HOME) },
   { path: '**', redirectTo: '' }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, { preloadingStrategy: PrecargaInteligente })],
   exports: [RouterModule],
 })
 export class AppRoutingModule {}

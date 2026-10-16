@@ -6,6 +6,7 @@ import { CompraDePersona, DesgloseTarjeta, DetalleEstadoCuentaPersona } from '..
 import { EstadoCuentaPersonasService } from '../../services/estado-cuenta-personas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { nombrePeriodo } from '../../shared/periodo.helper';
+import { EXPANDIR } from '../../shared/motion';
 import { claseEstadoCuota, claveTarjeta, etiquetaEstadoCuota, nombreTarjeta, textoCuota, textoPorcentaje } from '../personas.constants';
 
 interface OtroCargo {
@@ -18,7 +19,8 @@ interface OtroCargo {
 @Component({
   selector: 'app-detalle-persona',
   templateUrl: './detalle-persona.component.html',
-  styleUrl: './detalle-persona.component.css'
+  styleUrl: './detalle-persona.component.css',
+  animations: [EXPANDIR]
 })
 export class DetallePersonaComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) personaId!: number;

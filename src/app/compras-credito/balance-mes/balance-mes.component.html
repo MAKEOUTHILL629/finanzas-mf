@@ -40,9 +40,10 @@
   </div>
 
   <!-- Loading State -->
-  <div class="loading-container" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Cargando balance...</p>
+  <div class="loading-container" *ngIf="isLoading" aria-busy="true" aria-label="Cargando balance">
+    <app-skeleton alto="88px"></app-skeleton>
+    <app-skeleton alto="88px"></app-skeleton>
+    <app-skeleton alto="88px"></app-skeleton>
   </div>
 
   <!-- Contenido Principal -->
