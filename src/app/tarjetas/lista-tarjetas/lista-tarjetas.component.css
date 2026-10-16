@@ -20,4 +20,19 @@
 .cifras dt { margin: 0; }
 .cifras dd { margin: 0; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
 
-.tarjeta-acciones { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); margin-top: auto; }
+.tarjeta-acciones { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-1); margin-top: auto; }
+.tarjeta-botones { display: flex; flex-wrap: wrap; gap: var(--space-0); justify-content: flex-end; }
+
+.plastico-activo { color: var(--text-primary); font-weight: var(--weight-semibold); }
+.plasticos-archivados { display: flex; flex-wrap: wrap; gap: var(--space-0); margin: 0; padding: 0; list-style: none; }
+.plastico-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  font-size: var(--text-caption);
+}
+.plastico-chip .material-icons { font-size: 14px; color: var(--text-tertiary); }

@@ -1,13 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { Tarjeta } from '../../modelos/tarjeta';
+import { ResultadoReemplazo, Tarjeta } from '../../modelos/tarjeta';
 import { ModalService } from '../../services/modal.service';
 import { TarjetasService } from '../../services/tarjetas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
+import { etiquetaMotivo, nombreTarjeta, plasticosArchivados, terminacion, vigenciaLegible } from '../tarjetas.constants';
 
 export const MODAL_TARJETA = 'tarjeta-form';
+export const MODAL_PLASTICO = 'tarjeta-plastico';
 
 /** Qué le falta configurar a una tarjeta para que los extractos y los correos funcionen bien. */
 export function pendientesDeConfigurar(t: Tarjeta): string[] {
@@ -26,11 +28,18 @@ export function pendientesDeConfigurar(t: Tarjeta): string[] {
 })
 export class ListaTarjetasComponent implements OnInit, OnDestroy {
   readonly modalId = MODAL_TARJETA;
+  readonly modalPlastico = MODAL_PLASTICO;
   readonly pendientes = pendientesDeConfigurar;
+  readonly terminacion = terminacion;
+  readonly archivados = plasticosArchivados;
+  readonly vigencia = vigenciaLegible;
+  readonly motivo = etiquetaMotivo;
 
   tarjetas: Tarjeta[] = [];
   /** Tarjeta que se edita; el formulario existe solo mientras el modal está abierto. */
   editando: Tarjeta | null = null;
+  /** Tarjeta a la que se le registra un reemplazo de plástico. */
+  reemplazando: Tarjeta | null = null;
 
   cargando = true;
   error: string | null = null;
@@ -46,6 +55,7 @@ export class ListaTarjetasComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.modalService.modalState$.pipe(takeUntil(this.destroy$)).subscribe((id) => {
       if (id !== this.modalId) this.editando = null;
+      if (id !== this.modalPlastico) this.reemplazando = null;
     });
     this.cargar();
   }
@@ -78,6 +88,11 @@ export class ListaTarjetasComponent implements OnInit, OnDestroy {
     this.modalService.open(this.modalId);
   }
 
+  registrarReemplazo(t: Tarjeta): void {
+    this.reemplazando = t;
+    this.modalService.open(this.modalPlastico);
+  }
+
   cerrar(): void {
     this.modalService.close();
   }
@@ -88,8 +103,20 @@ export class ListaTarjetasComponent implements OnInit, OnDestroy {
     this.toast.exito('Tarjeta actualizada.');
   }
 
+  /** El reemplazo trae la lista de plásticos ya actualizada: se refleja en la tarjeta sin recargar todo. */
+  onPlasticoGuardado(r: ResultadoReemplazo): void {
+    const id = this.reemplazando?.id;
+    this.tarjetas = this.tarjetas.map((t) =>
+      t.id === id
+        ? { ...t, plasticos: r.plasticos, plasticoActivo: r.plasticoActivo, ultimos4Activo: r.plasticoActivo.ultimos4, ultimos4Digitos: r.plasticos.map((p) => p.ultimos4).join(',') }
+        : t
+    );
+    this.modalService.close();
+    this.toast.exito(`Plástico ${terminacion(r.plasticoActivo.ultimos4)} registrado. Tu historial de compras no cambió.`);
+  }
+
   nombre(t: Tarjeta): string {
-    return [t.franquicia, t.descripcion].filter((x) => !!x).join(' · ') || `Tarjeta #${t.id}`;
+    return nombreTarjeta(t);
   }
 
   trackById(_: number, t: Tarjeta): number | undefined {

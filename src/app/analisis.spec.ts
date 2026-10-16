@@ -37,30 +37,25 @@ describe('Tarjetas', () => {
     expect(pendientesDeConfigurar(tarjeta({ diaCorte: 15, diaLimitePago: 5, descripcion: 'Oro', ultimos4Digitos: '1927,9587' }))).toEqual([]);
   });
 
-  it('cambiosDeTarjeta: los últimos 4 dígitos se pueden agregar, cambiar y quitar; separadores distintos no cuentan como cambio', () => {
-    const t = tarjeta({ ultimos4Digitos: '1927' });
-    expect(cambiosDeTarjeta(t, { ...valoresDeTarjeta(t), ultimos4Digitos: '1927,9587' })).toEqual({ ultimos4Digitos: '1927,9587' });
-    expect(cambiosDeTarjeta(t, { ...valoresDeTarjeta(t), ultimos4Digitos: ' 1927 ' })).toEqual({});
-    expect(cambiosDeTarjeta(t, { ...valoresDeTarjeta(t), ultimos4Digitos: '' })).toEqual({ ultimos4Digitos: '' });
-    const dos = tarjeta({ ultimos4Digitos: '1927,9587' });
-    expect(cambiosDeTarjeta(dos, { ...valoresDeTarjeta(dos), ultimos4Digitos: '1927 9587' })).toEqual({});
-    expect(cambiosDeTarjeta(tarjeta(), { ...valoresDeTarjeta(tarjeta()), ultimos4Digitos: '4321' })).toEqual({ ultimos4Digitos: '4321' });
-  });
-
-  it('el formulario valida los últimos 4 dígitos (grupos de 4 separados por coma, o vacío)', () => {
+  it('los últimos 4 dígitos ya no se editan en el formulario de configuración: se gestionan como plásticos', () => {
+    const t = tarjeta({ ultimos4Digitos: '1927,9587' });
+    // aunque la tarjeta traiga dígitos, el formulario nunca los envía: no hay "cambio" por ellos
+    expect(cambiosDeTarjeta(t, valoresDeTarjeta(t))).toEqual({});
+    expect(Object.keys(valoresDeTarjeta(t))).not.toContain('ultimos4Digitos');
     configurarTestBed([FormularioTarjetaComponent]);
     const fixture = TestBed.createComponent(FormularioTarjetaComponent);
-    fixture.componentRef.setInput('tarjeta', tarjeta());
+    fixture.componentRef.setInput('tarjeta', tarjeta({ plasticos: [
+      { id: 2, tarjetaId: 4, ultimos4: '1927', esActivo: true, vigenteDesde: '2024-12-27', vigenteHasta: null, motivoReemplazo: null, reemplazaAId: 1, notas: null },
+      { id: 1, tarjetaId: 4, ultimos4: '9587', esActivo: false, vigenteDesde: null, vigenteHasta: '2024-03-16', motivoReemplazo: null, reemplazaAId: null, notas: null },
+    ] }));
     fixture.detectChanges();
-    const c = fixture.componentInstance;
-    for (const v of ['1927', '1927,9587', '1927 9587', '']) {
-      c.form.patchValue({ ultimos4Digitos: v });
-      expect(c.form.controls.ultimos4Digitos.valid).withContext(v).toBeTrue();
-    }
-    for (const v of ['192', '19277', '1927,95', 'abcd']) {
-      c.form.patchValue({ ultimos4Digitos: v });
-      expect(c.form.controls.ultimos4Digitos.invalid).withContext(v).toBeTrue();
-    }
+    expect(Object.keys(fixture.componentInstance.form.controls)).not.toContain('ultimos4Digitos');
+    const texto = (fixture.nativeElement as HTMLElement).textContent!.replace(/\s+/g, ' ');
+    expect(texto).toContain('Plásticos de esta tarjeta');
+    expect(texto).toContain('··1927');
+    expect(texto).toContain('Activo');
+    expect(texto).toContain('··9587');
+    expect(texto).toContain('Archivado');
   });
 
   it('cambiosDeTarjeta envía solo lo modificado y nunca valores vacíos', () => {

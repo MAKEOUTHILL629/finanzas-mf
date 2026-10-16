@@ -10,6 +10,7 @@ import { LedgerDeudasService } from './ledger-deudas.service';
 import { NotificacionesCorreoService } from './notificaciones-correo.service';
 import { ObligacionesMesService } from './obligaciones-mes.service';
 import { RecurrentesService } from './recurrentes.service';
+import { TarjetasService } from './tarjetas.service';
 import { TransaccionesService } from './transacciones.service';
 
 /** Verifica que cada servicio llame a la ruta/método/parámetros que expone el backend NestJS. */
@@ -162,6 +163,29 @@ describe('Servicios ERP (contrato con el backend NestJS)', () => {
     it('usa el apiUrl del entorno (ya no apunta a localhost:9000 fijo)', () => {
       TestBed.inject(ComprasCreditoService).getComprasCredito().subscribe();
       expect(esperar('GET', 'compras-credito').request.url).toBe(`${base}/compras-credito`);
+    });
+  });
+
+  describe('TarjetasService · plásticos', () => {
+    it('lista, reemplaza, corrige y elimina plásticos; el historial manda solo los filtros con valor', () => {
+      const s = TestBed.inject(TarjetasService);
+      s.getPlasticos(4).subscribe();
+      esperar('GET', 'tarjetas/4/plasticos');
+      s.reemplazarPlastico(4, { ultimos4: '5555', vigenteDesde: '2026-10-01', motivo: 'ROBO' }).subscribe();
+      expect(esperar('POST', 'tarjetas/4/plasticos/reemplazar').request.body).toEqual({ ultimos4: '5555', vigenteDesde: '2026-10-01', motivo: 'ROBO' });
+      s.actualizarPlastico(4, 9, { vigenteHasta: null, esActivo: true }).subscribe();
+      expect(esperar('PATCH', 'tarjetas/4/plasticos/9').request.body).toEqual({ vigenteHasta: null, esActivo: true });
+      s.eliminarPlastico(4, 9).subscribe();
+      esperar('DELETE', 'tarjetas/4/plasticos/9');
+
+      s.getHistorial(4, { plasticoId: 3, desde: '', hasta: null, limite: 100 }).subscribe();
+      const h = esperar('GET', 'tarjetas/4/historial').request.params;
+      expect(h.get('plasticoId')).toBe('3');
+      expect(h.get('limite')).toBe('100');
+      expect(h.has('desde')).toBeFalse();
+      expect(h.has('hasta')).toBeFalse();
+      s.getHistorial(4).subscribe();
+      expect(esperar('GET', 'tarjetas/4/historial').request.params.keys()).toEqual([]);
     });
   });
 });

@@ -37,7 +37,8 @@
         <span class="tarjeta-icono" aria-hidden="true"><i class="material-icons">credit_card</i></span>
         <div class="tarjeta-titulo">
           <h2>{{ nombre(t) }}</h2>
-          <span class="erp-muted" *ngIf="t.ultimos4Digitos">Terminada en <span class="erp-mono">{{ t.ultimos4Digitos }}</span></span>
+          <span class="erp-muted" *ngIf="t.ultimos4Activo">Plástico activo <span class="plastico-activo erp-mono">{{ terminacion(t.ultimos4Activo) }}</span></span>
+          <span class="erp-muted" *ngIf="!t.ultimos4Activo && t.ultimos4Digitos">Terminada en <span class="erp-mono">{{ t.ultimos4Digitos }}</span></span>
           <span class="erp-muted" *ngIf="t.ultimaActualizacionTasas">Tasas actualizadas {{ t.ultimaActualizacionTasas | date: 'dd/MM/yyyy' }}</span>
         </div>
       </header>
@@ -46,6 +47,14 @@
         <i class="material-icons" aria-hidden="true">tune</i>
         <span>Falta configurar: {{ pendientes(t).join(', ') }}.</span>
       </div>
+
+      <ul class="plasticos-archivados" *ngIf="archivados(t).length > 0" [attr.aria-label]="'Plásticos anteriores de ' + nombre(t)">
+        <li *ngFor="let p of archivados(t)" class="plastico-chip" [title]="motivo(p.motivoReemplazo) ? 'Reemplazado por ' + motivo(p.motivoReemplazo).toLowerCase() : 'Plástico anterior'">
+          <i class="material-icons" aria-hidden="true">history</i>
+          <span class="erp-mono">{{ terminacion(p.ultimos4) }}</span>
+          <span class="erp-muted">{{ vigencia(p) }}</span>
+        </li>
+      </ul>
 
       <dl class="cifras">
         <div><dt class="erp-overline">Día de corte</dt><dd class="erp-num">{{ t.diaCorte ?? '—' }}</dd></div>
@@ -58,10 +67,20 @@
 
       <footer class="tarjeta-acciones">
         <span class="erp-badge" [class.erp-badge--info]="t.permiteDolares">{{ t.permiteDolares ? 'Acepta USD' : 'Solo COP' }}</span>
-        <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="editar(t)">
-          <i class="material-icons" aria-hidden="true">tune</i>
-          Configurar
-        </button>
+        <div class="tarjeta-botones">
+          <a class="erp-btn erp-btn--ghost erp-btn--sm" [routerLink]="['/tarjetas', t.id]">
+            <i class="material-icons" aria-hidden="true">receipt_long</i>
+            Historial
+          </a>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="registrarReemplazo(t)">
+            <i class="material-icons" aria-hidden="true">autorenew</i>
+            Reemplazo
+          </button>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="editar(t)">
+            <i class="material-icons" aria-hidden="true">tune</i>
+            Configurar
+          </button>
+        </div>
       </footer>
     </article>
   </div>
@@ -69,4 +88,8 @@
 
 <app-modal [modalId]="modalId">
   <app-formulario-tarjeta *ngIf="editando" [tarjeta]="editando" (guardada)="onGuardada($event)" (cancelar)="cerrar()"></app-formulario-tarjeta>
+</app-modal>
+
+<app-modal [modalId]="modalPlastico">
+  <app-formulario-plastico *ngIf="reemplazando" [tarjeta]="reemplazando" (guardado)="onPlasticoGuardado($event)" (cancelar)="cerrar()"></app-formulario-plastico>
 </app-modal>

@@ -66,6 +66,8 @@ import { FormularioPagarExtractoComponent } from './extractos/formulario-pagar-e
 // Dominio: Tarjetas (configuración)
 import { ListaTarjetasComponent } from './tarjetas/lista-tarjetas/lista-tarjetas.component';
 import { FormularioTarjetaComponent } from './tarjetas/formulario-tarjeta/formulario-tarjeta.component';
+import { FormularioPlasticoComponent } from './tarjetas/formulario-plastico/formulario-plastico.component';
+import { HistorialTarjetaComponent } from './tarjetas/historial-tarjeta/historial-tarjeta.component';
 
 // Dominio: Cuentas y categorías
 import { ListaCuentasComponent } from './cuentas/lista-cuentas/lista-cuentas.component';
@@ -156,7 +158,9 @@ const EXTRACTOS_DECLARATIONS = [
 
 const TARJETAS_DECLARATIONS = [
   ListaTarjetasComponent,
-  FormularioTarjetaComponent
+  FormularioTarjetaComponent,
+  FormularioPlasticoComponent,
+  HistorialTarjetaComponent
 ];
 
 const CUENTAS_DECLARATIONS = [

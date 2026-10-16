@@ -1,0 +1,110 @@
+<section class="erp-page" aria-labelledby="titulo-historial">
+  <header class="erp-header">
+    <div>
+      <a class="erp-back" routerLink="/tarjetas"><i class="material-icons" aria-hidden="true">chevron_left</i>Tarjetas</a>
+      <h1 id="titulo-historial">Historial · {{ titulo }}</h1>
+      <p class="erp-subtitle">Todas las compras de la tarjeta, sin importar con qué plástico se hicieron. El plástico de cada compra aparece junto a su concepto.</p>
+    </div>
+  </header>
+
+  <div class="erp-skeleton" *ngIf="cargando" style="height: 320px" aria-busy="true" aria-label="Cargando historial"></div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>
+      {{ error }}
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!cargando && historial as h">
+    <!-- Plásticos: filtro por plástico -->
+    <div class="filtros erp-card" role="group" aria-label="Filtrar por plástico">
+      <div class="chips">
+        <button type="button" class="chip" [class.chip--on]="plasticoId === null" (click)="filtrarPlastico(null)" [attr.aria-pressed]="plasticoId === null">
+          Todos los plásticos
+        </button>
+        <button type="button" *ngFor="let p of h.plasticos" class="chip" [class.chip--on]="plasticoId === p.id" (click)="filtrarPlastico(p.id)" [attr.aria-pressed]="plasticoId === p.id">
+          <span class="erp-mono">{{ terminacion(p.ultimos4) }}</span>
+          <span class="chip-estado">{{ p.esActivo ? 'activo' : 'archivado' }}</span>
+        </button>
+      </div>
+      <div class="rango">
+        <label class="erp-field">
+          <span class="erp-label">Desde</span>
+          <input class="erp-input" type="date" [(ngModel)]="desde" (change)="cargar()" aria-label="Compras desde" />
+        </label>
+        <label class="erp-field">
+          <span class="erp-label">Hasta</span>
+          <input class="erp-input" type="date" [(ngModel)]="hasta" (change)="cargar()" aria-label="Compras hasta" />
+        </label>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="filtrado" (click)="limpiarFiltros()">Quitar filtros</button>
+      </div>
+      <ul class="vigencias" *ngIf="h.plasticos.length > 1">
+        <li *ngFor="let p of h.plasticos"><span class="erp-mono">{{ terminacion(p.ultimos4) }}</span> <span class="erp-muted">{{ vigencia(p) }}</span></li>
+      </ul>
+    </div>
+
+    <!-- Cifras -->
+    <div class="erp-grid erp-grid--stats">
+      <div class="erp-card erp-stat"><span class="erp-overline">Compras</span><span class="erp-stat-value erp-num">{{ h.totales.compras }}</span></div>
+      <div class="erp-card erp-stat"><span class="erp-overline">Valor de las compras</span><span class="erp-stat-value erp-num">{{ h.totales.valorCompras | moneda }}</span></div>
+      <div class="erp-card erp-stat"><span class="erp-overline">Saldo por pagar en cuotas</span><span class="erp-stat-value erp-num">{{ h.totales.saldoPendiente | moneda }}</span><span class="erp-stat-hint">Cuotas que aún no se han pagado</span></div>
+    </div>
+
+    <div class="erp-card erp-empty" *ngIf="compras.length === 0">
+      <i class="material-icons" aria-hidden="true">receipt_long</i>
+      <h2>{{ filtrado ? 'Ninguna compra con ese filtro' : 'Aún no hay compras en esta tarjeta' }}</h2>
+      <p *ngIf="filtrado">Prueba con otro plástico o amplía el rango de fechas.</p>
+    </div>
+
+    <div class="erp-card" *ngIf="compras.length > 0">
+      <div class="erp-table-wrap">
+        <table class="erp-table erp-table--compact erp-table--stack">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th class="wrap">Concepto</th>
+              <th>Plástico</th>
+              <th class="num">Cuotas</th>
+              <th class="num">Valor</th>
+              <th class="num">Saldo</th>
+              <th class="wrap">Responsables</th>
+              <th><span class="erp-sr-only">Detalle</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of compras; trackBy: trackCompra">
+              <td data-label="Fecha">{{ c.fechaCompra | fechaCorta }}</td>
+              <td class="wrap" data-label="Concepto">{{ c.concepto }}</td>
+              <td data-label="Plástico">
+                <span *ngIf="c.plastico" class="plastico-badge" [class.plastico-badge--inferido]="c.plasticoInferido" [class.plastico-badge--activo]="c.plastico.esActivo"
+                      [title]="c.plasticoInferido ? 'Deducido por la fecha de la compra' : 'Registrado en la compra'">
+                  <i class="material-icons" aria-hidden="true">credit_card</i>
+                  <span class="erp-mono">{{ terminacion(c.plastico.ultimos4) }}</span>
+                  <span *ngIf="c.plasticoInferido" aria-hidden="true">~</span>
+                  <span class="erp-sr-only" *ngIf="c.plasticoInferido">(deducido por fecha)</span>
+                </span>
+                <span *ngIf="!c.plastico" class="erp-muted">—</span>
+              </td>
+              <td class="num" data-label="Cuotas">{{ c.numeroCuotas - c.cuotasPendientes }}/{{ c.numeroCuotas }}</td>
+              <td class="num" data-label="Valor">{{ c.valorCompra | moneda }}</td>
+              <td class="num" data-label="Saldo">{{ c.saldoPendiente | moneda }}</td>
+              <td class="wrap" data-label="Responsables"><span class="erp-muted">{{ c.responsables.length ? responsables(c.responsables) : '—' }}</span></td>
+              <td data-label="">
+                <a class="erp-btn erp-btn--ghost erp-btn--sm" [routerLink]="['/compra-credito-detalle', c.id]" [attr.aria-label]="'Ver detalle de ' + c.concepto">
+                  <i class="material-icons" aria-hidden="true">chevron_right</i>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mas" *ngIf="masPorTraer">
+        <button type="button" class="erp-btn erp-btn--secondary" (click)="cargarMas()" [disabled]="cargandoMas">
+          {{ cargandoMas ? 'Cargando…' : 'Mostrar más compras (' + compras.length + ' de ' + h.paginacion.total + ')' }}
+        </button>
+      </div>
+    </div>
+  </ng-container>
+</section>

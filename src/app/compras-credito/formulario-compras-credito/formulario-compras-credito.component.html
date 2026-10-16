@@ -173,12 +173,25 @@
         >
           <option value="" disabled>Seleccione una tarjeta</option>
           <option *ngFor="let card of creditCards" [value]="card.id">
-            {{ card.franquicia }}{{ card.tasaInteresCompra != null ? ' — ' + card.tasaInteresCompra + '% E.M.' : '' }}
+            {{ etiquetaTarjeta(card) }}{{ card.tasaInteresCompra != null ? ' — ' + card.tasaInteresCompra + '% E.M.' : '' }}
           </option>
         </select>
         <div id="card-errors" class="invalid-feedback" *ngIf="cardId?.invalid && (cardId?.dirty || cardId?.touched)">
           <div *ngIf="cardId?.errors?.['required']">La tarjeta es requerida.</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Plástico: solo en compras retroactivas (anteriores al plástico activo) de tarjetas con plásticos anteriores -->
+    <div class="form-group" *ngIf="mostrarSelectorPlastico">
+      <label for="plastico">Plástico con el que se pagó</label>
+      <select id="plastico" formControlName="plasticoId" class="form-control" aria-describedby="plastico-ayuda">
+        <option value="">Deducirlo por la fecha de la compra</option>
+        <option *ngFor="let p of plasticosElegibles" [value]="p.id">{{ terminacion(p.ultimos4) }} · {{ p.esActivo ? 'activo' : 'archivado' }} · {{ vigencia(p) }}</option>
+      </select>
+      <div id="plastico-ayuda" class="hint-autofill">
+        <i class="material-icons">history</i>
+        La compra es anterior al plástico activo: elige el plástico con el que se hizo.
       </div>
     </div>
 

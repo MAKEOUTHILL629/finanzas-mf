@@ -5,9 +5,10 @@ import { Observable, Subject } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, takeUntil, finalize } from 'rxjs/operators';
 import { ApiServicesService } from '../../services/api-services.service';
 import { ModalService } from '../../services/modal.service';
-import { Tarjeta } from '../../modelos/tarjeta';
+import { PlasticoTarjeta, Tarjeta } from '../../modelos/tarjeta';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
 import { Persona } from '../../modelos/persona';
+import { esCompraRetroactiva, etiquetaTarjetaActiva, plasticoParaFecha, terminacion, vigenciaLegible } from '../../tarjetas/tarjetas.constants';
 
 @Component({
   selector: 'app-formulario-compras-credito',
@@ -34,6 +35,11 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
   // Observables
   filteredConcepts!: Observable<string[]>;
+
+  /** En los selectores se ofrece la franquicia y el plástico ACTIVO («American Express ··1927»). */
+  readonly etiquetaTarjeta = etiquetaTarjetaActiva;
+  readonly terminacion = terminacion;
+  readonly vigencia = vigenciaLegible;
 
   // Flags
   isNewConcept = false;
@@ -88,7 +94,9 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       interest: [0, [Validators.required, Validators.min(0)]],
       description: [''],
       status: ['pendiente', Validators.required],
-      cardId: ['', Validators.required]
+      cardId: ['', Validators.required],
+      // Solo se usa en compras retroactivas: con qué plástico (archivado) se pagó. Vacío = que el servidor lo deduzca por la fecha.
+      plasticoId: ['']
     });
   }
 
@@ -163,7 +171,13 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
         } else {
           this.interestAutoFilled = false;
         }
+        this.sugerirPlastico();
       });
+
+    // Una compra retroactiva puede ser de un plástico anterior: se sugiere el que regía en esa fecha.
+    this.purchaseForm.get('purchaseDate')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.sugerirPlastico());
 
     // Si el usuario edita el interés manualmente, el hint desaparece
     // (setValue con emitEvent:false no dispara este listener)
@@ -174,6 +188,27 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
           this.interestAutoFilled = false;
         }
       });
+  }
+
+  /** ¿La compra es anterior al plástico activo y la tarjeta tiene plásticos anteriores? Entonces se deja elegir. */
+  get mostrarSelectorPlastico(): boolean {
+    return esCompraRetroactiva(this.selectedCard, this.purchaseForm.get('purchaseDate')?.value ?? null);
+  }
+
+  get plasticosElegibles(): PlasticoTarjeta[] {
+    return this.selectedCard?.plasticos ?? [];
+  }
+
+  /** Deja seleccionado el plástico que regía en la fecha de la compra (o nada si no es retroactiva). */
+  private sugerirPlastico(): void {
+    const control = this.purchaseForm.get('plasticoId');
+    if (!control) return;
+    if (!this.mostrarSelectorPlastico) {
+      control.setValue('', { emitEvent: false });
+      return;
+    }
+    const deducido = plasticoParaFecha(this.plasticosElegibles, this.purchaseForm.get('purchaseDate')?.value ?? null);
+    control.setValue(deducido ? String(deducido.id) : '', { emitEvent: false });
   }
 
   /** Aplica la tasa de interés de compra de la tarjeta al campo de interés.
@@ -491,7 +526,9 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       estado: formValue.status,
       tarjeta: parseInt(formValue.cardId, 10),
       fechaUltimaCuota: formValue.purchaseDate,
-      pagoMensual: 0
+      pagoMensual: 0,
+      // Solo si el usuario puede elegir (compra retroactiva): si no, el servidor guarda el plástico vigente en esa fecha.
+      ...(this.mostrarSelectorPlastico && formValue.plasticoId ? { plasticoId: parseInt(formValue.plasticoId, 10) } : {})
     };
   }
 
@@ -548,7 +585,8 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       interest: 0,
       description: '',
       status: 'pendiente',
-      cardId: ''
+      cardId: '',
+      plasticoId: ''
     });
     this.responsableForm.reset();
     this.responsables = [];

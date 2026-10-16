@@ -13,6 +13,8 @@ export interface ComprasCredito {
   tarjeta?: number
   responsables?: string;
   porcentajePago?: number;
+  /** Plástico con el que se pagó (solo se envía al registrar una compra retroactiva; el servidor lo deduce si no llega). */
+  plasticoId?: number | null;
 }
 
 /**
@@ -25,6 +27,8 @@ export interface ComprasCreditoMultimoneda extends ComprasCredito {
   valorMonedaOriginal?: number | null;
   tasaCambioAplicada?: number | null;
   trmConfirmada?: boolean | null;
+  /** Plástico guardado en la compra (las anteriores a esta función no lo tienen: el historial de la tarjeta lo deduce por fecha). */
+  plasticoUltimos4?: string | null;
 }
 
 

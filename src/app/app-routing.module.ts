@@ -14,6 +14,7 @@ import { ExtractosTarjetasComponent } from './extractos/extractos-tarjetas/extra
 import { DetallePrestamoComponent } from './prestamos/detalle-prestamo/detalle-prestamo.component';
 import { ListaCortesComponent } from './prestamos/lista-cortes/lista-cortes.component';
 import { ListaTarjetasComponent } from './tarjetas/lista-tarjetas/lista-tarjetas.component';
+import { HistorialTarjetaComponent } from './tarjetas/historial-tarjeta/historial-tarjeta.component';
 import { ListaCuentasComponent } from './cuentas/lista-cuentas/lista-cuentas.component';
 import { ListaCategoriasComponent } from './cuentas/lista-categorias/lista-categorias.component';
 import { ListaTransaccionesComponent } from './transacciones/lista-transacciones/lista-transacciones.component';
@@ -46,6 +47,7 @@ export const routes: Routes = [
   { path: 'pagos-mes-personas-detalle/:id', component: PagoPersonaMesDetalleComponent, canActivate: [authGuard] },
   { path: 'pagos-mes/:id', component: PagosMesTarjetasDetalleComponent, canActivate: [authGuard] },
   { path: 'tarjetas', component: ListaTarjetasComponent, canActivate: [authGuard] },
+  { path: 'tarjetas/:id', component: HistorialTarjetaComponent, canActivate: [authGuard] },
   { path: 'extractos', component: ExtractosTarjetasComponent, canActivate: [authGuard] },
   { path: 'cuentas', component: ListaCuentasComponent, canActivate: [authGuard] },
   { path: 'categorias', component: ListaCategoriasComponent, canActivate: [authGuard] },

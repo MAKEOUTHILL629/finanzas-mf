@@ -105,6 +105,10 @@
           </select>
           <i class="material-icons edit-hint" *ngIf="!camposEditando['tarjeta']">edit</i>
         </div>
+        <div class="info-row" *ngIf="$any(compraCredito)?.plasticoUltimos4">
+          <span class="label">Plástico</span>
+          <span class="value financial-num">··{{ $any(compraCredito).plasticoUltimos4 }}</span>
+        </div>
       </div>
     </div>
 

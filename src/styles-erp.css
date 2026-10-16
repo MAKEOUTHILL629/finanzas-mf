@@ -396,3 +396,7 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 fieldset.erp-field { border: 0; padding: 0; margin: 0; min-width: 0; }
 fieldset.erp-field legend { padding: 0; margin-bottom: 6px; }
 fieldset.erp-field.opciones { display: flex; flex-direction: column; gap: var(--space-1); }
+
+/* Lista de plásticos de una tarjeta (formulario de configuración): terminación · estado · vigencia */
+.plasticos-lista { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.plasticos-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
