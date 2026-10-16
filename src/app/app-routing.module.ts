@@ -24,10 +24,14 @@ import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.compone
 import { AportesCarroComponent } from './aportes-carro/aportes-carro.component';
 import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.component';
 import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
+import { CobrosComponent } from './cobros/cobros.component';
+import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  // Página pública del enlace de cobro: la abre la persona a la que se le cobra, sin iniciar sesión (sin guard y sin menú).
+  { path: 'p/:token', component: CobroPublicoComponent },
   { path: 'compras-credito', component: TablaComprasCreditoComponent, canActivate: [authGuard] },
   {
     path: 'compra-credito-detalle/:id',
@@ -51,6 +55,7 @@ export const routes: Routes = [
   { path: 'estado-cuenta', component: EstadoCuentaComponent, canActivate: [authGuard] },
   { path: 'aportes-carro', component: AportesCarroComponent, canActivate: [authGuard] },
   { path: 'liquidacion', component: LiquidacionMensualComponent, canActivate: [authGuard] },
+  { path: 'cobros', component: CobrosComponent, canActivate: [authGuard] },
   { path: 'recurrentes-persona', component: ListaRecurrentesPersonaComponent, canActivate: [authGuard] },
   { path: 'cruces-deuda', component: ListaCrucesComponent, canActivate: [authGuard] },
   { path: 'obligaciones', component: ListaObligacionesComponent, canActivate: [authGuard] },

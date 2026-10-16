@@ -30,14 +30,16 @@ de carga, vacío y error con reintento.
 | `/cortes-cobro` | Cortes de cobro: activo, futuros y pasados, con estadísticas por corte |
 | `/obligaciones`, `/obligaciones/:id` | Obligaciones del mes (resumen, días, aportes y cruces) |
 | `/extractos` | Extracto por tarjeta y periodo; **Pagar extracto** (cuenta + fecha, `sp_pagar_extracto_tarjeta`) |
-| `/tarjetas` | Edición de día de corte, límite de pago, cupo, tasas y descripción (últimos 4) |
-| `/cuentas`, `/categorias` | Cuentas financieras (saldo solo lectura: lo mueve la BD) y categorías, con sugeridas opcionales |
+| `/tarjetas` | Edición de día de corte, límite de pago, cupo, tasas y **últimos 4 dígitos** (varios si se reexpidió: `1927,9587`) |
+| `/cuentas`, `/categorias` | Cuentas financieras (saldo solo lectura: lo mueve la BD; una puede ser la **principal**, la que recibe los avisos sin número) y categorías, con sugeridas opcionales |
 | `/transacciones` | Libro diario por periodo, alta, edición y anulación |
-| `/correos` | Bandeja de correos del banco por estado y **conciliación** (confirmar, descartar, cuotas, responsables) |
+| `/correos` | Bandeja de correos del banco por estado y **conciliación**; arriba, las **cuentas y tarjetas detectadas** (últimos 4 dígitos con sugerencias para asignarlas de una vez) y **Reprocesar pendientes** (simula primero, aplica en segundo plano). Cada correo muestra si se registró solo, se enlazó a lo que ya tenías o es un aviso repetido, y se puede **deshacer** |
 | `/flujo-caja` | Flujo de caja libre estimado del mes con dona y barras (ng2-charts) |
 | `/estado-cuenta`, `/cruces-deuda` | Lo que cada persona debe por mes, extracto por persona, abonos y cruces de deuda |
 | `/aportes-carro` | Cuota del carro por mes (acordeón), aportes diarios con desglose por método, cruces de cuentas con terceros, saldo a favor (trasladar al mes siguiente o cruzar contra el estado de cuenta) y configuración de la cuota mensual |
-| `/liquidacion` | Liquidación de fin de mes por persona: tarjetas, préstamos, recurrentes, cruces, cuota del carro y abonos; registrar pago, cruzar cuenta y aplicar saldo a favor |
+| `/liquidacion` | Liquidación de fin de mes por persona: tarjetas (con número de cuota, % y valor de la compra), préstamos, recurrentes, **gastos repartidos**, cruces, cuota del carro y abonos; registrar pago, cruzar cuenta, aplicar saldo a favor y **compartir el cobro** con un enlace |
+| `/cobros` | **Cobros a personas**: repartir un gasto (luz, mercado, fiesta; a partes iguales, por % o por monto), pagos que las personas reportan con comprobante (aprobar/rechazar), ingresos ya recibidos por aplicar y enlaces compartidos |
+| `/p/:token` | **Página pública** (sin sesión ni menú) que abre la persona a la que se le cobra: su saldo, el detalle de cada cobro y un formulario para avisar el pago con su comprobante |
 | `/recurrentes-persona` | Cargos o descuentos mensuales por persona, de por vida o por X meses (progreso k/X), pausar/reactivar |
 
 Convenciones:
@@ -50,6 +52,16 @@ Convenciones:
 - **Formularios** reactivos con `inject(FormBuilder)`; los modales usan `ModalService` + `<app-modal>` y destruyen el formulario al cerrar.
 - **Pruebas** (`ng test`, Edge headless: `CHROME_BIN=msedge`): `src/app/testing/erp-testing.ts` ofrece los helpers de `HttpTestingController`
   y el módulo de pruebas; `render-smoke.spec.ts` monta todas las pantallas nuevas. La lógica de cada pantalla vive en funciones puras con su spec.
+
+## Correos inteligentes y cobros a personas
+
+- **Productos detectados** (`correos/productos-detectados`): los correos traen solo los últimos 4 dígitos. El panel los agrupa, propone a cuál de tus cuentas o tarjetas pertenece cada uno
+  (las tarjetas, por las compras que ya tienes con igual fecha y monto) y permite aceptar todo o asignar a mano. `Reprocesar pendientes` (`correos/reprocesar-correos`) primero **simula**
+  —cuántas compras se enlazan, cuántas se crean con tus valores habituales, cuántos avisos repetidos— y solo escribe al confirmar; la fecha de corte evita registrar historial viejo.
+- **Cobros** (`cobros/`): `FormularioCobroComponent` calcula en vivo cuánto le toca a cada uno (misma aritmética en centavos que el backend, en `cobros.constants.ts`);
+  `CompartirCobroComponent` genera el enlace (copiar o WhatsApp) y `AprobarReporteComponent` registra el pago reportado: enlazando el ingreso que ya llegó por correo, creándolo en una cuenta o solo anotándolo.
+- **Página pública** (`cobros/cobro-publico`): `app-menu` no se muestra en `/p/…` aunque haya sesión (`MenuStateService.rutaPublica$`). Las fotos del comprobante se reducen en el navegador
+  (`shared/archivo.helper.ts`, JPEG ≤ 1600 px) antes de enviarse; los PDF se envían tal cual si pesan menos de 2.2 MB. Los mensajes de error no revelan si un enlace existió.
 
 ## Navegación (menú)
 

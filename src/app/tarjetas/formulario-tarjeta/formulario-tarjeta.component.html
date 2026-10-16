@@ -21,8 +21,18 @@
 
     <div class="erp-field">
       <label class="erp-label" for="tj-descripcion">Descripción</label>
-      <input id="tj-descripcion" class="erp-input" type="text" formControlName="descripcion" maxlength="255" autocomplete="off" placeholder="Ej. Oro *1927" aria-describedby="tj-descripcion-ayuda" />
-      <p id="tj-descripcion-ayuda" class="erp-field-hint">Incluye los últimos 4 dígitos (*1927): así se identifica la tarjeta en los correos del banco.</p>
+      <input id="tj-descripcion" class="erp-input" type="text" formControlName="descripcion" maxlength="255" autocomplete="off" placeholder="Ej. Oro" />
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="tj-ult4">Últimos 4 dígitos</label>
+      <input id="tj-ult4" class="erp-input erp-mono" type="text" formControlName="ultimos4Digitos" maxlength="60" autocomplete="off"
+             placeholder="1927  o  1927,9587" [attr.aria-invalid]="campoInvalido('ultimos4Digitos')" aria-describedby="tj-ult4-ayuda" />
+      <p id="tj-ult4-ayuda" class="erp-field-hint">
+        Con ellos se identifica la tarjeta en los correos del banco y cada compra llega sola a la tarjeta correcta. Si el banco te la reexpidió con otro número,
+        agrega ambos separados por coma: <span class="erp-mono">1927,9587</span>.
+      </p>
+      <p class="erp-field-error" *ngIf="campoInvalido('ultimos4Digitos')">Grupos de 4 dígitos separados por coma.</p>
     </div>
 
     <div class="erp-field">

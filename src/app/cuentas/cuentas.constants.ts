@@ -16,6 +16,9 @@ export const TIPOS_CATEGORIA: ReadonlyArray<{ valor: TipoCategoria; etiqueta: st
 /** Un grupo de 4 dígitos o varios separados por coma/espacio (cuenta + tarjeta débito): igual que el backend. */
 export const PATRON_ULTIMOS_4 = /^\d{4}(?:\s*[,;\s]\s*\d{4})*$/;
 
+/** Igual que `PATRON_ULTIMOS_4`, pero admite vacío (p. ej. para quitar los dígitos de una tarjeta). */
+export const PATRON_ULTIMOS_4_OPCIONAL = /^(?:\d{4}(?:\s*[,;\s]\s*\d{4})*)?$/;
+
 export function etiquetaTipoCuenta(tipo: string | null | undefined): string {
   return TIPOS_CUENTA.find((t) => t.valor === tipo)?.etiqueta ?? (tipo || 'Cuenta');
 }

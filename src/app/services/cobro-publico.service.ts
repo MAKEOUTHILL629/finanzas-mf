@@ -1,0 +1,23 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { CobroPublico, ReportarPago, ResultadoReporte } from '../modelos/cobros-personas';
+
+/** Página pública del enlace de cobro (`/api/publico/cobros/:token`): no requiere sesión. */
+@Injectable({ providedIn: 'root' })
+export class CobroPublicoService {
+  constructor(private http: HttpClient) {}
+
+  private url(token: string): string {
+    return `${environment.apiUrl}/publico/cobros/${encodeURIComponent(token)}`;
+  }
+
+  getCobro(token: string): Observable<CobroPublico> {
+    return this.http.get<CobroPublico>(this.url(token));
+  }
+
+  reportarPago(token: string, pago: ReportarPago): Observable<ResultadoReporte> {
+    return this.http.post<ResultadoReporte>(`${this.url(token)}/pagos`, pago);
+  }
+}

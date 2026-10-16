@@ -37,6 +37,7 @@
         <span class="tarjeta-icono" aria-hidden="true"><i class="material-icons">credit_card</i></span>
         <div class="tarjeta-titulo">
           <h2>{{ nombre(t) }}</h2>
+          <span class="erp-muted" *ngIf="t.ultimos4Digitos">Terminada en <span class="erp-mono">{{ t.ultimos4Digitos }}</span></span>
           <span class="erp-muted" *ngIf="t.ultimaActualizacionTasas">Tasas actualizadas {{ t.ultimaActualizacionTasas | date: 'dd/MM/yyyy' }}</span>
         </div>
       </header>

@@ -1,14 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
+import { ResumenReproceso } from '../../modelos/correos-inteligentes';
 import { EstadoNotificacionCorreo, NotificacionCorreo, ResultadoConciliacion } from '../../modelos/erp';
+import { Persona } from '../../modelos/persona';
 import { ModalService } from '../../services/modal.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
+import { PersonasService } from '../../services/personas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
-import { ESTADOS_CORREO, VistaCorreo, claseEstadoCorreo, etiquetaEstadoCorreo, explicarMotivo, interpretarCorreo } from '../correos.constants';
+import { ESTADOS_CORREO, VistaCorreo, admiteDeshacer, claseEstadoCorreo, etiquetaEstadoCorreo, etiquetaVinculo, explicarMotivo, interpretarCorreo } from '../correos.constants';
 
 export const MODAL_CONCILIAR = 'correo-conciliar';
+export const MODAL_REPROCESAR = 'correos-reprocesar';
 export const LIMITE_CORREOS = 300;
 
 /** Cuántos correos hay por estado (para los contadores de las pestañas). */
@@ -25,10 +29,13 @@ export function contarPorEstado(correos: NotificacionCorreo[]): Record<string, n
 })
 export class ListaCorreosComponent implements OnInit, OnDestroy {
   readonly modalId = MODAL_CONCILIAR;
+  readonly modalReproceso = MODAL_REPROCESAR;
   readonly pestanas = ESTADOS_CORREO;
   readonly claseEstado = claseEstadoCorreo;
   readonly etiquetaEstado = etiquetaEstadoCorreo;
   readonly explicar = explicarMotivo;
+  readonly vinculo = etiquetaVinculo;
+  readonly deshacer = admiteDeshacer;
 
   correos: NotificacionCorreo[] = [];
   conteos: Record<string, number> = {};
@@ -36,6 +43,8 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
 
   /** Correo que se concilia; el formulario existe solo mientras el modal está abierto. */
   conciliando: NotificacionCorreo | null = null;
+  reprocesando = false;
+  personas: Persona[] = [];
   confirmandoDescarte: NotificacionCorreo | null = null;
   trabajando = false;
 
@@ -47,13 +56,16 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
   constructor(
     private notificacionesService: NotificacionesCorreoService,
     private modalService: ModalService,
+    private personasService: PersonasService,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
     this.modalService.modalState$.pipe(takeUntil(this.destroy$)).subscribe((id) => {
       if (id !== this.modalId) this.conciliando = null;
+      if (id !== this.modalReproceso) this.reprocesando = false;
     });
+    this.personasService.getPersonas().pipe(takeUntil(this.destroy$)).subscribe({ next: (p) => (this.personas = p), error: () => (this.personas = []) });
     this.cargar();
   }
 
@@ -116,6 +128,30 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
     this.cargar();
   }
 
+  // ── reprocesar pendientes ──
+
+  abrirReproceso(): void {
+    this.reprocesando = true;
+    this.modalService.open(this.modalReproceso);
+  }
+
+  cerrarReproceso(): void {
+    this.modalService.close();
+  }
+
+  onReprocesado(r: ResumenReproceso): void {
+    const creadas = (r.acciones['compras_creadas'] ?? 0) + (r.acciones['compras_creadas_con_plantilla'] ?? 0);
+    const enlazadas = (r.acciones['compras_enlazadas'] ?? 0) + (r.acciones['transacciones_enlazadas'] ?? 0);
+    const movimientos = r.acciones['transacciones_creadas'] ?? 0;
+    this.toast.exito(`Reproceso listo: ${creadas} compra${creadas === 1 ? '' : 's'} nueva${creadas === 1 ? '' : 's'}, ${movimientos} movimiento${movimientos === 1 ? '' : 's'}, ${enlazadas} enlazado${enlazadas === 1 ? '' : 's'}.`);
+    this.cargar();
+  }
+
+  nombrePersona(id: number | null | undefined): string | null {
+    if (id === null || id === undefined) return null;
+    return this.personas.find((p) => p.id === id)?.nombre ?? null;
+  }
+
   // ── descartar ──
 
   pedirDescarte(n: NotificacionCorreo): void {
@@ -151,6 +187,8 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
 
   /** Lo que se perdería al descartar: la compra importada o la transacción pendiente que se generó. */
   efectoDeDescartar(n: NotificacionCorreo): string {
+    if (n.vinculo === 'EXISTENTE') return 'Lo que ya tenías registrado se conserva: el correo solo se separa de ello y queda ignorado.';
+    if (n.vinculo === 'DUPLICADO') return 'Es un aviso repetido: solo se marca como ignorado.';
     if (n.compra_credito_generada_id) return 'La compra que se importó de este correo se eliminará junto con sus cuotas.';
     if (n.transaccion_generada_id) return 'La transacción generada quedará anulada.';
     return 'No se generó ningún movimiento: solo se marca el correo como ignorado.';

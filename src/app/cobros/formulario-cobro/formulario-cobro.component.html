@@ -1,0 +1,123 @@
+<form class="erp-form" [formGroup]="form" (ngSubmit)="enviar()" novalidate aria-labelledby="titulo-form-cobro">
+  <div>
+    <h2 class="erp-form-title" id="titulo-form-cobro">{{ esEdicion ? 'Editar gasto repartido' : 'Repartir un gasto' }}</h2>
+    <p class="erp-subtitle">La luz, el mercado o lo de una fiesta: lo que le toca a cada uno entra a su liquidación del mes.</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorServidor">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <span>{{ errorServidor }}</span>
+  </div>
+
+  <div class="erp-form-grid">
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="cb-concepto">¿Qué se pagó?<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="cb-concepto" class="erp-input" type="text" formControlName="concepto" maxlength="255" autocomplete="off" placeholder="Ej. Recibo de la luz octubre"
+             [attr.aria-invalid]="campoInvalido('concepto')" />
+      <p class="erp-field-error" *ngIf="campoInvalido('concepto')">Escribe un nombre para el gasto.</p>
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <span class="erp-label" id="cb-cat-label">Tipo de gasto</span>
+      <div class="segmentos" role="radiogroup" aria-labelledby="cb-cat-label">
+        <label class="segmento" *ngFor="let c of categorias" [class.segmento--activo]="form.controls.categoria.value === c.valor">
+          <input type="radio" formControlName="categoria" [value]="c.valor" />
+          <i class="material-icons" aria-hidden="true">{{ c.icono }}</i>
+          <span>{{ c.etiqueta }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="cb-total">Costó en total<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="cb-total" class="erp-input" type="number" inputmode="decimal" min="0" step="0.01" formControlName="montoTotal" placeholder="0.00"
+             [attr.aria-invalid]="intentado && totalInvalido" />
+      <p class="erp-field-error" *ngIf="intentado && totalInvalido">Un valor mayor a 0 con máximo 2 decimales.</p>
+    </div>
+
+    <div class="erp-field">
+      <label class="erp-label" for="cb-fecha">Fecha del gasto<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="cb-fecha" class="erp-input" type="date" formControlName="fechaGasto" [attr.aria-invalid]="campoInvalido('fechaGasto')" />
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="cb-periodo">Se cobra en la liquidación de<span class="erp-req" aria-hidden="true">*</span></label>
+      <input id="cb-periodo" class="erp-input" type="month" formControlName="periodo" [attr.aria-invalid]="campoInvalido('periodo')" aria-describedby="cb-periodo-ayuda" />
+      <p id="cb-periodo-ayuda" class="erp-field-hint">{{ nombrePeriodo(form.controls.periodo.value) }}. Si lo cambias, el cobro aparece en ese mes (por ejemplo, la luz de septiembre que cobras en octubre).</p>
+    </div>
+
+    <!-- Cómo se divide -->
+    <div class="erp-field erp-span-2">
+      <span class="erp-label" id="cb-modo-label">¿Cómo se divide?</span>
+      <div class="segmentos" role="radiogroup" aria-labelledby="cb-modo-label">
+        <label class="segmento" *ngFor="let m of modos" [class.segmento--activo]="modo === m.valor">
+          <input type="radio" formControlName="modoDivision" [value]="m.valor" />
+          <span>{{ m.etiqueta }}</span>
+        </label>
+      </div>
+      <p class="erp-field-hint">{{ ayudaModo }}</p>
+    </div>
+
+    <!-- Quiénes -->
+    <div class="erp-field erp-span-2">
+      <div class="quienes-cabecera">
+        <span class="erp-label" id="cb-quienes-label">¿Quiénes participan?<span class="erp-req" aria-hidden="true">*</span></span>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="marcarTodas()" *ngIf="otras.length > 1">Marcar a todos</button>
+      </div>
+      <div class="personas" role="group" aria-labelledby="cb-quienes-label">
+        <button type="button" class="persona-chip" *ngFor="let p of otras" [class.persona-chip--activo]="estaMarcada(p.id)" [attr.aria-pressed]="estaMarcada(p.id)" (click)="alternar(p.id)">
+          <i class="material-icons" aria-hidden="true">{{ estaMarcada(p.id) ? 'check_circle' : 'radio_button_unchecked' }}</i>{{ p.nombre }}
+        </button>
+      </div>
+      <label class="erp-check" *ngIf="yo && modo === 'IGUAL'">
+        <input type="checkbox" formControlName="yoParticipo" />
+        <span>Yo también participo (mi parte no genera deuda)</span>
+      </label>
+      <p class="erp-field-error" *ngIf="intentado && seleccion.size === 0">Marca al menos a una persona.</p>
+    </div>
+
+    <!-- Valor por persona (porcentaje o monto) -->
+    <div class="erp-field erp-span-2" *ngIf="modo !== 'IGUAL' && seleccion.size > 0">
+      <span class="erp-label">{{ modo === 'PORCENTAJE' ? 'Porcentaje de cada uno' : 'Monto de cada uno' }}</span>
+      <div class="valores">
+        <div class="valor-fila" *ngFor="let id of seleccion">
+          <label [for]="'cb-valor-' + id">{{ nombre(id) }}</label>
+          <div class="valor-input">
+            <input [id]="'cb-valor-' + id" class="erp-input" type="number" inputmode="decimal" min="0" [max]="modo === 'PORCENTAJE' ? 100 : null" step="any"
+                   [formControl]="valores.controls['' + id]" [placeholder]="modo === 'PORCENTAJE' ? '0' : '0.00'" />
+            <span class="sufijo">{{ modo === 'PORCENTAJE' ? '%' : '$' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista previa -->
+    <div class="erp-span-2 previa" aria-live="polite" *ngIf="seleccion.size > 0 || (modo === 'IGUAL' && form.controls.yoParticipo.value)">
+      <div class="erp-alert erp-alert--warning" role="status" *ngIf="reparto.error && !totalInvalido">
+        <i class="material-icons" aria-hidden="true">info</i><span>{{ reparto.error }}</span>
+      </div>
+      <ul class="previa-lista" *ngIf="!reparto.error">
+        <li *ngFor="let p of reparto.partes" [class.previa-propia]="p.esPropio">
+          <span>{{ nombre(p.personaId) }}<span class="erp-badge" *ngIf="p.esPropio">Tú</span></span>
+          <strong class="erp-num">{{ p.monto | moneda }}<span class="erp-muted" *ngIf="p.porcentaje !== null"> · {{ p.porcentaje }}%</span></strong>
+        </li>
+        <li class="previa-resumen">
+          <span>Se te debe en total</span><strong class="erp-num erp-gain">{{ reparto.montoACobrar | moneda }}</strong>
+        </li>
+        <li class="previa-resumen" *ngIf="reparto.parteDelPropietario > 0">
+          <span>Lo pones tú</span><strong class="erp-num">{{ reparto.parteDelPropietario | moneda }}</strong>
+        </li>
+      </ul>
+    </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label" for="cb-notas">Notas</label>
+      <textarea id="cb-notas" class="erp-textarea" rows="2" formControlName="notas" maxlength="1000" placeholder="Opcional: lo que quieras recordar de este gasto"></textarea>
+    </div>
+  </div>
+
+  <div class="erp-form-actions">
+    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Repartir el gasto' }}</button>
+  </div>
+</form>

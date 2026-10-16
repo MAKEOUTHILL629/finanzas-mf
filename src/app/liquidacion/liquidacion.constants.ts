@@ -2,7 +2,7 @@ import { BloqueLiquidacion, EstadoLiquidacion, ItemLiquidacion, LiquidacionPerso
 import { EstadoCuentaPersona } from '../modelos/erp';
 import { moneda } from '../shared/moneda.util';
 
-export type ClaveBloque = 'cuotasTarjetas' | 'cuotasPrestamos' | 'cargosRecurrentes' | 'crucesCuentas' | 'saldoAFavorAplicado' | 'abonosRealizados' | 'otros';
+export type ClaveBloque = 'cuotasTarjetas' | 'cuotasPrestamos' | 'cargosRecurrentes' | 'cobrosPuntuales' | 'crucesCuentas' | 'saldoAFavorAplicado' | 'abonosRealizados' | 'otros';
 
 export interface DefinicionBloque {
   clave: ClaveBloque;
@@ -15,6 +15,7 @@ export const BLOQUES: DefinicionBloque[] = [
   { clave: 'cuotasTarjetas', titulo: 'Compras / cuotas de tarjeta de crédito', icono: 'credit_card' },
   { clave: 'cuotasPrestamos', titulo: 'Cuotas de préstamos', icono: 'account_balance_wallet' },
   { clave: 'cargosRecurrentes', titulo: 'Pagos y cargos recurrentes del mes', icono: 'autorenew' },
+  { clave: 'cobrosPuntuales', titulo: 'Servicios, mercado y eventos del mes', icono: 'call_split' },
   { clave: 'crucesCuentas', titulo: 'Cruces de cuentas del mes', icono: 'compare_arrows' },
   { clave: 'saldoAFavorAplicado', titulo: 'Saldo a favor de la cuota aplicado', icono: 'savings' },
   { clave: 'abonosRealizados', titulo: 'Abonos realizados en el mes', icono: 'payments' },
@@ -26,6 +27,7 @@ const ETIQUETA_ORIGEN: Record<OrigenMovimiento, string> = {
   PRESTAMO: 'Préstamo',
   RECURRENTE_COMPARTIDO: 'Gasto compartido',
   RECURRENTE_PERSONA: 'Recurrente',
+  COBRO_PUNTUAL: 'Gasto repartido',
   CRUCE_APORTE_CARRO: 'Aporte del carro',
   CRUCE_ENTRE_PERSONAS: 'Cruce entre personas',
   SALDO_A_FAVOR_CARRO: 'Saldo a favor del carro',
@@ -39,7 +41,8 @@ export function etiquetaOrigen(origen: OrigenMovimiento | string): string {
 
 /** Bloques que tienen movimientos (los vacíos no se muestran). */
 export function bloquesConItems(l: LiquidacionPersona): Array<DefinicionBloque & { bloque: BloqueLiquidacion }> {
-  return BLOQUES.map((d) => ({ ...d, bloque: l[d.clave] })).filter((b) => b.bloque.items.length > 0);
+  // `?? vacío`: un backend anterior a los cobros puntuales no envía ese bloque.
+  return BLOQUES.map((d) => ({ ...d, bloque: l[d.clave] ?? { items: [], subtotal: 0 } })).filter((b) => b.bloque.items.length > 0);
 }
 
 /** «Andrés te debe $X este mes» / «Tienes un saldo a favor de Andrés por $X este mes» / «Paz y salvo en el mes». */
@@ -72,7 +75,7 @@ export function adaptarParaAbono(l: LiquidacionPersona): EstadoCuentaPersona {
     iniciales_nombre: l.persona.iniciales,
     color_representativo: l.persona.color,
     cuotas_tc_mes: l.cuotasTarjetas.subtotal,
-    recurrentes_compartidos_mes: l.cargosRecurrentes.subtotal,
+    recurrentes_compartidos_mes: l.cargosRecurrentes.subtotal + l.cobrosPuntuales.subtotal,
     prestamos_mes: l.cuotasPrestamos.subtotal,
     cruces_asumidos_mes: l.crucesCuentas.subtotal,
     abonos_recibidos_mes: l.abonosRealizados.subtotal,

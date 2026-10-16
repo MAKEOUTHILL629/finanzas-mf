@@ -19,6 +19,11 @@ import { FormularioConciliarComponent } from './correos/formulario-conciliar/for
 import { FlujoCajaComponent } from './flujo-caja/flujo-caja.component';
 import { EstadoCuentaComponent } from './deudas/estado-cuenta/estado-cuenta.component';
 import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.component';
+import { CobrosComponent } from './cobros/cobros.component';
+import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
+import { FormularioCobroComponent } from './cobros/formulario-cobro/formulario-cobro.component';
+import { CompartirCobroComponent } from './cobros/compartir-cobro/compartir-cobro.component';
+import { ProductosDetectadosComponent } from './correos/productos-detectados/productos-detectados.component';
 import { API, configurarTestBed, http, responder, verificarHttp } from './testing/erp-testing';
 
 /**
@@ -201,6 +206,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     configurarTestBed([ListaCorreosComponent]);
     const f = TestBed.createComponent(ListaCorreosComponent);
     f.detectChanges();
+    responder('personas', personas);
     http().expectOne((r) => r.url === `${API}/notificaciones-correo`).flush([{
       id: 9, owner_user_id: 1, external_message_id: '<a@b>', remitente: 'x', asunto: 'Compra EXITO', fecha_correo: '2026-10-13T19:00:00.000Z', cuerpo_extraido: null,
       datos_parseados: { monto: '50000', moneda: 'COP', comercio: 'EXITO', ultimos_4: '0000', instrumento: 'TC', ruta: 'COMPRA_TC', tipo: 'Compra', metodo: 'Tarjeta Credito', motivo: 'tarjeta_no_identificada' },
@@ -258,5 +264,121 @@ describe('Renderizado de las pantallas (humo)', () => {
     responder('personas', personas);
     const t = texto(f);
     for (const esperado of ['Cruces de deuda', 'Papá', 'Andrés', 'Cuota casa', 'Préstamo #30', '$100,000.00']) expect(t).toContain(esperado);
+  });
+});
+
+
+describe('Renderizado — correos inteligentes y cobros a personas (humo)', () => {
+  afterEach(() => verificarHttp());
+
+  const cobro = {
+    id: 10, concepto: 'Recibo de la luz', categoria: 'SERVICIO', fechaGasto: '2026-10-14T00:00:00.000Z', periodo: '2026-10', montoTotal: 184500, modoDivision: 'IGUAL', estado: 'ACTIVO', notas: 'Octubre',
+    transaccionId: null, compraCreditoId: null, notificacionId: null, montoACobrar: 123000, parteDelPropietario: 61500,
+    participantes: [
+      { personaId: 1, nombre: 'Felipe', iniciales: 'FE', color: null, monto: 61500, porcentaje: null, esPropio: true },
+      { personaId: 2, nombre: 'Andrés', iniciales: 'AN', color: null, monto: 61500, porcentaje: null, esPropio: false },
+    ],
+  };
+  const reporte = {
+    id: 5, enlaceId: 3, personaId: 2, persona: 'Andrés', periodo: '2026-10', montoReportado: 61500, fechaPago: '2026-10-20T00:00:00.000Z', medio: 'BREB', referencia: 'ABC1', comentario: 'Listo',
+    tieneComprobante: true, comprobanteNombre: 'c.jpg', comprobanteTipo: 'image/jpeg', comprobanteTamano: 48000, estado: 'PENDIENTE', montoAprobado: null, motivoRechazo: null, revisadoEn: null,
+    creadoEn: '2026-10-20T15:00:00.000Z', transaccionId: null, movimientoId: null,
+    correoCoincidente: { notificacionId: 1, transaccionId: 77, fecha: '2026-10-20T00:00:00.000Z', monto: 61500, cuentaId: 1 },
+  };
+
+  it('Cobros: resumen, gastos repartidos y pagos por revisar con el aviso de que el dinero ya llegó', () => {
+    configurarTestBed([CobrosComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }]);
+    const f = TestBed.createComponent(CobrosComponent);
+    f.detectChanges();
+    responder('personas', personas);
+    http().expectOne((r) => r.url === `${API}/cuentas-financieras`).flush([cuenta(1)]);
+    http().expectOne((r) => r.url === `${API}/cobros-puntuales`).flush([cobro]);
+    responder('cobros/reportes', [reporte]);
+    http().expectOne((r) => r.url === `${API}/cobros/ingresos-sugeridos`).flush([{ notificacionId: 2, transaccionId: 40, fecha: '2026-10-06T00:00:00.000Z', personaId: 5, persona: 'Alicia Buitrago', monto: 2000000, concepto: 'x', cuentaId: 1 }]);
+    http().expectOne((r) => r.url === `${API}/cobros/enlaces`).flush([]);
+    let t = texto(f);
+    for (const esperado of ['Cobros a personas', 'Repartir un gasto', 'Recibo de la luz', '$184,500.00', 'Se te debe', '$123,000.00', 'Andrés', 'Pagos por revisar', 'Ingresos por aplicar']) expect(t).toContain(esperado);
+
+    f.componentInstance.pestana = 'reportes';
+    t = texto(f);
+    for (const esperado of ['Andrés', '$61,500.00', 'Bre-B', 'ABC1', 'Ver comprobante', 'El dinero ya llegó', 'Aprobar', 'Rechazar']) expect(t).toContain(esperado);
+
+    f.componentInstance.pestana = 'ingresos';
+    t = texto(f);
+    for (const esperado of ['Alicia Buitrago', '$2,000,000.00', 'Aplicar a']) expect(t).toContain(esperado);
+
+    f.componentInstance.pestana = 'enlaces';
+    expect(texto(f)).toContain('Aún no compartes enlaces');
+  });
+
+  it('Repartir un gasto: personas, modos y vista previa del reparto', () => {
+    configurarTestBed([FormularioCobroComponent]);
+    const f = TestBed.createComponent(FormularioCobroComponent);
+    f.componentInstance.personas = personas as never;
+    f.componentInstance.periodoInicial = '2026-10';
+    f.detectChanges();
+    f.componentInstance.form.patchValue({ concepto: 'Mercado', montoTotal: 90000 });
+    f.componentInstance.alternar(2);
+    f.componentInstance.alternar(3);
+    const t = texto(f);
+    for (const esperado of ['Repartir un gasto', 'Servicio', 'Mercado', 'A partes iguales', 'Por porcentaje', 'Monto fijo', 'Andrés', 'Papá', 'Yo también participo', 'Se te debe en total', '$60,000.00', 'Octubre 2026']) expect(t).toContain(esperado);
+  });
+
+  it('Compartir con una persona: sin enlace aún ofrece generarlo con el mensaje y cómo pagar', () => {
+    configurarTestBed([CompartirCobroComponent]);
+    const f = TestBed.createComponent(CompartirCobroComponent);
+    f.componentInstance.personaId = 2;
+    f.componentInstance.nombre = 'Andrés Gómez';
+    f.componentInstance.celular = '3104445566';
+    f.componentInstance.periodo = '2026-10';
+    f.detectChanges();
+    http().expectOne((r) => r.url === `${API}/cobros/enlaces`).flush([]);
+    const t = texto(f);
+    for (const esperado of ['Compartir con Andrés Gómez', 'Octubre 2026', 'Mensaje para Andrés Gómez', '¿Cómo te paga?', 'El enlace dura', 'Generar enlace']) expect(t).toContain(esperado);
+  });
+
+  it('Página pública: saldo, detalle con porcentaje y cuota, cómo pagar, formulario con comprobante y avisos anteriores', () => {
+    const token = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG';
+    configurarTestBed([CobroPublicoComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token }) } } }]);
+    const f = TestBed.createComponent(CobroPublicoComponent);
+    f.detectChanges();
+    http().expectOne(`${API}/publico/cobros/${token}`).flush({
+      version: 1, periodo: '2026-10', generadoEn: '2026-10-20T12:00:00.000Z', propietario: { nombre: 'Felipe Hernández' }, persona: { nombre: 'Andrés Gómez', iniciales: 'AG', color: null },
+      bloques: [
+        { clave: 'cuotasTarjetas', titulo: 'Compras con tarjeta de crédito', subtotal: 100000, items: [{ fecha: '2026-10-05T00:00:00.000Z', concepto: 'Cuota 2/6 - Nevera', monto: 100000, signo: 1, impacto: 100000, origen: 'COMPRA_CREDITO', detalle: { tipo: 'CUOTA_TARJETA', compra: 'Nevera', fechaCompra: null, valorCompra: 1200000, numeroCuota: 2, cuotasDeLaCompra: 6, cuotasQueTePertenecen: 6, porcentaje: 50, valorCuotaTotal: 200000, tarjeta: 'Visa' } }] },
+        { clave: 'abonosRealizados', titulo: 'Pagos y abonos', subtotal: -30000, items: [{ fecha: '2026-10-08T00:00:00.000Z', concepto: 'Pago Nequi', monto: 30000, signo: -1, impacto: -30000, origen: 'PAGO_RECIBIDO', detalle: null }] },
+      ],
+      obligaciones: [{ concepto: 'Cuota del carro octubre', metaMensual: 1000000, montoAbonado: 600000, saldoPendiente: 400000 }],
+      resumen: { totalCargos: 500000, totalAbonosYFavor: 30000, saldoNetoFinal: 470000, estado: 'DEBE', saldoAnterior: 50000, saldoTotalAcumulado: 520000 },
+      mensaje: 'Hola Andrés, este es el resumen.', instruccionesPago: 'Bre-B @felipe', venceEn: '2099-01-01T00:00:00.000Z', actualizadoEn: '2026-10-20T12:00:00.000Z',
+      reportes: [{ id: 1, monto: 100000, fechaPago: '2026-10-10T00:00:00.000Z', estado: 'RECHAZADO', motivoRechazo: 'No lo veo', montoAprobado: null, creadoEn: null, conComprobante: true }],
+    });
+    const t = texto(f);
+    for (const esperado of [
+      'Hola, Andrés', 'Resumen de Octubre 2026', 'de parte de Felipe Hernández', 'Le debes a Felipe', '$520,000.00', 'De meses anteriores', '$50,000.00',
+      'Cómo pagar', 'Bre-B @felipe', 'Compras con tarjeta de crédito', 'Cuota 2 de 6 · 50 % de $200,000.00 · compra de $1,200,000.00 · Visa', 'Pagos y abonos', 'Faltan $400,000.00',
+      'Avisar que pagué', 'Adjuntar foto o PDF', 'Enviar aviso de pago', 'Mis avisos de pago', 'Rechazado', 'No lo veo', 'Este enlace es personal',
+    ]) expect(t).toContain(esperado);
+    // sin menú ni datos de otras personas: solo la hoja pública
+    expect((f.nativeElement as HTMLElement).querySelector('app-menu')).toBeNull();
+  });
+
+  it('Productos detectados: sugerencias, asignados y acciones', () => {
+    configurarTestBed([ProductosDetectadosComponent]);
+    const f = TestBed.createComponent(ProductosDetectadosComponent);
+    f.detectChanges();
+    responder('notificaciones-correo/productos', [
+      { ultimos4: '1927', instrumento: 'TC', esDebito: false, correos: 384, pendientes: 380, primera: '2024-12-27T00:00:00.000Z', ultima: '2026-10-13T00:00:00.000Z', totalCop: '48706756', asignadoA: null,
+        sugerencia: { tipo: 'TARJETA_EXISTENTE', tarjetaId: 2, tarjeta: 'American Express', votos: 192, total: 193, automatica: true } },
+      { ultimos4: '3698', instrumento: 'CUENTA', esDebito: false, correos: 855, pendientes: 855, primera: '2021-08-09T00:00:00.000Z', ultima: '2026-09-27T00:00:00.000Z', totalCop: '1', asignadoA: null,
+        sugerencia: { tipo: 'CREAR_CUENTA', nombre: 'Bancolombia *3698', tipoCuenta: 'AHORROS', esPrincipal: true } },
+      { ultimos4: '9491', instrumento: 'TC', esDebito: false, correos: 188, pendientes: 0, primera: null, ultima: null, totalCop: '2', asignadoA: { tipo: 'TARJETA', id: 1, nombre: 'Mastercard' }, sugerencia: null },
+    ]);
+    responder('tarjetas', [{ id: 1, franquicia: 'Mastercard' }, { id: 2, franquicia: 'American Express' }]);
+    responder('cuentas-financieras', []);
+    const t = texto(f);
+    for (const esperado of ['Cuentas y tarjetas detectadas', '3 en tus correos', '2 sin asignar', '••1927', 'Tarjeta de crédito', 'Sin asignar', 'Es tu American Express', '192 de 193', '••3698', 'Parece tu cuenta principal', 'Mastercard', 'Aceptar sugerencias (2)', 'Reprocesar pendientes']) {
+      expect(t).toContain(esperado);
+    }
   });
 });

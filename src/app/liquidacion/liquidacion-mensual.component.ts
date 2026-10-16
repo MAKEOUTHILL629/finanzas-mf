@@ -3,9 +3,12 @@ import { Subject, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { iniciales } from '../deudas/deudas.constants';
 import { LiquidacionMensual, LiquidacionPersona, PeriodoCarro, ResultadoAplicarExcedente } from '../modelos/aportes';
+import { EnlaceCobro } from '../modelos/cobros-personas';
 import { EstadoCuentaPersona, ResultadoAbonoPersona } from '../modelos/erp';
 import { Persona } from '../modelos/persona';
 import { AportesCarroService } from '../services/aportes-carro.service';
+import { CobrosPersonasService } from '../services/cobros-personas.service';
+import { lineaDetalle } from '../cobros/cobros.constants';
 import { LiquidacionMensualService } from '../services/liquidacion-mensual.service';
 import { ModalService } from '../services/modal.service';
 import { PersonasService } from '../services/personas.service';
@@ -28,6 +31,7 @@ import {
 export const MODAL_ABONO_LIQUIDACION = 'liquidacion-abono';
 export const MODAL_CRUCE_LIQUIDACION = 'liquidacion-cruce';
 export const MODAL_EXCEDENTE_LIQUIDACION = 'liquidacion-excedente';
+export const MODAL_COMPARTIR_LIQUIDACION = 'liquidacion-compartir';
 
 @Component({
   selector: 'app-liquidacion-mensual',
@@ -38,6 +42,8 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
   readonly modalAbono = MODAL_ABONO_LIQUIDACION;
   readonly modalCruce = MODAL_CRUCE_LIQUIDACION;
   readonly modalExcedente = MODAL_EXCEDENTE_LIQUIDACION;
+  readonly modalCompartir = MODAL_COMPARTIR_LIQUIDACION;
+  readonly detalle = lineaDetalle;
 
   readonly bloques = BLOQUES;
   readonly bloquesConItems = bloquesConItems;
@@ -68,12 +74,17 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
   excedenteResponsable = 'el responsable';
   excedenteAbierto = false;
 
+  /** Enlaces ya compartidos del periodo (para mostrar su estado en cada persona). */
+  enlaces: EnlaceCobro[] = [];
+  compartiendo: LiquidacionPersona | null = null;
+
   private destroy$ = new Subject<void>();
 
   constructor(
     private liquidacionService: LiquidacionMensualService,
     private personasService: PersonasService,
     private aportesService: AportesCarroService,
+    private cobrosService: CobrosPersonasService,
     private modalService: ModalService,
     private toast: ToastService
   ) {}
@@ -83,6 +94,7 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
       if (id !== this.modalAbono) this.abonando = null;
       if (id !== this.modalCruce) this.cruzando = null;
       if (id !== this.modalExcedente) this.excedenteAbierto = false;
+      if (id !== this.modalCompartir) this.compartiendo = null;
     });
     this.personasService
       .getPersonas()
@@ -108,6 +120,7 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (l) => {
           this.liquidacion = l;
+          this.cargarEnlaces();
           // con una sola persona o pocas, se muestra el desglose abierto
           if (this.abiertas.size === 0 && l.personas.length === 1) this.abiertas.add(l.personas[0].persona.id);
         },
@@ -116,6 +129,31 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
           this.error = mensajeDeError(err, 'No se pudo cargar la liquidación del mes.');
         }
       });
+  }
+
+  /** Los enlaces compartidos del periodo; si falla, la liquidación se ve igual (solo sin ese estado). */
+  private cargarEnlaces(): void {
+    this.cobrosService
+      .getEnlaces(this.periodo)
+      .pipe(takeUntil(this.destroy$), catchError(() => of([] as EnlaceCobro[])))
+      .subscribe((e) => (this.enlaces = e));
+  }
+
+  enlaceDe(l: LiquidacionPersona): EnlaceCobro | null {
+    return this.enlaces.find((e) => e.personaId === l.persona.id) ?? null;
+  }
+
+  celularDe(l: LiquidacionPersona): string | null {
+    return this.personas.find((p) => p.id === l.persona.id)?.numeroCelular ?? null;
+  }
+
+  abrirCompartir(l: LiquidacionPersona): void {
+    this.compartiendo = l;
+    this.modalService.open(this.modalCompartir);
+  }
+
+  onEnlaceCambiado(): void {
+    this.cargarEnlaces();
   }
 
   // ── periodo y filtros ──

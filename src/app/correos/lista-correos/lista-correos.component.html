@@ -12,6 +12,8 @@
     </div>
   </header>
 
+  <app-productos-detectados (cambiado)="cargar()" (reprocesar)="abrirReproceso()"></app-productos-detectados>
+
   <div class="chips" role="tablist" aria-label="Estado de los correos" *ngIf="!error">
     <button type="button" class="chip" role="tab" *ngFor="let p of pestanas" [class.chip--activo]="pestana === p.valor"
             [attr.aria-selected]="pestana === p.valor" (click)="pestana = p.valor">
@@ -68,7 +70,15 @@
         <span class="erp-badge" *ngIf="vista(n).ultimos4"><i class="material-icons" aria-hidden="true">{{ vista(n).instrumento === 'TC' ? 'credit_card' : 'account_balance' }}</i><span class="erp-mono">••{{ vista(n).ultimos4 }}</span></span>
       </div>
 
-      <p class="correo-motivo erp-muted" *ngIf="n.estado_procesamiento === 'PENDIENTE' && explicar(vista(n).motivo) as m">{{ m }}</p>
+      <div class="correo-marcas" *ngIf="vinculo(n.vinculo, vista(n).motivo) as v">
+        <span class="erp-badge erp-badge--{{ v.clase === 'neutral' ? '' : v.clase }}"><i class="material-icons" aria-hidden="true">{{ v.icono }}</i>{{ v.texto }}</span>
+        <span class="erp-badge" *ngIf="nombrePersona(n.persona_id) as quien"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</span>
+      </div>
+      <div class="correo-marcas" *ngIf="!n.vinculo && nombrePersona(n.persona_id) as quien">
+        <span class="erp-badge"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</span>
+      </div>
+
+      <p class="correo-motivo erp-muted" *ngIf="explicar(vista(n).motivo) as m">{{ m }}</p>
       <p class="correo-motivo erp-muted" *ngIf="n.estado_procesamiento === 'PENDIENTE' && !vista(n).motivo && (n.compra_credito_generada_id || n.transaccion_generada_id)">
         {{ n.compra_credito_generada_id ? 'Se importó como una compra a 1 cuota: asigna las cuotas y los responsables.' : 'Se creó una transacción pendiente: confírmala para ajustar el saldo.' }}
       </p>
@@ -83,6 +93,7 @@
         <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="vista(n).linkCorreo" [href]="vista(n).linkCorreo" target="_blank" rel="noopener noreferrer">
           <i class="material-icons" aria-hidden="true">open_in_new</i>Abrir correo
         </a>
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="deshacer(n)" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">undo</i>Deshacer</button>
         <ng-container *ngIf="n.estado_procesamiento === 'PENDIENTE'">
           <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">delete_outline</i>Descartar</button>
           <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirConciliar(n)"><i class="material-icons" aria-hidden="true">task_alt</i>Conciliar</button>
@@ -94,4 +105,8 @@
 
 <app-modal [modalId]="modalId">
   <app-formulario-conciliar *ngIf="conciliando" [notificacion]="conciliando" (conciliada)="onConciliada($event)" (cancelar)="cerrarConciliar()"></app-formulario-conciliar>
+</app-modal>
+
+<app-modal [modalId]="modalReproceso">
+  <app-reprocesar-correos *ngIf="reprocesando" (terminado)="onReprocesado($event)" (cancelar)="cerrarReproceso()"></app-reprocesar-correos>
 </app-modal>

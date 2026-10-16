@@ -28,6 +28,9 @@
 .correo-titulo .erp-muted { font-size: var(--text-caption); }
 .correo-monto { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
 .correo-monto .erp-stat-value { font-size: var(--text-h2); }
+.correo-marcas { display: flex; flex-wrap: wrap; gap: 6px; }
+.correo-marcas .erp-badge { display: inline-flex; align-items: center; gap: 4px; }
+.correo-marcas .material-icons { font-size: 14px; }
 .correo-motivo { margin: 0; font-size: var(--text-body-sm); line-height: 1.5; }
 .correo-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); margin-top: auto; }
 .correo-acciones a { text-decoration: none; }

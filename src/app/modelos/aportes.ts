@@ -204,6 +204,7 @@ export type OrigenMovimiento =
   | 'PRESTAMO'
   | 'RECURRENTE_COMPARTIDO'
   | 'RECURRENTE_PERSONA'
+  | 'COBRO_PUNTUAL'
   | 'CRUCE_APORTE_CARRO'
   | 'CRUCE_ENTRE_PERSONAS'
   | 'SALDO_A_FAVOR_CARRO'
@@ -227,7 +228,25 @@ export interface ItemLiquidacion {
   cargoRecurrentePersonaId: number | null;
   obligacionMesId: number | null;
   cuotaDetalleId: number | null;
+  cobroPuntualId?: number | null;
+  /** Por qué se cobra: de qué compra es la cuota y qué porcentaje le toca, o de qué gasto repartido es la parte. */
+  detalle?: DetalleItemLiquidacion | null;
 }
+
+export type DetalleItemLiquidacion =
+  | {
+      tipo: 'CUOTA_TARJETA';
+      compra: string | null;
+      fechaCompra: string | null;
+      valorCompra: number | null;
+      numeroCuota: number | null;
+      cuotasDeLaCompra: number | null;
+      cuotasQueTePertenecen: number | null;
+      porcentaje: number | null;
+      valorCuotaTotal: number | null;
+      tarjeta: string | null;
+    }
+  | { tipo: 'COBRO_PUNTUAL'; categoria: string; montoTotal: number; modoDivision: string; notas: string | null };
 
 export interface BloqueLiquidacion {
   items: ItemLiquidacion[];
@@ -257,6 +276,7 @@ export interface LiquidacionPersona {
   cuotasTarjetas: BloqueLiquidacion;
   cuotasPrestamos: BloqueLiquidacion;
   cargosRecurrentes: BloqueLiquidacion;
+  cobrosPuntuales: BloqueLiquidacion;
   crucesCuentas: BloqueLiquidacion;
   saldoAFavorAplicado: BloqueLiquidacion;
   abonosRealizados: BloqueLiquidacion;

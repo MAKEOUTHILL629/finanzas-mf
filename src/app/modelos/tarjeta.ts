@@ -14,4 +14,6 @@ export interface Tarjeta{
   diaLimitePago?: number | null;
   cupoTotal?: number | null;
   permiteDolares?: boolean | null;
+  /** Últimos 4 dígitos que reporta el banco; varios separados por coma si se reexpidió la tarjeta ("1927,9587"). */
+  ultimos4Digitos?: string | null;
 }

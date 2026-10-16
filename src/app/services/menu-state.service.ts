@@ -18,10 +18,15 @@ export type LayoutMenu = 'invitado' | 'sidebar' | 'rail' | 'drawer' | 'movil';
 export const BP_ESCRITORIO = 1024;
 export const BP_MOVIL = 768;
 
-export function layoutPara(ancho: number, colapsado: boolean, conSesion: boolean): LayoutMenu {
-  if (!conSesion) return 'invitado';
+export function layoutPara(ancho: number, colapsado: boolean, conSesion: boolean, rutaPublica = false): LayoutMenu {
+  if (!conSesion || rutaPublica) return 'invitado';
   if (ancho >= BP_ESCRITORIO) return colapsado ? 'rail' : 'sidebar';
   return ancho >= BP_MOVIL ? 'drawer' : 'movil';
+}
+
+/** Páginas que abre cualquier persona con un enlace (sin menú): `/p/<token>`. */
+export function esRutaPublica(url: string | null | undefined): boolean {
+  return /^\/p\/[^/?#]+/.test(url ?? '');
 }
 
 const CLAVE_COLAPSADO = 'finanzas-menu-colapsado';
@@ -55,14 +60,16 @@ export class MenuStateService implements OnDestroy {
   readonly colapsado$ = new BehaviorSubject<boolean>(leer(CLAVE_COLAPSADO) === true);
   readonly drawerAbierto$ = new BehaviorSubject<boolean>(false);
   readonly favoritos$ = new BehaviorSubject<string[]>(resolverFavoritos(leer(CLAVE_FAVORITOS), GRUPOS_MENU));
+  /** La ruta actual es una página pública: no se muestra el menú aunque haya sesión. */
+  readonly rutaPublica$ = new BehaviorSubject<boolean>(typeof window === 'undefined' ? false : esRutaPublica(window.location.pathname));
 
   readonly layout$: Observable<LayoutMenu>;
 
   private readonly alCambiarTamano = () => this.fijarAncho(window.innerWidth);
 
   constructor(auth: AuthServiceService) {
-    this.layout$ = combineLatest([this.ancho$, this.colapsado$, auth.isLoggedIn$]).pipe(
-      map(([ancho, colapsado, sesion]) => layoutPara(ancho, colapsado, sesion)),
+    this.layout$ = combineLatest([this.ancho$, this.colapsado$, auth.isLoggedIn$, this.rutaPublica$]).pipe(
+      map(([ancho, colapsado, sesion, publica]) => layoutPara(ancho, colapsado, sesion, publica)),
       distinctUntilChanged()
     );
     // el panel deslizable solo existe en pantallas chicas: al pasar a escritorio (o cerrar sesión) se cierra
@@ -78,6 +85,10 @@ export class MenuStateService implements OnDestroy {
 
   fijarAncho(ancho: number): void {
     this.ancho$.next(ancho);
+  }
+
+  fijarRutaPublica(valor: boolean): void {
+    if (this.rutaPublica$.value !== valor) this.rutaPublica$.next(valor);
   }
 
   // ── barra lateral ──

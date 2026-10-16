@@ -33,6 +33,7 @@ export class FormularioCuentaComponent implements OnInit, OnDestroy {
     ultimos4Digitos: ['', [Validators.maxLength(60), Validators.pattern(PATRON_ULTIMOS_4)]],
     moneda: ['COP', [Validators.required, Validators.pattern(/^[A-Za-z]{3}$/)]],
     saldoInicial: [null as number | string | null, importeNoNegativoOpcional],
+    esPrincipal: [false],
   });
 
   constructor(private cuentasService: CuentasFinancierasService) {}
@@ -50,6 +51,7 @@ export class FormularioCuentaComponent implements OnInit, OnDestroy {
         ultimos4Digitos: this.cuenta.ultimos_4_digitos ?? '',
         moneda: this.cuenta.moneda,
         saldoInicial: null,
+        esPrincipal: !!this.cuenta.es_principal,
       });
       // la moneda no se puede cambiar una vez creada la cuenta
       this.form.controls.moneda.disable();
@@ -72,6 +74,7 @@ export class FormularioCuentaComponent implements OnInit, OnDestroy {
     if (banco && banco !== (c.banco_entidad ?? '')) cambios.bancoEntidad = banco;
     const ult = (v.ultimos4Digitos ?? '').trim();
     if (ult && ult !== (c.ultimos_4_digitos ?? '')) cambios.ultimos4Digitos = ult;
+    if (!!v.esPrincipal !== !!c.es_principal) cambios.esPrincipal = !!v.esPrincipal;
     return cambios;
   }
 
@@ -85,6 +88,7 @@ export class FormularioCuentaComponent implements OnInit, OnDestroy {
       moneda: (v.moneda ?? 'COP').toUpperCase(),
       ...(banco ? { bancoEntidad: banco } : {}),
       ...(ult ? { ultimos4Digitos: ult } : {}),
+      ...(v.esPrincipal ? { esPrincipal: true } : {}),
       ...(v.saldoInicial !== null && v.saldoInicial !== undefined && v.saldoInicial !== '' ? { saldoInicial: String(v.saldoInicial) } : {}),
     };
   }

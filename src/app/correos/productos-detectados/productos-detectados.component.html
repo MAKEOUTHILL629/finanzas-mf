@@ -1,0 +1,99 @@
+<section class="erp-card productos" aria-labelledby="titulo-productos" *ngIf="cargando || error || productos.length > 0">
+  <header class="productos-cabecera">
+    <button type="button" class="productos-titulo" (click)="alternar()" [attr.aria-expanded]="abierto" aria-controls="lista-productos">
+      <i class="material-icons" aria-hidden="true">account_balance_wallet</i>
+      <span>
+        <h2 id="titulo-productos">Cuentas y tarjetas detectadas</h2>
+        <span class="erp-muted resumen" *ngIf="!cargando && !error">
+          {{ productos.length }} en tus correos ·
+          <strong [class.erp-loss]="porAsignar.length > 0">{{ porAsignar.length === 0 ? 'todas asignadas' : porAsignar.length + ' sin asignar' }}</strong>
+        </span>
+      </span>
+      <i class="material-icons chevron" [class.chevron--abierto]="abierto" aria-hidden="true">expand_more</i>
+    </button>
+    <div class="productos-acciones" *ngIf="!cargando && !error">
+      <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" *ngIf="aceptables.length > 0" (click)="aceptarTodo()" [disabled]="trabajando">
+        <i class="material-icons" aria-hidden="true">auto_awesome</i>
+        {{ trabajando ? 'Asignando…' : 'Aceptar sugerencias (' + aceptables.length + ')' }}
+      </button>
+      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="reprocesar.emit()">
+        <i class="material-icons" aria-hidden="true">sync</i>
+        Reprocesar pendientes
+      </button>
+    </div>
+  </header>
+
+  <div id="lista-productos" *ngIf="abierto">
+    <div *ngIf="cargando" aria-busy="true" aria-label="Cargando productos">
+      <div class="erp-skeleton" style="height: 56px; margin-bottom: 8px" *ngFor="let _ of [1, 2, 3]"></div>
+    </div>
+
+    <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+      <i class="material-icons" aria-hidden="true">error</i>
+      <div>{{ error }} <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="cargar()">Reintentar</button></div>
+    </div>
+
+    <p class="erp-muted ayuda" *ngIf="!cargando && !error && porAsignar.length > 0">
+      Los correos del banco traen solo los últimos 4 dígitos. Asigna cada uno a tu cuenta o tarjeta para que los movimientos se registren solos;
+      al terminar, usa «Reprocesar pendientes» para ponerte al día con lo que ya llegó.
+    </p>
+
+    <ul class="lista" *ngIf="!cargando && !error">
+      <li class="producto" *ngFor="let p of productos; trackBy: trackProducto" [class.producto--pendiente]="!p.asignadoA">
+        <div class="producto-icono" aria-hidden="true"><i class="material-icons">{{ p.instrumento === 'TC' ? 'credit_card' : p.esDebito ? 'payments' : 'account_balance' }}</i></div>
+
+        <div class="producto-texto">
+          <div class="producto-linea">
+            <strong class="erp-mono">••{{ p.ultimos4 }}</strong>
+            <span class="erp-badge">{{ etiqueta(p) }}</span>
+            <span class="erp-badge erp-badge--success" *ngIf="p.asignadoA"><i class="material-icons" aria-hidden="true">check</i>{{ p.asignadoA.nombre }}</span>
+            <span class="erp-badge erp-badge--warning" *ngIf="!p.asignadoA">Sin asignar</span>
+          </div>
+          <span class="erp-muted producto-meta">
+            {{ p.correos }} correo{{ p.correos === 1 ? '' : 's' }}<ng-container *ngIf="p.pendientes > 0"> · <strong>{{ p.pendientes }} por resolver</strong></ng-container>
+            <ng-container *ngIf="p.primera && p.ultima"> · {{ p.primera | fechaCorta }} → {{ p.ultima | fechaCorta }}</ng-container>
+          </span>
+          <span class="producto-sugerencia" *ngIf="!p.asignadoA && sugerencia(p.sugerencia) as t"><i class="material-icons" aria-hidden="true">lightbulb</i>{{ t }}</span>
+        </div>
+
+        <div class="producto-acciones" *ngIf="!p.asignadoA">
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="aceptable(p.sugerencia)" (click)="aceptarUno(p)" [disabled]="trabajando">Aceptar</button>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="abrirAsignar(p)" [disabled]="trabajando">{{ aceptable(p.sugerencia) ? 'Otra…' : 'Asignar…' }}</button>
+        </div>
+
+        <!-- Asignación manual en línea -->
+        <form class="producto-form" *ngIf="asignando === p" [formGroup]="form" (ngSubmit)="guardarAsignacion()" novalidate [attr.aria-label]="'Asignar ••' + p.ultimos4">
+          <div class="erp-field">
+            <label class="erp-label" [for]="'pd-destino-' + p.ultimos4">¿A cuál de tus productos pertenece ••{{ p.ultimos4 }}?</label>
+            <select [id]="'pd-destino-' + p.ultimos4" class="erp-select" formControlName="destino">
+              <optgroup label="Tarjetas de crédito" *ngIf="tarjetas.length > 0">
+                <option *ngFor="let t of tarjetas" [value]="'t:' + t.id">{{ nombreTarjeta(t) }}</option>
+              </optgroup>
+              <optgroup label="Cuentas" *ngIf="cuentas.length > 0">
+                <option *ngFor="let c of cuentas" [value]="'c:' + c.id">{{ c.nombre }}</option>
+              </optgroup>
+              <optgroup label="Crear nueva">
+                <option [value]="NUEVA_TARJETA">Una tarjeta de crédito nueva</option>
+                <option [value]="NUEVA_CUENTA">Una cuenta nueva</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="erp-field" *ngIf="creaNueva">
+            <label class="erp-label" [for]="'pd-nombre-' + p.ultimos4">{{ form.controls.destino.value === NUEVA_TARJETA ? 'Franquicia (Visa, Amex…)' : 'Nombre de la cuenta' }}</label>
+            <input [id]="'pd-nombre-' + p.ultimos4" class="erp-input" type="text" formControlName="nombre" maxlength="120" autocomplete="off"
+                   [placeholder]="form.controls.destino.value === NUEVA_TARJETA ? 'Ej. Mastercard' : 'Ej. Ahorros Bancolombia'" />
+          </div>
+          <label class="erp-check" *ngIf="form.controls.destino.value === NUEVA_CUENTA">
+            <input type="checkbox" formControlName="esPrincipal" />
+            <span>Es mi cuenta principal (recibe los avisos sin número, como la nómina)</span>
+          </label>
+          <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorAsignar"><i class="material-icons" aria-hidden="true">error</i><span>{{ errorAsignar }}</span></div>
+          <div class="erp-actions">
+            <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarAsignar()" [disabled]="trabajando">Cancelar</button>
+            <button type="submit" class="erp-btn erp-btn--primary erp-btn--sm" [disabled]="trabajando">{{ trabajando ? 'Guardando…' : 'Guardar' }}</button>
+          </div>
+        </form>
+      </li>
+    </ul>
+  </div>
+</section>

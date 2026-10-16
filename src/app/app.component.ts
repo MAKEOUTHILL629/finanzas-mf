@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { MenuStateService } from './services/menu-state.service';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { MenuStateService, esRutaPublica } from './services/menu-state.service';
 import { ThemeService } from './services/theme.service';
 
 @Component({
@@ -15,10 +17,13 @@ export class AppComponent implements OnInit {
   constructor(
     readonly themeService: ThemeService,
     /** El layout (`layout-sidebar`, `layout-rail`, `layout-drawer`, `layout-movil`, `layout-invitado`) lo decide el servicio del menú. */
-    readonly menuEstado: MenuStateService
+    readonly menuEstado: MenuStateService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.themeService.initTheme();
+    // las páginas públicas (`/p/<token>`) nunca llevan menú
+    this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd)).subscribe((e) => this.menuEstado.fijarRutaPublica(esRutaPublica(e.urlAfterRedirects)));
   }
 }

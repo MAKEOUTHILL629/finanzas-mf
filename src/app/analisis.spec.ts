@@ -32,7 +32,35 @@ describe('Tarjetas', () => {
   it('pendientesDeConfigurar indica qué falta', () => {
     expect(pendientesDeConfigurar(tarjeta())).toEqual(['día de corte', 'día límite de pago']);
     expect(pendientesDeConfigurar(tarjeta({ diaCorte: 15, diaLimitePago: 5 }))).toEqual([]);
-    expect(pendientesDeConfigurar(tarjeta({ diaCorte: 15, diaLimitePago: 5, descripcion: 'Oro' }))).toEqual(['últimos 4 dígitos en la descripción']);
+    expect(pendientesDeConfigurar(tarjeta({ diaCorte: 15, diaLimitePago: 5, descripcion: 'Oro' }))).toEqual(['últimos 4 dígitos']);
+    // la columna propia de los últimos 4 dígitos también lo resuelve
+    expect(pendientesDeConfigurar(tarjeta({ diaCorte: 15, diaLimitePago: 5, descripcion: 'Oro', ultimos4Digitos: '1927,9587' }))).toEqual([]);
+  });
+
+  it('cambiosDeTarjeta: los últimos 4 dígitos se pueden agregar, cambiar y quitar; separadores distintos no cuentan como cambio', () => {
+    const t = tarjeta({ ultimos4Digitos: '1927' });
+    expect(cambiosDeTarjeta(t, { ...valoresDeTarjeta(t), ultimos4Digitos: '1927,9587' })).toEqual({ ultimos4Digitos: '1927,9587' });
+    expect(cambiosDeTarjeta(t, { ...valoresDeTarjeta(t), ultimos4Digitos: ' 1927 ' })).toEqual({});
+    expect(cambiosDeTarjeta(t, { ...valoresDeTarjeta(t), ultimos4Digitos: '' })).toEqual({ ultimos4Digitos: '' });
+    const dos = tarjeta({ ultimos4Digitos: '1927,9587' });
+    expect(cambiosDeTarjeta(dos, { ...valoresDeTarjeta(dos), ultimos4Digitos: '1927 9587' })).toEqual({});
+    expect(cambiosDeTarjeta(tarjeta(), { ...valoresDeTarjeta(tarjeta()), ultimos4Digitos: '4321' })).toEqual({ ultimos4Digitos: '4321' });
+  });
+
+  it('el formulario valida los últimos 4 dígitos (grupos de 4 separados por coma, o vacío)', () => {
+    configurarTestBed([FormularioTarjetaComponent]);
+    const fixture = TestBed.createComponent(FormularioTarjetaComponent);
+    fixture.componentRef.setInput('tarjeta', tarjeta());
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    for (const v of ['1927', '1927,9587', '1927 9587', '']) {
+      c.form.patchValue({ ultimos4Digitos: v });
+      expect(c.form.controls.ultimos4Digitos.valid).withContext(v).toBeTrue();
+    }
+    for (const v of ['192', '19277', '1927,95', 'abcd']) {
+      c.form.patchValue({ ultimos4Digitos: v });
+      expect(c.form.controls.ultimos4Digitos.invalid).withContext(v).toBeTrue();
+    }
   });
 
   it('cambiosDeTarjeta envía solo lo modificado y nunca valores vacíos', () => {

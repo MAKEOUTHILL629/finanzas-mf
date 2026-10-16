@@ -77,7 +77,7 @@
       <div class="cuenta-saldo">
         <span class="erp-overline">Saldo</span>
         <span class="erp-stat-value erp-num" [class.erp-loss]="c.saldo_actual < 0">{{ c.saldo_actual | moneda }}</span>
-        <span class="erp-stat-hint">{{ c.moneda }}<ng-container *ngIf="c.ultimos_4_digitos"> · <span class="erp-mono">{{ enmascarar(c.ultimos_4_digitos) }}</span></ng-container></span>
+        <span class="erp-stat-hint">{{ c.moneda }}<ng-container *ngIf="c.es_principal"> · <strong>Principal</strong></ng-container><ng-container *ngIf="c.ultimos_4_digitos"> · <span class="erp-mono">{{ enmascarar(c.ultimos_4_digitos) }}</span></ng-container></span>
       </div>
 
       <footer class="cuenta-acciones">

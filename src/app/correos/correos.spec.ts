@@ -1,9 +1,28 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ProductoDetectado, ResumenReproceso } from '../modelos/correos-inteligentes';
 import { NotificacionCorreo } from '../modelos/erp';
 import { ModalService } from '../services/modal.service';
 import { ToastService } from '../shared/toast/toast.service';
 import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
-import { admiteConvertirEnPrestamo, claseEstadoCorreo, etiquetaEstadoCorreo, explicarMotivo, interpretarCorreo } from './correos.constants';
+import {
+  accionesDelResumen,
+  admiteConvertirEnPrestamo,
+  admiteDeshacer,
+  claseEstadoCorreo,
+  esAceptable,
+  etiquetaEstadoCorreo,
+  etiquetaProducto,
+  etiquetaVinculo,
+  explicarMotivo,
+  fechaCorteSugerida,
+  interpretarCorreo,
+  motivosOrdenados,
+  porcentajeAvance,
+  sinAsignar,
+  textoSugerencia,
+} from './correos.constants';
+import { ProductosDetectadosComponent, asignacionDeSugerencia, construirAsignacion } from './productos-detectados/productos-detectados.component';
+import { ReprocesarCorreosComponent } from './reprocesar-correos/reprocesar-correos.component';
 import { FormularioConciliarComponent, ValoresConciliacion, construirConfirmacion, modoDe } from './formulario-conciliar/formulario-conciliar.component';
 import { ListaCorreosComponent, contarPorEstado } from './lista-correos/lista-correos.component';
 
@@ -169,6 +188,7 @@ describe('ListaCorreosComponent', () => {
     configurarTestBed([ListaCorreosComponent]);
     const fixture = TestBed.createComponent(ListaCorreosComponent);
     fixture.detectChanges();
+    responder('personas', [{ id: 5, nombre: 'Alicia Buitrago' }]);
     const req = http().expectOne((r) => r.url === `${API}/notificaciones-correo`);
     expect(req.request.params.get('limit')).toBe('300');
     req.flush(correos);
@@ -219,7 +239,314 @@ describe('ListaCorreosComponent', () => {
     configurarTestBed([ListaCorreosComponent]);
     const fixture = TestBed.createComponent(ListaCorreosComponent);
     fixture.detectChanges();
+    responder('personas', []);
     errorHttp(http().expectOne((r) => r.url === `${API}/notificaciones-correo`), 500, {});
     expect(fixture.componentInstance.error).toContain('problema');
+  });
+});
+
+
+describe('correos.constants — vínculos, reproceso y productos', () => {
+  it('explica los motivos nuevos del sync inteligente', () => {
+    for (const m of ['compra_creada_desde_plantilla', 'vinculada_a_compra_existente', 'vinculada_a_transaccion_existente', 'duplicado_de_correo', 'compra_rechazada_o_no_exitosa', 'historico_sin_registro_previo']) {
+      expect(explicarMotivo(m)).not.toBe(m);
+    }
+  });
+
+  it('etiqueta qué hizo el sistema con el correo', () => {
+    expect(etiquetaVinculo('EXISTENTE', null)).toEqual(jasmine.objectContaining({ texto: 'Enlazado a lo que ya tenías', clase: 'info' }));
+    expect(etiquetaVinculo('DUPLICADO', null)?.texto).toBe('Aviso repetido');
+    expect(etiquetaVinculo('CREADA', 'compra_creada_desde_plantilla')?.texto).toContain('valores habituales');
+    expect(etiquetaVinculo('CREADA', 'transaccion_confirmada_automaticamente')?.texto).toBe('Registrado automáticamente');
+    expect(etiquetaVinculo(null, null)).toBeNull();
+  });
+
+  it('solo se puede deshacer lo conciliado por el sistema', () => {
+    expect(admiteDeshacer({ estado_procesamiento: 'CONCILIADO', vinculo: 'CREADA' })).toBeTrue();
+    expect(admiteDeshacer({ estado_procesamiento: 'CONCILIADO', vinculo: null })).toBeFalse();
+    expect(admiteDeshacer({ estado_procesamiento: 'PENDIENTE', vinculo: 'CREADA' })).toBeFalse();
+  });
+
+  it('resume el reproceso: acciones en orden, sin las vacías, y motivos pendientes de mayor a menor', () => {
+    expect(accionesDelResumen({ duplicados: 2, compras_enlazadas: 5, siguen_pendientes: 1 }).map((a) => [a.clave, a.cantidad])).toEqual([['compras_enlazadas', 5], ['duplicados', 2], ['siguen_pendientes', 1]]);
+    const motivos = motivosOrdenados({ vinculada_a_compra_existente: 9, tarjeta_no_identificada: 3, cuenta_no_identificada: 7 });
+    expect(motivos.map((m) => [m.motivo, m.cantidad])).toEqual([['cuenta_no_identificada', 7], ['tarjeta_no_identificada', 3]]);
+    expect(motivosOrdenados({ vinculada_a_compra_existente: 9 }, false).length).toBe(1);
+    expect(porcentajeAvance(25, 100)).toBe(25);
+    expect(porcentajeAvance(5, 0)).toBe(0);
+    expect(porcentajeAvance(120, 100)).toBe(100);
+  });
+
+  it('la fecha de corte sugerida es el día siguiente a la última compra registrada (o el 1.º del mes)', () => {
+    // epoch-ms a medianoche UTC, como llegan las fechas de compra del backend legacy
+    const compras = [{ fechaCompra: Date.UTC(2026, 4, 24) }, { fechaCompra: Date.UTC(2026, 5, 1) }, { fechaCompra: undefined }];
+    expect(fechaCorteSugerida(compras)).toBe('2026-06-02');
+    expect(fechaCorteSugerida([{ fechaCompra: Date.UTC(2026, 11, 31) }])).toBe('2027-01-01');
+    expect(fechaCorteSugerida([], new Date(2026, 9, 15))).toBe('2026-10-01');
+  });
+
+  it('textos de sugerencia y cuáles se pueden aceptar sin pensar', () => {
+    const fuerte = { tipo: 'TARJETA_EXISTENTE', tarjetaId: 2, tarjeta: 'Amex', votos: 192, total: 193, automatica: true } as const;
+    const debil = { ...fuerte, votos: 1, total: 1, automatica: false };
+    expect(textoSugerencia(fuerte)).toContain('192 de 193');
+    expect(textoSugerencia(debil)).toContain('solo 1 compra coincide');
+    expect(textoSugerencia({ tipo: 'CREAR_CUENTA', nombre: 'x', tipoCuenta: 'AHORROS', esPrincipal: true })).toContain('principal');
+    expect(textoSugerencia({ tipo: 'AGREGAR_A_CUENTA', cuentaId: 1, cuenta: 'Ahorros' })).toContain('Ahorros');
+    expect(textoSugerencia({ tipo: 'CREAR_TARJETA' })).toContain('nueva');
+    expect(textoSugerencia(null)).toBeNull();
+    expect([fuerte, debil, { tipo: 'CREAR_TARJETA' } as const, { tipo: 'CREAR_CUENTA', nombre: 'x', tipoCuenta: 'AHORROS', esPrincipal: false } as const].map((x) => esAceptable(x))).toEqual([true, false, false, true]);
+    expect(esAceptable(null)).toBeFalse();
+    expect(etiquetaProducto({ instrumento: 'TC', esDebito: false })).toBe('Tarjeta de crédito');
+    expect(etiquetaProducto({ instrumento: 'CUENTA', esDebito: true })).toBe('Tarjeta débito');
+    expect(etiquetaProducto({ instrumento: 'CUENTA', esDebito: false })).toBe('Cuenta');
+  });
+});
+
+function producto(extra: Partial<ProductoDetectado> = {}): ProductoDetectado {
+  return {
+    ultimos4: '1927', instrumento: 'TC', esDebito: false, correos: 384, pendientes: 380, primera: '2024-12-27T00:00:00.000Z', ultima: '2026-10-13T00:00:00.000Z', totalCop: '48706756', asignadoA: null,
+    sugerencia: { tipo: 'TARJETA_EXISTENTE', tarjetaId: 2, tarjeta: 'American Express', votos: 192, total: 193, automatica: true }, ...extra,
+  };
+}
+
+describe('ProductosDetectadosComponent', () => {
+  afterEach(() => verificarHttp());
+
+  it('construirAsignacion / asignacionDeSugerencia arman el cuerpo según lo elegido', () => {
+    const p = { ultimos4: '1927', instrumento: 'TC' as const };
+    expect(construirAsignacion(p, { destino: 't:2', nombre: '', esPrincipal: false })).toEqual({ ultimos4: '1927', destino: 'TARJETA', id: 2 });
+    expect(construirAsignacion(p, { destino: 'c:7', nombre: '', esPrincipal: false })).toEqual({ ultimos4: '1927', destino: 'CUENTA', id: 7 });
+    expect(construirAsignacion(p, { destino: 'nueva-tarjeta', nombre: ' Visa ', esPrincipal: false })).toEqual({ ultimos4: '1927', destino: 'TARJETA', nuevo: { franquicia: 'Visa' } });
+    expect(construirAsignacion(p, { destino: 'nueva-cuenta', nombre: 'Ahorros', esPrincipal: true })).toEqual({ ultimos4: '1927', destino: 'CUENTA', nuevo: { nombre: 'Ahorros', esPrincipal: true } });
+    expect(construirAsignacion(p, { destino: '', nombre: '', esPrincipal: false })).toBeNull();
+    expect(construirAsignacion(p, { destino: 't:abc', nombre: '', esPrincipal: false })).toBeNull();
+
+    expect(asignacionDeSugerencia(p, producto().sugerencia)).toEqual({ ultimos4: '1927', destino: 'TARJETA', id: 2 });
+    expect(asignacionDeSugerencia(p, { tipo: 'AGREGAR_A_CUENTA', cuentaId: 7, cuenta: 'x' })).toEqual({ ultimos4: '1927', destino: 'CUENTA', id: 7 });
+    expect(asignacionDeSugerencia(p, { tipo: 'CREAR_CUENTA', nombre: 'Bancolombia *1927', tipoCuenta: 'AHORROS', esPrincipal: true })).toEqual({
+      ultimos4: '1927', destino: 'CUENTA', nuevo: { nombre: 'Bancolombia *1927', tipoCuenta: 'AHORROS', esPrincipal: true },
+    });
+    expect(asignacionDeSugerencia(p, { tipo: 'CREAR_TARJETA' })).toBeNull();
+    expect(asignacionDeSugerencia(p, null)).toBeNull();
+    expect(sinAsignar([producto(), producto({ ultimos4: '9491', asignadoA: { tipo: 'TARJETA', id: 1, nombre: 'Mastercard' } })]).length).toBe(1);
+  });
+
+  function iniciar(productos: ProductoDetectado[]) {
+    configurarTestBed([ProductosDetectadosComponent]);
+    const fixture = TestBed.createComponent(ProductosDetectadosComponent);
+    fixture.detectChanges();
+    responder('notificaciones-correo/productos', productos);
+    responder('tarjetas', [{ id: 1, franquicia: 'Mastercard' }, { id: 2, franquicia: 'American Express', descripcion: 'Platinum' }]);
+    responder('cuentas-financieras', [{ id: 7, nombre: 'Ahorros', moneda: 'COP' }]);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const recargar = (productos: ProductoDetectado[] = []) => {
+    responder('notificaciones-correo/productos', productos);
+    responder('tarjetas', []);
+    responder('cuentas-financieras', []);
+  };
+
+  it('muestra cuántos están sin asignar, abierto si falta alguno y plegado si todos están asignados', () => {
+    const f = iniciar([producto(), producto({ ultimos4: '9491', asignadoA: { tipo: 'TARJETA', id: 1, nombre: 'Mastercard' }, sugerencia: null })]);
+    const c = f.componentInstance;
+    expect(c.porAsignar.length).toBe(1);
+    expect(c.aceptables.length).toBe(1);
+    expect(c.abierto).toBeTrue();
+    expect((f.nativeElement as HTMLElement).textContent).toContain('1 sin asignar');
+    expect((f.nativeElement as HTMLElement).textContent).toContain('Aceptar sugerencias (1)');
+    TestBed.resetTestingModule();
+
+    const todo = iniciar([producto({ asignadoA: { tipo: 'TARJETA', id: 2, nombre: 'Amex' }, sugerencia: null })]);
+    expect(todo.componentInstance.abierto).toBeFalse();
+    expect((todo.nativeElement as HTMLElement).textContent).toContain('todas asignadas');
+  });
+
+  it('aceptar todas las sugerencias llama al backend, avisa y recarga', () => {
+    const f = iniciar([producto()]);
+    const c = f.componentInstance;
+    const cambiado = jasmine.createSpy('cambiado');
+    c.cambiado.subscribe(cambiado);
+    const exito = spyOn(TestBed.inject(ToastService), 'exito');
+    c.aceptarTodo();
+    const req = esperar('POST', 'notificaciones-correo/productos/aceptar-sugerencias');
+    expect(req.request.body).toEqual({});
+    req.flush({ aplicados: [{ ultimos4: '1927', destino: 'TARJETA', id: 2, nombre: 'Amex', creado: false }, { ultimos4: '3698', destino: 'CUENTA', id: 9, nombre: 'Ahorros', creado: true }], omitidos: [] });
+    expect(exito).toHaveBeenCalledWith('2 productos asignados (1 creado).');
+    expect(cambiado).toHaveBeenCalled();
+    recargar();
+  });
+
+  it('aceptar la sugerencia de uno y asignar a mano uno nuevo', () => {
+    const f = iniciar([producto(), producto({ ultimos4: '5052', sugerencia: { tipo: 'CREAR_TARJETA' } })]);
+    const c = f.componentInstance;
+    c.aceptarUno(c.productos[0]);
+    const req = esperar('POST', 'notificaciones-correo/productos/asignar');
+    expect(req.request.body).toEqual({ ultimos4: '1927', destino: 'TARJETA', id: 2 });
+    req.flush({ ultimos4: '1927', destino: 'TARJETA', id: 2, nombre: 'American Express', creado: false });
+    recargar([producto({ ultimos4: '5052', sugerencia: { tipo: 'CREAR_TARJETA' } })]);
+
+    c.abrirAsignar(c.productos[0]);
+    expect(c.form.controls.destino.value).toBe('nueva-tarjeta');
+    c.form.patchValue({ nombre: 'Visa' });
+    c.guardarAsignacion();
+    const nuevo = esperar('POST', 'notificaciones-correo/productos/asignar');
+    expect(nuevo.request.body).toEqual({ ultimos4: '5052', destino: 'TARJETA', nuevo: { franquicia: 'Visa' } });
+    errorHttp(nuevo, 409, { message: 'Los dígitos 5052 ya pertenecen a otro producto' });
+    expect(c.errorAsignar).toContain('ya pertenecen');
+    expect(c.asignando).not.toBeNull(); // el formulario sigue abierto para corregir
+  });
+
+  it('el formulario en línea propone la tarjeta sugerida y exige elegir un destino', () => {
+    const f = iniciar([producto()]);
+    const c = f.componentInstance;
+    c.abrirAsignar(c.productos[0]);
+    expect(c.form.controls.destino.value).toBe('t:2');
+    c.form.patchValue({ destino: '' });
+    c.guardarAsignacion();
+    http().expectNone((r) => r.method === 'POST');
+    expect(c.errorAsignar).toContain('Elige');
+    c.cancelarAsignar();
+    expect(c.asignando).toBeNull();
+  });
+
+  it('un error de carga se muestra con opción de reintentar', () => {
+    configurarTestBed([ProductosDetectadosComponent]);
+    const fixture = TestBed.createComponent(ProductosDetectadosComponent);
+    fixture.detectChanges();
+    errorHttp(esperar('GET', 'notificaciones-correo/productos'), 500, {});
+    http().match(() => true); // forkJoin cancela las demás
+    expect(fixture.componentInstance.error).toContain('problema');
+  });
+});
+
+describe('ReprocesarCorreosComponent', () => {
+  afterEach(() => verificarHttp());
+
+  const resumen = (extra: Partial<ResumenReproceso> = {}): ResumenReproceso => ({
+    simulado: true, desde: '2026-06-02', evaluados: 40, acciones: { compras_enlazadas: 25, compras_creadas_con_plantilla: 10, duplicados: 3, siguen_pendientes: 2 },
+    motivos: { vinculada_a_compra_existente: 25, tarjeta_no_identificada: 2 }, omitidos: 0, errores: [], muestras: [], aprendizajes: [], ...extra,
+  });
+
+  function iniciar() {
+    configurarTestBed([ReprocesarCorreosComponent]);
+    const fixture = TestBed.createComponent(ReprocesarCorreosComponent);
+    fixture.detectChanges();
+    responder('compras-credito', [{ fechaCompra: Date.UTC(2026, 5, 1) }, { fechaCompra: Date.UTC(2026, 4, 24) }]);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('propone como corte el día siguiente a la última compra y simula SIN escribir', () => {
+    const f = iniciar();
+    const c = f.componentInstance;
+    expect(c.desde).toBe('2026-06-02');
+    c.simular();
+    const req = esperar('POST', 'notificaciones-correo/reprocesar');
+    expect(req.request.body).toEqual({ desde: '2026-06-02', simular: true });
+    req.flush(resumen());
+    f.detectChanges();
+    expect(c.fase).toBe('resumen');
+    const t = (f.nativeElement as HTMLElement).textContent ?? '';
+    expect(t).toContain('simulación');
+    expect(t).toContain('Compras que ya tenías: se enlazan');
+    expect(t).toContain('Aplicar estos cambios');
+  });
+
+  it('sin fecha de corte no se envía `desde`; si falla la simulación se vuelve a la configuración con el error', () => {
+    const f = iniciar();
+    const c = f.componentInstance;
+    c.sinCorte = true;
+    c.simular();
+    const req = esperar('POST', 'notificaciones-correo/reprocesar');
+    expect(req.request.body).toEqual({ simular: true });
+    errorHttp(req, 400, { message: 'desde inválido' });
+    expect(c.fase).toBe('config');
+    expect(c.error).toBe('desde inválido');
+  });
+
+  it('aplicar ejecuta en segundo plano, muestra el avance y termina con el resumen real', fakeAsync(() => {
+    configurarTestBed([ReprocesarCorreosComponent]);
+    const fixture = TestBed.createComponent(ReprocesarCorreosComponent);
+    fixture.detectChanges();
+    responder('compras-credito', []);
+    const c = fixture.componentInstance;
+    const terminado = jasmine.createSpy('terminado');
+    c.terminado.subscribe(terminado);
+    c.resumen = resumen();
+    c.fase = 'resumen';
+
+    c.aplicar();
+    const inicio = esperar('POST', 'notificaciones-correo/reprocesar');
+    expect(inicio.request.body.simular).toBeFalse();
+    inicio.flush({ jobId: 'job-1', total: 40 });
+
+    tick(1500);
+    esperar('GET', 'notificaciones-correo/reprocesar/job-1').flush({ jobId: 'job-1', estado: 'EN_CURSO', total: 40, procesados: 10, iniciado: 'x', terminado: null, resumen: null, error: null });
+    expect(c.fase).toBe('ejecutando');
+    expect(c.avance?.procesados).toBe(10);
+
+    tick(1500);
+    esperar('GET', 'notificaciones-correo/reprocesar/job-1').flush({ jobId: 'job-1', estado: 'TERMINADO', total: 40, procesados: 40, iniciado: 'x', terminado: 'y', resumen: resumen({ simulado: false }), error: null });
+    expect(c.fase).toBe('listo');
+    expect(terminado).toHaveBeenCalledWith(jasmine.objectContaining({ simulado: false, evaluados: 40 }));
+    discardPeriodicTasks();
+  }));
+
+  it('si el trabajo en segundo plano falla, vuelve al resumen con el motivo', fakeAsync(() => {
+    configurarTestBed([ReprocesarCorreosComponent]);
+    const fixture = TestBed.createComponent(ReprocesarCorreosComponent);
+    fixture.detectChanges();
+    responder('compras-credito', []);
+    const c = fixture.componentInstance;
+    c.resumen = resumen();
+    c.fase = 'resumen';
+    c.aplicar();
+    esperar('POST', 'notificaciones-correo/reprocesar').flush({ jobId: 'j', total: 1 });
+    tick(1500);
+    esperar('GET', 'notificaciones-correo/reprocesar/j').flush({ jobId: 'j', estado: 'FALLIDO', total: 1, procesados: 0, iniciado: 'x', terminado: 'y', resumen: null, error: 'se cayó la conexión' });
+    expect(c.fase).toBe('resumen');
+    expect(c.error).toBe('se cayó la conexión');
+    discardPeriodicTasks();
+  }));
+});
+
+describe('ListaCorreosComponent — vínculos y deshacer', () => {
+  afterEach(() => verificarHttp());
+
+  function iniciar(correos: NotificacionCorreo[]) {
+    configurarTestBed([ListaCorreosComponent]);
+    const fixture = TestBed.createComponent(ListaCorreosComponent);
+    fixture.detectChanges();
+    responder('personas', [{ id: 5, nombre: 'Alicia Buitrago' }]);
+    http().expectOne((r) => r.url === `${API}/notificaciones-correo`).flush(correos);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('lo que el sistema resolvió solo se rotula, nombra a la persona y se puede deshacer', () => {
+    const f = iniciar([correo({ id: 1, estado_procesamiento: 'CONCILIADO', vinculo: 'EXISTENTE', persona_id: 5, compra_credito_generada_id: 8, datos_parseados: { monto: '50000', comercio: 'DIDI', motivo: 'vinculada_a_compra_existente' } })]);
+    const c = f.componentInstance;
+    c.pestana = 'CONCILIADO';
+    f.detectChanges();
+    const t = (f.nativeElement as HTMLElement).textContent ?? '';
+    expect(t).toContain('Enlazado a lo que ya tenías');
+    expect(t).toContain('Alicia Buitrago');
+    expect(t).toContain('Ya tenías esta compra registrada');
+    expect(t).toContain('Deshacer');
+    expect(c.efectoDeDescartar(c.correos[0])).toContain('se conserva');
+    expect(c.efectoDeDescartar(correo({ vinculo: 'DUPLICADO' }))).toContain('repetido');
+  });
+
+  it('abre y cierra el reproceso en un modal', () => {
+    const f = iniciar([]);
+    const c = f.componentInstance;
+    c.abrirReproceso();
+    expect(c.reprocesando).toBeTrue();
+    TestBed.inject(ModalService).close();
+    expect(c.reprocesando).toBeFalse();
+    c.onReprocesado({ ...({} as ResumenReproceso), acciones: { compras_creadas_con_plantilla: 2, compras_creadas: 1, transacciones_creadas: 4, compras_enlazadas: 6 } } as ResumenReproceso);
+    http().expectOne((r) => r.url === `${API}/notificaciones-correo`).flush([]);
   });
 });

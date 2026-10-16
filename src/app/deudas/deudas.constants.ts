@@ -9,6 +9,10 @@ const ETIQUETAS: Record<TipoMovimientoDeuda, string> = {
   ABONO_PAGO_RECIBIDO: 'Pago recibido',
   ABONO_APORTE_DIARIO: 'Aporte diario',
   ABONO_CRUCE_DEUDA: 'Cruce de deuda (abono)',
+  CARGO_RECURRENTE_PERSONA: 'Cargo recurrente',
+  ABONO_RECURRENTE_PERSONA: 'Descuento recurrente',
+  ABONO_SALDO_FAVOR_CARRO: 'Saldo a favor del carro',
+  CARGO_COBRO_PUNTUAL: 'Gasto repartido',
 };
 
 export function etiquetaMovimiento(tipo: string | null | undefined): string {

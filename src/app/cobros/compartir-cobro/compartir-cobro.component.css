@@ -1,0 +1,11 @@
+.enlace { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2); border: 1px solid var(--table-border); border-radius: var(--radius-md); }
+.enlace-estado { display: flex; align-items: center; gap: 8px; font-size: var(--text-body-sm); color: var(--text-secondary); }
+.enlace-estado .material-icons { color: var(--green-success, #34c759); }
+.enlace-estado--inactivo .material-icons { color: var(--text-secondary); }
+.enlace-url { display: flex; gap: 8px; }
+.enlace-url .erp-input { flex: 1; min-width: 0; font-size: var(--text-body-sm); }
+.enlace-acciones { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.enlace-acciones a { text-decoration: none; }
+.campos { display: flex; flex-direction: column; gap: var(--space-2); }
+.erp-form-actions { flex-wrap: wrap; }
+.erp-alert a { color: var(--text-link); font-weight: var(--weight-semibold); }

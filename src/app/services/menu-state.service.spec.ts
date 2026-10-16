@@ -1,10 +1,27 @@
 import { BehaviorSubject } from 'rxjs';
 import { FAVORITOS_POR_DEFECTO } from '../shared/menu/menu.config';
 import { AuthServiceService } from './auth-service.service';
-import { BP_ESCRITORIO, BP_MOVIL, LayoutMenu, MenuStateService, layoutPara } from './menu-state.service';
+import { BP_ESCRITORIO, BP_MOVIL, LayoutMenu, MenuStateService, esRutaPublica, layoutPara } from './menu-state.service';
 
 const CLAVES = ['finanzas-menu-colapsado', 'finanzas-menu-favoritos'];
 const limpiar = () => CLAVES.forEach((c) => localStorage.removeItem(c));
+
+describe('páginas públicas (enlace de cobro)', () => {
+  it('solo /p/<token> es público', () => {
+    expect(esRutaPublica('/p/abc123')).toBeTrue();
+    expect(esRutaPublica('/p/abc123?x=1')).toBeTrue();
+    expect(esRutaPublica('/p/')).toBeFalse();
+    expect(esRutaPublica('/p')).toBeFalse();
+    expect(esRutaPublica('/cobros')).toBeFalse();
+    expect(esRutaPublica('/prestamos/7')).toBeFalse();
+    expect(esRutaPublica(null)).toBeFalse();
+  });
+
+  it('en una página pública no hay menú aunque haya sesión, en cualquier ancho', () => {
+    for (const ancho of [320, 800, 1920]) expect(layoutPara(ancho, false, true, true)).toBe('invitado');
+    expect(layoutPara(1280, false, true, false)).toBe('sidebar');
+  });
+});
 
 describe('layoutPara', () => {
   it('sin sesión no hay menú, sea cual sea el ancho', () => {

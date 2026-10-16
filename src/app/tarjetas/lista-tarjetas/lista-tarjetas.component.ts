@@ -14,7 +14,8 @@ export function pendientesDeConfigurar(t: Tarjeta): string[] {
   const faltan: string[] = [];
   if (t.diaCorte === null || t.diaCorte === undefined) faltan.push('día de corte');
   if (t.diaLimitePago === null || t.diaLimitePago === undefined) faltan.push('día límite de pago');
-  if (!/\d{4}/.test(t.descripcion ?? '')) faltan.push('últimos 4 dígitos en la descripción');
+  // Los dígitos viven en su propia columna; las tarjetas antiguas los llevan en la descripción ("Oro *1927").
+  if (!/\d{4}/.test(t.ultimos4Digitos ?? '') && !/\d{4}/.test(t.descripcion ?? '')) faltan.push('últimos 4 dígitos');
   return faltan;
 }
 

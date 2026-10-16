@@ -1,0 +1,67 @@
+<div class="erp-form" aria-labelledby="titulo-compartir">
+  <div>
+    <h2 class="erp-form-title" id="titulo-compartir">Compartir con {{ nombre }}</h2>
+    <p class="erp-subtitle">Un enlace con el detalle de lo que debe en {{ nombrePeriodo(periodo) }}. Desde ahí puede avisarte que pagó y adjuntar el comprobante.</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error">
+    <i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span>
+  </div>
+
+  <div *ngIf="cargando" aria-busy="true"><div class="erp-skeleton" style="height: 120px"></div></div>
+
+  <ng-container *ngIf="!cargando">
+    <!-- Enlace listo -->
+    <section class="enlace" *ngIf="enlace" aria-label="Enlace para compartir">
+      <div class="enlace-estado" [class.enlace-estado--inactivo]="!enlace.vigente">
+        <i class="material-icons" aria-hidden="true">{{ enlace.vigente ? 'link' : 'link_off' }}</i>
+        <span>{{ enlace.vigente ? vence(enlace.expiraEn) : 'Desactivado: la persona ya no puede abrirlo' }} · visto {{ enlace.vistas }} {{ enlace.vistas === 1 ? 'vez' : 'veces' }}</span>
+      </div>
+
+      <div class="enlace-url" *ngIf="enlace.vigente">
+        <input class="erp-input erp-mono" type="text" [value]="url" readonly aria-label="Enlace" (focus)="$any($event.target).select()" />
+        <button type="button" class="erp-btn erp-btn--secondary" (click)="copiar()">
+          <i class="material-icons" aria-hidden="true">{{ copiado ? 'check' : 'content_copy' }}</i>{{ copiado ? 'Copiado' : 'Copiar' }}
+        </button>
+      </div>
+
+      <div class="erp-alert erp-alert--warning" *ngIf="enlace.reportesPendientes > 0" role="status">
+        <i class="material-icons" aria-hidden="true">notifications_active</i>
+        <span>Tiene {{ enlace.reportesPendientes }} pago{{ enlace.reportesPendientes === 1 ? '' : 's' }} esperando tu revisión. <a routerLink="/cobros" [queryParams]="{ tab: 'reportes', periodo: periodo }" (click)="cerrar.emit()">Revisar</a></span>
+      </div>
+
+      <div class="enlace-acciones" *ngIf="enlace.vigente">
+        <a class="erp-btn erp-btn--primary" [href]="whatsapp" target="_blank" rel="noopener noreferrer"><i class="material-icons" aria-hidden="true">chat</i>Enviar por WhatsApp</a>
+        <button type="button" class="erp-btn erp-btn--ghost" (click)="desactivar()" [disabled]="trabajando"><i class="material-icons" aria-hidden="true">link_off</i>Desactivar</button>
+      </div>
+      <p class="erp-field-hint" *ngIf="enlace.vigente">La persona ve la liquidación como estaba el {{ enlace.snapshotEn | date: 'dd/MM/yyyy HH:mm' }}. Si después registras más cargos o abonos, actualiza el enlace.</p>
+    </section>
+
+    <!-- Mensaje e instrucciones -->
+    <form [formGroup]="form" (ngSubmit)="generar()" novalidate class="campos">
+      <div class="erp-field">
+        <label class="erp-label" for="cc-mensaje">Mensaje para {{ nombre }}</label>
+        <textarea id="cc-mensaje" class="erp-textarea" rows="2" maxlength="600" formControlName="mensaje"></textarea>
+      </div>
+      <div class="erp-field">
+        <label class="erp-label" for="cc-instrucciones">¿Cómo te paga?</label>
+        <textarea id="cc-instrucciones" class="erp-textarea" rows="2" maxlength="600" formControlName="instruccionesPago" placeholder="Ej. Bre-B a @luish9910 o Bancolombia Ahorros *3698"></textarea>
+        <p class="erp-field-hint">Se guarda para la próxima vez.</p>
+      </div>
+      <div class="erp-field" *ngIf="!enlace || !enlace.vigente">
+        <label class="erp-label" for="cc-vigencia">El enlace dura</label>
+        <select id="cc-vigencia" class="erp-select" formControlName="diasVigencia">
+          <option *ngFor="let v of vigencias" [ngValue]="v.dias">{{ v.etiqueta }}</option>
+        </select>
+      </div>
+
+      <div class="erp-form-actions">
+        <button type="button" class="erp-btn erp-btn--ghost" (click)="cerrar.emit()">Cerrar</button>
+        <button type="button" class="erp-btn erp-btn--ghost" *ngIf="enlace?.vigente" (click)="generar(true)" [disabled]="trabajando" title="El enlace anterior deja de funcionar">Generar uno nuevo</button>
+        <button type="submit" class="erp-btn erp-btn--primary" [disabled]="trabajando">
+          {{ trabajando ? 'Un momento…' : enlace?.vigente ? 'Actualizar enlace' : enlace ? 'Reactivar enlace' : 'Generar enlace' }}
+        </button>
+      </div>
+    </form>
+  </ng-container>
+</div>

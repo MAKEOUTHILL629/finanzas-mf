@@ -80,6 +80,13 @@ import { FormularioTransaccionComponent } from './transacciones/formulario-trans
 // Dominio: Correos del banco
 import { ListaCorreosComponent } from './correos/lista-correos/lista-correos.component';
 import { FormularioConciliarComponent } from './correos/formulario-conciliar/formulario-conciliar.component';
+import { ProductosDetectadosComponent } from './correos/productos-detectados/productos-detectados.component';
+import { ReprocesarCorreosComponent } from './correos/reprocesar-correos/reprocesar-correos.component';
+import { CobrosComponent } from './cobros/cobros.component';
+import { FormularioCobroComponent } from './cobros/formulario-cobro/formulario-cobro.component';
+import { AprobarReporteComponent } from './cobros/aprobar-reporte/aprobar-reporte.component';
+import { CompartirCobroComponent } from './cobros/compartir-cobro/compartir-cobro.component';
+import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
 
 // Dominio: Flujo de caja y deudas por persona
 import { FlujoCajaComponent } from './flujo-caja/flujo-caja.component';
@@ -166,7 +173,17 @@ const TRANSACCIONES_DECLARATIONS = [
 
 const CORREOS_DECLARATIONS = [
   ListaCorreosComponent,
-  FormularioConciliarComponent
+  FormularioConciliarComponent,
+  ProductosDetectadosComponent,
+  ReprocesarCorreosComponent
+];
+
+const COBROS_DECLARATIONS = [
+  CobrosComponent,
+  FormularioCobroComponent,
+  AprobarReporteComponent,
+  CompartirCobroComponent,
+  CobroPublicoComponent
 ];
 
 const ANALISIS_DECLARATIONS = [
@@ -218,6 +235,7 @@ const CORE_PROVIDERS: (Provider | EnvironmentProviders)[] = [
     ...CUENTAS_DECLARATIONS,
     ...TRANSACCIONES_DECLARATIONS,
     ...CORREOS_DECLARATIONS,
+    ...COBROS_DECLARATIONS,
     ...ANALISIS_DECLARATIONS
   ],
   imports: [

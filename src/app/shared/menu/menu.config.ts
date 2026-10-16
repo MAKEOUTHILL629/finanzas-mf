@@ -35,6 +35,7 @@ export const GRUPOS_MENU: GrupoMenu[] = [
       { id: 'pagos-mes', etiqueta: 'Pagos del mes', icono: 'calendar_today', ruta: '/pagos-mes', palabras: 'pagos mes tarjetas cuotas' },
       { id: 'pagos-persona', etiqueta: 'Pagos por persona', corta: 'Por persona', icono: 'people', ruta: '/pagos-mes-personas', palabras: 'pagos persona quien debe', relacionadas: ['/pagos-mes-personas-detalle'] },
       { id: 'cortes-cobro', etiqueta: 'Cortes de cobro', corta: 'Cortes', icono: 'event_repeat', ruta: '/cortes-cobro', palabras: 'cortes cobro corte' },
+      { id: 'cobros', etiqueta: 'Cobros a personas', corta: 'Cobros', icono: 'request_quote', ruta: '/cobros', palabras: 'cobros luz mercado fiesta repartir gastos compartidos enlace comprobante pagos reportados aprobar' },
     ],
   },
   {

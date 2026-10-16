@@ -1,4 +1,4 @@
-<ng-container *ngIf="isUserLoggedIn$ | async; else invitado">
+<ng-container *ngIf="(isUserLoggedIn$ | async) && !(estado.rutaPublica$ | async); else invitado">
 
   <!-- Barra superior: tablet y móvil. Muestra dónde estás y abre el panel. -->
   <header class="topbar" *ngIf="esPanel">
@@ -171,7 +171,7 @@
   </li>
 </ng-template>
 
-<!-- Sin sesión no hay menú: solo el cambio de tema -->
+<!-- Sin sesión (o en una página pública: /p/<token>) no hay menú: solo el cambio de tema -->
 <ng-template #invitado>
   <button type="button" class="tema-flotante" (click)="toggleTheme()"
           [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'" [attr.aria-label]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">

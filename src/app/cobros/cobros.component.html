@@ -1,0 +1,256 @@
+<section class="erp-page" aria-labelledby="titulo-cobros">
+  <header class="erp-header">
+    <div>
+      <h1 id="titulo-cobros">Cobros a personas</h1>
+      <p class="erp-subtitle">Reparte gastos entre varias personas (la luz, el mercado, una fiesta), comparte con cada una el detalle de lo que debe y aprueba los pagos que te reportan.</p>
+    </div>
+    <div class="erp-actions">
+      <a class="erp-btn erp-btn--ghost" routerLink="/liquidacion">
+        <i class="material-icons" aria-hidden="true">fact_check</i>
+        Liquidación
+      </a>
+      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirNuevo()">
+        <i class="material-icons" aria-hidden="true">call_split</i>
+        Repartir un gasto
+      </button>
+    </div>
+  </header>
+
+  <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
+    <div class="erp-field">
+      <label class="erp-label" for="co-periodo">Periodo</label>
+      <div class="erp-month-picker">
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <input id="co-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+      </div>
+      <span class="erp-field-hint">{{ nombrePeriodo(periodo) }}</span>
+    </div>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngFor="let e of errores">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>{{ e }} <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="cargar()">Reintentar</button></div>
+  </div>
+
+  <div class="erp-grid erp-grid--stats" *ngIf="!cargando" aria-label="Resumen">
+    <div class="erp-card erp-stat">
+      <span class="erp-overline">Repartido en {{ nombrePeriodo(periodo) }}</span>
+      <span class="erp-stat-value erp-num">{{ totalACobrar | moneda }}</span>
+      <span class="erp-stat-hint">{{ cobros.length }} gasto{{ cobros.length === 1 ? '' : 's' }} · lo que se cobra a los demás</span>
+    </div>
+    <div class="erp-card erp-stat" [class.stat-alerta]="pendientes > 0">
+      <span class="erp-overline">Pagos por revisar</span>
+      <span class="erp-stat-value erp-num">{{ pendientes }}</span>
+      <span class="erp-stat-hint">Personas que dicen haber pagado</span>
+    </div>
+    <div class="erp-card erp-stat" [class.stat-alerta]="ingresos.length > 0">
+      <span class="erp-overline">Ingresos por aplicar</span>
+      <span class="erp-stat-value erp-num">{{ ingresos.length }}</span>
+      <span class="erp-stat-hint">Transferencias de personas ya recibidas</span>
+    </div>
+  </div>
+
+  <div class="chips" role="tablist" aria-label="Secciones de cobros">
+    <button type="button" class="chip" role="tab" [class.chip--activo]="pestana === 'gastos'" [attr.aria-selected]="pestana === 'gastos'" (click)="pestana = 'gastos'">
+      Gastos repartidos <span class="chip-n erp-num">{{ cobros.length }}</span>
+    </button>
+    <button type="button" class="chip" role="tab" [class.chip--activo]="pestana === 'reportes'" [attr.aria-selected]="pestana === 'reportes'" (click)="pestana = 'reportes'">
+      Pagos reportados <span class="chip-n erp-num" [class.chip-n--alerta]="pendientes > 0">{{ pendientes }}</span>
+    </button>
+    <button type="button" class="chip" role="tab" [class.chip--activo]="pestana === 'ingresos'" [attr.aria-selected]="pestana === 'ingresos'" (click)="pestana = 'ingresos'">
+      Ingresos por aplicar <span class="chip-n erp-num" [class.chip-n--alerta]="ingresos.length > 0">{{ ingresos.length }}</span>
+    </button>
+    <button type="button" class="chip" role="tab" [class.chip--activo]="pestana === 'enlaces'" [attr.aria-selected]="pestana === 'enlaces'" (click)="pestana = 'enlaces'">
+      Enlaces compartidos <span class="chip-n erp-num">{{ enlaces.length }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="cargando" aria-busy="true" aria-label="Cargando">
+    <div class="erp-skeleton" style="height: 120px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3]"></div>
+  </div>
+
+  <!-- ───────── Gastos repartidos ───────── -->
+  <ng-container *ngIf="!cargando && pestana === 'gastos'">
+    <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="anular-titulo" *ngIf="confirmandoAnular">
+      <i class="material-icons" aria-hidden="true">warning</i>
+      <div>
+        <strong id="anular-titulo">¿Anular «{{ confirmandoAnular.concepto }}»?</strong>
+        <p class="aviso">Los cargos a {{ confirmandoAnular.participantes.length }} persona(s) dejan de contar en su liquidación. Los pagos que ya hicieron no se tocan.</p>
+        <div class="erp-actions">
+          <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarAnular()" [disabled]="trabajando">{{ trabajando ? 'Anulando…' : 'Sí, anular' }}</button>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="confirmandoAnular = null" [disabled]="trabajando">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="erp-card erp-empty" *ngIf="cobros.length === 0">
+      <i class="material-icons" aria-hidden="true">call_split</i>
+      <h2>No hay gastos repartidos en {{ nombrePeriodo(periodo) }}</h2>
+      <p>Cuando pagues algo que se divide entre varios —el recibo de la luz, el mercado, una fiesta— regístralo aquí y cada quien lo verá en su liquidación.</p>
+      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirNuevo()"><i class="material-icons" aria-hidden="true">call_split</i>Repartir un gasto</button>
+    </div>
+
+    <div class="erp-grid" *ngIf="cobros.length > 0">
+      <article class="erp-card cobro" *ngFor="let c of cobros; trackBy: trackById" [attr.aria-label]="c.concepto" [class.cobro--anulado]="c.estado === 'ANULADO'">
+        <header class="cobro-cabecera">
+          <span class="cobro-icono" aria-hidden="true"><i class="material-icons">{{ iconoCat(c.categoria) }}</i></span>
+          <div class="cobro-titulo">
+            <h2>{{ c.concepto }}</h2>
+            <span class="erp-muted">{{ categoria(c.categoria) }} · {{ c.fechaGasto | fechaCorta }}</span>
+          </div>
+          <span class="erp-badge erp-badge--danger" *ngIf="c.estado === 'ANULADO'">Anulado</span>
+        </header>
+        <div class="cobro-montos">
+          <div><span class="erp-overline">Costó</span><strong class="erp-num">{{ c.montoTotal | moneda }}</strong></div>
+          <div><span class="erp-overline">Se te debe</span><strong class="erp-num erp-gain">{{ c.montoACobrar | moneda }}</strong></div>
+        </div>
+        <ul class="cobro-personas" aria-label="Reparto">
+          <li *ngFor="let p of c.participantes"><span>{{ p.nombre }}<span class="erp-badge" *ngIf="p.esPropio">Tú</span></span><strong class="erp-num">{{ p.monto | moneda }}</strong></li>
+        </ul>
+        <p class="erp-muted notas" *ngIf="c.notas">{{ c.notas }}</p>
+        <footer class="cobro-acciones" *ngIf="c.estado === 'ACTIVO'">
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirAnular(c)"><i class="material-icons" aria-hidden="true">block</i>Anular</button>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="abrirEditar(c)"><i class="material-icons" aria-hidden="true">edit</i>Editar</button>
+        </footer>
+      </article>
+    </div>
+  </ng-container>
+
+  <!-- ───────── Pagos reportados ───────── -->
+  <ng-container *ngIf="!cargando && pestana === 'reportes'">
+    <div class="chips chips--sub" role="group" aria-label="Filtrar pagos">
+      <button type="button" class="chip" [class.chip--activo]="filtroReportes === 'PENDIENTE'" (click)="filtroReportes = 'PENDIENTE'">Por revisar</button>
+      <button type="button" class="chip" [class.chip--activo]="filtroReportes === 'APROBADO'" (click)="filtroReportes = 'APROBADO'">Aprobados</button>
+      <button type="button" class="chip" [class.chip--activo]="filtroReportes === 'RECHAZADO'" (click)="filtroReportes = 'RECHAZADO'">Rechazados</button>
+      <button type="button" class="chip" [class.chip--activo]="filtroReportes === ''" (click)="filtroReportes = ''">Todos</button>
+    </div>
+
+    <div class="erp-card erp-empty" *ngIf="reportesVisibles.length === 0">
+      <i class="material-icons" aria-hidden="true">inbox</i>
+      <h2>{{ filtroReportes === 'PENDIENTE' ? 'No hay pagos por revisar' : 'No hay pagos en esta vista' }}</h2>
+      <p>Cuando alguien abra su enlace y avise que pagó (con su comprobante), lo verás aquí para aprobarlo o rechazarlo.</p>
+    </div>
+
+    <div class="erp-grid" *ngIf="reportesVisibles.length > 0">
+      <article class="erp-card reporte" *ngFor="let r of reportesVisibles; trackBy: trackById" [attr.aria-label]="'Pago de ' + r.persona">
+        <header class="cobro-cabecera">
+          <span class="cobro-icono" aria-hidden="true"><i class="material-icons">payments</i></span>
+          <div class="cobro-titulo">
+            <h2>{{ r.persona }}</h2>
+            <span class="erp-muted">Cobro de {{ nombrePeriodo(r.periodo) }} · pagó el {{ r.fechaPago | fechaCorta }}</span>
+          </div>
+          <span class="erp-badge erp-badge--{{ claseReporte(r.estado) === 'neutral' ? '' : claseReporte(r.estado) }}">{{ estadoReporte(r.estado) }}</span>
+        </header>
+
+        <div class="cobro-montos">
+          <div><span class="erp-overline">Reportó</span><strong class="erp-num">{{ r.montoReportado | moneda }}</strong></div>
+          <div *ngIf="r.montoAprobado !== null"><span class="erp-overline">Aprobado</span><strong class="erp-num erp-gain">{{ r.montoAprobado | moneda }}</strong></div>
+          <div><span class="erp-overline">Medio</span><strong>{{ medio(r.medio) }}</strong></div>
+        </div>
+
+        <p class="erp-muted notas" *ngIf="r.referencia">Referencia: <span class="erp-mono">{{ r.referencia }}</span></p>
+        <p class="notas" *ngIf="r.comentario">«{{ r.comentario }}»</p>
+        <p class="erp-muted notas" *ngIf="r.estado === 'RECHAZADO' && r.motivoRechazo">Motivo del rechazo: {{ r.motivoRechazo }}</p>
+
+        <div class="erp-alert erp-alert--info" *ngIf="r.estado === 'PENDIENTE' && r.correoCoincidente as c">
+          <i class="material-icons" aria-hidden="true">mark_email_read</i>
+          <span>El dinero ya llegó: hay un ingreso de {{ c.monto | moneda }} de esta persona el {{ c.fecha | fechaCorta }} en tus correos del banco.</span>
+        </div>
+
+        <!-- Rechazo en línea -->
+        <div class="rechazo" *ngIf="rechazando === r">
+          <label class="erp-label" [for]="'motivo-' + r.id">¿Por qué lo rechazas? (la persona lo verá)</label>
+          <textarea [id]="'motivo-' + r.id" class="erp-textarea" rows="2" maxlength="500" [(ngModel)]="motivoRechazo" name="motivo" placeholder="Ej. No veo la transferencia en mi cuenta"></textarea>
+          <div class="erp-actions">
+            <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarRechazo()" [disabled]="trabajando">Cancelar</button>
+            <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarRechazo()" [disabled]="trabajando || motivoRechazo.trim().length < 2">{{ trabajando ? 'Rechazando…' : 'Rechazar pago' }}</button>
+          </div>
+        </div>
+
+        <footer class="cobro-acciones">
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="r.tieneComprobante" (click)="verComprobante(r)" [disabled]="verComprobanteId === r.id">
+            <i class="material-icons" aria-hidden="true">attach_file</i>{{ verComprobanteId === r.id ? 'Abriendo…' : 'Ver comprobante' }}
+            <span class="erp-muted" *ngIf="r.comprobanteTamano">({{ tamano(r.comprobanteTamano) }})</span>
+          </button>
+          <ng-container *ngIf="r.estado === 'PENDIENTE' && rechazando !== r">
+            <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirRechazo(r)"><i class="material-icons" aria-hidden="true">close</i>Rechazar</button>
+            <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirAprobar(r)"><i class="material-icons" aria-hidden="true">check</i>Aprobar</button>
+          </ng-container>
+        </footer>
+      </article>
+    </div>
+  </ng-container>
+
+  <!-- ───────── Ingresos por aplicar ───────── -->
+  <ng-container *ngIf="!cargando && pestana === 'ingresos'">
+    <div class="erp-card erp-empty" *ngIf="ingresos.length === 0">
+      <i class="material-icons" aria-hidden="true">done_all</i>
+      <h2>No hay ingresos por aplicar</h2>
+      <p>Cuando una persona registrada te transfiera y el banco te avise, el ingreso aparece aquí para abonarlo a lo que debe.</p>
+    </div>
+    <div class="erp-grid" *ngIf="ingresos.length > 0">
+      <article class="erp-card reporte" *ngFor="let i of ingresos" [attr.aria-label]="'Ingreso de ' + i.persona">
+        <header class="cobro-cabecera">
+          <span class="cobro-icono" aria-hidden="true"><i class="material-icons">south_west</i></span>
+          <div class="cobro-titulo">
+            <h2>{{ i.persona }}</h2>
+            <span class="erp-muted">{{ i.fecha | fechaCorta }} · {{ i.concepto }}</span>
+          </div>
+        </header>
+        <div class="cobro-montos"><div><span class="erp-overline">Te transfirió</span><strong class="erp-num erp-gain">{{ i.monto | moneda }}</strong></div></div>
+        <footer class="cobro-acciones">
+          <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="aplicarIngreso(i)" [disabled]="trabajando">
+            <i class="material-icons" aria-hidden="true">savings</i>Aplicar a {{ nombrePeriodo(periodo) }}
+          </button>
+        </footer>
+      </article>
+    </div>
+  </ng-container>
+
+  <!-- ───────── Enlaces ───────── -->
+  <ng-container *ngIf="!cargando && pestana === 'enlaces'">
+    <div class="erp-card erp-empty" *ngIf="enlaces.length === 0">
+      <i class="material-icons" aria-hidden="true">link</i>
+      <h2>Aún no compartes enlaces de {{ nombrePeriodo(periodo) }}</h2>
+      <p>Desde la liquidación puedes generar, para cada persona, un enlace con el detalle de lo que debe y dónde avisarte que pagó.</p>
+      <a class="erp-btn erp-btn--primary" routerLink="/liquidacion"><i class="material-icons" aria-hidden="true">fact_check</i>Ir a la liquidación</a>
+    </div>
+    <div class="erp-grid" *ngIf="enlaces.length > 0">
+      <article class="erp-card reporte" *ngFor="let e of enlaces; trackBy: trackById" [attr.aria-label]="'Enlace de ' + e.persona">
+        <header class="cobro-cabecera">
+          <span class="cobro-icono" aria-hidden="true"><i class="material-icons">link</i></span>
+          <div class="cobro-titulo">
+            <h2>{{ e.persona }}</h2>
+            <span class="erp-muted">{{ nombrePeriodo(e.periodo) }} · {{ e.vigente ? vence(e.expiraEn) : 'Desactivado' }}</span>
+          </div>
+          <span class="erp-badge erp-badge--warning" *ngIf="e.reportesPendientes > 0">{{ e.reportesPendientes }} pago{{ e.reportesPendientes === 1 ? '' : 's' }} por revisar</span>
+        </header>
+        <div class="cobro-montos" *ngIf="e.resumen as r">
+          <div><span class="erp-overline">Saldo acumulado</span><strong class="erp-num" [class.erp-loss]="r.saldoTotalAcumulado > 0">{{ r.saldoTotalAcumulado | moneda }}</strong></div>
+          <div><span class="erp-overline">Vistas</span><strong class="erp-num">{{ e.vistas }}</strong></div>
+        </div>
+        <p class="erp-muted notas">Foto del {{ e.snapshotEn | date: 'dd/MM/yyyy HH:mm' }}<ng-container *ngIf="e.ultimaVistaEn"> · última vez vista {{ e.ultimaVistaEn | date: 'dd/MM HH:mm' }}</ng-container></p>
+        <footer class="cobro-acciones">
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="e.vigente" (click)="revocarEnlace(e)" [disabled]="trabajando"><i class="material-icons" aria-hidden="true">link_off</i>Desactivar</button>
+          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="refrescarEnlace(e)" [disabled]="trabajando"><i class="material-icons" aria-hidden="true">sync</i>Actualizar</button>
+          <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="e.vigente" [href]="whatsapp(e)" target="_blank" rel="noopener noreferrer"><i class="material-icons" aria-hidden="true">chat</i>WhatsApp</a>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="e.vigente" (click)="copiar(e)"><i class="material-icons" aria-hidden="true">content_copy</i>Copiar enlace</button>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="!e.vigente" (click)="abrirCompartir(e)"><i class="material-icons" aria-hidden="true">autorenew</i>Reactivar</button>
+        </footer>
+      </article>
+    </div>
+  </ng-container>
+</section>
+
+<app-modal [modalId]="modalCobro">
+  <app-formulario-cobro *ngIf="formularioAbierto" [cobro]="editando" [personas]="personas" [periodoInicial]="periodo" (guardado)="onCobroGuardado($event)" (cancelar)="cerrarModal()"></app-formulario-cobro>
+</app-modal>
+
+<app-modal [modalId]="modalAprobar">
+  <app-aprobar-reporte *ngIf="aprobando" [reporte]="aprobando" [cuentas]="cuentas" (aprobado)="onAprobado($event)" (cancelar)="cerrarModal()"></app-aprobar-reporte>
+</app-modal>
+
+<app-modal [modalId]="modalCompartir">
+  <app-compartir-cobro *ngIf="compartiendo as c" [personaId]="c.personaId" [nombre]="c.nombre" [celular]="c.celular" [periodo]="periodo" (cambiado)="onEnlaceCambiado()" (cerrar)="cerrarModal()"></app-compartir-cobro>
+</app-modal>

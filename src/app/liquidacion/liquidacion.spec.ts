@@ -2,7 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ItemLiquidacion, LiquidacionMensual, LiquidacionPersona } from '../modelos/aportes';
 import { LiquidacionMensualService } from '../services/liquidacion-mensual.service';
-import { configurarTestBed, errorHttp, esperar, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
 import { periodoActual } from '../shared/periodo.helper';
 import { LiquidacionMensualComponent } from './liquidacion-mensual.component';
 import {
@@ -27,6 +27,7 @@ const liquidacionAndres = (extra: Partial<LiquidacionPersona> = {}): Liquidacion
   cuotasTarjetas: bloque([item()]),
   cuotasPrestamos: bloque([item({ id: 2, concepto: 'Domicilio', tipoMovimiento: 'CARGO_PRESTAMO_DIRECTO', origen: 'PRESTAMO', monto: 80000, impacto: 80000 })]),
   cargosRecurrentes: bloque([item({ id: 3, concepto: 'Plan de celular (Cuota 3 de 6)', origen: 'RECURRENTE_PERSONA', monto: 65000, impacto: 65000 })]),
+  cobrosPuntuales: vacio,
   crucesCuentas: bloque([item({ id: 4, concepto: 'Cruce Aporte Carro (CRUCE_CUENTAS)', origen: 'CRUCE_APORTE_CARRO', monto: 100000, impacto: 100000, comentario: 'arreglo' })]),
   saldoAFavorAplicado: vacio,
   abonosRealizados: bloque([item({ id: 5, concepto: 'Pago Nequi', origen: 'PAGO_RECIBIDO', signo: -1, monto: 30000, impacto: -30000 })]),
@@ -43,7 +44,7 @@ const liquidacionAndres = (extra: Partial<LiquidacionPersona> = {}): Liquidacion
 const liquidacionPapa = (): LiquidacionPersona =>
   liquidacionAndres({
     persona: { id: 4, nombre: 'Luis Fernando', iniciales: 'LF', color: '#FF9500' },
-    cuotasTarjetas: vacio, cuotasPrestamos: vacio, cargosRecurrentes: vacio, crucesCuentas: vacio, abonosRealizados: vacio,
+    cuotasTarjetas: vacio, cuotasPrestamos: vacio, cargosRecurrentes: vacio, cobrosPuntuales: vacio, crucesCuentas: vacio, abonosRealizados: vacio,
     saldoAFavorAplicado: bloque([item({ id: 6, concepto: 'Saldo a favor Abril 2026 aplicado', origen: 'SALDO_A_FAVOR_CARRO', signo: -1, monto: 45000, impacto: -45000 })]),
     estadoAporteCarro: {
       obligacionMesId: 66, tipoObligacion: 'CUOTA_CARRO', periodo: '2026-10', concepto: 'Octubre 2026', valorCuotaObjetivo: 1000000, montoAbonado: 500000, saldoPendiente: 500000,
@@ -121,12 +122,19 @@ describe('LiquidacionMensualComponent', () => {
   afterEach(() => verificarHttp());
   const texto = (f: any) => (f.nativeElement as HTMLElement).textContent!.replace(/\s+/g, ' ');
 
-  function montar(respuesta: LiquidacionMensual | null = datos()) {
+  /** Tras cargar la liquidación, la pantalla consulta los enlaces ya compartidos del periodo. */
+  const enlaces = (lista: object[] = []) => http().expectOne((r) => r.url === `${API}/cobros/enlaces`).flush(lista);
+  const liquidacionDe = (periodo: string, respuesta: LiquidacionMensual, listaEnlaces: object[] = []) => {
+    responder(`liquidacion-mensual/${periodo}`, respuesta);
+    enlaces(listaEnlaces);
+  };
+
+  function montar(respuesta: LiquidacionMensual | null = datos(), listaEnlaces: object[] = []) {
     configurarTestBed([LiquidacionMensualComponent]);
     const f = TestBed.createComponent(LiquidacionMensualComponent);
     f.detectChanges();
-    responder('personas', [{ id: 2, nombre: 'Andrés Gómez' }, { id: 4, nombre: 'Luis Fernando' }]);
-    if (respuesta) responder(`liquidacion-mensual/${periodoActual()}`, respuesta);
+    responder('personas', [{ id: 2, nombre: 'Andrés Gómez', numeroCelular: '3104445566' }, { id: 4, nombre: 'Luis Fernando' }]);
+    if (respuesta) liquidacionDe(periodoActual(), respuesta, listaEnlaces);
     f.detectChanges();
     return f;
   }
@@ -161,6 +169,49 @@ describe('LiquidacionMensualComponent', () => {
     expect(t).not.toContain('Aplicar saldo a favor');
   });
 
+  it('muestra el bloque de gastos repartidos y por qué se cobra cada cuota (porcentaje y número de cuota)', () => {
+    const conDetalle = liquidacionAndres({
+      cuotasTarjetas: bloque([
+        item({ detalle: { tipo: 'CUOTA_TARJETA', compra: 'Nevera', fechaCompra: null, valorCompra: 600000, numeroCuota: 2, cuotasDeLaCompra: 6, cuotasQueTePertenecen: 6, porcentaje: 50, valorCuotaTotal: 100000, tarjeta: 'Visa' } }),
+      ]),
+      cobrosPuntuales: bloque([
+        item({ id: 9, concepto: 'Recibo de la luz', origen: 'COBRO_PUNTUAL', tipoMovimiento: 'CARGO_COBRO_PUNTUAL', monto: 61500, impacto: 61500, detalle: { tipo: 'COBRO_PUNTUAL', categoria: 'SERVICIO', montoTotal: 184500, modoDivision: 'IGUAL', notas: null } }),
+      ]),
+    });
+    const f = montar(datos({ personas: [conDetalle] }));
+    const t = texto(f);
+    for (const esperado of ['Servicios, mercado y eventos del mes', 'Recibo de la luz', 'Gasto repartido', 'Tu parte de $184,500.00 (a partes iguales)', 'Cuota 2 de 6 · 50 % de $100,000.00 · compra de $600,000.00 · Visa']) {
+      expect(t).toContain(esperado);
+    }
+  });
+
+  it('compartir cobro abre el modal con la persona; si ya hay enlace muestra su estado y los pagos por revisar', () => {
+    const f = montar(datos({ personas: [liquidacionAndres()] }), [
+      { id: 3, personaId: 2, persona: 'Andrés Gómez', periodo: periodoActual(), token: 'T'.repeat(43), ruta: '/p/x', vigente: true, reportesPendientes: 2, vistas: 1 },
+    ]);
+    const c = f.componentInstance;
+    expect(c.enlaceDe(liquidacionAndres())?.reportesPendientes).toBe(2);
+    expect(texto(f)).toContain('Enlace compartido');
+    expect(texto(f)).toContain('avisó 2 pagos');
+    expect(c.celularDe(liquidacionAndres())).toBe('3104445566');
+    c.abrirCompartir(liquidacionAndres());
+    expect(c.compartiendo?.persona.id).toBe(2);
+    c.cerrarModal();
+    expect(c.compartiendo).toBeNull();
+  });
+
+  it('si los enlaces no cargan, la liquidación se ve igual', () => {
+    configurarTestBed([LiquidacionMensualComponent]);
+    const f = TestBed.createComponent(LiquidacionMensualComponent);
+    f.detectChanges();
+    responder('personas', []);
+    responder(`liquidacion-mensual/${periodoActual()}`, datos());
+    errorHttp(http().expectOne((r) => r.url === `${API}/cobros/enlaces`), 500, {});
+    f.detectChanges();
+    expect(texto(f)).toContain('Luis Fernando te debe');
+    expect(f.componentInstance.enlaces).toEqual([]);
+  });
+
   it('el responsable de la cuota ve el avance, el faltante incluido en lo que debe y el saldo a favor aplicado', () => {
     const f = montar();
     (f.nativeElement.querySelectorAll('.persona-cabecera')[0] as HTMLButtonElement).click();
@@ -177,11 +228,12 @@ describe('LiquidacionMensualComponent', () => {
     f.componentInstance.moverPeriodo(-1);
     const anterior = f.componentInstance.periodo;
     expect(anterior).not.toBe(periodoActual());
-    responder(`liquidacion-mensual/${anterior}`, datos({ periodo: anterior, personas: [liquidacionAndres()] }));
+    liquidacionDe(anterior, datos({ periodo: anterior, personas: [liquidacionAndres()] }));
     f.componentInstance.onPersonaChange('2');
     const req = esperar('GET', `liquidacion-mensual/${anterior}`);
     expect(req.request.params.get('personaId')).toBe('2');
     req.flush(datos({ periodo: anterior, personas: [liquidacionAndres()] }));
+    enlaces();
     f.detectChanges();
     // con una sola persona el desglose arranca abierto
     expect(f.nativeElement.querySelectorAll('.persona-cuerpo').length).toBe(1);

@@ -141,6 +141,7 @@
                   <span class="erp-badge erp-badge--warning" *ngIf="i.estado === 'PROYECTADO'">Proyectado</span>
                   <ng-container *ngIf="i.comentario"> · {{ i.comentario }}</ng-container>
                 </span>
+                <span class="item-detalle" *ngIf="detalle(i.detalle) as d">{{ d }}</span>
               </div>
               <span class="item-monto erp-num" [ngClass]="clasePorSigno(i)">{{ i.impacto | moneda }}</span>
             </li>
@@ -168,6 +169,17 @@
             <i class="material-icons" aria-hidden="true">savings</i>
             Aplicar saldo a favor
           </button>
+          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="abrirCompartir(l)">
+            <i class="material-icons" aria-hidden="true">share</i>
+            {{ enlaceDe(l)?.vigente ? 'Enlace compartido' : 'Compartir cobro' }}
+          </button>
+        </div>
+
+        <div class="erp-alert erp-alert--warning" role="status" *ngIf="enlaceDe(l) as e">
+          <ng-container *ngIf="e.reportesPendientes > 0">
+            <i class="material-icons" aria-hidden="true">notifications_active</i>
+            <span>{{ l.persona.nombre }} avisó {{ e.reportesPendientes }} pago{{ e.reportesPendientes === 1 ? '' : 's' }}. <a routerLink="/cobros" [queryParams]="{ tab: 'reportes', periodo: periodo }">Revisar</a></span>
+          </ng-container>
         </div>
       </div>
     </article>
@@ -180,6 +192,17 @@
 
 <app-modal [modalId]="modalCruce">
   <app-formulario-cruce *ngIf="cruzando" [personas]="personas" (creado)="onCruceCreado()" (cancelar)="cerrarModal()"></app-formulario-cruce>
+</app-modal>
+
+<app-modal [modalId]="modalCompartir">
+  <app-compartir-cobro
+    *ngIf="compartiendo as c"
+    [personaId]="c.persona.id"
+    [nombre]="c.persona.nombre"
+    [celular]="celularDe(c)"
+    [periodo]="periodo"
+    (cambiado)="onEnlaceCambiado()"
+    (cerrar)="cerrarModal()"></app-compartir-cobro>
 </app-modal>
 
 <app-modal [modalId]="modalExcedente">

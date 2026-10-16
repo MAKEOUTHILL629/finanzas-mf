@@ -51,6 +51,7 @@
 .item-concepto { overflow-wrap: anywhere; }
 .item-meta { font-size: var(--text-caption); display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .item-monto { white-space: nowrap; font-weight: var(--weight-semibold); }
+.item-detalle { font-size: var(--text-caption); color: var(--text-secondary); line-height: 1.4; }
 
 .faltante { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); background: var(--warning-bg, rgba(255, 159, 10, 0.12)); border-radius: var(--radius-md); font-size: var(--text-body-sm); }
 .faltante .material-icons { color: var(--orange-warning, #ff9f0a); }
@@ -61,3 +62,4 @@
   .persona-cabecera { flex-wrap: wrap; }
   .persona-neto { margin-left: auto; }
 }
+.erp-alert a { color: var(--text-link); font-weight: var(--weight-semibold); }

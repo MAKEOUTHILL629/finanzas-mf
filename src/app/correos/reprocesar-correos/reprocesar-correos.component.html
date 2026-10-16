@@ -1,0 +1,113 @@
+<div class="erp-form" aria-labelledby="titulo-reproceso">
+  <div>
+    <h2 class="erp-form-title" id="titulo-reproceso">Reprocesar correos pendientes</h2>
+    <p class="erp-subtitle">Pone al día lo que llegó antes de que tus cuentas y tarjetas estuvieran asignadas: enlaza lo que ya tienes, evita duplicados y registra lo que falta.</p>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error">
+    <i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span>
+  </div>
+
+  <!-- 1. Configuración -->
+  <ng-container *ngIf="fase === 'config'">
+    <div class="erp-field">
+      <label class="erp-label" for="rp-desde">Registrar lo que falte desde</label>
+      <input id="rp-desde" class="erp-input" type="date" [(ngModel)]="desde" [disabled]="sinCorte" name="desde" />
+      <p class="erp-field-hint">
+        Desde esta fecha en adelante, cada compra o movimiento que no esté registrado se crea. Antes de esa fecha los correos <strong>solo se enlazan</strong> con lo que ya tienes: nada de
+        hace años se vuelve a registrar. Por defecto: el día siguiente a tu última compra registrada.
+      </p>
+    </div>
+    <label class="erp-check">
+      <input type="checkbox" [(ngModel)]="sinCorte" name="sinCorte" />
+      <span>Sin fecha de corte (registrar todo lo que falte, incluso lo muy antiguo)</span>
+    </label>
+    <div class="erp-actions">
+      <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()">Cancelar</button>
+      <button type="button" class="erp-btn erp-btn--primary" (click)="simular()" [disabled]="!sinCorte && !desde">
+        <i class="material-icons" aria-hidden="true">preview</i>
+        Ver qué pasaría
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- 2. Simulando -->
+  <div class="estado" *ngIf="fase === 'simulando'" aria-busy="true" role="status">
+    <div class="erp-skeleton" style="height: 18px; width: 70%"></div>
+    <div class="erp-skeleton" style="height: 18px; width: 50%"></div>
+    <div class="erp-skeleton" style="height: 18px; width: 60%"></div>
+    <span class="erp-muted">Revisando tus correos pendientes… no se escribe nada todavía.</span>
+  </div>
+
+  <!-- 3. Resumen -->
+  <ng-container *ngIf="(fase === 'resumen' || fase === 'ejecutando' || fase === 'listo') && resumen">
+    <div class="erp-alert" [class.erp-alert--info]="fase !== 'resumen'" [class.erp-alert--warning]="fase === 'resumen'" role="status">
+      <i class="material-icons" aria-hidden="true">{{ fase === 'listo' ? 'check_circle' : 'info' }}</i>
+      <span *ngIf="fase === 'resumen'">Esto es una <strong>simulación</strong>: aún no se ha cambiado nada. Se evaluaron {{ resumen.evaluados }} correos {{ corteTexto }}.</span>
+      <span *ngIf="fase === 'ejecutando'">Aplicando los cambios en segundo plano… puedes seguir usando la app.</span>
+      <span *ngIf="fase === 'listo'">Listo: se procesaron {{ resumen.evaluados }} correos.</span>
+    </div>
+
+    <ul class="acciones" aria-label="Qué pasa con los correos">
+      <li *ngFor="let a of acciones(resumen.acciones)" class="accion">
+        <i class="material-icons erp-text-{{ a.clase }}" aria-hidden="true">{{ a.icono }}</i>
+        <span class="accion-titulo">{{ a.titulo }}</span>
+        <strong class="erp-num accion-n">{{ a.cantidad }}</strong>
+      </li>
+    </ul>
+
+    <div class="pendientes" *ngIf="motivos(resumen.motivos).length > 0">
+      <h3 class="erp-overline">Lo que sigue pendiente, y por qué</h3>
+      <ul>
+        <li *ngFor="let m of motivos(resumen.motivos)"><strong class="erp-num">{{ m.cantidad }}</strong> {{ m.texto }}</li>
+      </ul>
+    </div>
+
+    <div class="aprendizajes" *ngIf="resumen.aprendizajes.length > 0">
+      <h3 class="erp-overline">Tarjetas reconocidas por tus compras</h3>
+      <ul>
+        <li *ngFor="let a of resumen.aprendizajes">••{{ a.ultimos4 }} → <strong>{{ a.tarjeta }}</strong> ({{ a.votos }} de {{ a.total }} compras coinciden){{ a.aplicado ? ' · asignada' : ' · se asignaría' }}</li>
+      </ul>
+    </div>
+
+    <details class="muestras" *ngIf="resumen.muestras.length > 0">
+      <summary>Ver ejemplos ({{ resumen.muestras.length }})</summary>
+      <table class="erp-table">
+        <thead><tr><th>Fecha</th><th>Comercio</th><th class="erp-num">Monto</th><th>Qué pasa</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let m of resumen.muestras">
+            <td>{{ m.fecha | fechaCorta }}</td>
+            <td>{{ m.comercio || '—' }}</td>
+            <td class="erp-num">{{ m.monto !== null ? (m.monto | moneda) : '—' }}</td>
+            <td>{{ m.accion.replace('_', ' ') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </details>
+
+    <div class="erp-alert erp-alert--warning" *ngIf="resumen.errores.length > 0" role="alert">
+      <i class="material-icons" aria-hidden="true">warning</i>
+      <span>{{ resumen.errores.length }} correo{{ resumen.errores.length === 1 ? '' : 's' }} no se pudo{{ resumen.errores.length === 1 ? '' : 'ieron' }} procesar; siguen pendientes.</span>
+    </div>
+    <p class="erp-muted" *ngIf="resumen.omitidos > 0">{{ resumen.omitidos }} correo{{ resumen.omitidos === 1 ? '' : 's' }} no tiene datos suficientes para reprocesarse (se resuelven a mano).</p>
+
+    <!-- Avance -->
+    <div *ngIf="fase === 'ejecutando'" class="avance">
+      <div class="erp-progress" role="progressbar" [attr.aria-valuenow]="porcentaje(avance?.procesados ?? 0, avance?.total ?? 0)" aria-valuemin="0" aria-valuemax="100" aria-label="Avance del reproceso">
+        <div class="erp-progress-bar" [style.width.%]="porcentaje(avance?.procesados ?? 0, avance?.total ?? 0)"></div>
+      </div>
+      <span class="erp-muted">{{ avance?.procesados ?? 0 }} de {{ avance?.total ?? '…' }}</span>
+    </div>
+
+    <div class="erp-actions" *ngIf="fase === 'resumen'">
+      <button type="button" class="erp-btn erp-btn--ghost" (click)="volver()">Cambiar la fecha</button>
+      <button type="button" class="erp-btn erp-btn--primary" (click)="aplicar()" [disabled]="!registraAlgo">
+        <i class="material-icons" aria-hidden="true">done_all</i>
+        Aplicar estos cambios
+      </button>
+    </div>
+    <div class="erp-actions" *ngIf="fase === 'listo'">
+      <button type="button" class="erp-btn erp-btn--primary" (click)="cancelar.emit()">Cerrar</button>
+    </div>
+  </ng-container>
+</div>

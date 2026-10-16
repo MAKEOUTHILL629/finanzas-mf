@@ -7,10 +7,12 @@ import { Tarjeta } from '../../modelos/tarjeta';
 import { TarjetasService } from '../../services/tarjetas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { importeNoNegativoOpcional, importeOpcional } from '../../shared/validadores';
+import { PATRON_ULTIMOS_4_OPCIONAL } from '../../cuentas/cuentas.constants';
 
 export interface ValoresTarjeta {
   franquicia: string;
   descripcion: string;
+  ultimos4Digitos: string;
   diaCorte: number | null;
   diaLimitePago: number | null;
   cupoTotal: number | string | null;
@@ -24,6 +26,7 @@ export function valoresDeTarjeta(t: Tarjeta): ValoresTarjeta {
   return {
     franquicia: t.franquicia ?? '',
     descripcion: t.descripcion ?? '',
+    ultimos4Digitos: t.ultimos4Digitos ?? '',
     diaCorte: t.diaCorte ?? null,
     diaLimitePago: t.diaLimitePago ?? null,
     cupoTotal: t.cupoTotal ?? null,
@@ -43,6 +46,9 @@ export function cambiosDeTarjeta(original: Tarjeta, v: ValoresTarjeta): Actualiz
   const cambios: ActualizarTarjeta = {};
   if (v.franquicia.trim() !== base.franquicia.trim()) cambios.franquicia = v.franquicia.trim();
   if (v.descripcion.trim() !== base.descripcion.trim()) cambios.descripcion = v.descripcion.trim();
+  // Los dígitos sí se pueden quitar (cadena vacía); se comparan sin importar separadores.
+  const quitarSeparadores = (x: string) => x.replace(/[\s;]+/g, ',').replace(/^,|,$/g, '');
+  if (quitarSeparadores(v.ultimos4Digitos.trim()) !== quitarSeparadores(base.ultimos4Digitos.trim())) cambios.ultimos4Digitos = v.ultimos4Digitos.trim();
   if (!vacio(v.diaCorte) && !igual(v.diaCorte, base.diaCorte)) cambios.diaCorte = Number(v.diaCorte);
   if (!vacio(v.diaLimitePago) && !igual(v.diaLimitePago, base.diaLimitePago)) cambios.diaLimitePago = Number(v.diaLimitePago);
   if (!vacio(v.cupoTotal) && !igual(v.cupoTotal, base.cupoTotal)) cambios.cupoTotal = String(v.cupoTotal);
@@ -78,6 +84,7 @@ export class FormularioTarjetaComponent implements OnChanges, OnDestroy {
   form = this.fb.group({
     franquicia: ['', Validators.maxLength(255)],
     descripcion: ['', Validators.maxLength(255)],
+    ultimos4Digitos: ['', [Validators.maxLength(60), Validators.pattern(PATRON_ULTIMOS_4_OPCIONAL)]],
     diaCorte: [null as number | null, [Validators.min(1), Validators.max(31), Validators.pattern(/^\d+$/)]],
     diaLimitePago: [null as number | null, [Validators.min(1), Validators.max(31), Validators.pattern(/^\d+$/)]],
     cupoTotal: [null as number | string | null, importeOpcional],

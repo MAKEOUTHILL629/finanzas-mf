@@ -29,7 +29,11 @@ export type TipoMovimientoDeuda =
   | 'CARGO_CRUCE_DEUDA'
   | 'ABONO_PAGO_RECIBIDO'
   | 'ABONO_APORTE_DIARIO'
-  | 'ABONO_CRUCE_DEUDA';
+  | 'ABONO_CRUCE_DEUDA'
+  | 'CARGO_RECURRENTE_PERSONA'
+  | 'ABONO_RECURRENTE_PERSONA'
+  | 'ABONO_SALDO_FAVOR_CARRO'
+  | 'CARGO_COBRO_PUNTUAL';
 
 /** Periodo contable `YYYY-MM`. */
 export type Periodo = string;
@@ -48,6 +52,8 @@ export interface CuentaFinanciera {
   /** Lo mantiene el Trigger 2 de la BD; el frontend nunca lo envía. */
   saldo_actual: number;
   is_active: boolean | null;
+  /** Recibe los avisos del banco que no traen número de cuenta (p. ej. la nómina). Solo una por usuario. */
+  es_principal?: boolean;
   created_at: string | null;
 }
 
@@ -59,6 +65,8 @@ export interface CrearCuentaFinanciera {
   moneda?: string;
   /** Solo al crear: después el saldo lo mueven los movimientos. */
   saldoInicial?: number | string;
+  /** Marcarla desmarca la anterior. */
+  esPrincipal?: boolean;
 }
 
 export type ActualizarCuentaFinanciera = Partial<Omit<CrearCuentaFinanciera, 'moneda' | 'saldoInicial'>> & { isActive?: boolean };
@@ -172,8 +180,14 @@ export interface DatosParseadosCorreo {
   /** Si el backend no pudo completar el proceso: `trm_no_disponible`, `cuenta_no_identificada`, … */
   motivo?: string;
   linkCorreo?: string;
+  /** Cuando la compra se creó con los valores habituales del comercio: cuántas compras se compararon y qué tan seguro es. */
+  plantilla?: { muestras: number; confianza: number; origen: 'historial' | 'concepto_similar' };
+  persona_id?: number;
   [clave: string]: unknown;
 }
+
+/** Lo que el sync hizo con el correo: CREADA = registró algo; EXISTENTE = lo enlazó a algo que ya existía; DUPLICADO = otro aviso del mismo hecho. */
+export type VinculoCorreo = 'CREADA' | 'EXISTENTE' | 'DUPLICADO';
 
 export interface NotificacionCorreo {
   id: number;
@@ -188,6 +202,16 @@ export interface NotificacionCorreo {
   transaccion_generada_id: number | null;
   compra_credito_generada_id: number | null;
   created_at: string | null;
+  // Columnas que rellena el sync inteligente (pueden faltar en respuestas antiguas)
+  ultimos_4?: string | null;
+  comercio_normalizado?: string | null;
+  monto_original?: number | string | null;
+  moneda?: string | null;
+  tarjeta_id?: number | null;
+  cuenta_id?: number | null;
+  persona_id?: number | null;
+  vinculo?: VinculoCorreo | null;
+  notificacion_original_id?: number | null;
 }
 
 export interface ResponsableConciliacion {
@@ -454,6 +478,8 @@ export interface ActualizarTarjeta {
   cuotaManejo?: number | string;
   urlInfo?: string;
   extractTasas?: boolean;
+  /** Últimos 4 dígitos con los que el banco reporta la tarjeta; varios separados por coma si se reexpidió ("1927,9587"). Vacío = quitar. */
+  ultimos4Digitos?: string;
 }
 
 export interface PagarExtracto {
