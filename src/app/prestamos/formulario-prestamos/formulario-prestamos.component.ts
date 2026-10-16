@@ -1,11 +1,9 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { CorteCobro, CrearPrestamo, MetodoPrestamo } from '../../modelos/cobros';
-import { Persona } from '../../modelos/persona';
 import { CortesCobroService } from '../../services/cortes-cobro.service';
-import { PersonasService } from '../../services/personas.service';
 import { PrestamosService } from '../../services/prestamos.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { hoyIso } from '../../shared/periodo.helper';
@@ -30,7 +28,6 @@ export class FormularioPrestamosComponent implements OnInit, OnDestroy {
   readonly metodos = METODOS_PRESTAMO;
   readonly direcciones = DIRECCIONES_PRESTAMO;
 
-  personas: Persona[] = [];
   cortes: CorteCobro[] = [];
   cargando = true;
   enviando = false;
@@ -56,26 +53,21 @@ export class FormularioPrestamosComponent implements OnInit, OnDestroy {
 
   constructor(
     private prestamosService: PrestamosService,
-    private personasService: PersonasService,
     private cortesService: CortesCobroService
   ) {}
 
   ngOnInit(): void {
-    forkJoin({
-      personas: this.personasService.getPersonas(),
-      cortes: this.cortesService.getCortes().pipe(catchError(() => of([] as CorteCobro[]))),
-    })
+    // Las personas salen del catálogo compartido (el selector muestra su propio esqueleto/vacío/error); aquí solo se cargan los cortes.
+    this.cortesService
+      .getCortes()
       .pipe(
+        catchError(() => of([] as CorteCobro[])),
         takeUntil(this.destroy$),
         finalize(() => (this.cargando = false))
       )
-      .subscribe({
-        next: ({ personas, cortes }) => {
-          this.personas = personas;
-          this.cortes = cortes;
-          this.form.controls.corteId.setValue(corteParaHoy(cortes, hoyIso())?.id ?? null);
-        },
-        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las personas.'))
+      .subscribe((cortes) => {
+        this.cortes = cortes;
+        this.form.controls.corteId.setValue(corteParaHoy(cortes, hoyIso())?.id ?? null);
       });
 
     // La cuota mensual solo se exige cuando el préstamo es recurrente.

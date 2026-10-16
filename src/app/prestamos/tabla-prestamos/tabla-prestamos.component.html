@@ -52,10 +52,7 @@
     </div>
     <div class="erp-field">
       <label class="erp-label" for="pr-responsable">Responsable</label>
-      <select id="pr-responsable" class="erp-select" formControlName="responsable">
-        <option value="">Todos</option>
-        <option *ngFor="let p of personas" [value]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="pr-responsable" catalogo="personas" formControlName="responsable" placeholder="Todos"></app-select>
     </div>
     <div class="erp-field">
       <label class="erp-label" for="pr-corte">Corte</label>

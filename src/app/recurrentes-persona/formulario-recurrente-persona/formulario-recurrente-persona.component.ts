@@ -3,7 +3,6 @@ import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@ang
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { ModalidadDuracion, NaturalezaRecurrentePersona, RecurrentePersona } from '../../modelos/aportes';
-import { Persona } from '../../modelos/persona';
 import { RecurrentesPersonaService } from '../../services/recurrentes-persona.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { nombrePeriodo, periodoActual } from '../../shared/periodo.helper';
@@ -24,7 +23,6 @@ export function plazoCoherente(g: AbstractControl): ValidationErrors | null {
   templateUrl: './formulario-recurrente-persona.component.html'
 })
 export class FormularioRecurrentePersonaComponent implements OnInit, OnDestroy {
-  @Input() personas: Persona[] = [];
   /** Recurrente a editar; `null` = alta. */
   @Input() recurrente: RecurrentePersona | null = null;
   @Output() guardado = new EventEmitter<RecurrentePersona>();

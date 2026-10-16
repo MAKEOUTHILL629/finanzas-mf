@@ -1,10 +1,9 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { Subject, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { PrestamoDetalle } from '../../modelos/cobros';
 import { CrearCruceDeuda } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
 import { LedgerDeudasService } from '../../services/ledger-deudas.service';
 import { PrestamosService } from '../../services/prestamos.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -24,7 +23,6 @@ export function personasDistintas(g: AbstractControl): ValidationErrors | null {
   templateUrl: './formulario-cruce.component.html'
 })
 export class FormularioCruceComponent implements OnInit, OnDestroy {
-  @Input() personas: Persona[] = [];
   @Output() creado = new EventEmitter<void>();
   @Output() cancelar = new EventEmitter<void>();
 

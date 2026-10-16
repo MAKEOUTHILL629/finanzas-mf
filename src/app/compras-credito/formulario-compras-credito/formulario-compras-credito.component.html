@@ -163,19 +163,18 @@
 
       <div class="form-group">
         <label for="card">Tarjeta Asociada <span class="required-indicator">*</span></label>
-        <select
-          id="card"
+        <app-select
+          inputId="card"
+          catalogo="tarjetas"
+          [etiquetar]="etiquetarTarjeta"
           formControlName="cardId"
-          class="form-control"
-          [ngClass]="{ 'is-invalid': cardId?.invalid && (cardId?.dirty || cardId?.touched) }"
-          aria-describedby="card-errors"
-          required
-        >
-          <option value="" disabled>Seleccione una tarjeta</option>
-          <option *ngFor="let card of creditCards" [value]="card.id">
-            {{ etiquetaTarjeta(card) }}{{ card.tasaInteresCompra != null ? ' — ' + card.tasaInteresCompra + '% E.M.' : '' }}
-          </option>
-        </select>
+          placeholder="Seleccione una tarjeta"
+          [permitirVacio]="false"
+          [invalido]="!!cardId?.invalid && !!(cardId?.dirty || cardId?.touched)"
+          ariaDescribedby="card-errors"
+          [enlaceCrear]="{ texto: 'Ir a Tarjetas', ruta: '/tarjetas' }"
+          textoVacio="Aún no hay tarjetas registradas."
+        ></app-select>
         <div id="card-errors" class="invalid-feedback" *ngIf="cardId?.invalid && (cardId?.dirty || cardId?.touched)">
           <div *ngIf="cardId?.errors?.['required']">La tarjeta es requerida.</div>
         </div>
@@ -271,12 +270,14 @@
           <div class="form-row">
             <div class="form-group">
               <label for="personaId">Persona <span class="required-indicator">*</span></label>
-              <select id="personaId" formControlName="personaId" class="form-control">
-                <option value="" disabled>Seleccione una persona</option>
-                <option *ngFor="let persona of personasDisponibles" [value]="persona.id">
-                  {{ persona.nombre }}
-                </option>
-              </select>
+              <app-select
+                inputId="personaId"
+                catalogo="personas"
+                formControlName="personaId"
+                placeholder="Seleccione una persona"
+                [permitirVacio]="false"
+                [filtro]="filtroPersonas"
+              ></app-select>
             </div>
 
             <div class="form-group">

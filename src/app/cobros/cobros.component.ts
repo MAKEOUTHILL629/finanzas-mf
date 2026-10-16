@@ -3,12 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { CobroPuntual, EnlaceCobro, EstadoReporte, IngresoSugerido, ReportePago, ResultadoAprobacion } from '../modelos/cobros-personas';
-import { CuentaFinanciera } from '../modelos/erp';
-import { Persona } from '../modelos/persona';
+import { ItemCuenta, ItemPersona } from '../modelos/catalogos';
 import { CobrosPersonasService } from '../services/cobros-personas.service';
-import { CuentasFinancierasService } from '../services/cuentas-financieras.service';
+import { CatalogosService } from '../services/catalogos.service';
 import { ModalService } from '../services/modal.service';
-import { PersonasService } from '../services/personas.service';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { moneda } from '../shared/moneda.util';
 import { copiarAlPortapapeles } from '../shared/portapapeles.helper';
@@ -69,8 +67,9 @@ export class CobrosComponent implements OnInit, OnDestroy {
   reportes: ReportePago[] = [];
   ingresos: IngresoSugerido[] = [];
   enlaces: EnlaceCobro[] = [];
-  personas: Persona[] = [];
-  cuentas: CuentaFinanciera[] = [];
+  personas: ItemPersona[] = [];
+  /** Cuentas activas donde se puede recibir un pago. */
+  cuentas: ItemCuenta[] = [];
   cargando = true;
   /** Qué listas no se pudieron cargar (las demás se muestran igual). */
   errores: string[] = [];
@@ -91,8 +90,7 @@ export class CobrosComponent implements OnInit, OnDestroy {
 
   constructor(
     private cobrosService: CobrosPersonasService,
-    private personasService: PersonasService,
-    private cuentasService: CuentasFinancierasService,
+    private catalogos: CatalogosService,
     private modalService: ModalService,
     private toast: ToastService,
     private route: ActivatedRoute
@@ -109,8 +107,9 @@ export class CobrosComponent implements OnInit, OnDestroy {
       if (id !== this.modalAprobar) this.aprobando = null;
       if (id !== this.modalCompartir) this.compartiendo = null;
     });
-    this.personasService.getPersonas().pipe(takeUntil(this.destroy$), catchError(() => of([] as Persona[]))).subscribe((p) => (this.personas = p));
-    this.cuentasService.getCuentas(true).pipe(takeUntil(this.destroy$), catchError(() => of([] as CuentaFinanciera[]))).subscribe((c) => (this.cuentas = c));
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.cuentas = e.datos.filter((c) => c.activa)));
+    this.catalogos.asegurar(['personas', 'cuentas']);
     this.cargar();
   }
 
@@ -322,12 +321,12 @@ export class CobrosComponent implements OnInit, OnDestroy {
 
   whatsapp(e: EnlaceCobro): string {
     const p = this.personas.find((x) => x.id === e.personaId);
-    return enlaceWhatsApp(telefonoWhatsApp(p?.numeroCelular), textoParaCompartir(e.persona, e.periodo, this.urlDe(e), e.resumen?.saldoTotalAcumulado));
+    return enlaceWhatsApp(telefonoWhatsApp(p?.celular), textoParaCompartir(e.persona, e.periodo, this.urlDe(e), e.resumen?.saldoTotalAcumulado));
   }
 
   abrirCompartir(e: EnlaceCobro): void {
     const p = this.personas.find((x) => x.id === e.personaId);
-    this.compartiendo = { personaId: e.personaId, nombre: e.persona, celular: p?.numeroCelular ?? null };
+    this.compartiendo = { personaId: e.personaId, nombre: e.persona, celular: p?.celular ?? null };
     this.modalService.open(this.modalCompartir);
   }
 

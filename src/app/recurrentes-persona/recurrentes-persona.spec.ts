@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
 import { RecurrentePersona } from '../modelos/aportes';
 import { RecurrentesPersonaService } from '../services/recurrentes-persona.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { FormularioRecurrentePersonaComponent, plazoCoherente } from './formulario-recurrente-persona/formulario-recurrente-persona.component';
 import { ListaRecurrentesPersonaComponent } from './lista-recurrentes-persona/lista-recurrentes-persona.component';
 import {
@@ -26,7 +26,7 @@ const recurrente = (extra: Partial<RecurrentePersona> = {}): RecurrentePersona =
 });
 const vitalicio = (extra: Partial<RecurrentePersona> = {}) =>
   recurrente({ id: 4, personaId: 4, personaNombre: 'Luis Fernando', concepto: 'Descuento', valorMensual: 10000, naturaleza: 'ABONO_A_FAVOR', modalidadDuracion: 'INDEFINIDO', vitalicio: true, numeroMeses: null, mesFin: null, progreso: null, cuotasGeneradas: 2, ...extra });
-const personas = [{ id: 2, nombre: 'Andrés Gómez' }, { id: 4, nombre: 'Luis Fernando' }];
+const personas = [persona(2, 'Andrés Gómez'), persona(4, 'Luis Fernando')];
 const valores = (extra: object = {}) => ({ personaId: 2, concepto: ' Plan de celular ', valorMensual: 65000 as number | string | null, naturaleza: 'CARGO_A_COBRAR' as any, modalidadDuracion: 'PLAZO_FIJO' as any, numeroMeses: 6 as number | string | null, mesInicio: '2026-08', diaCobro: 1 as number | string | null, notas: '', ...extra });
 
 describe('Recurrentes por persona — lógica', () => {
@@ -124,7 +124,7 @@ describe('ListaRecurrentesPersonaComponent', () => {
     const f = TestBed.createComponent(ListaRecurrentesPersonaComponent);
     f.detectChanges();
     responder('recurrentes-persona', lista);
-    responder('personas', personas);
+    responderCatalogos({ personas });
     f.detectChanges();
     return f;
   }
@@ -163,7 +163,6 @@ describe('ListaRecurrentesPersonaComponent', () => {
     expect(req.request.body).toEqual({ activo: false });
     req.flush(recurrente({ activo: false }));
     responder('recurrentes-persona', [recurrente({ activo: false }), vitalicio()]);
-    responder('personas', personas);
     f.detectChanges();
     expect(texto(f)).toContain('Pausado');
   });
@@ -177,7 +176,6 @@ describe('ListaRecurrentesPersonaComponent', () => {
     f.componentInstance.confirmarEliminar();
     responder('recurrentes-persona/3', { eliminado: true, movimientosAnulados: 3 }, 'DELETE');
     responder('recurrentes-persona', [vitalicio()]);
-    responder('personas', personas);
     f.detectChanges();
     expect(f.nativeElement.querySelectorAll('tbody tr').length).toBe(1);
     expect(f.componentInstance.eliminando).toBeNull();
@@ -192,7 +190,7 @@ describe('ListaRecurrentesPersonaComponent', () => {
     const f = TestBed.createComponent(ListaRecurrentesPersonaComponent);
     f.detectChanges();
     errorHttp(esperar('GET', 'recurrentes-persona'), 500, { message: 'x' });
-    http().match((r) => r.url === `${API}/personas`); // la otra petición del forkJoin queda cancelada o abierta: se descarta
+    responderCatalogos(); // los catálogos van aparte: un fallo de los recurrentes no los cancela
     f.detectChanges();
     expect(texto(f)).toContain('Reintentar');
   });
@@ -204,7 +202,9 @@ describe('FormularioRecurrentePersonaComponent', () => {
   function montar(entradas: Partial<FormularioRecurrentePersonaComponent> = {}) {
     configurarTestBed([FormularioRecurrentePersonaComponent]);
     const f = TestBed.createComponent(FormularioRecurrentePersonaComponent);
-    Object.assign(f.componentInstance, { personas }, entradas);
+    Object.assign(f.componentInstance, entradas);
+    f.detectChanges();
+    responderCatalogos({ personas });
     f.detectChanges();
     return f;
   }

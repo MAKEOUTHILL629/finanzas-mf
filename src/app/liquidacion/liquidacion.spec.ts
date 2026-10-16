@@ -2,7 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ItemLiquidacion, LiquidacionMensual, LiquidacionPersona } from '../modelos/aportes';
 import { LiquidacionMensualService } from '../services/liquidacion-mensual.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { periodoActual } from '../shared/periodo.helper';
 import { LiquidacionMensualComponent } from './liquidacion-mensual.component';
 import {
@@ -133,7 +133,7 @@ describe('LiquidacionMensualComponent', () => {
     configurarTestBed([LiquidacionMensualComponent]);
     const f = TestBed.createComponent(LiquidacionMensualComponent);
     f.detectChanges();
-    responder('personas', [{ id: 2, nombre: 'Andrés Gómez', numeroCelular: '3104445566' }, { id: 4, nombre: 'Luis Fernando' }]);
+    responderCatalogos({ personas: [persona(2, 'Andrés Gómez', { celular: '3104445566' }), persona(4, 'Luis Fernando')] });
     if (respuesta) liquidacionDe(periodoActual(), respuesta, listaEnlaces);
     f.detectChanges();
     return f;
@@ -204,7 +204,7 @@ describe('LiquidacionMensualComponent', () => {
     configurarTestBed([LiquidacionMensualComponent]);
     const f = TestBed.createComponent(LiquidacionMensualComponent);
     f.detectChanges();
-    responder('personas', []);
+    responderCatalogos();
     responder(`liquidacion-mensual/${periodoActual()}`, datos());
     errorHttp(http().expectOne((r) => r.url === `${API}/cobros/enlaces`), 500, {});
     f.detectChanges();
@@ -249,7 +249,7 @@ describe('LiquidacionMensualComponent', () => {
     configurarTestBed([LiquidacionMensualComponent]);
     const f = TestBed.createComponent(LiquidacionMensualComponent);
     f.detectChanges();
-    responder('personas', []);
+    responderCatalogos();
     errorHttp(esperar('GET', `liquidacion-mensual/${periodoActual()}`), 400, { message: 'periodo inválido' });
     f.detectChanges();
     expect(texto(f)).toContain('Reintentar');

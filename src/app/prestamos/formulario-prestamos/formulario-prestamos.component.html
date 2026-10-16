@@ -16,10 +16,8 @@
 
     <div class="erp-field">
       <label class="erp-label" for="pf-responsable">Persona<span class="erp-req" aria-hidden="true">*</span></label>
-      <select id="pf-responsable" class="erp-select" formControlName="responsable" [attr.aria-invalid]="campoInvalido('responsable')">
-        <option [ngValue]="null" disabled>{{ cargando ? 'Cargando…' : 'Selecciona una persona' }}</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="pf-responsable" catalogo="personas" formControlName="responsable" placeholder="Selecciona una persona" [permitirVacio]="false"
+                  [invalido]="campoInvalido('responsable')" [enlaceCrear]="null"></app-select>
       <p class="erp-field-error" *ngIf="campoInvalido('responsable')">Selecciona a quién se le presta.</p>
     </div>
 

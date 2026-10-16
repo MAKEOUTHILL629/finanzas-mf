@@ -1,19 +1,16 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, ValidationErrors, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, finalize, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
 import {
   ActualizarTransaccion,
-  Categoria,
   CrearTransaccion,
-  CuentaFinanciera,
   EstadoTransaccion,
   TipoTransaccion,
   Transaccion,
 } from '../../modelos/erp';
-import { Tarjeta } from '../../modelos/tarjeta';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
-import { TarjetasService } from '../../services/tarjetas.service';
+import { ItemCategoria, ItemCuenta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { TransaccionesService } from '../../services/transacciones.service';
 import { esImporteValido } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -130,10 +127,11 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
   readonly tipos = TIPOS_TRANSACCION;
   readonly estados = ESTADOS_TRANSACCION.filter((e) => e.valor !== 'ANULADO');
 
-  cuentas: CuentaFinanciera[] = [];
-  categorias: Categoria[] = [];
-  tarjetas: Tarjeta[] = [];
-  cargando = true;
+  /** «Bancolombia Ahorros ··3698 (COP)»: la moneda importa al elegir cuentas. */
+  readonly etiquetaCuenta = (c: ItemCuenta): string => `${c.nombre}${c.ultimos4 ? ` ··${c.ultimos4.split(/[,;\s]+/)[0]}` : ''} (${c.moneda})${c.activa ? '' : ' · inactiva'}`;
+  /** Categorías que aplican al tipo de transacción (las de tipo AMBOS siempre); en un tipo sin categoría propia se ofrecen todas. */
+  filtroCategorias: (c: ItemCategoria) => boolean = () => true;
+
   enviando = false;
   errorServidor: string | null = null;
   sinCambios = false;
@@ -159,11 +157,7 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
     { validators: (g): ValidationErrors | null => this.validarReglas(g.getRawValue() as ValoresTransaccion) }
   );
 
-  constructor(
-    private transaccionesService: TransaccionesService,
-    private cuentasService: CuentasFinancierasService,
-    private tarjetasService: TarjetasService
-  ) {}
+  constructor(private transaccionesService: TransaccionesService, private catalogos: CatalogosService) {}
 
   get esEdicion(): boolean {
     return !!this.transaccion;
@@ -185,24 +179,8 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    forkJoin({
-      cuentas: this.cuentasService.getCuentas(true),
-      categorias: this.cuentasService.getCategorias().pipe(catchError(() => of([] as Categoria[]))),
-      tarjetas: this.tarjetasService.getTarjetas().pipe(catchError(() => of([] as Tarjeta[]))),
-    })
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.cargando = false))
-      )
-      .subscribe({
-        next: ({ cuentas, categorias, tarjetas }) => {
-          this.cuentas = cuentas;
-          this.categorias = categorias;
-          this.tarjetas = tarjetas;
-        },
-        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las cuentas.'))
-      });
-
+    // Una sola petición trae todo lo que el formulario pueda necesitar según el tipo que se elija (cuentas, tarjetas, categorías).
+    this.catalogos.asegurar(['cuentas', 'categorias', 'tarjetas']);
     if (this.transaccion) {
       this.form.reset(valoresDeTransaccion(this.transaccion) as never);
       // tipo y moneda no se cambian al editar: afectan a las reglas y al saldo de otra forma
@@ -210,7 +188,15 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
       this.form.controls.monedaOriginal.disable();
     }
 
+    this.actualizarFiltroCategorias();
+    this.form.controls.tipoTransaccion.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.actualizarFiltroCategorias());
     this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.limpiarReferenciasQueNoAplican());
+  }
+
+  private actualizarFiltroCategorias(): void {
+    const tipo = this.form.controls.tipoTransaccion.value;
+    const propio = tipo === 'INGRESO' ? 'INGRESO' : tipo === 'EGRESO' || tipo === 'PAGO_TARJETA' ? 'EGRESO' : null;
+    this.filtroCategorias = propio ? (c: ItemCategoria) => c.tipo === propio || c.tipo === 'AMBOS' : () => true;
   }
 
   ngOnDestroy(): void {
@@ -284,9 +270,5 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
 
   mostrarErrorRegla(clave: 'origen' | 'destino' | 'tarjeta' | 'mismaCuenta' | 'tasa'): boolean {
     return !!this.form.errors?.[clave] && (this.form.touched || this.form.dirty);
-  }
-
-  nombreTarjeta(t: Tarjeta): string {
-    return [t.franquicia, t.descripcion].filter((x) => !!x).join(' · ') || `Tarjeta #${t.id}`;
   }
 }

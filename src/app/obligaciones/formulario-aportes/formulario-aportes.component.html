@@ -27,10 +27,8 @@
     <div class="aporte-fila" *ngFor="let fila of items.controls; let i = index" [formGroupName]="i">
       <div class="erp-field">
         <label class="erp-label" [for]="'ap-persona-' + i">Persona</label>
-        <select [id]="'ap-persona-' + i" class="erp-select" formControlName="personaId" [attr.aria-invalid]="campoInvalido(fila, 'personaId')">
-          <option [ngValue]="null" disabled>Selecciona…</option>
-          <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-        </select>
+        <app-select [inputId]="'ap-persona-' + i" catalogo="personas" formControlName="personaId" placeholder="Selecciona…" [permitirVacio]="false"
+                    [invalido]="campoInvalido(fila, 'personaId')"></app-select>
       </div>
 
       <div class="erp-field">

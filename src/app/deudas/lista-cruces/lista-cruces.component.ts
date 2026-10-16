@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, finalize, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { CruceDeuda } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { LedgerDeudasService } from '../../services/ledger-deudas.service';
 import { ModalService } from '../../services/modal.service';
-import { PersonasService } from '../../services/personas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 
@@ -20,7 +20,7 @@ export class ListaCrucesComponent implements OnInit, OnDestroy {
   readonly modalId = MODAL_CRUCE;
 
   cruces: CruceDeuda[] = [];
-  personas: Persona[] = [];
+  personas: ItemPersona[] = [];
   /** El formulario existe solo mientras el modal está abierto. */
   formularioAbierto = false;
 
@@ -31,7 +31,7 @@ export class ListaCrucesComponent implements OnInit, OnDestroy {
 
   constructor(
     private ledgerService: LedgerDeudasService,
-    private personasService: PersonasService,
+    private catalogos: CatalogosService,
     private modalService: ModalService,
     private toast: ToastService
   ) {}
@@ -40,6 +40,9 @@ export class ListaCrucesComponent implements OnInit, OnDestroy {
     this.modalService.modalState$.pipe(takeUntil(this.destroy$)).subscribe((id) => {
       if (id !== this.modalId) this.formularioAbierto = false;
     });
+    // Nombres de las personas (y las del formulario): catálogo compartido; si falla, la lista de cruces se muestra igual.
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.asegurar(['personas']);
     this.cargar();
   }
 
@@ -51,18 +54,15 @@ export class ListaCrucesComponent implements OnInit, OnDestroy {
   cargar(): void {
     this.cargando = true;
     this.error = null;
-    forkJoin({
-      cruces: this.ledgerService.getCrucesDeuda(),
-      personas: this.personasService.getPersonas().pipe(catchError(() => of([] as Persona[]))),
-    })
+    this.ledgerService
+      .getCrucesDeuda()
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: ({ cruces, personas }) => {
+        next: (cruces) => {
           this.cruces = cruces;
-          this.personas = personas;
         },
         error: (err) => {
           this.cruces = [];

@@ -30,11 +30,9 @@
 
     <div class="erp-field">
       <label class="erp-label" for="ob-responsable">Responsable principal<span class="erp-req" aria-hidden="true">*</span></label>
-      <select id="ob-responsable" class="erp-select" formControlName="responsablePrincipalId" [attr.aria-invalid]="campoInvalido('responsablePrincipalId')">
-        <option [ngValue]="null" disabled>{{ cargandoPersonas ? 'Cargando…' : 'Selecciona una persona' }}</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
-      <p class="erp-field-hint">Quien responde por la meta; los aportes de otras personas generan un préstamo por cobrar.</p>
+      <app-select inputId="ob-responsable" catalogo="personas" formControlName="responsablePrincipalId" placeholder="Selecciona una persona" [permitirVacio]="false"
+                  [invalido]="campoInvalido('responsablePrincipalId')" ariaDescribedby="ob-resp-ayuda"></app-select>
+      <p id="ob-resp-ayuda" class="erp-field-hint">Quien responde por la meta; los aportes de otras personas generan un préstamo por cobrar.</p>
       <p class="erp-field-error" *ngIf="campoInvalido('responsablePrincipalId')">Selecciona al responsable.</p>
     </div>
 

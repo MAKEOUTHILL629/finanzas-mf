@@ -951,3 +951,15 @@
 .fab-button.pulse {
   animation: fabPulse 2s ease-in-out infinite;
 }
+
+.multiselect-retry {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  cursor: pointer;
+}

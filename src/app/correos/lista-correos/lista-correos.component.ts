@@ -3,10 +3,10 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { ResumenReproceso } from '../../modelos/correos-inteligentes';
 import { EstadoNotificacionCorreo, NotificacionCorreo, ResultadoConciliacion } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
 import { ModalService } from '../../services/modal.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
-import { PersonasService } from '../../services/personas.service';
+import { CatalogosService } from '../../services/catalogos.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ESTADOS_CORREO, VistaCorreo, admiteDeshacer, claseEstadoCorreo, etiquetaEstadoCorreo, etiquetaVinculo, explicarMotivo, interpretarCorreo } from '../correos.constants';
@@ -44,7 +44,7 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
   /** Correo que se concilia; el formulario existe solo mientras el modal está abierto. */
   conciliando: NotificacionCorreo | null = null;
   reprocesando = false;
-  personas: Persona[] = [];
+  personas: ItemPersona[] = [];
   confirmandoDescarte: NotificacionCorreo | null = null;
   trabajando = false;
 
@@ -56,7 +56,7 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
   constructor(
     private notificacionesService: NotificacionesCorreoService,
     private modalService: ModalService,
-    private personasService: PersonasService,
+    private catalogos: CatalogosService,
     private toast: ToastService
   ) {}
 
@@ -65,7 +65,9 @@ export class ListaCorreosComponent implements OnInit, OnDestroy {
       if (id !== this.modalId) this.conciliando = null;
       if (id !== this.modalReproceso) this.reprocesando = false;
     });
-    this.personasService.getPersonas().pipe(takeUntil(this.destroy$)).subscribe({ next: (p) => (this.personas = p), error: () => (this.personas = []) });
+    // Nombre de la persona reconocida en cada correo: catálogo compartido (si falla, solo no se muestra el nombre).
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.asegurar(['personas']);
     this.cargar();
   }
 

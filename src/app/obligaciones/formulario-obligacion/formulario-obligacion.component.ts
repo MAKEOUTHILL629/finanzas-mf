@@ -3,9 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { CrearObligacionMes } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
 import { ObligacionesMesService } from '../../services/obligaciones-mes.service';
-import { PersonasService } from '../../services/personas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { fechasCoherentes, importeConDosDecimales } from '../../shared/validadores';
 import { finDePeriodo, periodoActual } from '../../shared/periodo.helper';
@@ -20,8 +18,6 @@ export class FormularioObligacionComponent implements OnInit, OnDestroy {
   @Output() cancelar = new EventEmitter<void>();
 
   readonly tipos = TIPOS_OBLIGACION;
-  personas: Persona[] = [];
-  cargandoPersonas = true;
   enviando = false;
   errorServidor: string | null = null;
 
@@ -43,23 +39,10 @@ export class FormularioObligacionComponent implements OnInit, OnDestroy {
     { validators: fechasCoherentes('fechaInicio', 'fechaFinal') }
   );
 
-  constructor(
-    private obligacionesService: ObligacionesMesService,
-    private personasService: PersonasService
-  ) {}
+  constructor(private obligacionesService: ObligacionesMesService) {}
 
-  ngOnInit(): void {
-    this.personasService
-      .getPersonas()
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.cargandoPersonas = false))
-      )
-      .subscribe({
-        next: (p) => (this.personas = p),
-        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las personas.'))
-      });
-  }
+  /** Las personas del selector salen del catálogo compartido (con su propio esqueleto, vacío y «Reintentar»). */
+  ngOnInit(): void {}
 
   ngOnDestroy(): void {
     this.destroy$.next();

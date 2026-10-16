@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { iniciales } from '../../deudas/deudas.constants';
 import { FiltroRecurrentesPersona, ModalidadDuracion, RecurrentePersona } from '../../modelos/aportes';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
-import { PersonasService } from '../../services/personas.service';
 import { RecurrentesPersonaService } from '../../services/recurrentes-persona.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { moneda } from '../../shared/moneda.util';
@@ -39,7 +39,7 @@ export class ListaRecurrentesPersonaComponent implements OnInit, OnDestroy {
   readonly iniciales = iniciales;
 
   recurrentes: RecurrentePersona[] = [];
-  personas: Persona[] = [];
+  personas: ItemPersona[] = [];
   filtros: FiltroRecurrentesPersona = { personaId: null, activo: null, modalidadDuracion: null };
 
   cargando = true;
@@ -55,7 +55,7 @@ export class ListaRecurrentesPersonaComponent implements OnInit, OnDestroy {
 
   constructor(
     private recurrentesService: RecurrentesPersonaService,
-    private personasService: PersonasService,
+    private catalogos: CatalogosService,
     private modalService: ModalService,
     private toast: ToastService
   ) {}
@@ -67,6 +67,9 @@ export class ListaRecurrentesPersonaComponent implements OnInit, OnDestroy {
         this.enEdicion = null;
       }
     });
+    // Nombres y filtro de personas: catálogo compartido (si falla, los recurrentes se ven igual).
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.asegurar(['personas']);
     this.cargar();
   }
 
@@ -78,15 +81,15 @@ export class ListaRecurrentesPersonaComponent implements OnInit, OnDestroy {
   cargar(): void {
     this.cargando = true;
     this.error = null;
-    forkJoin({ recurrentes: this.recurrentesService.getRecurrentes(), personas: this.personasService.getPersonas() })
+    this.recurrentesService
+      .getRecurrentes()
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: ({ recurrentes, personas }) => {
+        next: (recurrentes) => {
           this.recurrentes = recurrentes;
-          this.personas = personas;
         },
         error: (err) => {
           this.recurrentes = [];

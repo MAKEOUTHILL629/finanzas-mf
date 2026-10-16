@@ -1,13 +1,15 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { CorteCobro } from '../../modelos/cobros';
-import { AbonarPersona, CuentaFinanciera, EstadoCuentaPersona, Periodo, ResultadoAbonoPersona } from '../../modelos/erp';
+import { AbonarPersona, EstadoCuentaPersona, Periodo, ResultadoAbonoPersona } from '../../modelos/erp';
+import { ItemCuenta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { CortesCobroService } from '../../services/cortes-cobro.service';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
 import { LedgerDeudasService } from '../../services/ledger-deudas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
+import { moneda } from '../../shared/moneda.util';
 import { importeConDosDecimales } from '../../shared/validadores';
 
 /** Cuerpo de `POST /personas/:id/abonar`. El corte solo se envía si se eligió (liquida los préstamos de ese corte). */
@@ -37,14 +39,19 @@ export class FormularioAbonoComponent implements OnInit, OnDestroy {
   @Output() abonado = new EventEmitter<ResultadoAbonoPersona>();
   @Output() cancelar = new EventEmitter<void>();
 
-  cuentas: CuentaFinanciera[] = [];
+  /** Cuentas activas en pesos (el SP registra el ingreso en COP). */
+  cuentas: ItemCuenta[] = [];
   cortes: CorteCobro[] = [];
-  cargando = true;
   enviando = false;
   errorServidor: string | null = null;
 
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
+  private cuentasListas = false;
+  private cortesListos = false;
+
+  readonly soloPesos = (c: ItemCuenta): boolean => c.moneda === 'COP';
+  readonly etiquetaConSaldo = (c: ItemCuenta): string => `${c.nombre} — saldo ${moneda(c.saldoActual)}`;
 
   form = this.fb.group({
     cuentaDestinoId: [null as number | null, Validators.required],
@@ -56,9 +63,13 @@ export class FormularioAbonoComponent implements OnInit, OnDestroy {
 
   constructor(
     private ledgerService: LedgerDeudasService,
-    private cuentasService: CuentasFinancierasService,
+    private catalogos: CatalogosService,
     private cortesService: CortesCobroService
   ) {}
+
+  get cargando(): boolean {
+    return !(this.cuentasListas && this.cortesListos);
+  }
 
   ngOnInit(): void {
     const saldo = Number(this.persona.saldo_total_acumulado ?? 0);
@@ -68,23 +79,26 @@ export class FormularioAbonoComponent implements OnInit, OnDestroy {
       monto: saldo > 0 ? saldo : null,
     });
 
-    forkJoin({
-      cuentas: this.cuentasService.getCuentas(true),
-      cortes: this.cortesService.getCortes().pipe(catchError(() => of([] as CorteCobro[]))),
-    })
+    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      if (e.cargado) {
+        this.cuentasListas = true;
+        this.cuentas = e.datos.filter((c) => c.activa && this.soloPesos(c));
+        if (this.cuentas.length === 1 && this.form.controls.cuentaDestinoId.value === null) this.form.controls.cuentaDestinoId.setValue(this.cuentas[0].id);
+      } else if (e.error) {
+        this.cuentasListas = true;
+        this.errorServidor = e.error;
+      }
+    });
+    this.catalogos.asegurar(['cuentas'], { forzar: true }); // el saldo que se muestra debe estar al día
+
+    this.cortesService
+      .getCortes()
       .pipe(
+        catchError(() => of([] as CorteCobro[])),
         takeUntil(this.destroy$),
-        finalize(() => (this.cargando = false))
+        finalize(() => (this.cortesListos = true))
       )
-      .subscribe({
-        next: ({ cuentas, cortes }) => {
-          // el SP registra el ingreso en pesos: solo se ofrecen cuentas COP
-          this.cuentas = cuentas.filter((c) => c.moneda === 'COP');
-          this.cortes = cortes;
-          if (this.cuentas.length === 1) this.form.controls.cuentaDestinoId.setValue(this.cuentas[0].id);
-        },
-        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las cuentas.'))
-      });
+      .subscribe((cortes) => (this.cortes = cortes));
   }
 
   ngOnDestroy(): void {

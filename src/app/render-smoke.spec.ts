@@ -24,7 +24,7 @@ import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.comp
 import { FormularioCobroComponent } from './cobros/formulario-cobro/formulario-cobro.component';
 import { CompartirCobroComponent } from './cobros/compartir-cobro/compartir-cobro.component';
 import { ProductosDetectadosComponent } from './correos/productos-detectados/productos-detectados.component';
-import { API, configurarTestBed, http, responder, verificarHttp } from './testing/erp-testing';
+import { API, categoriaItem, configurarTestBed, cuentaItem, http, persona, responder, responderCatalogos, tarjetaItem, verificarHttp } from './testing/erp-testing';
 
 /**
  * Humo de renderizado: monta cada pantalla con datos realistas y comprueba lo que se pinta.
@@ -36,7 +36,7 @@ function texto(f: ComponentFixture<unknown>): string {
   return (f.nativeElement as HTMLElement).textContent!.replace(/\s+/g, ' ');
 }
 const cuenta = (id: number, extra: object = {}) => ({ id, owner_user_id: 1, nombre: `Cuenta ${id}`, tipo_cuenta: 'AHORROS', banco_entidad: 'Bancolombia', ultimos_4_digitos: '3698,4278', moneda: 'COP', saldo_actual: 1500000.5, is_active: true, created_at: null, ...extra });
-const personas = [{ id: 1, nombre: 'Felipe', linkedUserId: 1 }, { id: 2, nombre: 'Andrés' }, { id: 3, nombre: 'Papá' }];
+const personas = [persona(1, 'Felipe', { esPropia: true, tieneUsuario: true }), persona(2, 'Andrés'), persona(3, 'Papá')];
 const prestamo = (extra: object = {}) => ({
   id: 7, valorPrestado: 120000.5, concepto: 'Mercado', fechaCobro: Date.UTC(2026, 9, 15), responsable: 2, estado: 'Pendiente', comentarios: 'semana 2', direccionPrestamo: 'POR_COBRAR',
   saldoPendiente: 120000.5, esRecurrenteMensual: false, cuotaMensualAcordada: null, fechaPrestamo: Date.UTC(2026, 9, 1), metodo: 'Nequi', corteId: 5, creadoPorPersonaId: null, origenCruceAporteId: null,
@@ -54,7 +54,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     const f = TestBed.createComponent(TablaPrestamosComponent);
     f.detectChanges();
     responder('prestamos', [prestamo(), prestamo({ id: 8, concepto: 'Domicilio', estado: 'Pagado', saldoPendiente: 0, aprobaciones: [] })]);
-    responder('personas', personas);
+    responderCatalogos({ personas });
     responder('cortes-cobro', [corte]);
     const t = texto(f);
     expect(t).toContain('Por cobrar');
@@ -71,7 +71,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     const f = TestBed.createComponent(DetallePrestamoComponent);
     f.detectChanges();
     responder('prestamos/7', prestamo());
-    responder('personas', personas);
+    responderCatalogos({ personas });
     responder('cortes-cobro', [corte]);
     const t = texto(f);
     for (const esperado of ['Mercado', 'Marcar como pagado', 'Anular', 'Aprobar', 'Rechazar', 'Felipe', 'Aprobado', 'Corte octubre', '15 de Octubre del 2026', '$120,000.50']) expect(t).toContain(esperado);
@@ -108,7 +108,6 @@ describe('Renderizado de las pantallas (humo)', () => {
       aporte_dia_id: 10, obligacion_mes_id: 3, mes_concepto: null, periodo: '2026-10', fecha: '2026-10-05T00:00:00.000Z', notas: 'sábado', items_count: 2, valor_total_dia: 300000.5,
       detalles: [{ id: 1, aporte_dia_id: 10, persona_id: 2, valor: 100000, metodo: 'Nequi', comentarios: null, prestamo_cruce_generado_id: 77, created_at: null, persona: { id: 2, nombre: 'Andrés' }, prestamo_cruce: { id: 77, estado: 'Pendiente', valor_prestado: 100000, corte_id: 5 } }],
     }]);
-    responder('personas', personas);
     let t = texto(f);
     for (const esperado of ['Cuota del carro', 'Aportes por día', '5 de Octubre del 2026', '$300,000.50', 'sábado', 'Registrar aportes']) expect(t).toContain(esperado);
     f.componentInstance.alternarDia(f.componentInstance.dias[0]);
@@ -133,7 +132,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     const f = TestBed.createComponent(FormularioPagarExtractoComponent);
     f.componentRef.setInput('resumen', { tarjeta_id: 4, franquicia: 'Visa', nombre_tarjeta: 'Oro', dia_corte: 15, dia_limite_pago: 5, periodo_facturacion: '2026-10', total_cuotas_mes: 6, total_extracto_cop: 1200000.5, componente_en_usd: 0, todas_trm_confirmadas: true, total_responsabilidad_terceros: 0, total_propio: 1200000.5 });
     f.detectChanges();
-    responder('cuentas-financieras', [cuenta(1, { saldo_actual: 5000000 })]);
+    responderCatalogos({ cuentas: [cuentaItem(1, 'Cuenta 1', { saldoActual: 5000000 })] });
     responder('transacciones', { total: 0, limit: 200, offset: 0, items: [] });
     const t = texto(f);
     for (const esperado of ['Pagar extracto', 'Visa · Oro', 'Cuenta 1', 'Saldo de la cuenta después del pago', '$3,799,999.50', 'quedarán como pagadas']) expect(t).toContain(esperado);
@@ -173,8 +172,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     configurarTestBed([ListaTransaccionesComponent]);
     const f = TestBed.createComponent(ListaTransaccionesComponent);
     f.detectChanges();
-    responder('cuentas-financieras', [cuenta(3, { nombre: 'Bancolombia' })]);
-    responder('categorias', [{ id: 5, owner_user_id: 1, nombre: 'Alimentación', tipo: 'EGRESO', icono: null, color: null, created_at: null }]);
+    responderCatalogos({ cuentas: [cuentaItem(3, 'Bancolombia')], categorias: [categoriaItem(5, 'Alimentación')] });
     http().expectOne((r) => r.url === `${API}/transacciones`).flush({ total: 2, limit: 500, offset: 0, items: [
       { id: 1, owner_user_id: 1, tipo_transaccion: 'INGRESO', cuenta_origen_id: null, cuenta_destino_id: 3, tarjeta_pagada_id: null, categoria_id: null, fecha_transaccion: '2026-10-05T15:30:00.000Z', concepto: 'Nómina', moneda_original: 'COP', monto_original: 3500000, tasa_cambio: 1, monto_cop: 3500000, origen_registro: 'EMAIL_AUTO', estado: 'CONFIRMADO', notas: null, created_at: null },
       { id: 2, owner_user_id: 1, tipo_transaccion: 'EGRESO', cuenta_origen_id: 3, cuenta_destino_id: null, tarjeta_pagada_id: null, categoria_id: 5, fecha_transaccion: '2026-10-06T15:30:00.000Z', concepto: 'Mercado', moneda_original: 'USD', monto_original: 20, tasa_cambio: 4000, monto_cop: 80000, origen_registro: 'MANUAL', estado: 'PENDIENTE_REVISION', notas: null, created_at: null },
@@ -188,9 +186,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     configurarTestBed([FormularioTransaccionComponent]);
     const f = TestBed.createComponent(FormularioTransaccionComponent);
     f.detectChanges();
-    responder('cuentas-financieras', [cuenta(3)]);
-    responder('categorias', []);
-    responder('tarjetas', [{ id: 4, franquicia: 'Visa', descripcion: 'Oro' }]);
+    responderCatalogos({ cuentas: [cuentaItem(3, 'Cuenta 3')], tarjetas: [tarjetaItem(4, 'Visa', { descripcion: 'Oro', nombre: 'Visa · Oro', etiqueta: 'Visa · Oro' })] });
     let t = texto(f);
     for (const esperado of ['Egreso', 'Ingreso', 'Transferencia', 'Pago de tarjeta', 'Pago de préstamo', 'Reembolso de tercero', 'Pagar desde']) expect(t).toContain(esperado);
     expect(t).not.toContain('Tarjeta que se paga');
@@ -206,7 +202,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     configurarTestBed([ListaCorreosComponent]);
     const f = TestBed.createComponent(ListaCorreosComponent);
     f.detectChanges();
-    responder('personas', personas);
+    responderCatalogos({ personas });
     http().expectOne((r) => r.url === `${API}/notificaciones-correo`).flush([{
       id: 9, owner_user_id: 1, external_message_id: '<a@b>', remitente: 'x', asunto: 'Compra EXITO', fecha_correo: '2026-10-13T19:00:00.000Z', cuerpo_extraido: null,
       datos_parseados: { monto: '50000', moneda: 'COP', comercio: 'EXITO', ultimos_4: '0000', instrumento: 'TC', ruta: 'COMPRA_TC', tipo: 'Compra', metodo: 'Tarjeta Credito', motivo: 'tarjeta_no_identificada' },
@@ -221,10 +217,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     const f = TestBed.createComponent(FormularioConciliarComponent);
     f.componentRef.setInput('notificacion', { id: 9, asunto: 'Compra EXITO', fecha_correo: '2026-10-13T19:00:00.000Z', compra_credito_generada_id: 5, transaccion_generada_id: null, datos_parseados: { monto: '50000', comercio: 'EXITO', ultimos_4: '1927', instrumento: 'TC' } });
     f.detectChanges();
-    responder('cuentas-financieras', []);
-    responder('categorias', []);
-    responder('tarjetas', []);
-    responder('personas', personas);
+    responderCatalogos({ personas });
     f.componentInstance.agregarResponsable();
     const t = texto(f);
     for (const esperado of ['Conciliar correo', 'Número de cuotas', '¿Quién paga parte de esta compra?', 'Agregar persona', 'Suma:', '$50,000.00', '••1927']) expect(t).toContain(esperado);
@@ -261,7 +254,7 @@ describe('Renderizado de las pantallas (humo)', () => {
     const f = TestBed.createComponent(ListaCrucesComponent);
     f.detectChanges();
     responder('cruces-deuda', [{ id: 1, fecha_cruce: '2026-10-05T00:00:00.000Z', persona_que_abona_id: 3, persona_que_asume_deuda_id: 2, monto: 100000, prestamo_destino_id: 30, periodo_recurrente_destino_id: null, concepto: 'Cuota casa', comentarios: null }]);
-    responder('personas', personas);
+    responderCatalogos({ personas });
     const t = texto(f);
     for (const esperado of ['Cruces de deuda', 'Papá', 'Andrés', 'Cuota casa', 'Préstamo #30', '$100,000.00']) expect(t).toContain(esperado);
   });
@@ -290,8 +283,7 @@ describe('Renderizado — correos inteligentes y cobros a personas (humo)', () =
     configurarTestBed([CobrosComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }]);
     const f = TestBed.createComponent(CobrosComponent);
     f.detectChanges();
-    responder('personas', personas);
-    http().expectOne((r) => r.url === `${API}/cuentas-financieras`).flush([cuenta(1)]);
+    responderCatalogos({ personas, cuentas: [cuentaItem(1, 'Cuenta 1')] });
     http().expectOne((r) => r.url === `${API}/cobros-puntuales`).flush([cobro]);
     responder('cobros/reportes', [reporte]);
     http().expectOne((r) => r.url === `${API}/cobros/ingresos-sugeridos`).flush([{ notificacionId: 2, transaccionId: 40, fecha: '2026-10-06T00:00:00.000Z', personaId: 5, persona: 'Alicia Buitrago', monto: 2000000, concepto: 'x', cuentaId: 1 }]);
@@ -374,8 +366,7 @@ describe('Renderizado — correos inteligentes y cobros a personas (humo)', () =
         sugerencia: { tipo: 'CREAR_CUENTA', nombre: 'Bancolombia *3698', tipoCuenta: 'AHORROS', esPrincipal: true } },
       { ultimos4: '9491', instrumento: 'TC', esDebito: false, correos: 188, pendientes: 0, primera: null, ultima: null, totalCop: '2', asignadoA: { tipo: 'TARJETA', id: 1, nombre: 'Mastercard' }, sugerencia: null },
     ]);
-    responder('tarjetas', [{ id: 1, franquicia: 'Mastercard' }, { id: 2, franquicia: 'American Express' }]);
-    responder('cuentas-financieras', []);
+    responderCatalogos({ tarjetas: [tarjetaItem(1, 'Mastercard'), tarjetaItem(2, 'American Express')] });
     const t = texto(f);
     for (const esperado of ['Cuentas y tarjetas detectadas', '3 en tus correos', '2 sin asignar', '••1927', 'Tarjeta de crédito', 'Sin asignar', 'Es tu American Express', '192 de 193', '••3698', 'Parece tu cuenta principal', 'Mastercard', 'Aceptar sugerencias (2)', 'Reprocesar pendientes']) {
       expect(t).toContain(esperado);

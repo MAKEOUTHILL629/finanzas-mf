@@ -1,0 +1,21 @@
+:host { display: block; min-width: 0; }
+.ui-select { position: relative; }
+.ui-select select { width: 100%; }
+/* Esqueleto dentro del campo mientras se cargan las opciones: mismo alto que el select, sin saltos de layout. */
+.ui-select-esqueleto { position: absolute; inset: 0; border-radius: 12px; pointer-events: none; opacity: 0.55; }
+.ui-select--cargando select { color: transparent; }
+.ui-select--invalido select { border-color: var(--border-error); }
+.ui-select-error, .ui-select-vacio { margin: 6px 0 0; }
+.ui-select-enlace {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.ui-select-enlace:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .ui-select-esqueleto { animation: none; } }

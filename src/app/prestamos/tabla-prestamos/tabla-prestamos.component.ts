@@ -4,10 +4,10 @@ import { Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { CorteCobro, PrestamoDetalle } from '../../modelos/cobros';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
 import { CortesCobroService } from '../../services/cortes-cobro.service';
 import { ModalService } from '../../services/modal.service';
-import { PersonasService } from '../../services/personas.service';
+import { CatalogosService } from '../../services/catalogos.service';
 import { PrestamosService } from '../../services/prestamos.service';
 import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -73,7 +73,7 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
 
   prestamos: PrestamoDetalle[] = [];
   visibles: PrestamoDetalle[] = [];
-  personas: Persona[] = [];
+  personas: ItemPersona[] = [];
   cortes: CorteCobro[] = [];
   limite = this.TAM_PAGINA;
 
@@ -86,7 +86,7 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
 
   constructor(
     private prestamosService: PrestamosService,
-    private personasService: PersonasService,
+    private catalogos: CatalogosService,
     private cortesService: CortesCobroService,
     private modalService: ModalService,
     private toast: ToastService,
@@ -94,6 +94,9 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Nombres y filtro de personas: catálogo compartido (un fallo ahí no impide ver los préstamos).
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.asegurar(['personas']);
     this.filtros.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.limite = this.TAM_PAGINA;
       this.aplicarFiltros();
@@ -111,7 +114,6 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
     this.error = null;
     forkJoin({
       prestamos: this.prestamosService.getPrestamos(),
-      personas: this.personasService.getPersonas(),
       // los nombres de corte son un adorno: si fallan, la tabla sigue funcionando
       cortes: this.cortesService.getCortes().pipe(catchError(() => of([] as CorteCobro[]))),
     })
@@ -120,9 +122,8 @@ export class TablaPrestamosComponent implements OnInit, OnDestroy {
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: ({ prestamos, personas, cortes }) => {
+        next: ({ prestamos, cortes }) => {
           this.prestamos = ordenarPrestamos(prestamos ?? []);
-          this.personas = personas ?? [];
           this.cortes = cortes;
           this.calcularTotales();
           this.aplicarFiltros();

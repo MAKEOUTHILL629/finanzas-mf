@@ -172,17 +172,15 @@
       <div class="form-row">
         <div class="form-group">
           <label for="personaId">Persona <span class="required">*</span></label>
-          <select
-            id="personaId"
+          <app-select
+            inputId="personaId"
+            catalogo="personas"
             formControlName="personaId"
-            class="form-control"
-            [class.is-invalid]="responsableForm.get('personaId')?.invalid && responsableForm.get('personaId')?.touched"
-          >
-            <option value="">Seleccione una persona</option>
-            <option *ngFor="let persona of personasDisponibles" [value]="persona.id">
-              {{ persona.nombre }}
-            </option>
-          </select>
+            placeholder="Seleccione una persona"
+            [permitirVacio]="false"
+            [filtro]="filtroPersonas"
+            [invalido]="!!responsableForm.get('personaId')?.invalid && !!responsableForm.get('personaId')?.touched"
+          ></app-select>
           <div class="invalid-feedback" *ngIf="responsableForm.get('personaId')?.invalid && responsableForm.get('personaId')?.touched">
             Debe seleccionar una persona
           </div>

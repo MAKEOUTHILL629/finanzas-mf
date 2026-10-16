@@ -1,13 +1,11 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject, combineLatest } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AporteDiario, PeriodoCarro, PersonaResumen, ResultadoAporteDiario } from '../../modelos/aportes';
-import { CuentaFinanciera } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
+import { ItemCuenta, ItemPersona } from '../../modelos/catalogos';
 import { AportesCarroService } from '../../services/aportes-carro.service';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
-import { PersonasService } from '../../services/personas.service';
+import { CatalogosService } from '../../services/catalogos.service';
 import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { nombrePeriodo, periodoActual, hoyIso } from '../../shared/periodo.helper';
@@ -62,10 +60,13 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
   readonly etiquetaMetodo = etiquetaMetodo;
   readonly nombrePeriodo = nombrePeriodo;
 
-  personas: Persona[] = [];
-  cuentas: CuentaFinanciera[] = [];
+  personas: ItemPersona[] = [];
+  /** Cuentas activas en pesos (los aportes en efectivo o por transferencia entran en COP). */
+  cuentas: ItemCuenta[] = [];
   opcionesPeriodo: OpcionPeriodo[] = [];
   cargando = true;
+  private filtros = new WeakMap<FilaLinea, { clave: string; fn: (p: ItemPersona) => boolean }>();
+  readonly soloPesos = (c: ItemCuenta): boolean => c.moneda === 'COP';
   enviando = false;
   errorServidor: string | null = null;
 
@@ -81,8 +82,7 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private aportesService: AportesCarroService,
-    private personasService: PersonasService,
-    private cuentasService: CuentasFinancierasService
+    private catalogos: CatalogosService
   ) {}
 
   get lineas(): FormArray<FilaLinea> {
@@ -102,22 +102,24 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
       notas: this.aporte?.notas ?? '',
     });
 
-    forkJoin({ personas: this.personasService.getPersonas(), cuentas: this.cuentasService.getCuentas(true) })
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.cargando = false))
-      )
-      .subscribe({
-        next: ({ personas, cuentas }) => {
-          this.personas = personas;
-          this.cuentas = cuentas.filter((c) => c.moneda === 'COP');
-          this.cargarLineas();
-        },
-        error: (err) => {
-          this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las personas y las cuentas.');
-          this.cargarLineas();
-        }
+    // Personas y cuentas: catálogos compartidos. Las líneas se arman cuando ambos responden (o fallan) para poder sugerir a «tu persona».
+    let listo = false;
+    combineLatest([this.catalogos.estado$('personas'), this.catalogos.estado$('cuentas')])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([p, c]) => {
+        this.personas = p.datos;
+        this.cuentas = c.datos.filter((x) => x.activa && this.soloPesos(x));
+        if (listo) return;
+        const personasListas = p.cargado || p.error !== null;
+        const cuentasListas = c.cargado || c.error !== null;
+        if (!personasListas || !cuentasListas) return;
+        listo = true;
+        this.cargando = false;
+        const fallo = p.error ?? c.error;
+        if (fallo && !(p.cargado && c.cargado)) this.errorServidor = fallo;
+        this.cargarLineas();
       });
+    this.catalogos.asegurar(['personas', 'cuentas']);
   }
 
   ngOnDestroy(): void {
@@ -181,11 +183,11 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
 
   /** Tu persona (la enlazada a tu usuario): también puede entregar efectivo o transferencias. */
   get miPersonaId(): number | null {
-    return this.personas.find((p) => !!p.linkedUserId)?.id ?? null;
+    return this.personas.find((p) => p.esPropia)?.id ?? null;
   }
 
   /** Quiénes pueden figurar en una línea según su método (en un cruce, cualquiera; en lo demás, el responsable o tú). */
-  opcionesPersona(fila: FilaLinea): Persona[] {
+  opcionesPersona(fila: FilaLinea): ItemPersona[] {
     const clase = clasificarMetodo(fila.controls.metodo.value);
     if (clase === 'CRUCE_CUENTAS' || clase === 'OTRO') return this.personas;
     const permitidos = new Set([this.responsable?.id, this.miPersonaId]);
@@ -193,6 +195,22 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
     // al editar, la persona que ya estaba debe poder verse aunque no cumpla
     const actual = this.personas.find((p) => p.id === fila.controls.personaId.value);
     return actual && !lista.includes(actual) ? [...lista, actual] : lista;
+  }
+
+  /**
+   * Mismo criterio que `opcionesPersona` pero como filtro del selector del catálogo. Se memoriza por fila: devolver una función nueva
+   * en cada ciclo de detección haría que el selector recalcule sus opciones sin parar.
+   */
+  filtroPersona(fila: FilaLinea): (p: ItemPersona) => boolean {
+    const clase = clasificarMetodo(fila.controls.metodo.value);
+    const clave = `${clase}|${this.miPersonaId}|${this.responsable?.id ?? ''}`;
+    const previo = this.filtros.get(fila);
+    if (previo?.clave === clave) return previo.fn;
+    const abierto = clase === 'CRUCE_CUENTAS' || clase === 'OTRO';
+    const permitidos = new Set([this.responsable?.id, this.miPersonaId]);
+    const fn = (p: ItemPersona): boolean => abierto || permitidos.has(p.id);
+    this.filtros.set(fila, { clave, fn });
+    return fn;
   }
 
   get periodosOrigen(): PeriodoCarro[] {

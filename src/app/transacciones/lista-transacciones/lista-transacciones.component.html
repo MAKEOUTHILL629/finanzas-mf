@@ -43,17 +43,11 @@
     </div>
     <div class="erp-field">
       <label class="erp-label" for="tx-f-cuenta">Cuenta</label>
-      <select id="tx-f-cuenta" class="erp-select" formControlName="cuenta">
-        <option value="">Todas</option>
-        <option *ngFor="let c of cuentas" [value]="c.id">{{ c.nombre }}</option>
-      </select>
+      <app-select inputId="tx-f-cuenta" catalogo="cuentas" formControlName="cuenta" placeholder="Todas" [soloActivas]="false"></app-select>
     </div>
     <div class="erp-field">
       <label class="erp-label" for="tx-f-categoria">Categoría</label>
-      <select id="tx-f-categoria" class="erp-select" formControlName="categoria">
-        <option value="">Todas</option>
-        <option *ngFor="let c of categorias" [value]="c.id">{{ c.nombre }}</option>
-      </select>
+      <app-select inputId="tx-f-categoria" catalogo="categorias" formControlName="categoria" placeholder="Todas"></app-select>
     </div>
     <button type="button" class="erp-btn erp-btn--ghost" *ngIf="hayFiltros" (click)="quitarFiltros()">
       <i class="material-icons" aria-hidden="true">filter_alt_off</i>

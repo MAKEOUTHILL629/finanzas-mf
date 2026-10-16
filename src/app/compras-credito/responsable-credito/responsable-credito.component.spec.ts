@@ -6,6 +6,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ResponsableCreditoComponent } from './responsable-credito.component';
 import { ApiServicesService } from '../../services/api-services.service';
 import { SharedListasService } from '../../services/shared-listas.service';
+import { SelectComponent } from '../../shared/ui/select/select.component';
 
 describe('ResponsableCreditoComponent', () => {
   let component: ResponsableCreditoComponent;
@@ -14,7 +15,7 @@ describe('ResponsableCreditoComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule],
-      declarations: [ResponsableCreditoComponent],
+      declarations: [ResponsableCreditoComponent, SelectComponent],
       providers: [
         ApiServicesService,
         SharedListasService,

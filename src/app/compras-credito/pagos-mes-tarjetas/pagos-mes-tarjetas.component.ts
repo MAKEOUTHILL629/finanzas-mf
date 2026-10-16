@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiServicesService } from '../../services/api-services.service';
 import { MesPagoTarjeta } from '../../modelos/compras-credito';
-import { Tarjeta } from '../../modelos/tarjeta';
+import { ItemTarjeta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { Router } from '@angular/router';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { normalizeSearchText } from '../../shared/utils';
@@ -14,7 +15,7 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class PagosMesTarjetasComponent implements OnInit, OnDestroy {
   mesPagoTarjetas: MesPagoTarjeta[] = [];
-  tarjetas: Tarjeta[] = [];
+  tarjetas: ItemTarjeta[] = [];
   private destroy$ = new Subject<void>();
 
   // Secciones colapsables
@@ -38,7 +39,8 @@ export class PagosMesTarjetasComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiServicesService,
     private route: Router,
-    private sharedListasService: SharedListasService
+    private sharedListasService: SharedListasService,
+    private catalogos: CatalogosService
   ) { }
 
   ngOnInit(): void {
@@ -262,17 +264,13 @@ export class PagosMesTarjetasComponent implements OnInit, OnDestroy {
   }
 
   loadTarjetas(): void {
-    this.apiService.get<Tarjeta[]>('tarjetas')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          this.tarjetas = data;
-          this.sharedListasService.listaTarjetas = data;
-        },
-        error: (err) => {
-          void err;
-        }
-      });
+    // Tarjetas del filtro y nombres de cada pago: catálogo compartido.
+    this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.tarjetas = e.datos;
+      // los nombres de cada tarjeta aparecen cuando llega el catálogo, aunque los pagos hayan llegado antes
+      if (e.datos.length > 0 && this.mesPagoTarjetas.length > 0) this.calcularTresMesesClave();
+    });
+    this.catalogos.asegurar(['tarjetas']);
   }
 
   obtenerTarjeta(id: number): string {

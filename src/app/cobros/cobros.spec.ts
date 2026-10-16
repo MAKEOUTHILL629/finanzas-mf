@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { CobroPuntual, CobroPublico, EnlaceCobro, ReportePago } from '../modelos/cobros-personas';
-import { Persona } from '../modelos/persona';
+import { ItemPersona } from '../modelos/catalogos';
 import { ModalService } from '../services/modal.service';
 import { LADO_MAX_IMAGEN, MAX_BYTES_COMPROBANTE, bytesDeBase64, escalarDimensiones, tamanoLegible, tipoPermitido } from '../shared/archivo.helper';
 import { ToastService } from '../shared/toast/toast.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { AprobarReporteComponent, construirAprobacion, modoSugerido } from './aprobar-reporte/aprobar-reporte.component';
 import { CobroPublicoComponent, mensajePublico, resumenSaldo } from './cobro-publico/cobro-publico.component';
 import { CobrosComponent, ordenarReportes } from './cobros.component';
@@ -25,10 +25,10 @@ import {
 import { CompartirCobroComponent, construirEnlace } from './compartir-cobro/compartir-cobro.component';
 import { FormularioCobroComponent, construirCobro, miPersona } from './formulario-cobro/formulario-cobro.component';
 
-const PERSONAS: Persona[] = [
-  { id: 1, nombre: 'Felipe', linkedUserId: 1 },
-  { id: 2, nombre: 'Andrés', numeroCelular: '3104445566' },
-  { id: 3, nombre: 'Papá' },
+const PERSONAS: ItemPersona[] = [
+  persona(1, 'Felipe', { esPropia: true, tieneUsuario: true }),
+  persona(2, 'Andrés', { celular: '3104445566' }),
+  persona(3, 'Papá'),
 ];
 
 function cobro(extra: Partial<CobroPuntual> = {}): CobroPuntual {
@@ -161,7 +161,7 @@ describe('FormularioCobroComponent', () => {
 
   it('miPersona es la enlazada al usuario', () => {
     expect(miPersona(PERSONAS)?.id).toBe(1);
-    expect(miPersona([{ id: 2, nombre: 'x' }])).toBeNull();
+    expect(miPersona([persona(2, 'x')])).toBeNull();
   });
 
   function crear(cobroInicial: CobroPuntual | null = null) {
@@ -262,11 +262,9 @@ describe('AprobarReporteComponent', () => {
     configurarTestBed([AprobarReporteComponent]);
     const fixture = TestBed.createComponent(AprobarReporteComponent);
     fixture.componentInstance.reporte = r;
-    fixture.componentInstance.cuentas = [
-      { id: 1, nombre: 'Nequi', es_principal: false } as never,
-      { id: 2, nombre: 'Ahorros', es_principal: true } as never,
-    ];
+    fixture.componentInstance.cuentas = [cuentaItem(1, 'Nequi'), cuentaItem(2, 'Ahorros', { esPrincipal: true })];
     fixture.detectChanges();
+    responderCatalogos({ cuentas: fixture.componentInstance.cuentas }, { esperadas: 0 }); // el selector de la cuenta pide el catálogo si está visible
     return fixture.componentInstance;
   }
 
@@ -311,8 +309,7 @@ describe('CobrosComponent', () => {
     configurarTestBed([CobrosComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(queryParams) } } }]);
     const fixture = TestBed.createComponent(CobrosComponent);
     fixture.detectChanges();
-    responder('personas', PERSONAS);
-    http().expectOne((r) => r.url === `${API}/cuentas-financieras`).flush([]);
+    responderCatalogos({ personas: PERSONAS }, { esperadas: 1 });
     http().expectOne((r) => r.url === `${API}/cobros-puntuales`).flush(datos.cobros ?? []);
     responder('cobros/reportes', datos.reportes ?? []);
     http().expectOne((r) => r.url === `${API}/cobros/ingresos-sugeridos`).flush(datos.ingresos ?? []);
@@ -347,8 +344,7 @@ describe('CobrosComponent', () => {
     configurarTestBed([CobrosComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } }]);
     const fixture = TestBed.createComponent(CobrosComponent);
     fixture.detectChanges();
-    responder('personas', PERSONAS);
-    http().expectOne((r) => r.url === `${API}/cuentas-financieras`).flush([]);
+    responderCatalogos({ personas: PERSONAS }, { esperadas: 1 });
     errorHttp(http().expectOne((r) => r.url === `${API}/cobros-puntuales`), 500, {});
     responder('cobros/reportes', [reporte()]);
     http().expectOne((r) => r.url === `${API}/cobros/ingresos-sugeridos`).flush([]);
@@ -365,8 +361,7 @@ describe('CobrosComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.pestana).toBe('reportes');
     expect(fixture.componentInstance.periodo).toBe('2026-09');
-    responder('personas', PERSONAS);
-    http().expectOne((r) => r.url === `${API}/cuentas-financieras`).flush([]);
+    responderCatalogos({ personas: PERSONAS }, { esperadas: 1 });
     const req = http().expectOne((r) => r.url === `${API}/cobros-puntuales`);
     expect(req.request.params.get('periodo')).toBe('2026-09');
     req.flush([]);

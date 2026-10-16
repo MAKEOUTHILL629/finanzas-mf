@@ -1,7 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnChanges, OnInit, OnDestroy, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { ApiServicesService } from '../../services/api-services.service';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
@@ -18,8 +19,10 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
   responsables: ResponsableCompraCredito[] = [];
   responsablesOriginales: ResponsableCompraCredito[] = []; // Copia para comparación
   responsableForm: FormGroup;
-  personas: Persona[] = [];
-  personasDisponibles: Persona[] = [];
+  personas: ItemPersona[] = [];
+  personasDisponibles: ItemPersona[] = [];
+  /** Personas que aún no son responsables de la compra (se renueva al cambiar la lista para que el selector se actualice). */
+  filtroPersonas: (p: ItemPersona) => boolean = () => true;
   porcentajeRestante: number = 100;
   mostrarModalEliminacion: boolean = false;
   responsableAEliminar: ResponsableCompraCredito | null = null;
@@ -41,7 +44,8 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
   constructor(
     private fb: FormBuilder,
     private apiService: ApiServicesService,
-    private sharedListasService: SharedListasService
+    private sharedListasService: SharedListasService,
+    private catalogos: CatalogosService
   ) {
     this.responsableForm = this.fb.group({
       personaId: ['', Validators.required],
@@ -98,24 +102,19 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
     this.calcularPorcentajeRestante();
   }
 
+  /** Las personas vienen del catálogo compartido: no se repite la petición si otro formulario ya la hizo y se actualizan solas. */
   loadPersonas() {
-    this.apiService.get<Persona[]>(`personas`)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (personas) => {
-          this.personas = personas || [];
-          if (!this.sharedListasService.listaPersonas || this.sharedListasService.listaPersonas.length === 0) {
-            this.sharedListasService.listaPersonas = this.personas;
-          }
-          this.updatePersonasDisponibles();
-        },
-        error: (error) => { void error; }
-      });
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.personas = e.datos;
+      this.updatePersonasDisponibles();
+    });
+    this.catalogos.asegurar(['personas']);
   }
 
   updatePersonasDisponibles() {
     const responsablesIds = new Set(this.responsables.map(r => r.persona));
     this.personasDisponibles = this.personas.filter(p => !responsablesIds.has(p.id));
+    this.filtroPersonas = (p: ItemPersona) => !responsablesIds.has(p.id);
   }
 
   calcularPorcentajeRestante() {

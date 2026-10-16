@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AporteDiaConDetalle, MetodoAporte, RegistrarAportesDia, ResumenObligacionMes } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { ObligacionesMesService } from '../../services/obligaciones-mes.service';
 import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -26,9 +27,10 @@ type FilaAporte = FormGroup<{
   templateUrl: './formulario-aportes.component.html',
   styleUrl: './formulario-aportes.component.css'
 })
-export class FormularioAportesComponent implements OnChanges, OnDestroy {
+export class FormularioAportesComponent implements OnChanges, OnInit, OnDestroy {
   @Input({ required: true }) obligacion!: ResumenObligacionMes;
-  @Input() personas: Persona[] = [];
+  /** Personas del catálogo compartido (para saber a quién se le genera un préstamo y mostrar su nombre). */
+  personas: ItemPersona[] = [];
   @Output() registrado = new EventEmitter<AporteDiaConDetalle>();
   @Output() cancelar = new EventEmitter<void>();
 
@@ -46,8 +48,16 @@ export class FormularioAportesComponent implements OnChanges, OnDestroy {
     items: this.fb.array<FilaAporte>([]),
   });
 
-  constructor(private obligacionesService: ObligacionesMesService) {
+  constructor(private obligacionesService: ObligacionesMesService, private catalogos: CatalogosService) {
     this.agregarFila();
+  }
+
+  ngOnInit(): void {
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.personas = e.datos;
+      this.preseleccionarResponsable();
+    });
+    this.catalogos.asegurar(['personas']);
   }
 
   get items(): FormArray<FilaAporte> {
@@ -60,11 +70,13 @@ export class FormularioAportesComponent implements OnChanges, OnDestroy {
       this.form.controls.fecha.setValue(this.fechaPorDefecto());
     }
     // Si el responsable principal ya está en la lista, se preselecciona en la primera fila vacía.
-    if (cambios['personas'] || cambios['obligacion']) {
-      const primera = this.items.at(0);
-      if (primera && !primera.controls.personaId.dirty && this.obligacion?.responsable_principal_id) {
-        primera.controls.personaId.setValue(this.obligacion.responsable_principal_id);
-      }
+    if (cambios['obligacion']) this.preseleccionarResponsable();
+  }
+
+  private preseleccionarResponsable(): void {
+    const primera = this.items.at(0);
+    if (primera && !primera.controls.personaId.dirty && this.obligacion?.responsable_principal_id) {
+      primera.controls.personaId.setValue(this.obligacion.responsable_principal_id);
     }
   }
 
@@ -100,7 +112,7 @@ export class FormularioAportesComponent implements OnChanges, OnDestroy {
     if (id === null || id === undefined) return false;
     if (id === this.obligacion?.responsable_principal_id) return false;
     const persona = this.personas.find((p) => p.id === Number(id));
-    return !(persona?.linkedUserId);
+    return !persona?.tieneUsuario;
   }
 
   nombrePersona(id: number | null): string {

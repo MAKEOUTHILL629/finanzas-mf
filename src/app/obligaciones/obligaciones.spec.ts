@@ -3,7 +3,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AporteDiaConDetalle, ResumenObligacionMes } from '../modelos/erp';
 import { ToastService } from '../shared/toast/toast.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { DetalleObligacionComponent } from './detalle-obligacion/detalle-obligacion.component';
 import { FormularioAportesComponent } from './formulario-aportes/formulario-aportes.component';
 import { FormularioObligacionComponent } from './formulario-obligacion/formulario-obligacion.component';
@@ -19,9 +19,9 @@ function resumen(extra: Partial<ResumenObligacionMes> = {}): ResumenObligacionMe
 }
 
 const PERSONAS = [
-  { id: 1, nombre: 'Felipe', linkedUserId: 1 },
-  { id: 2, nombre: 'Andrés', linkedUserId: null },
-  { id: 3, nombre: 'Papá', linkedUserId: null },
+  persona(1, 'Felipe', { esPropia: true, tieneUsuario: true }),
+  persona(2, 'Andrés'),
+  persona(3, 'Papá'),
 ];
 
 describe('ListaObligacionesComponent', () => {
@@ -92,7 +92,7 @@ describe('FormularioObligacionComponent', () => {
     configurarTestBed([FormularioObligacionComponent]);
     const fixture = TestBed.createComponent(FormularioObligacionComponent);
     fixture.detectChanges();
-    responder('personas', PERSONAS);
+    responderCatalogos({ personas: PERSONAS });
     return fixture.componentInstance;
   }
 
@@ -156,7 +156,8 @@ describe('FormularioAportesComponent', () => {
     configurarTestBed([FormularioAportesComponent]);
     const fixture: ComponentFixture<FormularioAportesComponent> = TestBed.createComponent(FormularioAportesComponent);
     fixture.componentRef.setInput('obligacion', obligacion);
-    fixture.componentRef.setInput('personas', PERSONAS);
+    fixture.detectChanges();
+    responderCatalogos({ personas: PERSONAS });
     fixture.detectChanges();
     c = fixture.componentInstance;
   }
@@ -265,15 +266,13 @@ describe('DetalleObligacionComponent', () => {
     fixture.detectChanges();
     responder(`obligaciones-mes/${id}/resumen`, resumen());
     responder(`obligaciones-mes/${id}/aportes-dia`, [dia(10), dia(11)]);
-    responder('personas', PERSONAS);
     return fixture.componentInstance;
   }
 
-  it('carga resumen, aportes por día y personas', () => {
+  it('carga resumen y aportes por día (las personas vienen del catálogo, ya no de esta pantalla)', () => {
     const c = iniciar();
     expect(c.resumen?.concepto).toBe('Cuota del carro');
     expect(c.dias.length).toBe(2);
-    expect(c.personas.length).toBe(3);
     expect(c.esCompletada()).toBeFalse();
   });
 
@@ -296,7 +295,6 @@ describe('DetalleObligacionComponent', () => {
     expect(exito).toHaveBeenCalledWith('Aportes registrados. Se generaron 1 préstamo por cobrar.');
     responder('obligaciones-mes/3/resumen', resumen());
     responder('obligaciones-mes/3/aportes-dia', []);
-    responder('personas', PERSONAS);
     expect(c.dias.length).toBe(0);
   });
 

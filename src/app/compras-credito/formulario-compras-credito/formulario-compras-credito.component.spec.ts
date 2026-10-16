@@ -9,6 +9,7 @@ import { FormularioComprasCreditoComponent } from './formulario-compras-credito.
 import { ApiServicesService } from '../../services/api-services.service';
 import { ModalService } from '../../services/modal.service';
 import { SharedListasService } from '../../services/shared-listas.service';
+import { SelectComponent } from '../../shared/ui/select/select.component';
 
 describe('FormularioComprasCreditoComponent', () => {
   let component: FormularioComprasCreditoComponent;
@@ -21,7 +22,7 @@ describe('FormularioComprasCreditoComponent', () => {
         FormsModule,
         MatAutocompleteModule
       ],
-      declarations: [FormularioComprasCreditoComponent],
+      declarations: [FormularioComprasCreditoComponent, SelectComponent],
       providers: [
         ApiServicesService,
         ModalService,

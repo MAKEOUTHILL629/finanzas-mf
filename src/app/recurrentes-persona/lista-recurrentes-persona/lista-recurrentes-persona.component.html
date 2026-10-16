@@ -32,10 +32,7 @@
   <form class="erp-toolbar" role="search" aria-label="Filtrar recurrentes" (submit)="$event.preventDefault()" *ngIf="!cargando && !error && recurrentes.length > 0">
     <div class="erp-field">
       <label class="erp-label" for="rp-f-persona">Persona</label>
-      <select id="rp-f-persona" class="erp-select" name="persona" [ngModel]="filtros.personaId" (ngModelChange)="cambiarFiltro('personaId', $event)">
-        <option [ngValue]="null">Todas</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="rp-f-persona" catalogo="personas" name="persona" [ngModel]="filtros.personaId" (ngModelChange)="cambiarFiltro('personaId', $event)" placeholder="Todas"></app-select>
     </div>
     <div class="erp-field">
       <label class="erp-label" for="rp-f-duracion">Duración</label>
@@ -154,7 +151,6 @@
 <app-modal [modalId]="modalId">
   <app-formulario-recurrente-persona
     *ngIf="formularioAbierto"
-    [personas]="personas"
     [recurrente]="enEdicion"
     (guardado)="onGuardado($event)"
     (cancelar)="cerrarFormulario()"></app-formulario-recurrente-persona>

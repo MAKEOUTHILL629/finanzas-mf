@@ -5,11 +5,11 @@ import {
   SortableFields,
 } from '../../modelos/compras-credito';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Tarjeta } from '../../modelos/tarjeta';
+import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { ApiServicesService } from '../../services/api-services.service';
 import { Router } from '@angular/router';
 import { ModalService } from '../../services/modal.service';
-import { Persona } from '../../modelos/persona';
 import { capitalize, matchesSearchFields, normalizeSearchText } from '../../shared/utils';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { Subject, takeUntil } from 'rxjs';
@@ -52,15 +52,18 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     { titulo: 'Tarjeta', columna: 'tarjeta' },
   ];
 
-  tarjetas: Tarjeta[] = [];
-  personas: Persona[] = [];
+  tarjetas: ItemTarjeta[] = [];
+  personas: ItemPersona[] = [];
+  /** Si los catálogos no cargaron se avisa (antes un fallo se veía como «No hay tarjetas disponibles»). */
+  errorCatalogos: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private apiService: ApiServicesService,
     private router: Router,
     private modalService: ModalService,
-    private sharedListasService: SharedListasService
+    private sharedListasService: SharedListasService,
+    private catalogos: CatalogosService
   ) {
     this.filterForm = this.fb.group({
       fechaCompraInicio: [''],
@@ -98,18 +101,19 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /** Tarjetas del filtro: catálogo compartido (esqueleto/vacío/error en un solo lugar; no se repite si otra pantalla ya lo cargó). */
   loadTarjetas(): void {
-    this.apiService.get<Tarjeta[]>('tarjetas')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => {
-          this.tarjetas = data;
-          this.sharedListasService.listaTarjetas = data;
-        },
-        error: (err) => {
-          void err;
-        },
-      });
+    this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.tarjetas = e.datos;
+      this.errorCatalogos = e.error ?? this.errorCatalogos;
+      if (e.cargado && !e.error) this.errorCatalogos = null;
+    });
+    this.catalogos.asegurar(['tarjetas']);
+  }
+
+  reintentarCatalogos(): void {
+    this.errorCatalogos = null;
+    this.catalogos.recargar(['tarjetas', 'personas']);
   }
 
   obtenerTarjeta(id: number): string {
@@ -364,16 +368,10 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   }
 
   loadPersonas(): void {
-    this.apiService.get<Persona[]>('personas')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (personas) => {
-          this.personas = personas;
-          this.sharedListasService.listaPersonas = personas;
-        },
-        error: (error) => {
-          void error;
-        }
-      });
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.personas = e.datos;
+      if (e.error) this.errorCatalogos = e.error;
+    });
+    this.catalogos.asegurar(['personas']);
   }
 }

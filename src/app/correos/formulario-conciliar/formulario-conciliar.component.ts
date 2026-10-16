@@ -1,14 +1,11 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, finalize, takeUntil } from 'rxjs/operators';
-import { Categoria, ConciliarNotificacion, CuentaFinanciera, NotificacionCorreo, ResultadoConciliacion } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
-import { Tarjeta } from '../../modelos/tarjeta';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { ConciliarNotificacion, NotificacionCorreo, ResultadoConciliacion } from '../../modelos/erp';
+import { ItemCuenta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
-import { PersonasService } from '../../services/personas.service';
-import { TarjetasService } from '../../services/tarjetas.service';
 import { esImporteValido } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { hoyIso } from '../../shared/periodo.helper';
@@ -99,11 +96,9 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
   modo!: ModoConciliacion;
   motivo: string | null = null;
 
-  cuentas: CuentaFinanciera[] = [];
-  categorias: Categoria[] = [];
-  tarjetas: Tarjeta[] = [];
-  personas: Persona[] = [];
-  cargando = true;
+  /** «Bancolombia Ahorros ··3698 (COP)». */
+  readonly etiquetaCuenta = (c: ItemCuenta): string => `${c.nombre}${c.ultimos4 ? ` ··${c.ultimos4.split(/[,;\s]+/)[0]}` : ''} (${c.moneda})`;
+
   enviando = false;
   errorServidor: string | null = null;
 
@@ -126,12 +121,7 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
     prestamoComentarios: [''],
   });
 
-  constructor(
-    private notificacionesService: NotificacionesCorreoService,
-    private cuentasService: CuentasFinancierasService,
-    private tarjetasService: TarjetasService,
-    private personasService: PersonasService
-  ) {}
+  constructor(private notificacionesService: NotificacionesCorreoService, private catalogos: CatalogosService) {}
 
   get responsables() {
     return this.form.controls.responsables;
@@ -148,27 +138,17 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
       prestamoFechaCobro: hoyIso(),
     });
 
-    forkJoin({
-      cuentas: this.cuentasService.getCuentas(true).pipe(catchError(() => of([] as CuentaFinanciera[]))),
-      categorias: this.cuentasService.getCategorias().pipe(catchError(() => of([] as Categoria[]))),
-      tarjetas: this.tarjetasService.getTarjetas().pipe(catchError(() => of([] as Tarjeta[]))),
-      personas: this.personasService.getPersonas().pipe(catchError(() => of([] as Persona[]))),
-    })
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.cargando = false))
-      )
-      .subscribe(({ cuentas, categorias, tarjetas, personas }) => {
-        this.cuentas = cuentas;
-        this.categorias = categorias;
-        this.tarjetas = tarjetas;
-        this.personas = personas;
-        // si la cuenta/tarjeta solo puede ser una, se preselecciona
-        if (this.modo === 'nuevo') {
-          if (this.vista.instrumento === 'TC' && tarjetas.length === 1) this.form.controls.tarjetaId.setValue(tarjetas[0].id ?? null);
-          if (this.vista.instrumento !== 'TC' && cuentas.length === 1) this.form.controls.cuentaId.setValue(cuentas[0].id);
-        }
+    // Cuentas, categorías, tarjetas y personas: catálogos compartidos (cada selector muestra su esqueleto, vacío o error con «Reintentar»).
+    this.catalogos.asegurar(['cuentas', 'categorias', 'tarjetas', 'personas']);
+    // Si la cuenta/tarjeta solo puede ser una, se preselecciona (una sola vez, cuando llega el catálogo).
+    if (this.modo === 'nuevo') {
+      const tipo = this.vista.instrumento === 'TC' ? 'tarjetas' : 'cuentas';
+      const control = tipo === 'tarjetas' ? this.form.controls.tarjetaId : this.form.controls.cuentaId;
+      this.catalogos.estado$(tipo).pipe(takeUntil(this.destroy$)).subscribe((e) => {
+        const posibles = tipo === 'cuentas' ? (e.datos as ItemCuenta[]).filter((c) => c.activa) : e.datos;
+        if (control.value === null && !control.dirty && posibles.length === 1) control.setValue(posibles[0].id);
       });
+    }
 
     // El monto, la cuenta/tarjeta (modo nuevo) y los datos del préstamo solo se exigen cuando aplican.
     this.form.controls.convertir.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((c) => {
@@ -216,10 +196,6 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
   get faltaProducto(): boolean {
     if (this.modo !== 'nuevo') return false;
     return this.esTarjeta ? this.form.controls.tarjetaId.value === null : this.form.controls.cuentaId.value === null;
-  }
-
-  nombreTarjeta(t: Tarjeta): string {
-    return [t.franquicia, t.descripcion].filter((x) => !!x).join(' · ') || `Tarjeta #${t.id}`;
   }
 
   enviar(): void {

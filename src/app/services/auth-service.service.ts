@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
 import { tap, catchError, finalize } from 'rxjs/operators';
 import { ApiServicesService } from './api-services.service';
+import { CatalogosService } from './catalogos.service';
 import { Credentials, AuthResponse } from '../modelos/Authenticate';
 import { clearAllFilterStates } from '../shared/table-filter.helper';
 
@@ -29,7 +30,8 @@ export class AuthServiceService {
 
   constructor(
     private apiService: ApiServicesService,
-    private router: Router
+    private router: Router,
+    private catalogos: CatalogosService
   ) { }
 
   /**
@@ -74,6 +76,7 @@ export class AuthServiceService {
       .pipe(
         tap(response => {
           if (response && response.token) {
+             this.catalogos.limpiar(); // sesión nueva = catálogos nuevos
              localStorage.setItem(this.TOKEN_KEY, response.token);
              this.loggedIn.next(true);
           } else {
@@ -153,6 +156,8 @@ export class AuthServiceService {
         catchError(() => of(null)),
         finalize(() => {
           clearAllFilterStates();
+          // Los catálogos (personas, cuentas…) son de ESTE usuario: no deben verse en la sesión de otro.
+          this.catalogos.limpiar();
           localStorage.removeItem(this.TOKEN_KEY);
           this.loggedIn.next(false);
           this.router.navigate(['/login']);

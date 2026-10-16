@@ -139,7 +139,7 @@
     </div>
 
     <app-modal [modalId]="modalId">
-      <app-formulario-aportes [obligacion]="r" [personas]="personas" (registrado)="onRegistrado($event)" (cancelar)="cerrarFormulario()"></app-formulario-aportes>
+      <app-formulario-aportes [obligacion]="r" (registrado)="onRegistrado($event)" (cancelar)="cerrarFormulario()"></app-formulario-aportes>
     </app-modal>
   </ng-container>
 </section>

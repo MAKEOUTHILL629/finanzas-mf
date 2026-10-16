@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, debounceTime, finalize, takeUntil } from 'rxjs/operators';
-import { Categoria, CuentaFinanciera, FiltroTransacciones, Transaccion } from '../../modelos/erp';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
+import { Subject } from 'rxjs';
+import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
+import { FiltroTransacciones, Transaccion } from '../../modelos/erp';
+import { ItemCategoria, ItemCuenta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
 import { TransaccionesService } from '../../services/transacciones.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -69,8 +70,9 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
   totales: TotalesTransacciones = { ingresos: 0, egresos: 0, neto: 0, pendientesRevision: 0 };
   pagina = 0;
 
-  cuentas: CuentaFinanciera[] = [];
-  categorias: Categoria[] = [];
+  /** Para los nombres de la tabla y los filtros (catálogos compartidos). */
+  cuentas: ItemCuenta[] = [];
+  categorias: ItemCategoria[] = [];
 
   /** Transacción en edición (null = alta). El formulario existe solo mientras el modal está abierto. */
   formularioAbierto = false;
@@ -85,7 +87,7 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
 
   constructor(
     private transaccionesService: TransaccionesService,
-    private cuentasService: CuentasFinancierasService,
+    private catalogos: CatalogosService,
     private modalService: ModalService,
     private toast: ToastService
   ) {}
@@ -97,16 +99,10 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
         this.editando = null;
       }
     });
-    // listas para los filtros: si fallan, la pantalla funciona igual (sin esos desplegables)
-    forkJoin({
-      cuentas: this.cuentasService.getCuentas().pipe(catchError(() => of([] as CuentaFinanciera[]))),
-      categorias: this.cuentasService.getCategorias().pipe(catchError(() => of([] as Categoria[]))),
-    })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(({ cuentas, categorias }) => {
-        this.cuentas = cuentas;
-        this.categorias = categorias;
-      });
+    // Listas de los filtros y de los nombres de la tabla: del catálogo compartido (cada selector muestra su propio error con «Reintentar»).
+    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.cuentas = e.datos));
+    this.catalogos.estado$('categorias').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.categorias = e.datos));
+    this.catalogos.asegurar(['cuentas', 'categorias']);
 
     this.filtros.valueChanges.pipe(debounceTime(150), takeUntil(this.destroy$)).subscribe(() => {
       this.pagina = 0;

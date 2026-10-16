@@ -13,7 +13,7 @@
 
   <ng-container *ngIf="!cargando">
     <!-- Sin cuentas -->
-    <div class="erp-alert erp-alert--warning" *ngIf="cuentas.length === 0">
+    <div class="erp-alert erp-alert--warning" *ngIf="cuentas.length === 0 && !errorServidor">
       <i class="material-icons" aria-hidden="true">account_balance</i>
       <span>
         No tienes cuentas activas en pesos desde las que pagar.
@@ -35,10 +35,8 @@
     <div class="erp-form-grid" *ngIf="cuentas.length > 0">
       <div class="erp-field erp-span-2">
         <label class="erp-label" for="pe-cuenta">Pagar desde<span class="erp-req" aria-hidden="true">*</span></label>
-        <select id="pe-cuenta" class="erp-select" formControlName="cuentaOrigenId" [attr.aria-invalid]="campoInvalido('cuentaOrigenId')">
-          <option [ngValue]="null" disabled>Selecciona una cuenta</option>
-          <option *ngFor="let c of cuentas" [ngValue]="c.id">{{ c.nombre }} — saldo {{ c.saldo_actual | moneda }}</option>
-        </select>
+        <app-select inputId="pe-cuenta" catalogo="cuentas" [filtro]="soloPesos" [etiquetar]="etiquetaConSaldo" formControlName="cuentaOrigenId" placeholder="Selecciona una cuenta" [permitirVacio]="false"
+                    [invalido]="campoInvalido('cuentaOrigenId')"></app-select>
         <p class="erp-field-error" *ngIf="campoInvalido('cuentaOrigenId')">Selecciona la cuenta de origen.</p>
       </div>
 

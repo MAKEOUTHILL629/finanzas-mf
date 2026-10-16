@@ -2,7 +2,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AporteDiario, DetalleAporteDiario, PeriodoCarro, ResumenCarro } from '../modelos/aportes';
 import { AportesCarroService } from '../services/aportes-carro.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona as personaCatalogo, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { desplazarPeriodo, periodoActual } from '../shared/periodo.helper';
 import { AportesCarroComponent } from './aportes-carro.component';
 import {
@@ -51,11 +51,11 @@ const resumen = (extra: Partial<ResumenCarro> = {}): ResumenCarro => ({
   tipoObligacion: 'CUOTA_CARRO', responsable: papa, cuotaBase: 1000000, periodoActual: periodoActual(), periodoSeleccionadoId: 66, saldoAFavorDisponibleGlobal: 245000,
   periodos: [periodo(), conExcedente()], ...extra,
 });
-const personas = [{ id: 1, nombre: 'Felipe', linkedUserId: 1 }, { id: 2, nombre: 'Andrés Gómez' }, { id: 4, nombre: 'Luis Fernando' }];
+const personas = [personaCatalogo(1, 'Felipe', { esPropia: true, tieneUsuario: true }), personaCatalogo(2, 'Andrés Gómez'), personaCatalogo(4, 'Luis Fernando')];
 const cuentas = [
-  { id: 9, owner_user_id: 1, nombre: 'Efectivo', tipo_cuenta: 'EFECTIVO', banco_entidad: null, ultimos_4_digitos: null, moneda: 'COP', saldo_actual: 0, is_active: true, created_at: null },
-  { id: 8, owner_user_id: 1, nombre: 'Bancolombia', tipo_cuenta: 'AHORROS', banco_entidad: 'Bancolombia', ultimos_4_digitos: '1234', moneda: 'COP', saldo_actual: 1000000, is_active: true, created_at: null },
-  { id: 7, owner_user_id: 1, nombre: 'Dólares', tipo_cuenta: 'AHORROS', banco_entidad: null, ultimos_4_digitos: null, moneda: 'USD', saldo_actual: 10, is_active: true, created_at: null },
+  cuentaItem(9, 'Efectivo', { tipoCuenta: 'EFECTIVO' }),
+  cuentaItem(8, 'Bancolombia', { bancoEntidad: 'Bancolombia', ultimos4: '1234', saldoActual: 1000000 }),
+  cuentaItem(7, 'Dólares', { moneda: 'USD', saldoActual: 10 }),
 ];
 function texto(f: ComponentFixture<unknown>): string {
   f.detectChanges();
@@ -348,8 +348,7 @@ describe('FormularioAporteDiarioComponent', () => {
     const f = TestBed.createComponent(FormularioAporteDiarioComponent);
     Object.assign(f.componentInstance, { periodos: [periodo(), conExcedente()], responsable: papa, cuotaBase: 1000000, periodoInicial: '2026-09' }, entradas);
     f.detectChanges();
-    responder('personas', personas);
-    responder('cuentas-financieras', cuentas);
+    responderCatalogos({ personas, cuentas });
     f.detectChanges();
     return f;
   }

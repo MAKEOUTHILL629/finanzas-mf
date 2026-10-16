@@ -34,10 +34,8 @@
     </label>
     <div class="erp-field opcion-extra" *ngIf="modo === 'cuenta'">
       <label class="erp-label" for="ap-cuenta">Cuenta donde lo recibiste</label>
-      <select id="ap-cuenta" class="erp-select" formControlName="cuentaId">
-        <option [ngValue]="null" disabled>Selecciona la cuenta</option>
-        <option *ngFor="let c of cuentas" [ngValue]="c.id">{{ c.nombre }}</option>
-      </select>
+      <app-select inputId="ap-cuenta" catalogo="cuentas" formControlName="cuentaId" placeholder="Selecciona la cuenta" [permitirVacio]="false"
+                  [enlaceCrear]="{ texto: 'Crear una cuenta', ruta: '/cuentas' }"></app-select>
     </div>
 
     <label class="opcion" [class.opcion--activa]="modo === 'anotar'">

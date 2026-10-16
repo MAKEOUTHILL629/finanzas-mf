@@ -3,7 +3,8 @@ import { ResumenMensualTarjeta, Transaccion } from '../modelos/erp';
 import { ModalService } from '../services/modal.service';
 import { periodoActual } from '../shared/periodo.helper';
 import { ToastService } from '../shared/toast/toast.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { ItemCuenta } from '../modelos/catalogos';
+import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { ExtractosTarjetasComponent, MODAL_PAGO_EXTRACTO } from './extractos-tarjetas/extractos-tarjetas.component';
 import { FormularioPagarExtractoComponent } from './formulario-pagar-extracto/formulario-pagar-extracto.component';
 
@@ -13,10 +14,6 @@ function extracto(extra: Partial<ResumenMensualTarjeta> = {}): ResumenMensualTar
     total_extracto_cop: 1200000.5, componente_en_usd: 0, todas_trm_confirmadas: true, total_responsabilidad_terceros: 200000.25, total_propio: 1000000.25, ...extra,
   };
 }
-
-const cuenta = (id: number, saldo: number, moneda = 'COP', nombre = `Cuenta ${id}`) => ({
-  id, owner_user_id: 1, nombre, tipo_cuenta: 'AHORROS', banco_entidad: null, ultimos_4_digitos: null, moneda, saldo_actual: saldo, is_active: true, created_at: null,
-});
 
 function pagoPrevio(extra: Partial<Transaccion> = {}): Transaccion {
   return {
@@ -92,17 +89,20 @@ describe('ExtractosTarjetasComponent', () => {
   });
 });
 
+/** Cuenta del catálogo de los selectores (`GET /api/lookup`). */
+const cuenta = (id: number, saldo: number, moneda = 'COP') => cuentaItem(id, `Cuenta ${id}`, { saldoActual: saldo, moneda });
+
 describe('FormularioPagarExtractoComponent', () => {
   let c: FormularioPagarExtractoComponent;
   afterEach(() => verificarHttp());
 
-  function iniciar(cuentas: object[], transacciones: Transaccion[] = [], resumen = extracto()): void {
+  function iniciar(cuentas: ItemCuenta[], transacciones: Transaccion[] = [], resumen = extracto()): void {
     configurarTestBed([FormularioPagarExtractoComponent]);
     const fixture = TestBed.createComponent(FormularioPagarExtractoComponent);
     fixture.componentRef.setInput('resumen', resumen);
     fixture.detectChanges();
     c = fixture.componentInstance;
-    http().expectOne((r) => r.url === `${API}/cuentas-financieras` && r.params.get('soloActivas') === 'true').flush(cuentas);
+    responderCatalogos({ cuentas });
     http().expectOne((r) => r.url === `${API}/transacciones` && r.params.get('tipo') === 'PAGO_TARJETA').flush({ total: transacciones.length, limit: 200, offset: 0, items: transacciones });
   }
 
@@ -168,7 +168,7 @@ describe('FormularioPagarExtractoComponent', () => {
     const fixture = TestBed.createComponent(FormularioPagarExtractoComponent);
     fixture.componentRef.setInput('resumen', extracto());
     fixture.detectChanges();
-    http().expectOne((r) => r.url === `${API}/cuentas-financieras`).flush([cuenta(1, 9000000)]);
+    responderCatalogos({ cuentas: [cuenta(1, 9000000)] });
     errorHttp(http().expectOne((r) => r.url === `${API}/transacciones`), 500, {});
     expect(fixture.componentInstance.pagosPrevios).toEqual([]);
     expect(fixture.componentInstance.cuentas.length).toBe(1);

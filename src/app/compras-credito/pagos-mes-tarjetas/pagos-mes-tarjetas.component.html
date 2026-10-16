@@ -138,7 +138,7 @@
           <select class="input-glass" [(ngModel)]="tarjetaFiltro" (ngModelChange)="aplicarFiltros()">
             <option [value]="0">Todas las tarjetas</option>
             <option *ngFor="let tarjeta of tarjetas" [value]="tarjeta.id">
-              {{ tarjeta.franquicia }}
+              {{ tarjeta.etiqueta }}
             </option>
           </select>
         </div>

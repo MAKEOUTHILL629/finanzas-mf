@@ -33,10 +33,7 @@
 
     <div class="erp-field">
       <label class="erp-label" for="li-persona">Persona</label>
-      <select id="li-persona" class="erp-select" [ngModel]="personaFiltro" (ngModelChange)="onPersonaChange($event)" name="persona">
-        <option [ngValue]="null">Todas</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="li-persona" catalogo="personas" [ngModel]="personaFiltro" (ngModelChange)="onPersonaChange($event)" name="persona" placeholder="Todas"></app-select>
     </div>
 
     <label class="erp-check" *ngIf="personaFiltro === null">
@@ -191,7 +188,7 @@
 </app-modal>
 
 <app-modal [modalId]="modalCruce">
-  <app-formulario-cruce *ngIf="cruzando" [personas]="personas" (creado)="onCruceCreado()" (cancelar)="cerrarModal()"></app-formulario-cruce>
+  <app-formulario-cruce *ngIf="cruzando" (creado)="onCruceCreado()" (cancelar)="cerrarModal()"></app-formulario-cruce>
 </app-modal>
 
 <app-modal [modalId]="modalCompartir">

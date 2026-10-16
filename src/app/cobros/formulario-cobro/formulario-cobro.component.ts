@@ -3,7 +3,7 @@ import { FormBuilder, FormControl, FormRecord, Validators } from '@angular/forms
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { CategoriaCobro, CobroPuntual, GuardarCobroPuntual, ModoDivision } from '../../modelos/cobros-personas';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
 import { CobrosPersonasService } from '../../services/cobros-personas.service';
 import { esImporteValido } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -11,8 +11,8 @@ import { esPeriodoValido, hoyIso, nombrePeriodo } from '../../shared/periodo.hel
 import { CATEGORIAS_COBRO, MODOS_DIVISION, ResultadoReparto, calcularReparto, iconoCategoria } from '../cobros.constants';
 
 /** Persona que es el propietario de la cuenta (la enlazada a su usuario): su parte no genera deuda. */
-export function miPersona(personas: Persona[]): Persona | null {
-  return personas.find((p) => p.linkedUserId !== null && p.linkedUserId !== undefined) ?? null;
+export function miPersona(personas: ItemPersona[]): ItemPersona | null {
+  return personas.find((p) => p.esPropia) ?? null;
 }
 
 export interface EntradaCobro {
@@ -62,7 +62,7 @@ export function construirCobro(e: EntradaCobro): GuardarCobroPuntual {
 })
 export class FormularioCobroComponent implements OnInit, OnDestroy {
   @Input() cobro: CobroPuntual | null = null;
-  @Input({ required: true }) personas: Persona[] = [];
+  @Input({ required: true }) personas: ItemPersona[] = [];
   @Input() periodoInicial = '';
   @Output() guardado = new EventEmitter<CobroPuntual>();
   @Output() cancelar = new EventEmitter<void>();
@@ -105,11 +105,11 @@ export class FormularioCobroComponent implements OnInit, OnDestroy {
     return this.modos.find((m) => m.valor === this.modo)?.ayuda ?? '';
   }
 
-  get yo(): Persona | null {
+  get yo(): ItemPersona | null {
     return miPersona(this.personas);
   }
 
-  get otras(): Persona[] {
+  get otras(): ItemPersona[] {
     const yo = this.yo;
     return this.personas.filter((p) => p.id !== yo?.id);
   }

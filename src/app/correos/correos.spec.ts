@@ -3,7 +3,7 @@ import { ProductoDetectado, ResumenReproceso } from '../modelos/correos-intelige
 import { NotificacionCorreo } from '../modelos/erp';
 import { ModalService } from '../services/modal.service';
 import { ToastService } from '../shared/toast/toast.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, categoriaItem, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona, responder, responderCatalogos, tarjetaItem, verificarHttp } from '../testing/erp-testing';
 import {
   accionesDelResumen,
   admiteConvertirEnPrestamo,
@@ -117,10 +117,12 @@ describe('FormularioConciliarComponent', () => {
     const fixture = TestBed.createComponent(FormularioConciliarComponent);
     fixture.componentRef.setInput('notificacion', n);
     fixture.detectChanges();
-    responder('cuentas-financieras', [{ id: 1, nombre: 'Bancolombia', moneda: 'COP' }, { id: 2, nombre: 'Nequi', moneda: 'COP' }]);
-    responder('categorias', [{ id: 4, nombre: 'Mercado' }]);
-    responder('tarjetas', [{ id: 10, franquicia: 'Visa', descripcion: 'Oro' }, { id: 11, franquicia: 'Master', descripcion: 'Black' }]);
-    responder('personas', [{ id: 2, nombre: 'Andrés' }, { id: 3, nombre: 'Papá' }]);
+    responderCatalogos({
+      cuentas: [cuentaItem(1, 'Bancolombia'), cuentaItem(2, 'Nequi')],
+      categorias: [categoriaItem(4, 'Mercado')],
+      tarjetas: [tarjetaItem(10, 'Visa', { descripcion: 'Oro', nombre: 'Visa · Oro', etiqueta: 'Visa' }), tarjetaItem(11, 'Master', { descripcion: 'Black', nombre: 'Master · Black', etiqueta: 'Master' })],
+      personas: [persona(2, 'Andrés'), persona(3, 'Papá')],
+    });
     return fixture.componentInstance;
   }
 
@@ -188,7 +190,7 @@ describe('ListaCorreosComponent', () => {
     configurarTestBed([ListaCorreosComponent]);
     const fixture = TestBed.createComponent(ListaCorreosComponent);
     fixture.detectChanges();
-    responder('personas', [{ id: 5, nombre: 'Alicia Buitrago' }]);
+    responderCatalogos({ personas: [persona(5, 'Alicia Buitrago')] });
     const req = http().expectOne((r) => r.url === `${API}/notificaciones-correo`);
     expect(req.request.params.get('limit')).toBe('300');
     req.flush(correos);
@@ -239,7 +241,7 @@ describe('ListaCorreosComponent', () => {
     configurarTestBed([ListaCorreosComponent]);
     const fixture = TestBed.createComponent(ListaCorreosComponent);
     fixture.detectChanges();
-    responder('personas', []);
+    responderCatalogos();
     errorHttp(http().expectOne((r) => r.url === `${API}/notificaciones-correo`), 500, {});
     expect(fixture.componentInstance.error).toContain('problema');
   });
@@ -336,16 +338,16 @@ describe('ProductosDetectadosComponent', () => {
     const fixture = TestBed.createComponent(ProductosDetectadosComponent);
     fixture.detectChanges();
     responder('notificaciones-correo/productos', productos);
-    responder('tarjetas', [{ id: 1, franquicia: 'Mastercard' }, { id: 2, franquicia: 'American Express', descripcion: 'Platinum' }]);
-    responder('cuentas-financieras', [{ id: 7, nombre: 'Ahorros', moneda: 'COP' }]);
+    responderCatalogos({
+      tarjetas: [tarjetaItem(1, 'Mastercard'), tarjetaItem(2, 'American Express', { descripcion: 'Platinum', nombre: 'American Express · Platinum' })],
+      cuentas: [cuentaItem(7, 'Ahorros')],
+    });
     fixture.detectChanges();
     return fixture;
   }
 
   const recargar = (productos: ProductoDetectado[] = []) => {
     responder('notificaciones-correo/productos', productos);
-    responder('tarjetas', []);
-    responder('cuentas-financieras', []);
   };
 
   it('muestra cuántos están sin asignar, abierto si falta alguno y plegado si todos están asignados', () => {
@@ -519,7 +521,7 @@ describe('ListaCorreosComponent — vínculos y deshacer', () => {
     configurarTestBed([ListaCorreosComponent]);
     const fixture = TestBed.createComponent(ListaCorreosComponent);
     fixture.detectChanges();
-    responder('personas', [{ id: 5, nombre: 'Alicia Buitrago' }]);
+    responderCatalogos({ personas: [persona(5, 'Alicia Buitrago')] });
     http().expectOne((r) => r.url === `${API}/notificaciones-correo`).flush(correos);
     fixture.detectChanges();
     return fixture;

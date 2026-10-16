@@ -10,7 +10,7 @@ import { FlujoCajaComponent, estaVacio, piezasDeDesembolso } from './flujo-caja/
 import { ToastService } from './shared/toast/toast.service';
 import { FormularioTarjetaComponent, cambiosDeTarjeta, valoresDeTarjeta } from './tarjetas/formulario-tarjeta/formulario-tarjeta.component';
 import { ListaTarjetasComponent, pendientesDeConfigurar } from './tarjetas/lista-tarjetas/lista-tarjetas.component';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from './testing/erp-testing';
+import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from './testing/erp-testing';
 import { periodoActual } from './shared/periodo.helper';
 
 function fila(extra: Partial<EstadoCuentaPersona> = {}): EstadoCuentaPersona {
@@ -215,7 +215,7 @@ describe('Estado de cuenta y cruces', () => {
     fixture.componentRef.setInput('persona', fila());
     fixture.componentRef.setInput('periodo', '2026-10');
     fixture.detectChanges();
-    responder('cuentas-financieras', [{ id: 1, nombre: 'Bancolombia', moneda: 'COP', saldo_actual: 5 }, { id: 2, nombre: 'Dólares', moneda: 'USD', saldo_actual: 5 }]);
+    responderCatalogos({ cuentas: [cuentaItem(1, 'Bancolombia', { saldoActual: 5 }), cuentaItem(2, 'Dólares', { moneda: 'USD', saldoActual: 5 })] });
     responder('cortes-cobro', []);
     const c = fixture.componentInstance;
     expect(c.cuentas.map((x) => x.id)).toEqual([1]);
@@ -241,7 +241,7 @@ describe('Estado de cuenta y cruces', () => {
     fixture.componentRef.setInput('persona', fila());
     fixture.componentRef.setInput('periodo', '2026-10');
     fixture.detectChanges();
-    responder('cuentas-financieras', [{ id: 1, nombre: 'B', moneda: 'COP', saldo_actual: 5 }]);
+    responderCatalogos({ cuentas: [cuentaItem(1, 'B', { saldoActual: 5 })] });
     responder('cortes-cobro', [{ id: 5, concepto: 'Corte', fecha_inicio: '2026-10-01T00:00:00.000Z', fecha_final: '2026-10-31T00:00:00.000Z', estado: 'ACTIVO' }]);
     const c = fixture.componentInstance;
     c.form.patchValue({ monto: 10, corteId: 5 });
@@ -253,8 +253,8 @@ describe('Estado de cuenta y cruces', () => {
   it('el formulario de cruce exige personas distintas y ofrece los préstamos pendientes de quien asume', () => {
     configurarTestBed([FormularioCruceComponent]);
     const fixture = TestBed.createComponent(FormularioCruceComponent);
-    fixture.componentRef.setInput('personas', [{ id: 2, nombre: 'Andrés' }, { id: 3, nombre: 'Papá' }]);
     fixture.detectChanges();
+    responderCatalogos({ personas: [persona(2, 'Andrés'), persona(3, 'Papá')] });
     http().expectOne((r) => r.url === `${API}/prestamos` && r.params.get('estado') === 'Pendiente').flush([
       { id: 30, concepto: 'Mercado', responsable: 2, estado: 'Pendiente', valorPrestado: 100, saldoPendiente: 60 },
       { id: 31, concepto: 'Otro', responsable: 3, estado: 'Pendiente', valorPrestado: 10, saldoPendiente: null },
@@ -281,7 +281,7 @@ describe('Estado de cuenta y cruces', () => {
     responder('cruces-deuda', [
       { id: 1, fecha_cruce: '2026-10-05T00:00:00.000Z', persona_que_abona_id: 3, persona_que_asume_deuda_id: 2, monto: 100, prestamo_destino_id: 30, periodo_recurrente_destino_id: null, concepto: 'Cuota', comentarios: null, persona_que_abona: { id: 3, nombre: 'Papá' } },
     ]);
-    responder('personas', [{ id: 2, nombre: 'Andrés' }, { id: 3, nombre: 'Papá' }]);
+    responderCatalogos({ personas: [persona(2, 'Andrés'), persona(3, 'Papá')] });
     const c = fixture.componentInstance;
     expect(c.nombre(c.cruces[0], 'abona')).toBe('Papá');
     expect(c.nombre(c.cruces[0], 'asume')).toBe('Andrés');

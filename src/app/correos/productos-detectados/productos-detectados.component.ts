@@ -1,13 +1,11 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AsignarProducto, ProductoDetectado, SugerenciaProducto } from '../../modelos/correos-inteligentes';
-import { CuentaFinanciera } from '../../modelos/erp';
-import { Tarjeta } from '../../modelos/tarjeta';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
+import { ItemCuenta, ItemTarjeta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
-import { TarjetasService } from '../../services/tarjetas.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { esAceptable, etiquetaProducto, sinAsignar, textoSugerencia } from '../correos.constants';
@@ -73,8 +71,8 @@ export class ProductosDetectadosComponent implements OnInit, OnDestroy {
   readonly NUEVA_CUENTA = NUEVA_CUENTA;
 
   productos: ProductoDetectado[] = [];
-  tarjetas: Tarjeta[] = [];
-  cuentas: CuentaFinanciera[] = [];
+  tarjetas: ItemTarjeta[] = [];
+  cuentas: ItemCuenta[] = [];
   cargando = true;
   error: string | null = null;
   abierto = true;
@@ -95,12 +93,15 @@ export class ProductosDetectadosComponent implements OnInit, OnDestroy {
 
   constructor(
     private notificaciones: NotificacionesCorreoService,
-    private tarjetasService: TarjetasService,
-    private cuentasService: CuentasFinancierasService,
+    private catalogos: CatalogosService,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
+    // Tarjetas y cuentas a las que se pueden asignar los dígitos: catálogo compartido (se actualiza solo al crear/asignar).
+    this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.tarjetas = e.datos));
+    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.cuentas = e.datos));
+    this.catalogos.asegurar(['tarjetas', 'cuentas']);
     this.cargar();
   }
 
@@ -124,22 +125,17 @@ export class ProductosDetectadosComponent implements OnInit, OnDestroy {
   cargar(): void {
     this.cargando = true;
     this.error = null;
-    forkJoin({
-      productos: this.notificaciones.getProductos(),
-      tarjetas: this.tarjetasService.getTarjetas(),
-      cuentas: this.cuentasService.getCuentas(),
-    })
+    this.notificaciones
+      .getProductos()
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: (r) => {
-          this.productos = r.productos;
-          this.tarjetas = r.tarjetas;
-          this.cuentas = r.cuentas;
+        next: (productos) => {
+          this.productos = productos;
           // si ya está todo asignado el panel arranca plegado para no estorbar
-          this.abierto = r.productos.some((p) => !p.asignadoA);
+          this.abierto = productos.some((p) => !p.asignadoA);
         },
         error: (err) => {
           this.error = mensajeDeError(err, 'No se pudieron cargar los productos de los correos.');
@@ -151,8 +147,8 @@ export class ProductosDetectadosComponent implements OnInit, OnDestroy {
     this.abierto = !this.abierto;
   }
 
-  nombreTarjeta(t: Tarjeta): string {
-    return [t.franquicia, t.descripcion].filter(Boolean).join(' · ') || `Tarjeta ${t.id}`;
+  nombreTarjeta(t: ItemTarjeta): string {
+    return t.nombre;
   }
 
   // ── aceptar sugerencias ──

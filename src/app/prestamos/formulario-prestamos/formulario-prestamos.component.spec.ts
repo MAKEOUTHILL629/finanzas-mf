@@ -3,6 +3,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { SelectComponent } from '../../shared/ui/select/select.component';
 import { FormularioPrestamosComponent } from './formulario-prestamos.component';
 import { ApiServicesService } from '../../services/api-services.service';
 import { ModalService } from '../../services/modal.service';
@@ -15,7 +16,7 @@ describe('FormularioPrestamosComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule],
-      declarations: [FormularioPrestamosComponent],
+      declarations: [FormularioPrestamosComponent, SelectComponent],
       providers: [
         ApiServicesService,
         ModalService,

@@ -12,7 +12,7 @@
   <div class="erp-skeleton" style="height: 140px" *ngIf="cargando" aria-busy="true"></div>
 
   <ng-container *ngIf="!cargando">
-    <div class="erp-alert erp-alert--warning" *ngIf="cuentas.length === 0">
+    <div class="erp-alert erp-alert--warning" *ngIf="cuentas.length === 0 && !errorServidor">
       <i class="material-icons" aria-hidden="true">account_balance</i>
       <span>No tienes cuentas activas en pesos donde recibir el pago. <a routerLink="/cuentas" style="color: var(--text-link); font-weight: 600">Crea una cuenta</a> y vuelve a intentarlo.</span>
     </div>
@@ -20,10 +20,8 @@
     <div class="erp-form-grid" *ngIf="cuentas.length > 0">
       <div class="erp-field erp-span-2">
         <label class="erp-label" for="ab-cuenta">El dinero entra a<span class="erp-req" aria-hidden="true">*</span></label>
-        <select id="ab-cuenta" class="erp-select" formControlName="cuentaDestinoId" [attr.aria-invalid]="campoInvalido('cuentaDestinoId')">
-          <option [ngValue]="null" disabled>Selecciona una cuenta</option>
-          <option *ngFor="let c of cuentas" [ngValue]="c.id">{{ c.nombre }} — saldo {{ c.saldo_actual | moneda }}</option>
-        </select>
+        <app-select inputId="ab-cuenta" catalogo="cuentas" [filtro]="soloPesos" [etiquetar]="etiquetaConSaldo" formControlName="cuentaDestinoId" placeholder="Selecciona una cuenta" [permitirVacio]="false"
+                    [invalido]="campoInvalido('cuentaDestinoId')"></app-select>
         <p class="erp-field-error" *ngIf="campoInvalido('cuentaDestinoId')">Selecciona la cuenta que recibe el pago.</p>
       </div>
 

@@ -9,19 +9,15 @@
   <div class="erp-form-grid">
     <div class="erp-field">
       <label class="erp-label" for="cr-abona">Quien abona<span class="erp-req" aria-hidden="true">*</span></label>
-      <select id="cr-abona" class="erp-select" formControlName="personaQueAbonaId" [attr.aria-invalid]="campoInvalido('personaQueAbonaId')">
-        <option [ngValue]="null" disabled>Selecciona una persona</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="cr-abona" catalogo="personas" formControlName="personaQueAbonaId" placeholder="Selecciona una persona" [permitirVacio]="false"
+                  [invalido]="campoInvalido('personaQueAbonaId')"></app-select>
       <p class="erp-field-hint">Quien paga: su deuda baja.</p>
     </div>
 
     <div class="erp-field">
       <label class="erp-label" for="cr-asume">Quien asume la deuda<span class="erp-req" aria-hidden="true">*</span></label>
-      <select id="cr-asume" class="erp-select" formControlName="personaQueAsumeDeudaId" [attr.aria-invalid]="campoInvalido('personaQueAsumeDeudaId')">
-        <option [ngValue]="null" disabled>Selecciona una persona</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="cr-asume" catalogo="personas" formControlName="personaQueAsumeDeudaId" placeholder="Selecciona una persona" [permitirVacio]="false"
+                  [invalido]="campoInvalido('personaQueAsumeDeudaId')"></app-select>
       <p class="erp-field-hint">Su deuda sube por el mismo valor.</p>
       <p class="erp-field-error" *ngIf="form.errors?.['mismaPersona'] && (form.touched || form.dirty)">Deben ser personas distintas.</p>
     </div>

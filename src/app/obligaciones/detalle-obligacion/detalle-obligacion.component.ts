@@ -3,10 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AporteDetalle, AporteDiaConDetalle, ResumenObligacionMes } from '../../modelos/erp';
-import { Persona } from '../../modelos/persona';
 import { ModalService } from '../../services/modal.service';
 import { ObligacionesMesService } from '../../services/obligaciones-mes.service';
-import { PersonasService } from '../../services/personas.service';
 import { porcentajeAvance } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { nombrePeriodo } from '../../shared/periodo.helper';
@@ -29,7 +27,6 @@ export class DetalleObligacionComponent implements OnInit, OnDestroy {
   obligacionId = 0;
   resumen: ResumenObligacionMes | null = null;
   dias: AporteDiaConDetalle[] = [];
-  personas: Persona[] = [];
 
   cargando = true;
   error: string | null = null;
@@ -42,7 +39,6 @@ export class DetalleObligacionComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private obligacionesService: ObligacionesMesService,
-    private personasService: PersonasService,
     private modalService: ModalService,
     private toast: ToastService
   ) {}
@@ -70,17 +66,15 @@ export class DetalleObligacionComponent implements OnInit, OnDestroy {
     forkJoin({
       resumen: this.obligacionesService.getResumen(this.obligacionId),
       dias: this.obligacionesService.getAportesDia(this.obligacionId),
-      personas: this.personasService.getPersonas(),
     })
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: ({ resumen, dias, personas }) => {
+        next: ({ resumen, dias }) => {
           this.resumen = resumen;
           this.dias = dias;
-          this.personas = personas;
         },
         error: (err) => {
           this.resumen = null;

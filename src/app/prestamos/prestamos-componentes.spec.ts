@@ -5,7 +5,7 @@ import { CorteCobro, PrestamoDetalle } from '../modelos/cobros';
 import { ModalService } from '../services/modal.service';
 import { hoyIso } from '../shared/periodo.helper';
 import { ToastService } from '../shared/toast/toast.service';
-import { configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { configurarTestBed, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { DetallePrestamoComponent } from './detalle-prestamo/detalle-prestamo.component';
 import { FormularioCorteComponent } from './formulario-corte/formulario-corte.component';
 import { FormularioEditarPrestamoComponent } from './formulario-editar-prestamo/formulario-editar-prestamo.component';
@@ -15,10 +15,7 @@ import { TablaPrestamosComponent } from './tabla-prestamos/tabla-prestamos.compo
 
 const dia = (iso: string) => Date.parse(iso);
 
-const PERSONAS = [
-  { id: 2, nombre: 'Andrés' },
-  { id: 3, nombre: 'Papá' },
-];
+const PERSONAS = [persona(2, 'Andrés'), persona(3, 'Papá')];
 
 function corte(id: number, ini: string, fin: string, estado: CorteCobro['estado'], concepto = `Corte ${id}`): CorteCobro {
   return { id, owner_user_id: 1, concepto, fecha_inicio: `${ini}T00:00:00.000Z`, fecha_final: `${fin}T00:00:00.000Z`, estado, created_at: null };
@@ -46,8 +43,9 @@ describe('FormularioPrestamosComponent', () => {
     fixture = TestBed.createComponent(FormularioPrestamosComponent);
     c = fixture.componentInstance;
     fixture.detectChanges();
-    responder('personas', PERSONAS);
+    responderCatalogos({ personas: PERSONAS });
     responder('cortes-cobro', cortes);
+    fixture.detectChanges();
   }
   afterEach(() => verificarHttp());
 
@@ -55,9 +53,10 @@ describe('FormularioPrestamosComponent', () => {
     c.form.patchValue({ valorPrestado: 250000.75, concepto: '  Cuota del carro ', responsable: 2, fechaCobro: '2026-11-05', ...extra });
   }
 
-  it('propone el corte que contiene hoy y carga personas', () => {
+  it('propone el corte que contiene hoy y ofrece las personas del catálogo en el selector', () => {
     iniciar([corte(1, '2020-01-01', '2020-01-31', 'PASADO'), corte(9, '2000-01-01', '2999-12-31', 'ACTIVO')]);
-    expect(c.personas.length).toBe(2);
+    const opciones = (fixture.nativeElement as HTMLElement).querySelectorAll('#pf-responsable option');
+    expect(Array.from(opciones).map((o) => o.textContent?.trim())).toEqual(['Selecciona una persona', 'Andrés', 'Papá']);
     expect(c.form.controls.corteId.value).toBe(9);
   });
 
@@ -132,7 +131,7 @@ describe('TablaPrestamosComponent', () => {
       prestamo({ id: 2, estado: 'Pendiente', saldoPendiente: 100.1 }),
       prestamo({ id: 3, estado: 'Pendiente', saldoPendiente: 200.2, aprobaciones: [] }),
     ]);
-    responder('personas', PERSONAS);
+    responderCatalogos({ personas: PERSONAS });
     responder('cortes-cobro', [corte(5, '2026-10-01', '2026-10-31', 'ACTIVO', 'Corte octubre')]);
 
     // pendientes primero; con la misma fecha de cobro, el id más reciente antes
@@ -155,12 +154,12 @@ describe('TablaPrestamosComponent', () => {
     fixture.detectChanges();
     errorHttp(esperar('GET', 'prestamos'), 500, {});
     // forkJoin cancela las otras peticiones al fallar una: no se pueden responder
-    http().match((r) => r.url.endsWith('/personas') || r.url.endsWith('/cortes-cobro')).forEach((r) => !r.cancelled && r.flush([]));
+    http().match((r) => r.url.endsWith('/cortes-cobro')).forEach((r) => !r.cancelled && r.flush([]));
+    responderCatalogos(); // los catálogos son independientes: se piden una sola vez
     expect(c.error).toContain('problema');
     expect(c.cargando).toBeFalse();
     c.cargar();
     responder('prestamos', []);
-    responder('personas', []);
     responder('cortes-cobro', []);
     expect(c.error).toBeNull();
   });
@@ -178,7 +177,7 @@ describe('DetallePrestamoComponent', () => {
     c = fixture.componentInstance;
     fixture.detectChanges();
     responder(`prestamos/${id}`, p);
-    responder('personas', PERSONAS);
+    responderCatalogos({ personas: PERSONAS });
     responder('cortes-cobro', [corte(5, '2026-10-01', '2026-10-31', 'ACTIVO', 'Corte octubre')]);
   }
   afterEach(() => verificarHttp());
@@ -198,7 +197,8 @@ describe('DetallePrestamoComponent', () => {
     const f = TestBed.createComponent(DetallePrestamoComponent);
     f.detectChanges();
     expect(f.componentInstance.error).toContain('no es válido');
-    http().expectNone(() => true);
+    responderCatalogos(); // los nombres de las personas se piden aparte
+    http().expectNone(() => true); // pero nada del préstamo
   });
 
   it('un 404 se explica sin reintentos', () => {
@@ -206,7 +206,7 @@ describe('DetallePrestamoComponent', () => {
     const f = TestBed.createComponent(DetallePrestamoComponent);
     f.detectChanges();
     errorHttp(esperar('GET', 'prestamos/9'), 404, { message: 'Préstamo 9 no encontrado' });
-    http().match((r) => r.url.endsWith('/personas') || r.url.endsWith('/cortes-cobro')).forEach((r) => !r.cancelled && r.flush([]));
+    http().match((r) => r.url.endsWith('/lookup') || r.url.endsWith('/cortes-cobro')).forEach((r) => !r.cancelled && r.flush(r.request.url.endsWith('/lookup') ? { personas: [] } : []));
     expect(f.componentInstance.error).toBe('No encontramos ese préstamo.');
   });
 

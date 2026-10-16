@@ -64,19 +64,15 @@
 
           <div class="erp-field">
             <label class="erp-label" [for]="'fa-persona-' + i">{{ esMetodo(fila, 'CRUCE_CUENTAS') ? 'Quién asume la deuda' : 'Persona' }}</label>
-            <select [id]="'fa-persona-' + i" class="erp-select" formControlName="personaId" [attr.aria-invalid]="lineaInvalida(fila, 'personaId')">
-              <option [ngValue]="null" disabled>Selecciona…</option>
-              <option *ngFor="let p of opcionesPersona(fila)" [ngValue]="p.id">{{ p.nombre }}</option>
-            </select>
+            <app-select [inputId]="'fa-persona-' + i" catalogo="personas" formControlName="personaId" placeholder="Selecciona…" [permitirVacio]="false"
+                        [filtro]="filtroPersona(fila)" [invalido]="lineaInvalida(fila, 'personaId')"></app-select>
             <p class="erp-field-error" *ngIf="lineaInvalida(fila, 'personaId')">Elige la persona.</p>
           </div>
 
           <div class="erp-field" *ngIf="esMetodo(fila, 'EFECTIVO', 'TRANSFERENCIA')">
             <label class="erp-label" [for]="'fa-cuenta-' + i">Entra a la cuenta</label>
-            <select [id]="'fa-cuenta-' + i" class="erp-select" formControlName="cuentaFinancieraId">
-              <option [ngValue]="null">{{ esMetodo(fila, 'EFECTIVO') ? 'Efectivo (por defecto)' : 'Sin cuenta' }}</option>
-              <option *ngFor="let c of cuentas" [ngValue]="c.id">{{ c.nombre }}</option>
-            </select>
+            <app-select [inputId]="'fa-cuenta-' + i" catalogo="cuentas" formControlName="cuentaFinancieraId" [filtro]="soloPesos"
+                        [placeholder]="esMetodo(fila, 'EFECTIVO') ? 'Efectivo (por defecto)' : 'Sin cuenta'"></app-select>
           </div>
 
           <div class="erp-field" *ngIf="esMetodo(fila, 'SALDO_A_FAVOR')">

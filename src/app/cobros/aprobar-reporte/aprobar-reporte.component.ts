@@ -3,7 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AprobarReporte, ReportePago, ResultadoAprobacion } from '../../modelos/cobros-personas';
-import { CuentaFinanciera } from '../../modelos/erp';
+import { ItemCuenta } from '../../modelos/catalogos';
 import { CobrosPersonasService } from '../../services/cobros-personas.service';
 import { esImporteValido } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -22,7 +22,7 @@ export function construirAprobacion(r: Pick<ReportePago, 'correoCoincidente'>, v
 }
 
 /** Modo que se propone: enlazar si el dinero ya llegó por correo; si no, registrar en la cuenta principal (o en la única cuenta). */
-export function modoSugerido(r: Pick<ReportePago, 'correoCoincidente'>, cuentas: Pick<CuentaFinanciera, 'id'>[]): ModoAprobacion {
+export function modoSugerido(r: Pick<ReportePago, 'correoCoincidente'>, cuentas: Pick<ItemCuenta, 'id'>[]): ModoAprobacion {
   if (r.correoCoincidente) return 'enlazar';
   return cuentas.length > 0 ? 'cuenta' : 'anotar';
 }
@@ -34,7 +34,7 @@ export function modoSugerido(r: Pick<ReportePago, 'correoCoincidente'>, cuentas:
 })
 export class AprobarReporteComponent implements OnInit, OnDestroy {
   @Input({ required: true }) reporte!: ReportePago;
-  @Input() cuentas: CuentaFinanciera[] = [];
+  @Input() cuentas: ItemCuenta[] = [];
   @Output() aprobado = new EventEmitter<ResultadoAprobacion>();
   @Output() cancelar = new EventEmitter<void>();
 
@@ -54,7 +54,7 @@ export class AprobarReporteComponent implements OnInit, OnDestroy {
   constructor(private cobros: CobrosPersonasService) {}
 
   ngOnInit(): void {
-    const principal = this.cuentas.find((c) => c.es_principal) ?? this.cuentas[0];
+    const principal = this.cuentas.find((c) => c.esPrincipal) ?? this.cuentas[0];
     this.form.reset({
       modo: modoSugerido(this.reporte, this.cuentas),
       cuentaId: this.reporte.correoCoincidente?.cuentaId ?? principal?.id ?? null,

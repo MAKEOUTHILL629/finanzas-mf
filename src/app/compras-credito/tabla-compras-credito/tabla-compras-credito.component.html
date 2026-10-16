@@ -25,10 +25,14 @@
                 [checked]="isTarjetaSelected(tarjeta.id!)"
                 (change)="toggleTarjeta(tarjeta.id!)"
               >
-              <span>{{ tarjeta.franquicia }}</span>
+              <span>{{ tarjeta.etiqueta }}</span>
             </label>
-            <div class="multiselect-empty" *ngIf="tarjetas.length === 0">
+            <div class="multiselect-empty" *ngIf="tarjetas.length === 0 && !errorCatalogos">
               No hay tarjetas disponibles
+            </div>
+            <div class="multiselect-empty" *ngIf="errorCatalogos" role="alert">
+              {{ errorCatalogos }}
+              <button type="button" class="multiselect-retry" (click)="reintentarCatalogos()">Reintentar</button>
             </div>
           </div>
         </div>

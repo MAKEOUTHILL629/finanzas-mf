@@ -4,10 +4,10 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { CorteCobro, PrestamoDetalle } from '../../modelos/cobros';
 import { AprobacionPrestamo } from '../../modelos/prestamos';
-import { Persona } from '../../modelos/persona';
+import { ItemPersona } from '../../modelos/catalogos';
 import { CortesCobroService } from '../../services/cortes-cobro.service';
 import { ModalService } from '../../services/modal.service';
-import { PersonasService } from '../../services/personas.service';
+import { CatalogosService } from '../../services/catalogos.service';
 import { PrestamosService } from '../../services/prestamos.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -30,7 +30,7 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
 
   prestamoId = 0;
   prestamo: PrestamoDetalle | null = null;
-  personas: Persona[] = [];
+  personas: ItemPersona[] = [];
   cortes: CorteCobro[] = [];
 
   cargando = true;
@@ -50,13 +50,16 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private prestamosService: PrestamosService,
-    private personasService: PersonasService,
+    private catalogos: CatalogosService,
     private cortesService: CortesCobroService,
     private modalService: ModalService,
     private toast: ToastService
   ) {}
 
   ngOnInit(): void {
+    // Nombres de las personas: catálogo compartido (si falla, el préstamo se muestra igual con «—»).
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.asegurar(['personas']);
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       this.prestamoId = Number(params.get('id'));
       if (!Number.isInteger(this.prestamoId) || this.prestamoId <= 0) {
@@ -78,7 +81,6 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
     this.error = null;
     forkJoin({
       prestamo: this.prestamosService.getPrestamo(this.prestamoId),
-      personas: this.personasService.getPersonas(),
       cortes: this.cortesService.getCortes().pipe(catchError(() => of([] as CorteCobro[]))),
     })
       .pipe(
@@ -86,9 +88,8 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: ({ prestamo, personas, cortes }) => {
+        next: ({ prestamo, cortes }) => {
           this.prestamo = prestamo;
-          this.personas = personas;
           this.cortes = cortes;
         },
         error: (err) => {

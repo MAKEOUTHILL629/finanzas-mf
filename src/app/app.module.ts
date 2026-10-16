@@ -18,12 +18,14 @@ import { LoginComponent } from './login/login.component';
 
 // Core Interceptors
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { catalogosInterceptor } from './core/interceptors/catalogos.interceptor';
 import { httpErrorInterceptor } from './core/interceptors/http-error.interceptor';
 import { CsrfInterceptor } from './core/interceptors/csrf-interceptor.interceptor';
 
 // Shared Components & Pipes
 import { MenuComponent } from './shared/menu/menu.component';
 import { ModalComponent } from './shared/modal/modal.component';
+import { SelectComponent } from './shared/ui/select/select.component';
 import { FormatoFechaPipe } from './pipes/formato-fecha.pipe';
 import { FormatoTarjetaPipe } from './pipes/formato-tarjeta.pipe';
 import { FormatoPersonaPipe } from './pipes/formato-persona.pipe';
@@ -111,6 +113,7 @@ import { FormularioCruceComponent } from './deudas/formulario-cruce/formulario-c
 const SHARED_DECLARATIONS = [
   MenuComponent,
   ModalComponent,
+  SelectComponent,
   FormatoFechaPipe,
   FormatoTarjetaPipe,
   FormatoPersonaPipe,
@@ -215,7 +218,8 @@ const CORE_PROVIDERS: (Provider | EnvironmentProviders)[] = [
   provideHttpClient(
     withInterceptors([
       httpErrorInterceptor, // Outermost: aplica timeout y clasifica errores de red
-      authInterceptor       // Añade cabecera Authorization
+      authInterceptor,      // Añade cabecera Authorization
+      catalogosInterceptor  // Refresca los selectores cuando una operación cambia cuentas, tarjetas, personas o categorías
     ])
   ),
   {

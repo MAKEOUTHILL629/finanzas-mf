@@ -17,10 +17,8 @@
   <div class="erp-form-grid">
     <div class="erp-field erp-span-2">
       <label class="erp-label" for="rf-persona">Persona<span class="erp-req" aria-hidden="true">*</span></label>
-      <select id="rf-persona" class="erp-select" formControlName="personaId" [attr.aria-invalid]="campoInvalido('personaId')">
-        <option [ngValue]="null" disabled>Selecciona una persona</option>
-        <option *ngFor="let p of personas" [ngValue]="p.id">{{ p.nombre }}</option>
-      </select>
+      <app-select inputId="rf-persona" catalogo="personas" formControlName="personaId" placeholder="Selecciona una persona" [permitirVacio]="false"
+                  [invalido]="campoInvalido('personaId')"></app-select>
       <p class="erp-field-error" *ngIf="campoInvalido('personaId')">Elige la persona.</p>
     </div>
 

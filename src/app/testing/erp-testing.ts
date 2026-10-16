@@ -8,13 +8,15 @@ import { environment } from '../../environments/environment';
 import { FormatoFechaCortaPipe } from '../pipes/formato-fecha-corta.pipe';
 import { FormatoFechaPipe } from '../pipes/formato-fecha.pipe';
 import { FormatoMonedaPipe } from '../pipes/formato-moneda.pipe';
+import { Catalogos, ItemCategoria, ItemCuenta, ItemPersona, ItemTarjeta } from '../modelos/catalogos';
+import { SelectComponent } from '../shared/ui/select/select.component';
 
 export const API = environment.apiUrl;
 
 /** Configura TestBed para un componente del módulo ERP: pipes propios, formularios, router y HTTP simulado. */
 export function configurarTestBed(declarations: Type<unknown>[], providers: Provider[] = []): void {
   TestBed.configureTestingModule({
-    declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe],
+    declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe, SelectComponent],
     imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([])],
     providers: [provideHttpClient(), provideHttpClientTesting(), ...providers],
     schemas: [NO_ERRORS_SCHEMA],
@@ -54,3 +56,23 @@ export function verificarHttp(): void {
   }
   controlador?.verify();
 }
+
+// ── catálogos de los selectores (`GET /api/lookup`) ──
+
+/** Atiende TODAS las peticiones pendientes a `lookup` con los catálogos dados (los tipos no indicados llegan como arreglos vacíos). */
+export function responderCatalogos(datos: Partial<Catalogos> = {}, { esperadas = 1 }: { esperadas?: number } = {}): number {
+  const pendientes = http().match((r) => r.method === 'GET' && r.url === `${API}/lookup`);
+  if (pendientes.length < esperadas) throw new Error(`Se esperaban ${esperadas} petición(es) a lookup y hay ${pendientes.length}`);
+  for (const req of pendientes) {
+    const tipos = (req.request.params.get('tipos') ?? 'personas,tarjetas,cuentas,categorias').split(',');
+    req.flush(Object.fromEntries(tipos.map((t) => [t, (datos as Record<string, unknown>)[t] ?? []])));
+  }
+  return pendientes.length;
+}
+
+export const persona = (id: number, nombre: string, extra: Partial<ItemPersona> = {}): ItemPersona => ({ id, nombre, iniciales: null, color: null, esPropia: false, tieneUsuario: false, email: null, celular: null, ...extra });
+export const cuentaItem = (id: number, nombre: string, extra: Partial<ItemCuenta> = {}): ItemCuenta => ({ id, nombre, tipoCuenta: 'AHORROS', bancoEntidad: null, ultimos4: null, moneda: 'COP', saldoActual: 0, activa: true, esPrincipal: false, ...extra });
+export const categoriaItem = (id: number, nombre: string, extra: Partial<ItemCategoria> = {}): ItemCategoria => ({ id, nombre, tipo: 'EGRESO', color: null, icono: null, delSistema: false, ...extra });
+export const tarjetaItem = (id: number, franquicia: string, extra: Partial<ItemTarjeta> = {}): ItemTarjeta => ({
+  id, nombre: franquicia, franquicia, descripcion: null, ultimos4Activo: null, etiqueta: franquicia, plasticos: [], tasaInteresCompra: null, diaCorte: null, diaLimitePago: null, cupoTotal: null, permiteDolares: false, ...extra,
+});

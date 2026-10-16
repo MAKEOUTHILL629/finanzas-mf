@@ -1,13 +1,15 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
-import { CuentaFinanciera, ResultadoPagoExtracto, ResumenMensualTarjeta, Transaccion } from '../../modelos/erp';
-import { CuentasFinancierasService } from '../../services/cuentas-financieras.service';
+import { ResultadoPagoExtracto, ResumenMensualTarjeta, Transaccion } from '../../modelos/erp';
+import { ItemCuenta } from '../../modelos/catalogos';
+import { CatalogosService } from '../../services/catalogos.service';
 import { TarjetasService } from '../../services/tarjetas.service';
 import { TransaccionesService } from '../../services/transacciones.service';
 import { esImporteValido, restarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
+import { moneda } from '../../shared/moneda.util';
 import { nombrePeriodo } from '../../shared/periodo.helper';
 
 function importe(control: { value: unknown }): { importe: true } | null {
@@ -29,15 +31,21 @@ export class FormularioPagarExtractoComponent implements OnInit, OnDestroy {
   @Output() pagado = new EventEmitter<ResultadoPagoExtracto>();
   @Output() cancelar = new EventEmitter<void>();
 
-  cuentas: CuentaFinanciera[] = [];
+  /** Cuentas activas en pesos (el SP registra el pago en COP). */
+  cuentas: ItemCuenta[] = [];
   /** Pagos de este mismo extracto que ya están registrados (no anulados). */
   pagosPrevios: Transaccion[] = [];
-  cargando = true;
   enviando = false;
   errorServidor: string | null = null;
 
   private destroy$ = new Subject<void>();
   private readonly fb = inject(FormBuilder);
+  private cuentasListas = false;
+  private pagosListos = false;
+
+  readonly soloPesos = (c: ItemCuenta): boolean => c.moneda === 'COP';
+  /** «Bancolombia Ahorros — saldo $1,500.00»: el saldo es lo que decide desde dónde pagar. */
+  readonly etiquetaConSaldo = (c: ItemCuenta): string => `${c.nombre} — saldo ${moneda(c.saldoActual)}`;
 
   form = this.fb.group({
     cuentaOrigenId: [null as number | null, Validators.required],
@@ -48,41 +56,50 @@ export class FormularioPagarExtractoComponent implements OnInit, OnDestroy {
 
   constructor(
     private tarjetasService: TarjetasService,
-    private cuentasService: CuentasFinancierasService,
+    private catalogos: CatalogosService,
     private transaccionesService: TransaccionesService
   ) {}
+
+  /** Mientras no lleguen las cuentas y los pagos previos no se muestra el formulario (evita decidir con datos a medias). */
+  get cargando(): boolean {
+    return !(this.cuentasListas && this.pagosListos);
+  }
 
   ngOnInit(): void {
     this.form.controls.montoPagado.setValue(Number(this.resumen.total_extracto_cop));
 
-    forkJoin({
-      cuentas: this.cuentasService.getCuentas(true),
-      // Si la consulta de pagos previos falla no se bloquea el pago: solo se pierde el aviso de duplicado.
-      transacciones: this.transaccionesService
-        .getTransacciones({ tipo: 'PAGO_TARJETA', limit: 200 })
-        .pipe(catchError(() => of(null))),
-    })
+    // Cuentas del catálogo compartido; se refrescan al abrir porque el saldo decide si el pago deja la cuenta en negativo.
+    this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      if (e.cargado) {
+        this.cuentasListas = true;
+        this.cuentas = e.datos.filter((c) => c.activa && this.soloPesos(c));
+        if (this.cuentas.length === 1 && this.form.controls.cuentaOrigenId.value === null) this.form.controls.cuentaOrigenId.setValue(this.cuentas[0].id);
+      } else if (e.error) {
+        this.cuentasListas = true;
+        this.errorServidor = e.error;
+      }
+    });
+    this.catalogos.asegurar(['cuentas'], { forzar: true });
+
+    // Si la consulta de pagos previos falla no se bloquea el pago: solo se pierde el aviso de duplicado.
+    this.transaccionesService
+      .getTransacciones({ tipo: 'PAGO_TARJETA', limit: 200 })
       .pipe(
+        catchError(() => of(null)),
         takeUntil(this.destroy$),
-        finalize(() => (this.cargando = false))
+        finalize(() => (this.pagosListos = true))
       )
-      .subscribe({
-        next: ({ cuentas, transacciones }) => {
-          // El SP registra el pago en COP: solo se ofrecen cuentas en pesos.
-          this.cuentas = cuentas.filter((c) => c.moneda === 'COP');
-          if (this.cuentas.length === 1) this.form.controls.cuentaOrigenId.setValue(this.cuentas[0].id);
-          this.pagosPrevios = (transacciones?.items ?? []).filter(
-            (t) =>
-              t.tarjeta_pagada_id === this.resumen.tarjeta_id &&
-              t.estado !== 'ANULADO' &&
-              t.concepto.includes(`(${this.resumen.periodo_facturacion})`)
-          );
-          if (this.pagosPrevios.length > 0) {
-            this.form.controls.confirmoDuplicado.addValidators(Validators.requiredTrue);
-            this.form.controls.confirmoDuplicado.updateValueAndValidity();
-          }
-        },
-        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las cuentas.'))
+      .subscribe((transacciones) => {
+        this.pagosPrevios = (transacciones?.items ?? []).filter(
+          (t) =>
+            t.tarjeta_pagada_id === this.resumen.tarjeta_id &&
+            t.estado !== 'ANULADO' &&
+            t.concepto.includes(`(${this.resumen.periodo_facturacion})`)
+        );
+        if (this.pagosPrevios.length > 0) {
+          this.form.controls.confirmoDuplicado.addValidators(Validators.requiredTrue);
+          this.form.controls.confirmoDuplicado.updateValueAndValidity();
+        }
       });
   }
 
@@ -91,7 +108,7 @@ export class FormularioPagarExtractoComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  get cuentaSeleccionada(): CuentaFinanciera | undefined {
+  get cuentaSeleccionada(): ItemCuenta | undefined {
     const id = this.form.controls.cuentaOrigenId.value;
     return this.cuentas.find((c) => c.id === Number(id));
   }
@@ -101,7 +118,7 @@ export class FormularioPagarExtractoComponent implements OnInit, OnDestroy {
     const cuenta = this.cuentaSeleccionada;
     const monto = this.form.controls.montoPagado.value;
     if (!cuenta || !esImporteValido(monto)) return null;
-    return restarMonedas(cuenta.saldo_actual, monto);
+    return restarMonedas(cuenta.saldoActual, monto);
   }
 
   get dejaSaldoNegativo(): boolean {

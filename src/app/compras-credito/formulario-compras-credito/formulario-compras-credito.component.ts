@@ -5,10 +5,10 @@ import { Observable, Subject } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, takeUntil, finalize } from 'rxjs/operators';
 import { ApiServicesService } from '../../services/api-services.service';
 import { ModalService } from '../../services/modal.service';
-import { PlasticoTarjeta, Tarjeta } from '../../modelos/tarjeta';
+import { ItemPersona, ItemPlasticoCatalogo, ItemTarjeta } from '../../modelos/catalogos';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
-import { Persona } from '../../modelos/persona';
-import { esCompraRetroactiva, etiquetaTarjetaActiva, plasticoParaFecha, terminacion, vigenciaLegible } from '../../tarjetas/tarjetas.constants';
+import { CatalogosService } from '../../services/catalogos.service';
+import { esCompraRetroactiva, plasticoParaFecha, terminacion, vigenciaLegible } from '../../tarjetas/tarjetas.constants';
 
 @Component({
   selector: 'app-formulario-compras-credito',
@@ -28,24 +28,25 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   // Datos
   concepts: string[] = [];
   conceptsMap: Map<string, ComprasCredito> = new Map();
-  creditCards: Tarjeta[] = [];
-  personas: Persona[] = [];
-  personasDisponibles: Persona[] = [];
+  creditCards: ItemTarjeta[] = [];
+  personas: ItemPersona[] = [];
+  personasDisponibles: ItemPersona[] = [];
   responsables: ResponsableCompraCredito[] = [];
+  /** Personas que aún se pueden agregar como responsables (cambia de referencia al agregar/quitar para que el selector se actualice). */
+  filtroPersonas: (p: ItemPersona) => boolean = () => true;
 
   // Observables
   filteredConcepts!: Observable<string[]>;
 
-  /** En los selectores se ofrece la franquicia y el plástico ACTIVO («American Express ··1927»). */
-  readonly etiquetaTarjeta = etiquetaTarjetaActiva;
   readonly terminacion = terminacion;
   readonly vigencia = vigenciaLegible;
+
+  /** «American Express ··1927 — 1.8895% E.M.»: el plástico ACTIVO y la tasa que se importará al campo de interés. */
+  readonly etiquetarTarjeta = (t: ItemTarjeta): string => `${t.etiqueta}${t.tasaInteresCompra != null ? ` — ${t.tasaInteresCompra}% E.M.` : ''}`;
 
   // Flags
   isNewConcept = false;
   isLoadingConcepts = false;
-  isLoadingCards = false;
-  isLoadingPersonas = false;
   isSubmitting = false;
   showResponsablesSection = false;
   porcentajeRestante = 100;
@@ -56,7 +57,8 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private apiService: ApiServicesService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private catalogos: CatalogosService
   ) {}
 
   ngOnInit(): void {
@@ -113,8 +115,24 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
   private loadInitialData(): void {
     this.loadConcepts();
-    this.loadCreditCards();
-    this.loadPersonas();
+    this.suscribirCatalogos();
+  }
+
+  /**
+   * Tarjetas y personas vienen del catálogo compartido (con esqueleto, vacío y reintento en cada selector). Se vuelven a asegurar cada
+   * vez que se abre el formulario: si algo se creó o cambió desde la última vez, el selector lo trae sin recargar la página.
+   */
+  private suscribirCatalogos(): void {
+    this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.creditCards = e.datos;
+      const currentCardId = this.purchaseForm.get('cardId')?.value;
+      if (currentCardId && e.datos.length > 0) this.applyCardInterestRate(Number(currentCardId));
+    });
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
+      this.personas = e.datos;
+      this.updatePersonasDisponibles();
+    });
+    this.catalogos.asegurar(['tarjetas', 'personas']);
   }
 
   private loadConcepts(): void {
@@ -136,26 +154,6 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
               this.conceptsMap.set(compra.concepto.trim(), compra);
             }
           });
-        },
-        error: err => { void err; }
-      });
-  }
-
-  private loadCreditCards(): void {
-    this.isLoadingCards = true;
-    this.apiService.get<Tarjeta[]>('tarjetas')
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => this.isLoadingCards = false)
-      )
-      .subscribe({
-        next: cards => {
-          this.creditCards = cards;
-          // Si ya hay una tarjeta seleccionada (rara vez en init), aplicar la tasa
-          const currentCardId = this.purchaseForm.get('cardId')?.value;
-          if (currentCardId) {
-            this.applyCardInterestRate(Number(currentCardId));
-          }
         },
         error: err => { void err; }
       });
@@ -195,7 +193,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     return esCompraRetroactiva(this.selectedCard, this.purchaseForm.get('purchaseDate')?.value ?? null);
   }
 
-  get plasticosElegibles(): PlasticoTarjeta[] {
+  get plasticosElegibles(): ItemPlasticoCatalogo[] {
     return this.selectedCard?.plasticos ?? [];
   }
 
@@ -225,22 +223,6 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     }
   }
 
-  private loadPersonas(): void {
-    this.isLoadingPersonas = true;
-    this.apiService.get<Persona[]>('personas')
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => this.isLoadingPersonas = false)
-      )
-      .subscribe({
-        next: personas => {
-          this.personas = personas;
-          this.updatePersonasDisponibles();
-        },
-        error: err => { void err; }
-      });
-  }
-
   // ==================== AUTOCOMPLETADO ====================
 
   private listenToModalClose(): void {
@@ -250,6 +232,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
         if (state === null && this.autocompleteTrigger?.panelOpen) {
           this.autocompleteTrigger.closePanel();
         }
+        if (state === 'compra-credito-form') this.catalogos.asegurar(['tarjetas', 'personas']);
       });
   }
 
@@ -417,6 +400,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   private updatePersonasDisponibles(): void {
     const responsablesIds = new Set(this.responsables.map(r => r.persona));
     this.personasDisponibles = this.personas.filter(p => !responsablesIds.has(p.id));
+    this.filtroPersonas = (p: ItemPersona) => !responsablesIds.has(p.id);
   }
 
   private calcularPorcentajeRestante(): void {
@@ -482,7 +466,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   }
 
   getPersonaNombre(id: number): string {
-    const persona = this.personas.find(p => p.id === id);
+    const persona = this.personas.find(p => p.id === Number(id));
     return persona ? persona.nombre || 'N/A' : 'N/A';
   }
 
@@ -613,7 +597,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   get cardId(): AbstractControl | null { return this.purchaseForm.get('cardId'); }
 
   /** Devuelve la tarjeta actualmente seleccionada */
-  get selectedCard(): Tarjeta | undefined {
+  get selectedCard(): ItemTarjeta | undefined {
     const id = Number(this.purchaseForm.get('cardId')?.value);
     return id ? this.creditCards.find(c => c.id === id) : undefined;
   }

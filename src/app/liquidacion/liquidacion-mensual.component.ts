@@ -5,13 +5,13 @@ import { iniciales } from '../deudas/deudas.constants';
 import { LiquidacionMensual, LiquidacionPersona, PeriodoCarro, ResultadoAplicarExcedente } from '../modelos/aportes';
 import { EnlaceCobro } from '../modelos/cobros-personas';
 import { EstadoCuentaPersona, ResultadoAbonoPersona } from '../modelos/erp';
-import { Persona } from '../modelos/persona';
+import { ItemPersona } from '../modelos/catalogos';
 import { AportesCarroService } from '../services/aportes-carro.service';
 import { CobrosPersonasService } from '../services/cobros-personas.service';
 import { lineaDetalle } from '../cobros/cobros.constants';
 import { LiquidacionMensualService } from '../services/liquidacion-mensual.service';
 import { ModalService } from '../services/modal.service';
-import { PersonasService } from '../services/personas.service';
+import { CatalogosService } from '../services/catalogos.service';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { moneda } from '../shared/moneda.util';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../shared/periodo.helper';
@@ -61,7 +61,7 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
   personaFiltro: number | null = null;
   todas = false;
   liquidacion: LiquidacionMensual | null = null;
-  personas: Persona[] = [];
+  personas: ItemPersona[] = [];
   cargando = true;
   error: string | null = null;
 
@@ -82,7 +82,7 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
 
   constructor(
     private liquidacionService: LiquidacionMensualService,
-    private personasService: PersonasService,
+    private catalogos: CatalogosService,
     private aportesService: AportesCarroService,
     private cobrosService: CobrosPersonasService,
     private modalService: ModalService,
@@ -96,10 +96,9 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
       if (id !== this.modalExcedente) this.excedenteAbierto = false;
       if (id !== this.modalCompartir) this.compartiendo = null;
     });
-    this.personasService
-      .getPersonas()
-      .pipe(takeUntil(this.destroy$), catchError(() => of([] as Persona[])))
-      .subscribe((p) => (this.personas = p));
+    // Filtro de personas y celulares para «Compartir cobro»: catálogo compartido (si falla, la liquidación se ve igual).
+    this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+    this.catalogos.asegurar(['personas']);
     this.cargar();
   }
 
@@ -144,7 +143,7 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
   }
 
   celularDe(l: LiquidacionPersona): string | null {
-    return this.personas.find((p) => p.id === l.persona.id)?.numeroCelular ?? null;
+    return this.personas.find((p) => p.id === l.persona.id)?.celular ?? null;
   }
 
   abrirCompartir(l: LiquidacionPersona): void {

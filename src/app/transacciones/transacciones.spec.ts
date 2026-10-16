@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Transaccion } from '../modelos/erp';
 import { ModalService } from '../services/modal.service';
 import { ToastService } from '../shared/toast/toast.service';
-import { API, configurarTestBed, errorHttp, esperar, http, responder, verificarHttp } from '../testing/erp-testing';
+import { API, categoriaItem, configurarTestBed, cuentaItem, errorHttp, esperar, http, responderCatalogos, tarjetaItem, verificarHttp } from '../testing/erp-testing';
 import {
   FormularioTransaccionComponent,
   aDatetimeLocal,
@@ -21,8 +21,8 @@ function tx(extra: Partial<Transaccion> = {}): Transaccion {
   };
 }
 
-const cuenta = (id: number, nombre = `Cuenta ${id}`) => ({ id, owner_user_id: 1, nombre, tipo_cuenta: 'AHORROS', banco_entidad: null, ultimos_4_digitos: null, moneda: 'COP', saldo_actual: 100, is_active: true, created_at: null });
-const categoria = (id: number, nombre: string) => ({ id, owner_user_id: 1, nombre, tipo: 'EGRESO', icono: null, color: null, created_at: null });
+const cuenta = (id: number, nombre = `Cuenta ${id}`) => cuentaItem(id, nombre, { saldoActual: 100 });
+const categoria = (id: number, nombre: string) => categoriaItem(id, nombre);
 
 describe('transacciones.constants', () => {
   it('reglas por tipo: espejo de las del backend', () => {
@@ -111,9 +111,7 @@ describe('FormularioTransaccionComponent', () => {
     const fixture = TestBed.createComponent(FormularioTransaccionComponent);
     fixture.componentRef.setInput('transaccion', transaccion);
     fixture.detectChanges();
-    responder('cuentas-financieras', [cuenta(3), cuenta(7)]);
-    responder('categorias', [categoria(5, 'Alimentación')]);
-    responder('tarjetas', [{ id: 4, franquicia: 'Visa', descripcion: 'Oro' }]);
+    responderCatalogos({ cuentas: [cuenta(3), cuenta(7)], categorias: [categoria(5, 'Alimentación')], tarjetas: [tarjetaItem(4, 'Visa', { descripcion: 'Oro', nombre: 'Visa · Oro' })] });
     return fixture.componentInstance;
   }
 
@@ -209,8 +207,7 @@ describe('ListaTransaccionesComponent', () => {
     const fixture = TestBed.createComponent(ListaTransaccionesComponent);
     const c = fixture.componentInstance;
     fixture.detectChanges();
-    responder('cuentas-financieras', [cuenta(3, 'Bancolombia')]);
-    responder('categorias', [categoria(5, 'Alimentación')]);
+    responderCatalogos({ cuentas: [cuenta(3, 'Bancolombia')], categorias: [categoria(5, 'Alimentación')] });
     http().expectOne((r) => r.url === `${API}/transacciones`).flush({ total, limit: LIMITE_CONSULTA, offset: 0, items });
     return c;
   }
@@ -295,6 +292,7 @@ describe('ListaTransaccionesComponent', () => {
     configurarTestBed([ListaTransaccionesComponent]);
     const fixture = TestBed.createComponent(ListaTransaccionesComponent);
     fixture.detectChanges();
+    responderCatalogos();
     http().match((r) => r.url.endsWith('/cuentas-financieras') || r.url.endsWith('/categorias')).forEach((r) => r.flush([]));
     errorHttp(http().expectOne((r) => r.url === `${API}/transacciones`), 500, {});
     expect(fixture.componentInstance.error).toContain('problema');
