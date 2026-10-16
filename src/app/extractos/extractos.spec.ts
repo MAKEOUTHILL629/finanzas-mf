@@ -42,6 +42,14 @@ describe('ExtractosTarjetasComponent', () => {
     expect(c.tieneUsd(extracto({ componente_en_usd: 12.5 }))).toBeTrue();
   });
 
+  it('muestra qué parte del extracto es tuya y cuánto le toca a cada persona', () => {
+    const c = iniciar([extracto({ total_extracto_cop: 100000, total_propio: 60000, total_responsabilidad_terceros: 40000, terceros: [{ personaId: 2, nombre: 'Andrés', monto: 40000 }] })]);
+    expect(c.porcentajePropio(c.resumenes[0])).toBe(60);
+    expect(c.porcentajePropio(extracto({ total_extracto_cop: 0, total_propio: 0 }))).toBe(0);
+    const fixture = TestBed.createComponent(ExtractosTarjetasComponent);
+    expect(fixture.componentInstance.porcentajePropio(extracto({ total_extracto_cop: 100, total_propio: 250 }))).toBe(100); // nunca pasa de 100
+  });
+
   it('cambiar de mes vuelve a pedir ese periodo; un valor inválido se ignora', () => {
     const c = iniciar([]);
     c.moverPeriodo(-1);

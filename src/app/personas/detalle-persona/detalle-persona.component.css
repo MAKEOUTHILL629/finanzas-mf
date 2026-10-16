@@ -1,0 +1,50 @@
+.detalle { display: flex; flex-direction: column; gap: var(--space-3); transition: opacity var(--duration-fast) var(--ease-in-out); }
+.detalle--recargando { opacity: 0.55; }
+
+.seccion { margin: 0 0 var(--space-1); font-size: var(--text-body-sm); font-weight: var(--weight-semibold); color: var(--text-secondary); }
+
+/* Cómo se llega al total */
+.cuenta { display: grid; gap: 6px; margin: 0; max-width: 460px; }
+.cuenta-fila { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); }
+.cuenta-fila dt { color: var(--text-secondary); font-size: var(--text-body-sm); }
+.cuenta-fila dd { margin: 0; font-variant-numeric: tabular-nums; }
+.cuenta-fila--total { padding-top: 6px; border-top: 1px solid var(--border-subtle); }
+.cuenta-fila--total dt { color: var(--text-primary); font-weight: var(--weight-semibold); }
+.cuenta-fila--total dd { font-size: var(--text-h3); font-weight: var(--weight-bold); }
+
+/* Una tarjeta del desglose */
+.tarjeta { border: 1px solid var(--border-default); border-radius: var(--radius-md); margin-bottom: var(--space-1); overflow: hidden; }
+.tarjeta-cabecera {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-2);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tarjeta-cabecera:hover { background: var(--brand-blue-light); }
+.tarjeta-cabecera:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.tarjeta-nombre { display: inline-flex; align-items: center; gap: 6px; flex: 1; min-width: 0; font-weight: var(--weight-semibold); }
+.tarjeta-icono { font-size: 18px; color: var(--text-link); }
+.tarjeta-cifras { display: inline-flex; flex-wrap: wrap; gap: var(--space-0) var(--space-2); font-size: var(--text-body-sm); }
+.tarjeta .erp-table-wrap { border-top: 1px solid var(--border-subtle); border-radius: 0; }
+
+.compra-enlace { color: var(--text-primary); font-weight: var(--weight-semibold); text-decoration: none; }
+.compra-enlace:hover { color: var(--text-link); text-decoration: underline; }
+.compra-meta { display: block; font-size: var(--text-caption); }
+
+/* Listas simples */
+.lista { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.lista li { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) 0; border-bottom: 1px solid var(--border-subtle); }
+.lista li:last-child { border-bottom: none; }
+.lista-icono { color: var(--text-secondary); font-size: 20px; }
+.lista-texto { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: var(--text-body-sm); }
+
+.pie { margin: 0; }

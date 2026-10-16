@@ -1,0 +1,156 @@
+<div class="erp-skeleton" style="height: 160px" *ngIf="cargando && !detalle" aria-busy="true" aria-label="Cargando desglose"></div>
+
+<div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
+  <i class="material-icons" aria-hidden="true">error</i>
+  <div>
+    {{ error }}
+    <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+  </div>
+</div>
+
+<div class="detalle" *ngIf="detalle as d" [class.detalle--recargando]="cargando" aria-live="polite">
+  <!-- Cómo se llega al total -->
+  <dl class="cuenta" aria-label="Cómo se calcula lo que debe">
+    <div class="cuenta-fila" *ngIf="d.saldoAnterior !== 0">
+      <dt>Saldo anterior</dt>
+      <dd class="erp-num">{{ d.saldoAnterior | moneda }}</dd>
+    </div>
+    <div class="cuenta-fila">
+      <dt>{{ nombrePeriodo(d.periodo) }}</dt>
+      <dd class="erp-num">{{ d.pagoDelMes | moneda }}</dd>
+    </div>
+    <div class="cuenta-fila" *ngIf="d.abonosDelMes !== 0">
+      <dt>Abonos del mes</dt>
+      <dd class="erp-num erp-gain">− {{ d.abonosDelMes | moneda }}</dd>
+    </div>
+    <div class="cuenta-fila cuenta-fila--total">
+      <dt>{{ d.saldoExigible < 0 ? 'Saldo a favor' : 'A pagar ahora' }}</dt>
+      <dd class="erp-num">{{ (d.saldoExigible < 0 ? -d.saldoExigible : d.saldoExigible) | moneda }}</dd>
+    </div>
+    <div class="cuenta-fila" *ngIf="d.porVencer !== 0">
+      <dt>Por vencer (meses siguientes)</dt>
+      <dd class="erp-num">{{ d.porVencer | moneda }}</dd>
+    </div>
+    <div class="cuenta-fila cuenta-fila--total">
+      <dt>Deuda total pendiente</dt>
+      <dd class="erp-num">{{ d.deudaTotal | moneda }}</dd>
+    </div>
+  </dl>
+
+  <!-- Tarjetas -->
+  <section *ngIf="d.desglosePorTarjeta.length > 0" aria-label="Desglose por tarjeta">
+    <h3 class="seccion">Por tarjeta</h3>
+    <div class="tarjeta" *ngFor="let t of d.desglosePorTarjeta; trackBy: trackTarjeta">
+      <button
+        type="button"
+        class="tarjeta-cabecera"
+        (click)="alternar(t)"
+        [attr.aria-expanded]="estaAbierta(t)"
+        [attr.aria-controls]="'tarjeta-' + personaId + '-' + claveTarjeta(t)"
+      >
+        <i class="material-icons" aria-hidden="true">{{ estaAbierta(t) ? 'expand_less' : 'expand_more' }}</i>
+        <span class="tarjeta-nombre">
+          <i class="material-icons tarjeta-icono" aria-hidden="true">credit_card</i>
+          {{ nombreTarjeta(t) }}
+          <span class="erp-muted">· {{ t.numeroCompras }} {{ t.numeroCompras === 1 ? 'compra' : 'compras' }}</span>
+        </span>
+        <span class="tarjeta-cifras">
+          <span>Este mes <strong class="erp-num">{{ t.totalMes | moneda }}</strong></span>
+          <span class="erp-muted" *ngIf="t.porVencer > 0">Por vencer <span class="erp-num">{{ t.porVencer | moneda }}</span></span>
+        </span>
+      </button>
+
+      <div class="erp-table-wrap" [id]="'tarjeta-' + personaId + '-' + claveTarjeta(t)" *ngIf="estaAbierta(t)">
+        <table class="erp-table erp-table--stack erp-table--compact">
+          <caption class="erp-sr-only">Compras con {{ nombreTarjeta(t) }} que le tocan a {{ d.persona.nombre }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Compra</th>
+              <th scope="col">Le toca</th>
+              <th scope="col">Cuota del mes</th>
+              <th scope="col" class="num">Valor cuota</th>
+              <th scope="col">Estado</th>
+              <th scope="col" class="num">Después de este mes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of t.compras; trackBy: trackCompra">
+              <td data-label="Compra">
+                <a class="compra-enlace" [routerLink]="['/compra-credito-detalle', c.compraId]">{{ c.concepto || 'Compra #' + c.compraId }}</a>
+                <span class="erp-muted compra-meta">
+                  <ng-container *ngIf="c.fechaCompra">{{ c.fechaCompra | fechaCorta }}</ng-container>
+                  <ng-container *ngIf="c.plastico"> · ··{{ c.plastico }}</ng-container>
+                </span>
+              </td>
+              <td data-label="Le toca">{{ textoPorcentaje(c.porcentaje) }} <span class="erp-muted" *ngIf="c.cuotasDeLaPersona < c.numeroCuotasCompra">· {{ c.cuotasDeLaPersona }} de {{ c.numeroCuotasCompra }} cuotas</span></td>
+              <td data-label="Cuota del mes">
+                <ng-container *ngIf="c.cuotaDelMes; else sinCuota">{{ textoCuota(c) }}</ng-container>
+                <ng-template #sinCuota><span class="erp-muted">No vence este mes</span></ng-template>
+              </td>
+              <td data-label="Valor cuota" class="num">
+                <ng-container *ngIf="c.cuotaDelMes; else guion">{{ c.cuotaDelMes.monto | moneda }}</ng-container>
+                <ng-template #guion>—</ng-template>
+              </td>
+              <td data-label="Estado">
+                <ng-container *ngIf="c.cuotaDelMes">
+                  <span class="erp-badge" [ngClass]="claseEstadoCuota(c.cuotaDelMes.estado)">{{ etiquetaEstadoCuota(c.cuotaDelMes.estado) }}</span>
+                  <span class="erp-muted compra-meta" *ngIf="c.cuotaDelMes.estado === 'PARCIAL'">Faltan {{ c.cuotaDelMes.pendiente | moneda }}</span>
+                </ng-container>
+              </td>
+              <td data-label="Después de este mes" class="num">
+                <ng-container *ngIf="c.restantes.cuotas > 0; else terminada">
+                  {{ c.restantes.monto | moneda }}
+                  <span class="erp-muted compra-meta">{{ c.restantes.cuotas }} {{ c.restantes.cuotas === 1 ? 'cuota' : 'cuotas' }}</span>
+                </ng-container>
+                <ng-template #terminada><span class="erp-muted">Última cuota</span></ng-template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cuotas anteriores sin pagar -->
+  <section *ngIf="d.cuotasAnterioresPendientes.length > 0" aria-label="Cuotas de meses anteriores sin pagar">
+    <h3 class="seccion">Cuotas de meses anteriores sin pagar</h3>
+    <ul class="lista">
+      <li *ngFor="let c of d.cuotasAnterioresPendientes">
+        <span class="lista-texto">
+          <strong>{{ c.concepto || 'Compra #' + c.compraId }}</strong>
+          <span class="erp-muted">{{ c.tarjeta }} · cuota {{ c.numeroCuota }} de {{ c.cuotasDeLaCompra }} · {{ c.periodo }}</span>
+        </span>
+        <span class="erp-badge" [ngClass]="claseEstadoCuota(c.estado)">{{ etiquetaEstadoCuota(c.estado) }}</span>
+        <span class="erp-num">{{ c.pendiente | moneda }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Aviso de cuotas viejas no registradas -->
+  <div class="erp-alert erp-alert--warning" role="status" *ngIf="d.historicoSinCargar.cuotas > 0">
+    <i class="material-icons" aria-hidden="true">history</i>
+    <span>
+      {{ d.historicoSinCargar.cuotas }} {{ d.historicoSinCargar.cuotas === 1 ? 'cuota' : 'cuotas' }} de meses anteriores ({{ d.historicoSinCargar.monto | moneda }})
+      no están en el estado de cuenta y no se suman al saldo.
+    </span>
+  </div>
+
+  <!-- Lo demás -->
+  <section *ngIf="otros.length > 0" aria-label="Otros cargos del mes">
+    <h3 class="seccion">Otros cargos de {{ nombrePeriodo(d.periodo) }}</h3>
+    <ul class="lista">
+      <li *ngFor="let o of otros">
+        <i class="material-icons lista-icono" aria-hidden="true">{{ o.icono }}</i>
+        <span class="lista-texto">
+          <strong>{{ o.etiqueta }}</strong>
+          <span class="erp-muted">{{ o.bloque.items.length }} {{ o.bloque.items.length === 1 ? 'concepto' : 'conceptos' }}</span>
+        </span>
+        <span class="erp-num">{{ o.bloque.subtotal | moneda }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <p class="pie">
+    <a class="erp-btn erp-btn--ghost erp-btn--sm" routerLink="/liquidacion"><i class="material-icons" aria-hidden="true">fact_check</i>Ver liquidación completa</a>
+  </p>
+</div>

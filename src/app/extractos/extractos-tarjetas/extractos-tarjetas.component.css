@@ -26,3 +26,14 @@
 
 .extracto-acciones { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; margin-top: auto; }
 .extracto-acciones a { text-decoration: none; }
+
+.reparto { display: flex; flex-direction: column; gap: var(--space-1); }
+.barra { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: var(--bg-input); }
+.tramo { height: 100%; transition: width var(--duration-slow) var(--ease-out-expo); }
+.tramo--propio { background: var(--brand-blue); }
+.tramo--terceros { background: var(--chart-5); }
+.tramo + .tramo { margin-left: 2px; }
+.terceros { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: var(--text-body-sm); }
+.terceros li { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-1); }
+.terceros-nombre { color: var(--text-secondary); text-decoration: none; overflow-wrap: anywhere; }
+.terceros-nombre:hover { color: var(--text-link); text-decoration: underline; }

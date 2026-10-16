@@ -1,0 +1,51 @@
+/* los cuatro totales caben en una fila en escritorio */
+.totales { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+
+.personas-grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  align-items: start;
+}
+
+.persona-card { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+/* la persona con el desglose abierto ocupa todo el ancho para que la tabla de compras respire */
+.persona-card--abierta { grid-column: 1 / -1; }
+
+.persona-cabecera { display: flex; align-items: center; gap: var(--space-1); }
+.persona-nombre { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-h3); font-weight: var(--weight-semibold); letter-spacing: -0.01em; }
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: #fff;
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.02em;
+}
+
+.cifras { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); margin: 0; }
+.cifra { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cifra dt { font-size: var(--text-overline); font-weight: var(--weight-semibold); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
+.cifra dd { margin: 0; font-size: var(--text-h3); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.cifra--fuerte dd { color: var(--text-link); }
+
+.reparto { display: flex; flex-direction: column; gap: var(--space-1); }
+.barra { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: var(--bg-input); }
+.barra-tramo { height: 100%; min-width: 3px; transition: width var(--duration-slow) var(--ease-out-expo); }
+.barra-tramo + .barra-tramo { margin-left: 2px; }
+.leyenda { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: var(--text-body-sm); }
+.leyenda li { display: flex; align-items: center; gap: var(--space-1); min-width: 0; }
+.leyenda-nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+.punto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.mini { display: flex; flex-wrap: wrap; gap: var(--space-0) var(--space-2); margin: 0; font-size: var(--text-caption); color: var(--text-secondary); }
+.mini--aviso { align-items: center; gap: 6px; color: var(--amber-warning); }
+.mini--aviso .material-icons { font-size: 16px; }
+
+.persona-acciones { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: space-between; }
+.persona-detalle { border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); min-width: 0; }

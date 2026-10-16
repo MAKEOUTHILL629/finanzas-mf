@@ -459,6 +459,8 @@ export interface ResumenMensualTarjeta {
   todas_trm_confirmadas: boolean;
   total_responsabilidad_terceros: number;
   total_propio: number;
+  /** Cuánto de este extracto le toca a cada tercero (ya incluido en `total_responsabilidad_terceros`). */
+  terceros?: Array<{ personaId: number; nombre: string | null; monto: number }>;
 }
 
 /** `PUT /api/tarjetas/:id`: solo se envía lo que cambia. */

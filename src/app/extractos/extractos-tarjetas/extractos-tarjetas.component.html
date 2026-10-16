@@ -94,6 +94,19 @@
         <div *ngIf="tieneUsd(r)"><dt class="erp-overline">Componente USD</dt><dd class="erp-num">US{{ r.componente_en_usd | moneda }}</dd></div>
       </dl>
 
+      <div class="reparto" *ngIf="r.total_responsabilidad_terceros > 0">
+        <div class="barra" role="img" [attr.aria-label]="'Tu parte ' + porcentajePropio(r) + ' % del extracto; el resto es de terceros'">
+          <span class="tramo tramo--propio" [style.width.%]="porcentajePropio(r)"></span>
+          <span class="tramo tramo--terceros" [style.width.%]="100 - porcentajePropio(r)"></span>
+        </div>
+        <ul class="terceros" *ngIf="r.terceros?.length" aria-label="Lo que le toca a cada persona">
+          <li *ngFor="let t of r.terceros">
+            <a class="terceros-nombre" routerLink="/personas">{{ t.nombre || 'Persona #' + t.personaId }}</a>
+            <span class="erp-num">{{ t.monto | moneda }}</span>
+          </li>
+        </ul>
+      </div>
+
       <div class="erp-alert erp-alert--warning" *ngIf="!r.todas_trm_confirmadas">
         <i class="material-icons" aria-hidden="true">currency_exchange</i>
         <span>Hay compras en USD con TRM sin confirmar: este total puede cambiar cuando la confirmes.</span>

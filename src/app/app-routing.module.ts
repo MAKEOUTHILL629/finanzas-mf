@@ -25,6 +25,7 @@ import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.compone
 import { AportesCarroComponent } from './aportes-carro/aportes-carro.component';
 import { LiquidacionMensualComponent } from './liquidacion/liquidacion-mensual.component';
 import { ListaRecurrentesPersonaComponent } from './recurrentes-persona/lista-recurrentes-persona/lista-recurrentes-persona.component';
+import { ListaPersonasComponent } from './personas/lista-personas/lista-personas.component';
 import { CobrosComponent } from './cobros/cobros.component';
 import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
 import { authGuard } from './core/guards/auth.guard';
@@ -57,6 +58,7 @@ export const routes: Routes = [
   { path: 'estado-cuenta', component: EstadoCuentaComponent, canActivate: [authGuard] },
   { path: 'aportes-carro', component: AportesCarroComponent, canActivate: [authGuard] },
   { path: 'liquidacion', component: LiquidacionMensualComponent, canActivate: [authGuard] },
+  { path: 'personas', component: ListaPersonasComponent, canActivate: [authGuard] },
   { path: 'cobros', component: CobrosComponent, canActivate: [authGuard] },
   { path: 'recurrentes-persona', component: ListaRecurrentesPersonaComponent, canActivate: [authGuard] },
   { path: 'cruces-deuda', component: ListaCrucesComponent, canActivate: [authGuard] },

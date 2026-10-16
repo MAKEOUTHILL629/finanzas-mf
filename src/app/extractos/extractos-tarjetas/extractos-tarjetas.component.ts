@@ -124,6 +124,13 @@ export class ExtractosTarjetasComponent implements OnInit, OnDestroy {
     return this.periodo === periodoActual();
   }
 
+  /** Qué parte del extracto es tuya (0–100), para la barra «lo mío vs. lo de terceros». */
+  porcentajePropio(r: ResumenMensualTarjeta): number {
+    const total = Number(r.total_extracto_cop);
+    if (!(total > 0)) return 0;
+    return Math.max(0, Math.min(100, Math.round((Number(r.total_propio) / total) * 1000) / 10));
+  }
+
   tieneUsd(r: ResumenMensualTarjeta): boolean {
     return Number(r.componente_en_usd) > 0;
   }
