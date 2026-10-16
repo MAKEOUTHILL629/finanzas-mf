@@ -1,32 +1,26 @@
 <section class="erp-page" aria-labelledby="titulo-recurrentes-persona">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-recurrentes-persona">Recurrentes por persona</h1>
-      <p class="erp-subtitle">Cargos o descuentos que se repiten cada mes en el estado de cuenta de una persona, de por vida o por un número de meses.</p>
-    </div>
-    <div class="erp-actions">
-      <a class="erp-btn erp-btn--ghost" routerLink="/liquidacion">
-        <i class="material-icons" aria-hidden="true">fact_check</i>
-        Liquidación
-      </a>
-      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()" [disabled]="cargando || !!error">
-        <i class="material-icons" aria-hidden="true">add</i>
-        Nuevo recurrente
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Recurrentes por persona" subtitulo="Cargos o descuentos que se repiten cada mes en el estado de cuenta de una persona, de por vida o por un número de meses." idTitulo="titulo-recurrentes-persona">
+    <a appButton="ghost" routerLink="/liquidacion">
+      <i class="material-icons" aria-hidden="true">fact_check</i>
+      Liquidación
+    </a>
+    <button type="button" appButton="primary" (click)="abrirFormulario()" [disabled]="cargando || !!error">
+      <i class="material-icons" aria-hidden="true">add</i>
+      Nuevo recurrente
+    </button>
+  </app-page-header>
 
   <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && recurrentes.length > 0" aria-label="Resumen mensual">
-    <div class="erp-card erp-stat">
+    <app-card class="erp-stat">
       <span class="erp-overline">Se cobra cada mes</span>
       <span class="erp-stat-value erp-num">{{ totales.cobros | moneda }}</span>
       <span class="erp-stat-hint">Recurrentes activos «a cobrar»</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Se descuenta cada mes</span>
       <span class="erp-stat-value erp-num erp-gain">{{ totales.favores | moneda }}</span>
       <span class="erp-stat-hint">Recurrentes activos «a favor»</span>
-    </div>
+    </app-card>
   </div>
 
   <form class="erp-toolbar" role="search" aria-label="Filtrar recurrentes" (submit)="$event.preventDefault()" *ngIf="!cargando && !error && recurrentes.length > 0">
@@ -36,36 +30,36 @@
     </div>
     <div class="erp-field">
       <label class="erp-label" for="rp-f-duracion">Duración</label>
-      <select id="rp-f-duracion" class="erp-select" name="duracion" [ngModel]="filtros.modalidadDuracion" (ngModelChange)="cambiarFiltro('modalidadDuracion', $event)">
+      <select id="rp-f-duracion" appInput name="duracion" [ngModel]="filtros.modalidadDuracion" (ngModelChange)="cambiarFiltro('modalidadDuracion', $event)">
         <option [ngValue]="null">Todas</option>
         <option *ngFor="let m of modalidades" [ngValue]="m.valor">{{ m.etiqueta }}</option>
       </select>
     </div>
     <div class="erp-field">
       <label class="erp-label" for="rp-f-activo">Estado</label>
-      <select id="rp-f-activo" class="erp-select" name="activo" [ngModel]="filtros.activo" (ngModelChange)="cambiarFiltro('activo', $event)">
+      <select id="rp-f-activo" appInput name="activo" [ngModel]="filtros.activo" (ngModelChange)="cambiarFiltro('activo', $event)">
         <option [ngValue]="null">Todos</option>
         <option [ngValue]="true">Activos</option>
         <option [ngValue]="false">En pausa</option>
       </select>
     </div>
-    <button type="button" class="erp-btn erp-btn--ghost" *ngIf="hayFiltros" (click)="reiniciarFiltros()">
+    <button type="button" appButton="ghost" *ngIf="hayFiltros" (click)="reiniciarFiltros()">
       <i class="material-icons" aria-hidden="true">filter_alt_off</i>
       Quitar filtros
     </button>
   </form>
 
   <!-- Carga -->
-  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando recurrentes">
+  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando recurrentes">
     <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3]"></div>
-  </div>
+  </app-card>
 
   <!-- Error -->
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
@@ -76,30 +70,23 @@
       <strong id="eliminar-rec-titulo">¿Eliminar «{{ e.concepto }}» de {{ e.personaNombre }}?</strong>
       Se anularán sus cargos del estado de cuenta ({{ e.cuotasGeneradas }} generado{{ e.cuotasGeneradas === 1 ? '' : 's' }}). Si solo quieres dejar de cobrarlo, mejor ponlo en pausa.
       <div class="acciones-confirmacion">
-        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarEliminar()" [disabled]="trabajando">{{ trabajando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarEliminar()" [disabled]="trabajando">Cancelar</button>
+        <button type="button" appButton="danger" size="sm" (click)="confirmarEliminar()" [disabled]="trabajando">{{ trabajando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
+        <button type="button" appButton="ghost" size="sm" (click)="cancelarEliminar()" [disabled]="trabajando">Cancelar</button>
       </div>
     </div>
   </div>
 
   <!-- Vacío -->
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && recurrentes.length === 0">
-    <i class="material-icons" aria-hidden="true">autorenew</i>
-    <h2>Aún no hay recurrentes por persona</h2>
-    <p>Por ejemplo, el plan de celular de Andrés por 6 meses o un descuento mensual de por vida.</p>
-    <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">Nuevo recurrente</button>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && recurrentes.length === 0" icon="autorenew" titulo="Aún no hay recurrentes por persona" descripcion="Por ejemplo, el plan de celular de Andrés por 6 meses o un descuento mensual de por vida.">
+    <button type="button" appButton="primary" (click)="abrirFormulario()">Nuevo recurrente</button>
+  </app-empty-state>
 
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && recurrentes.length > 0 && visibles.length === 0">
-    <i class="material-icons" aria-hidden="true">search_off</i>
-    <h2>Ningún recurrente coincide</h2>
-    <button type="button" class="erp-btn erp-btn--secondary" (click)="reiniciarFiltros()">Quitar filtros</button>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && recurrentes.length > 0 && visibles.length === 0" icon="search_off" titulo="Ningún recurrente coincide"><button type="button" appButton="secondary" (click)="reiniciarFiltros()">Quitar filtros</button></app-empty-state>
 
   <!-- Tabla -->
-  <div class="erp-card tabla-card" *ngIf="!cargando && !error && visibles.length > 0">
+  <app-card class="tabla-card" *ngIf="!cargando && !error && visibles.length > 0">
     <div class="erp-table-wrap">
-      <table class="erp-table erp-table--stack erp-table--compact">
+      <table appTable compact stack>
         <caption class="erp-sr-only">Recurrentes por persona ({{ visibles.length }})</caption>
         <thead>
           <tr>
@@ -124,7 +111,7 @@
             <td data-label="Tipo"><span class="erp-badge" [class.erp-badge--warning]="r.naturaleza === 'CARGO_A_COBRAR'" [class.erp-badge--success]="r.naturaleza === 'ABONO_A_FAVOR'" [title]="etiquetaNaturaleza(r.naturaleza)">{{ etiquetaCorta(r.naturaleza) }}</span></td>
             <td data-label="Valor mensual" class="num">{{ r.valorMensual | moneda }}</td>
             <td data-label="Duración">
-              <span class="erp-badge erp-badge--info" *ngIf="r.vitalicio"><i class="material-icons" aria-hidden="true">all_inclusive</i>Vitalicio</span>
+              <app-badge tone="info" *ngIf="r.vitalicio"><i class="material-icons" aria-hidden="true">all_inclusive</i>Vitalicio</app-badge>
               <ng-container *ngIf="!r.vitalicio && r.progreso as p">
                 <span class="progreso-texto">{{ textoProgreso(r) }}</span>
                 <div class="erp-progress" [class.erp-progress--done]="p.porcentaje >= 100" role="progressbar" [attr.aria-valuenow]="p.porcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Cuotas generadas de ' + r.concepto">
@@ -136,16 +123,15 @@
               <span class="erp-badge" [class.erp-badge--success]="estadoVisual(r) === 'activo'" [class.erp-badge--warning]="estadoVisual(r) === 'pausado'" [class.erp-badge--info]="estadoVisual(r) === 'finalizado'">{{ etiquetaEstado[estadoVisual(r)] }}</span>
             </td>
             <td data-label="Acciones" class="acciones">
-              <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="abrirFormulario(r)" [attr.aria-label]="'Editar ' + r.concepto"><i class="material-icons" aria-hidden="true">edit</i></button>
-              <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="alternarActivo(r)" [disabled]="trabajando || r.estado === 'FINALIZADO'"
-                      [attr.aria-label]="(r.activo ? 'Pausar ' : 'Reactivar ') + r.concepto"><i class="material-icons" aria-hidden="true">{{ r.activo ? 'pause_circle' : 'play_circle' }}</i></button>
-              <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon peligro" (click)="pedirEliminar(r)" [attr.aria-label]="'Eliminar ' + r.concepto"><i class="material-icons" aria-hidden="true">delete_outline</i></button>
+              <button type="button" appButton="ghost" icon (click)="abrirFormulario(r)" [attr.aria-label]="'Editar ' + r.concepto"><i class="material-icons" aria-hidden="true">edit</i></button>
+              <button type="button" appButton="ghost" icon (click)="alternarActivo(r)" [disabled]="trabajando || r.estado === 'FINALIZADO'" [attr.aria-label]="(r.activo ? 'Pausar ' : 'Reactivar ') + r.concepto"><i class="material-icons" aria-hidden="true">{{ r.activo ? 'pause_circle' : 'play_circle' }}</i></button>
+              <button type="button" appButton="ghost" icon class="peligro" (click)="pedirEliminar(r)" [attr.aria-label]="'Eliminar ' + r.concepto"><i class="material-icons" aria-hidden="true">delete_outline</i></button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  </div>
+  </app-card>
 </section>
 
 <app-modal [modalId]="modalId">

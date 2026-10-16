@@ -9,35 +9,32 @@
       <p class="erp-subtitle">Cuando una persona paga lo que debe otra: la base de datos mueve la deuda de una a la otra automáticamente.</p>
     </div>
     <div class="erp-actions">
-      <button type="button" class="erp-btn erp-btn--primary" (click)="nuevo()">
+      <button type="button" appButton="primary" (click)="nuevo()">
         <i class="material-icons" aria-hidden="true">add</i>
         Nuevo cruce
       </button>
     </div>
   </header>
 
-  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando cruces">
+  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando cruces">
     <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3]"></div>
-  </div>
+  </app-card>
 
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && cruces.length === 0">
-    <i class="material-icons" aria-hidden="true">swap_horiz</i>
-    <h2>Aún no hay cruces de deuda</h2>
-    <p>Regístralos cuando alguien pague una deuda de otra persona (por ejemplo, quien cubre la cuota de otro).</p>
-    <button type="button" class="erp-btn erp-btn--primary" (click)="nuevo()">Nuevo cruce</button>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && cruces.length === 0" icon="swap_horiz" titulo="Aún no hay cruces de deuda" descripcion="Regístralos cuando alguien pague una deuda de otra persona (por ejemplo, quien cubre la cuota de otro).">
+    <button type="button" appButton="primary" (click)="nuevo()">Nuevo cruce</button>
+  </app-empty-state>
 
-  <div class="erp-card tabla-card" *ngIf="!cargando && !error && cruces.length > 0">
+  <app-card class="tabla-card" *ngIf="!cargando && !error && cruces.length > 0">
     <div class="erp-table-wrap">
-      <table class="erp-table erp-table--stack">
+      <table appTable stack>
         <caption class="erp-sr-only">Cruces de deuda ({{ cruces.length }})</caption>
         <thead>
           <tr>
@@ -61,7 +58,7 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </app-card>
 </section>
 
 <app-modal [modalId]="modalId">

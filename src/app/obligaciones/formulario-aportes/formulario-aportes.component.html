@@ -12,12 +12,12 @@
   <div class="erp-form-grid">
     <div class="erp-field">
       <label class="erp-label" for="ap-fecha">Fecha<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="ap-fecha" class="erp-input" type="date" formControlName="fecha" />
+      <input id="ap-fecha" appInput type="date" formControlName="fecha" />
       <p class="erp-field-hint">Si ya hay aportes ese día, se suman al mismo día.</p>
     </div>
     <div class="erp-field">
       <label class="erp-label" for="ap-notas">Notas del día</label>
-      <input id="ap-notas" class="erp-input" type="text" formControlName="notas" placeholder="Opcional" autocomplete="off" />
+      <input id="ap-notas" appInput type="text" formControlName="notas" placeholder="Opcional" autocomplete="off" />
     </div>
   </div>
 
@@ -33,24 +33,22 @@
 
       <div class="erp-field">
         <label class="erp-label" [for]="'ap-valor-' + i">Valor</label>
-        <input [id]="'ap-valor-' + i" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valor"
-               placeholder="0.00" [attr.aria-invalid]="campoInvalido(fila, 'valor')" />
+        <input [id]="'ap-valor-' + i" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valor" placeholder="0.00" [attr.aria-invalid]="campoInvalido(fila, 'valor')" />
       </div>
 
       <div class="erp-field">
         <label class="erp-label" [for]="'ap-metodo-' + i">Método</label>
-        <select [id]="'ap-metodo-' + i" class="erp-select" formControlName="metodo">
+        <select [id]="'ap-metodo-' + i" appInput formControlName="metodo">
           <option *ngFor="let m of metodos" [value]="m">{{ m }}</option>
         </select>
       </div>
 
       <div class="erp-field aporte-comentario">
         <label class="erp-label" [for]="'ap-comentario-' + i">Comentario</label>
-        <input [id]="'ap-comentario-' + i" class="erp-input" type="text" formControlName="comentarios" placeholder="Opcional" autocomplete="off" />
+        <input [id]="'ap-comentario-' + i" appInput type="text" formControlName="comentarios" placeholder="Opcional" autocomplete="off" />
       </div>
 
-      <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon aporte-quitar" (click)="quitarFila(i)"
-              [disabled]="items.length === 1" [attr.aria-label]="'Quitar el aporte ' + (i + 1)">
+      <button type="button" appButton="ghost" icon class="aporte-quitar" (click)="quitarFila(i)" [disabled]="items.length === 1" [attr.aria-label]="'Quitar el aporte ' + (i + 1)">
         <i class="material-icons" aria-hidden="true">delete_outline</i>
       </button>
 
@@ -61,7 +59,7 @@
       </p>
     </div>
 
-    <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="agregarFila()" [disabled]="items.length >= maxItems">
+    <button type="button" appButton="secondary" size="sm" (click)="agregarFila()" [disabled]="items.length >= maxItems">
       <i class="material-icons" aria-hidden="true">add</i>
       Agregar otro aporte
     </button>
@@ -81,8 +79,8 @@
   </div>
 
   <div class="erp-form-actions">
-    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
-    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando">
+    <button type="button" appButton="ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" appButton="primary" [disabled]="enviando">
       {{ enviando ? 'Registrando…' : 'Registrar aportes' }}
     </button>
   </div>

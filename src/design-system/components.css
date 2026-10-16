@@ -1,7 +1,9 @@
 /* ==============================================================
-   ERP — COMPONENTES COMPARTIDOS ("Liquid Trust" / "Swiss Glass")
-   Solo usa los tokens de styles.css (tema oscuro/claro automático).
-   Prefijo `erp-` para no chocar con las clases de los componentes existentes.
+   SISTEMA DE DISEÑO — COMPONENTES BASE
+   Es la única definición visual de: Card, Button, Field/Input/Select, Badge, Table, Alert, Skeleton,
+   Segmented y Modal (hoja inferior en móvil). Los componentes de Angular de `shared/ui` solo ponen
+   estas clases; las pantallas antiguas las usan directamente.
+   Solo usa los tokens de tokens.css (Claro/Oscuro automático). Prefijo `erp-`.
    ============================================================== */
 
 /* ── Página y cabecera ── */
@@ -9,7 +11,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   color: var(--text-primary);
   font-family: var(--font-main);
@@ -57,19 +59,27 @@
 
 /* ── Superficie "glass" ── */
 .erp-card {
+  display: block;
+  box-sizing: border-box;
   background: var(--bg-surface);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-card), inset 0 1px 0 var(--specular-light);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
+/* variantes: superficie sólida (sin vidrio), plana (sin sombra) y espaciados */
+.erp-card--solid { background: var(--bg-surface-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.erp-card--flat { box-shadow: none; }
+.erp-card--pad-none { padding: 0; }
+.erp-card--pad-sm { padding: var(--space-2); }
+.erp-card--pad-lg { padding: var(--space-4); }
 .erp-card--clickable {
   cursor: pointer;
   transition: transform var(--duration-normal) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-in-out);
 }
-.erp-card--clickable:hover { transform: translateY(-2px); border-color: var(--brand-blue); }
+.erp-card--clickable:hover { transform: translateY(-2px); border-color: var(--brand-blue); box-shadow: var(--shadow-lg); }
 .erp-card--clickable:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 
 .erp-card-title {
@@ -89,7 +99,7 @@
 
 /* ── Números financieros ── */
 .erp-num {
-  font-feature-settings: "tnum" on, "zero" on;
+  font-feature-settings: var(--num-features);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
@@ -114,51 +124,75 @@
 .erp-muted { color: var(--text-secondary); }
 .erp-mono { font-family: var(--font-mono); letter-spacing: 0.04em; }
 
-/* ── Botones ── */
+/* ── Botones (iOS: relleno, tintado, gris, texto) ── */
 .erp-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-height: 44px;
+  box-sizing: border-box;
+  min-height: var(--touch-target);
   padding: 0 var(--space-3);
-  border: 1.5px solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font: inherit;
   font-size: var(--text-body-sm);
   font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: transform var(--duration-normal) var(--ease-out-expo), box-shadow var(--duration-normal) var(--ease-out-expo),
-    background var(--duration-fast) var(--ease-in-out);
+  transition: transform var(--duration-normal) var(--ease-spring), box-shadow var(--duration-normal) var(--ease-out-expo),
+    background var(--duration-fast) var(--ease-in-out), color var(--duration-fast) var(--ease-in-out), filter var(--duration-fast) var(--ease-in-out);
 }
 .erp-btn .material-icons { font-size: 20px; }
 a.erp-btn, a.erp-btn:hover { text-decoration: none; }
-.erp-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
-.erp-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--brand-blue-light), var(--shadow-glow-brand); }
+.erp-btn:disabled, .erp-btn[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; pointer-events: none; }
+.erp-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--brand-blue-light), 0 0 0 1.5px var(--brand-blue); }
+.erp-btn:active:not(:disabled) { transform: scale(0.97); }
 
-.erp-btn--primary {
-  color: #fff;
-  background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-blue-hover) 100%);
-  box-shadow: var(--shadow-glow-brand);
-}
-.erp-btn--primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px -2px var(--brand-blue-glow); }
-.erp-btn--primary:active:not(:disabled) { transform: scale(0.98); }
+/* principal: relleno azul de sistema */
+.erp-btn--primary { color: var(--text-on-accent); background: var(--gradient-brand); box-shadow: var(--shadow-glow-brand); }
+.erp-btn--primary:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 6px 18px -4px var(--brand-blue-glow); }
 
-.erp-btn--secondary { color: var(--text-link); border-color: var(--text-link); background: transparent; }
-.erp-btn--secondary:hover:not(:disabled) { background: var(--brand-blue-light); transform: translateY(-1px); }
+/* secundario: tintado */
+.erp-btn--secondary { color: var(--text-link); background: var(--brand-blue-light); }
+.erp-btn--secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--system-blue) 20%, transparent); }
 
+/* discreto: gris translúcido */
 .erp-btn--ghost { color: var(--text-secondary); background: transparent; }
 .erp-btn--ghost:hover:not(:disabled) { color: var(--text-primary); background: var(--bg-input-hover); }
 
-.erp-btn--danger { color: var(--red-danger); border-color: var(--red-danger); background: transparent; }
-.erp-btn--danger:hover:not(:disabled) { background: var(--red-danger-bg); }
+.erp-btn--danger { color: var(--red-danger); background: var(--red-danger-bg); }
+.erp-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--system-red) 22%, transparent); }
 
 .erp-btn--sm { min-height: 34px; padding: 0 var(--space-2); font-size: var(--text-caption); }
-.erp-btn--icon { min-width: 44px; padding: 0; }
+.erp-btn--lg { min-height: 52px; padding: 0 var(--space-4); font-size: var(--text-body); }
+.erp-btn--block { display: flex; width: 100%; }
+.erp-btn--icon { min-width: var(--touch-target); padding: 0; }
 .erp-btn--icon.erp-btn--sm { min-width: 34px; }
+
+/* cargando: el texto se mantiene (sin saltos de ancho) y aparece un indicador */
+.erp-btn--loading { pointer-events: none; }
+.erp-btn--loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  margin-left: var(--space-1);
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: erp-spin 0.7s linear infinite;
+}
+@keyframes erp-spin { to { transform: rotate(360deg); } }
+
+/* En pantallas táctiles todo control mide al menos 44 × 44 px */
+@media (pointer: coarse), (max-width: 640px) {
+  .erp-btn--sm { min-height: var(--touch-target); }
+  .erp-btn--icon.erp-btn--sm { min-width: var(--touch-target); }
+}
 
 /* ── Formularios ── */
 .erp-form { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -176,8 +210,8 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
   box-sizing: border-box;
   min-height: 44px;
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
   background: var(--bg-input);
   color: var(--text-primary);
   font: inherit;
@@ -192,11 +226,12 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
   outline: none;
   background: var(--bg-input-focus);
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px var(--brand-blue-light);
+  box-shadow: 0 0 0 4px var(--brand-blue-light);
 }
 .erp-input.ng-invalid.ng-touched, .erp-select.ng-invalid.ng-touched, .erp-textarea.ng-invalid.ng-touched { border-color: var(--border-error); }
-.erp-input:disabled, .erp-select:disabled { opacity: 0.5; cursor: not-allowed; }
-.erp-input[type="number"] { font-feature-settings: "tnum" on; font-variant-numeric: tabular-nums; }
+.erp-input:disabled, .erp-select:disabled, .erp-textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+.erp-input.erp-input--invalid, .erp-select.erp-input--invalid, .erp-textarea.erp-input--invalid { border-color: var(--border-error); }
+.erp-input[type="number"] { font-feature-settings: var(--num-features); font-variant-numeric: tabular-nums; }
 .erp-field-error { margin: 0; font-size: var(--text-caption); color: var(--red-danger); }
 .erp-field-hint { margin: 0; font-size: var(--text-caption); color: var(--text-tertiary); }
 .erp-form-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; margin-top: var(--space-1); }
@@ -213,7 +248,7 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 .erp-check input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--brand-blue); cursor: pointer; }
 
 /* ── Sección desplegable ── */
-.erp-details { border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); }
+.erp-details { border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: var(--space-1) var(--space-2); background: var(--bg-input); }
 .erp-details > summary { cursor: pointer; font-size: var(--text-body-sm); font-weight: var(--weight-semibold); color: var(--text-secondary); padding: 6px 0; }
 .erp-details > summary:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
 .erp-details[open] > summary { margin-bottom: var(--space-1); }
@@ -246,6 +281,8 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 .erp-badge--danger  { color: var(--red-danger);    background: var(--red-danger-bg);    border-color: transparent; }
 .erp-badge--info    { color: var(--text-link);     background: var(--brand-blue-light); border-color: transparent; }
 .erp-badge--premium { color: var(--gold-premium);  background: var(--gold-premium-bg);  border-color: transparent; }
+.erp-badge--solid { color: var(--text-on-accent); background: var(--brand-blue); border-color: transparent; }
+.erp-badge--solid.erp-badge--danger { background: var(--red-danger); color: var(--text-on-accent); }
 
 /* ── Barra de progreso ── */
 .erp-progress { height: 8px; border-radius: var(--radius-pill); background: var(--bg-input); overflow: hidden; }
@@ -259,7 +296,7 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 .erp-progress--done .erp-progress-bar { background: linear-gradient(90deg, var(--green-success), var(--chart-6)); }
 
 /* ── Tablas ── */
-.erp-table-wrap { overflow-x: auto; border-radius: var(--radius-md); }
+.erp-table-wrap { overflow-x: auto; border-radius: var(--radius-md); -webkit-overflow-scrolling: touch; }
 .erp-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-body-sm); }
 .erp-table th {
   position: sticky;
@@ -282,7 +319,7 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 }
 .erp-table tbody tr { transition: background var(--duration-fast) var(--ease-in-out); }
 .erp-table tbody tr:hover { background: var(--table-row-hover); }
-.erp-table .num { text-align: right; font-feature-settings: "tnum" on, "zero" on; font-variant-numeric: tabular-nums; font-weight: var(--weight-medium); }
+.erp-table .num { text-align: right; font-feature-settings: var(--num-features); font-variant-numeric: tabular-nums; font-weight: var(--weight-medium); }
 .erp-table th.num { text-align: right; }
 .erp-table tfoot td { font-weight: var(--weight-bold); border-bottom: none; }
 .erp-row-toggle { cursor: pointer; }
@@ -352,9 +389,9 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 .erp-alert .material-icons { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 .erp-alert--info    { background: var(--brand-blue-light);  color: var(--text-primary); border-color: var(--brand-blue-glow); }
 .erp-alert--info .material-icons { color: var(--text-link); }
-.erp-alert--warning { background: var(--amber-warning-bg);  color: var(--text-primary); border-color: rgba(255, 171, 0, 0.35); }
+.erp-alert--warning { background: var(--amber-warning-bg);  color: var(--text-primary); border-color: color-mix(in srgb, var(--system-orange) 35%, transparent); }
 .erp-alert--warning .material-icons { color: var(--amber-warning); }
-.erp-alert--danger  { background: var(--red-danger-bg);     color: var(--text-primary); border-color: rgba(255, 59, 48, 0.35); }
+.erp-alert--danger  { background: var(--red-danger-bg);     color: var(--text-primary); border-color: color-mix(in srgb, var(--system-red) 35%, transparent); }
 .erp-alert--danger .material-icons { color: var(--red-danger); }
 
 /* ── Estados vacío / carga ── */
@@ -379,6 +416,8 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 /* ── Móvil ── */
 @media (max-width: 640px) {
   .erp-card { padding: var(--space-2); border-radius: var(--radius-md); }
+  .erp-card--pad-none { padding: 0; }
+  .erp-card--pad-lg { padding: var(--space-3); }
   .erp-form-grid { grid-template-columns: minmax(0, 1fr); }
   .erp-header { align-items: flex-start; }
   .erp-actions, .erp-actions .erp-btn { width: 100%; }
@@ -400,3 +439,71 @@ fieldset.erp-field.opciones { display: flex; flex-direction: column; gap: var(--
 /* Lista de plásticos de una tarjeta (formulario de configuración): terminación · estado · vigencia */
 .plasticos-lista { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
 .plasticos-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+
+
+/* ── Control segmentado con indicador deslizante (selector de tema, pestañas) ──
+   El «pill» se desplaza con un resorte suave hasta la opción activa (--seg-index / --seg-count). */
+.erp-segmented {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: stretch;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  isolation: isolate;
+}
+.erp-segmented::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--seg-count, 2));
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface-elevated);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(calc(100% * var(--seg-index, 0)));
+  transition: transform var(--duration-slow) var(--ease-spring);
+}
+.erp-segmented__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  min-width: 44px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-in-out);
+}
+.erp-segmented__item .material-icons { font-size: 18px; }
+.erp-segmented__item:hover { color: var(--text-primary); }
+.erp-segmented__item[aria-checked="true"], .erp-segmented__item[aria-selected="true"] { color: var(--text-primary); }
+.erp-segmented__item:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+@media (pointer: coarse) { .erp-segmented__item { min-height: var(--touch-target); } }
+@media (prefers-reduced-motion: reduce) { .erp-segmented::before { transition: none; } }
+
+/* ── Lista agrupada (estilo «inset grouped» de iOS) ── */
+.erp-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.erp-list > li { display: flex; align-items: center; gap: var(--space-2); min-height: var(--touch-target); padding: var(--space-1) 0; border-bottom: 1px solid var(--divider); }
+.erp-list > li:last-child { border-bottom: none; }
+
+/* ── Hoja inferior (modal en móvil) y capa translúcida ── */
+.erp-sheet {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow-modal);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}

@@ -1,5 +1,7 @@
 /* los cuatro totales caben en una fila en escritorio */
 .totales { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.totales .erp-stat-value { font-size: clamp(1.1rem, 0.75rem + 0.9vw, 1.45rem); }
+@media (max-width: 640px) { .totales { grid-template-columns: repeat(2, minmax(0, 1fr)); } .totales .erp-stat-hint { display: none; } }
 
 .personas-grid {
   display: grid;
@@ -22,7 +24,7 @@
   height: 40px;
   flex-shrink: 0;
   border-radius: 50%;
-  color: #fff;
+  color: var(--text-on-accent);
   font-size: var(--text-body-sm);
   font-weight: var(--weight-bold);
   letter-spacing: 0.02em;

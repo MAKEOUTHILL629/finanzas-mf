@@ -12,11 +12,11 @@
       <i class="material-icons chevron" [class.chevron--abierto]="abierto" aria-hidden="true">expand_more</i>
     </button>
     <div class="productos-acciones" *ngIf="!cargando && !error">
-      <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" *ngIf="aceptables.length > 0" (click)="aceptarTodo()" [disabled]="trabajando">
+      <button type="button" appButton="primary" size="sm" *ngIf="aceptables.length > 0" (click)="aceptarTodo()" [disabled]="trabajando">
         <i class="material-icons" aria-hidden="true">auto_awesome</i>
         {{ trabajando ? 'Asignando…' : 'Aceptar sugerencias (' + aceptables.length + ')' }}
       </button>
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="reprocesar.emit()">
+      <button type="button" appButton="secondary" size="sm" (click)="reprocesar.emit()">
         <i class="material-icons" aria-hidden="true">sync</i>
         Reprocesar pendientes
       </button>
@@ -30,7 +30,7 @@
 
     <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
       <i class="material-icons" aria-hidden="true">error</i>
-      <div>{{ error }} <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="cargar()">Reintentar</button></div>
+      <div>{{ error }} <button type="button" appButton="secondary" size="sm" (click)="cargar()">Reintentar</button></div>
     </div>
 
     <p class="erp-muted ayuda" *ngIf="!cargando && !error && porAsignar.length > 0">
@@ -45,9 +45,9 @@
         <div class="producto-texto">
           <div class="producto-linea">
             <strong class="erp-mono">••{{ p.ultimos4 }}</strong>
-            <span class="erp-badge">{{ etiqueta(p) }}</span>
-            <span class="erp-badge erp-badge--success" *ngIf="p.asignadoA"><i class="material-icons" aria-hidden="true">check</i>{{ p.asignadoA.nombre }}</span>
-            <span class="erp-badge erp-badge--warning" *ngIf="!p.asignadoA">Sin asignar</span>
+            <app-badge>{{ etiqueta(p) }}</app-badge>
+            <app-badge tone="success" *ngIf="p.asignadoA"><i class="material-icons" aria-hidden="true">check</i>{{ p.asignadoA.nombre }}</app-badge>
+            <app-badge tone="warning" *ngIf="!p.asignadoA">Sin asignar</app-badge>
           </div>
           <span class="erp-muted producto-meta">
             {{ p.correos }} correo{{ p.correos === 1 ? '' : 's' }}<ng-container *ngIf="p.pendientes > 0"> · <strong>{{ p.pendientes }} por resolver</strong></ng-container>
@@ -57,15 +57,15 @@
         </div>
 
         <div class="producto-acciones" *ngIf="!p.asignadoA">
-          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="aceptable(p.sugerencia)" (click)="aceptarUno(p)" [disabled]="trabajando">Aceptar</button>
-          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="abrirAsignar(p)" [disabled]="trabajando">{{ aceptable(p.sugerencia) ? 'Otra…' : 'Asignar…' }}</button>
+          <button type="button" appButton="secondary" size="sm" *ngIf="aceptable(p.sugerencia)" (click)="aceptarUno(p)" [disabled]="trabajando">Aceptar</button>
+          <button type="button" appButton="ghost" size="sm" (click)="abrirAsignar(p)" [disabled]="trabajando">{{ aceptable(p.sugerencia) ? 'Otra…' : 'Asignar…' }}</button>
         </div>
 
         <!-- Asignación manual en línea -->
         <form class="producto-form" *ngIf="asignando === p" [formGroup]="form" (ngSubmit)="guardarAsignacion()" novalidate [attr.aria-label]="'Asignar ••' + p.ultimos4">
           <div class="erp-field">
             <label class="erp-label" [for]="'pd-destino-' + p.ultimos4">¿A cuál de tus productos pertenece ••{{ p.ultimos4 }}?</label>
-            <select [id]="'pd-destino-' + p.ultimos4" class="erp-select" formControlName="destino">
+            <select [id]="'pd-destino-' + p.ultimos4" appInput formControlName="destino">
               <optgroup label="Tarjetas de crédito" *ngIf="tarjetas.length > 0">
                 <option *ngFor="let t of tarjetas" [value]="'t:' + t.id">{{ nombreTarjeta(t) }}</option>
               </optgroup>
@@ -80,8 +80,7 @@
           </div>
           <div class="erp-field" *ngIf="creaNueva">
             <label class="erp-label" [for]="'pd-nombre-' + p.ultimos4">{{ form.controls.destino.value === NUEVA_TARJETA ? 'Franquicia (Visa, Amex…)' : 'Nombre de la cuenta' }}</label>
-            <input [id]="'pd-nombre-' + p.ultimos4" class="erp-input" type="text" formControlName="nombre" maxlength="120" autocomplete="off"
-                   [placeholder]="form.controls.destino.value === NUEVA_TARJETA ? 'Ej. Mastercard' : 'Ej. Ahorros Bancolombia'" />
+            <input [id]="'pd-nombre-' + p.ultimos4" appInput type="text" formControlName="nombre" maxlength="120" autocomplete="off" [placeholder]="form.controls.destino.value === NUEVA_TARJETA ? 'Ej. Mastercard' : 'Ej. Ahorros Bancolombia'" />
           </div>
           <label class="erp-check" *ngIf="form.controls.destino.value === NUEVA_CUENTA">
             <input type="checkbox" formControlName="esPrincipal" />
@@ -89,8 +88,8 @@
           </label>
           <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorAsignar"><i class="material-icons" aria-hidden="true">error</i><span>{{ errorAsignar }}</span></div>
           <div class="erp-actions">
-            <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarAsignar()" [disabled]="trabajando">Cancelar</button>
-            <button type="submit" class="erp-btn erp-btn--primary erp-btn--sm" [disabled]="trabajando">{{ trabajando ? 'Guardando…' : 'Guardar' }}</button>
+            <button type="button" appButton="ghost" size="sm" (click)="cancelarAsignar()" [disabled]="trabajando">Cancelar</button>
+            <button type="submit" appButton="primary" size="sm" [disabled]="trabajando">{{ trabajando ? 'Guardando…' : 'Guardar' }}</button>
           </div>
         </form>
       </li>

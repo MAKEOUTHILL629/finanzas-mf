@@ -9,7 +9,7 @@
       <p class="erp-subtitle">Clasifican tus ingresos y egresos. Las del sistema no se pueden modificar.</p>
     </div>
     <div class="erp-actions">
-      <button type="button" class="erp-btn erp-btn--primary" (click)="nueva()">
+      <button type="button" appButton="primary" (click)="nueva()">
         <i class="material-icons" aria-hidden="true">add</i>
         Nueva categoría
       </button>
@@ -23,21 +23,21 @@
       <strong id="borrar-cat-titulo">¿Eliminar la categoría «{{ confirmandoBorrado.nombre }}»?</strong>
       <p class="aviso-texto">Solo se puede eliminar si ninguna transacción ni gasto recurrente la usa.</p>
       <div class="erp-actions">
-        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarBorrado()" [disabled]="trabajando">{{ trabajando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarBorrado()" [disabled]="trabajando">Cancelar</button>
+        <button type="button" appButton="danger" size="sm" (click)="confirmarBorrado()" [disabled]="trabajando">{{ trabajando ? 'Eliminando…' : 'Sí, eliminar' }}</button>
+        <button type="button" appButton="ghost" size="sm" (click)="cancelarBorrado()" [disabled]="trabajando">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando categorías">
+  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando categorías">
     <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3, 4]"></div>
-  </div>
+  </app-card>
 
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
@@ -47,8 +47,8 @@
     <h2>Aún no tienes categorías</h2>
     <p>Crea las tuyas o empieza con un conjunto sugerido ({{ sugeridas.length }} categorías) que luego puedes editar o eliminar.</p>
     <div class="erp-actions" style="justify-content: center">
-      <button type="button" class="erp-btn erp-btn--primary" (click)="pedirSugeridas()">Usar categorías sugeridas</button>
-      <button type="button" class="erp-btn erp-btn--secondary" (click)="nueva()">Crear una</button>
+      <button type="button" appButton="primary" (click)="pedirSugeridas()">Usar categorías sugeridas</button>
+      <button type="button" appButton="secondary" (click)="nueva()">Crear una</button>
     </div>
   </div>
 
@@ -60,8 +60,8 @@
         <ng-container *ngFor="let s of sugeridas; let ultimo = last">{{ s.nombre }}{{ ultimo ? '.' : ', ' }}</ng-container>
       </p>
       <div class="erp-actions">
-        <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="crearSugeridas()" [disabled]="trabajando">{{ trabajando ? 'Creando…' : 'Sí, crearlas' }}</button>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarSugeridas()" [disabled]="trabajando">Cancelar</button>
+        <button type="button" appButton="primary" size="sm" (click)="crearSugeridas()" [disabled]="trabajando">{{ trabajando ? 'Creando…' : 'Sí, crearlas' }}</button>
+        <button type="button" appButton="ghost" size="sm" (click)="cancelarSugeridas()" [disabled]="trabajando">Cancelar</button>
       </div>
     </div>
   </div>
@@ -72,10 +72,10 @@
       <li class="erp-card categoria" *ngFor="let c of g.categorias; trackBy: trackById">
         <span class="punto" [style.background]="c.color || 'var(--text-tertiary)'" aria-hidden="true"></span>
         <span class="categoria-nombre">{{ c.nombre }}</span>
-        <span class="erp-badge" *ngIf="esDelSistema(c)">Sistema</span>
+        <app-badge *ngIf="esDelSistema(c)">Sistema</app-badge>
         <span class="categoria-acciones" *ngIf="!esDelSistema(c)">
-          <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon erp-btn--sm" (click)="editar(c)" [attr.aria-label]="'Editar ' + c.nombre"><i class="material-icons" aria-hidden="true">edit</i></button>
-          <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon erp-btn--sm" (click)="pedirBorrado(c)" [attr.aria-label]="'Eliminar ' + c.nombre"><i class="material-icons" aria-hidden="true">delete_outline</i></button>
+          <button type="button" appButton="ghost" size="sm" icon (click)="editar(c)" [attr.aria-label]="'Editar ' + c.nombre"><i class="material-icons" aria-hidden="true">edit</i></button>
+          <button type="button" appButton="ghost" size="sm" icon (click)="pedirBorrado(c)" [attr.aria-label]="'Eliminar ' + c.nombre"><i class="material-icons" aria-hidden="true">delete_outline</i></button>
         </span>
       </li>
     </ul>

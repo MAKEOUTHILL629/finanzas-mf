@@ -19,8 +19,8 @@
 .chip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 .chip--activo { background: var(--brand-blue-light); border-color: var(--brand-blue); color: var(--text-link); font-weight: var(--weight-semibold); }
 .chip-n { font-size: var(--text-caption); opacity: 0.8; }
-.chip-n--alerta { background: var(--red-danger); color: #fff; opacity: 1; border-radius: var(--radius-pill); padding: 0 7px; min-width: 20px; text-align: center; }
-.stat-alerta { border-color: var(--orange-warning, #ff9f0a); }
+.chip-n--alerta { background: var(--red-danger); color: var(--text-on-accent); opacity: 1; border-radius: var(--radius-pill); padding: 0 7px; min-width: 20px; text-align: center; }
+.stat-alerta { border-color: var(--orange-warning, var(--amber-warning)); }
 
 .aviso { margin: 4px 0 var(--space-1); }
 

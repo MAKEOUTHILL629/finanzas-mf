@@ -1,28 +1,21 @@
 <section class="erp-page" aria-labelledby="titulo-obligaciones">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-obligaciones">Obligaciones del mes</h1>
-      <p class="erp-subtitle">Cuotas con meta mensual (carro, casa…) y los aportes diarios que las van cubriendo.</p>
-    </div>
-    <div class="erp-actions">
-      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">
-        <i class="material-icons" aria-hidden="true">add</i>
-        Nueva obligación
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Obligaciones del mes" subtitulo="Cuotas con meta mensual (carro, casa…) y los aportes diarios que las van cubriendo." idTitulo="titulo-obligaciones">
+    <button type="button" appButton="primary" (click)="abrirFormulario()">
+      <i class="material-icons" aria-hidden="true">add</i>
+      Nueva obligación
+    </button>
+  </app-page-header>
 
   <!-- Filtros -->
   <div class="erp-toolbar" role="search" aria-label="Filtrar obligaciones">
     <div class="erp-field">
       <label class="erp-label" for="filtro-periodo">Periodo</label>
       <div class="erp-month-picker">
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior">
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior">
           <i class="material-icons" aria-hidden="true">chevron_left</i>
         </button>
-        <input id="filtro-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)"
-               aria-describedby="ayuda-periodo" />
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente">
+        <input id="filtro-periodo" appInput type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" aria-describedby="ayuda-periodo" />
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente">
           <i class="material-icons" aria-hidden="true">chevron_right</i>
         </button>
       </div>
@@ -31,13 +24,13 @@
 
     <div class="erp-field">
       <label class="erp-label" for="filtro-tipo">Tipo</label>
-      <select id="filtro-tipo" class="erp-select" [value]="tipo" (change)="onTipoChange($any($event.target).value)">
+      <select id="filtro-tipo" appInput [value]="tipo" (change)="onTipoChange($any($event.target).value)">
         <option value="">Todos los tipos</option>
         <option *ngFor="let t of tipos" [value]="t.valor">{{ t.etiqueta }}</option>
       </select>
     </div>
 
-    <button type="button" class="erp-btn erp-btn--ghost" *ngIf="periodo" (click)="verTodos()">
+    <button type="button" appButton="ghost" *ngIf="periodo" (click)="verTodos()">
       <i class="material-icons" aria-hidden="true">history</i>
       Ver todos los periodos
     </button>
@@ -45,21 +38,21 @@
 
   <!-- Totales del filtro actual -->
   <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && obligaciones.length > 0" aria-label="Totales">
-    <div class="erp-card erp-stat">
+    <app-card class="erp-stat">
       <span class="erp-overline">Meta total</span>
       <span class="erp-stat-value erp-num">{{ totales.meta | moneda }}</span>
       <span class="erp-stat-hint">{{ obligaciones.length }} {{ obligaciones.length === 1 ? 'obligación' : 'obligaciones' }}</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Aportado</span>
       <span class="erp-stat-value erp-num erp-gain">{{ totales.aportado | moneda }}</span>
       <span class="erp-stat-hint">{{ porcentaje(totales.aportado, totales.meta) | number: '1.1-1' }}% de la meta</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Restante</span>
       <span class="erp-stat-value erp-num" [class.erp-loss]="totales.restante > 0">{{ totales.restante | moneda }}</span>
       <span class="erp-stat-hint">{{ totales.restante > 0 ? 'Falta por cubrir' : 'Metas cubiertas' }}</span>
-    </div>
+    </app-card>
   </div>
 
   <!-- Carga -->
@@ -74,7 +67,7 @@
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       <strong>No se pudo cargar.</strong> {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
@@ -84,8 +77,8 @@
     <h2>No hay obligaciones{{ periodo ? ' en ' + nombrePeriodo(periodo) : '' }}</h2>
     <p>Crea una obligación con su meta mensual y registra los aportes de cada día para ver el avance.</p>
     <div class="erp-actions" style="justify-content: center">
-      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">Nueva obligación</button>
-      <button type="button" class="erp-btn erp-btn--secondary" *ngIf="periodo || tipo" (click)="periodo = ''; tipo = ''; cargar()">Quitar filtros</button>
+      <button type="button" appButton="primary" (click)="abrirFormulario()">Nueva obligación</button>
+      <button type="button" appButton="secondary" *ngIf="periodo || tipo" (click)="periodo = ''; tipo = ''; cargar()">Quitar filtros</button>
     </div>
   </div>
 

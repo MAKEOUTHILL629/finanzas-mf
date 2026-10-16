@@ -42,8 +42,7 @@
 
       <div class="erp-field erp-span-2">
         <label class="erp-label" for="pe-monto">Monto pagado<span class="erp-req" aria-hidden="true">*</span></label>
-        <input id="pe-monto" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="montoPagado"
-               [attr.aria-invalid]="campoInvalido('montoPagado')" aria-describedby="pe-monto-ayuda" />
+        <input id="pe-monto" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="montoPagado" [attr.aria-invalid]="campoInvalido('montoPagado')" aria-describedby="pe-monto-ayuda" />
         <p id="pe-monto-ayuda" class="erp-field-hint">
           Total del extracto: <span class="erp-num">{{ resumen.total_extracto_cop | moneda }}</span>
           <ng-container *ngIf="diferenciaConExtracto !== 0"> · diferencia <span class="erp-num">{{ diferenciaConExtracto | moneda }}</span></ng-container>
@@ -79,8 +78,8 @@
   </ng-container>
 
   <div class="erp-form-actions">
-    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
-    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando || cargando || cuentas.length === 0 || form.invalid">
+    <button type="button" appButton="ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" appButton="primary" [disabled]="enviando || cargando || cuentas.length === 0 || form.invalid">
       {{ enviando ? 'Registrando…' : 'Pagar extracto' }}
     </button>
   </div>

@@ -1,0 +1,145 @@
+/* ==============================================================
+   SISTEMA DE DISEÑO — BASE
+   Tipografía, fondo, enfoque, barras de desplazamiento, estructura de página
+   (AppLayout) y estilos globales de las listas flotantes de Angular Material.
+   Solo usa tokens de tokens.css.
+   ============================================================== */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-main);
+  font-size: var(--text-body);
+  line-height: 1.47; /* el interlineado de SF Pro Text */
+  background: var(--bg-app);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Toda cifra va en ancho fijo: los totales y las columnas se alinean sin saltos */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: var(--num-features);
+}
+
+h1, h2, h3, h4 { font-family: var(--font-main); letter-spacing: -0.02em; }
+input, select, textarea, button { font-family: inherit; }
+a { color: var(--text-link); }
+::selection { background: var(--brand-blue-light); }
+
+/* Un solo anillo de enfoque para todo lo interactivo (teclado) */
+:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
+
+/* Cambio de tema sin parpadeos: el navegador hace un fundido de TODA la pantalla (View Transitions) o,
+   si no existe, el cambio ocurre en un solo cuadro con las transiciones suspendidas (`sin-transiciones`).
+   Así el fondo y las tarjetas nunca quedan a medio camino ni desentonados. */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--duration-slow); animation-timing-function: var(--ease-in-out); }
+html.sin-transiciones, html.sin-transiciones *, html.sin-transiciones *::before, html.sin-transiciones *::after { transition: none !important; }
+
+select option {
+  background-color: var(--select-option-bg);
+  color: var(--select-option-text);
+}
+
+/* Barras de desplazamiento discretas */
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: var(--radius-pill); }
+*::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* Enlace «Saltar al contenido» para teclado y lectores de pantalla */
+.skip-link {
+  position: fixed;
+  top: var(--space-1);
+  left: var(--space-1);
+  z-index: var(--z-max);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface-solid);
+  color: var(--text-link);
+  box-shadow: var(--shadow-dropdown);
+  transform: translateY(-200%);
+  transition: transform var(--duration-fast) var(--ease-out-expo);
+}
+.skip-link:focus { transform: translateY(0); }
+
+/* ── AppLayout: estructura de página ──
+   El layout (sidebar · rail · drawer · movil · invitado) lo decide MenuStateService. */
+.app-container {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main-content {
+  padding: var(--space-3);
+  transition: margin-left 0.32s var(--ease-out-expo);
+}
+/* contenedor central con ancho armónico (max-w-7xl) */
+.app-content {
+  width: 100%;
+  max-width: var(--layout-max);
+  margin-inline: auto;
+}
+
+.layout-sidebar .main-content { margin-left: 288px; padding: var(--space-4); }
+.layout-rail .main-content { margin-left: 76px; padding: var(--space-4); }
+.layout-drawer .main-content { padding: calc(56px + env(safe-area-inset-top) + var(--space-3)) var(--space-4) var(--space-4); }
+.layout-movil .main-content {
+  padding: calc(56px + env(safe-area-inset-top) + var(--space-2)) var(--space-2) calc(64px + env(safe-area-inset-bottom) + var(--space-3));
+}
+.layout-invitado .main-content { padding: var(--space-3); }
+/* los avisos no quedan tapados por la barra inferior del móvil */
+.layout-movil { --toast-offset-inferior: calc(64px + env(safe-area-inset-bottom)); }
+
+/* ── Listas flotantes de Angular Material (autocompletar) ──
+   El panel se pinta en `cdk-overlay-container`, fuera del componente: sus estilos deben ser globales.
+   z-index 3000: por encima de los modales (2000). */
+.cdk-overlay-container { z-index: 3000 !important; }
+
+.cdk-overlay-container .mat-mdc-autocomplete-panel {
+  background: var(--bg-surface-solid) !important;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-blue-glow) transparent;
+}
+
+.cdk-overlay-container .mat-mdc-option {
+  background: transparent;
+  color: var(--text-primary) !important;
+  font-family: var(--font-main);
+  font-size: var(--text-body-sm);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-2);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out);
+}
+.cdk-overlay-container .mat-mdc-option .mdc-list-item__primary-text { color: var(--text-primary) !important; }
+.cdk-overlay-container .mat-mdc-option:hover,
+.cdk-overlay-container .mat-mdc-option.mat-mdc-option-active,
+.cdk-overlay-container .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) { background: var(--brand-blue-light) !important; }
+.cdk-overlay-container .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text { color: var(--brand-blue) !important; }
+.cdk-overlay-container .mat-mdc-option mat-spinner { display: inline-block; margin-right: 10px; vertical-align: middle; }
+
+/* Respeto a «reducir movimiento» en todo el sistema */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

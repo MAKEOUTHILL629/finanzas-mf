@@ -17,7 +17,7 @@
 .persona-cabecera:hover { background: var(--table-row-hover); }
 .persona-cabecera:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 
-.avatar { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-weight: var(--weight-bold); flex: none; }
+.avatar { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--text-on-accent); font-weight: var(--weight-bold); flex: none; }
 .persona-texto { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .persona-nombre { font-size: var(--text-h3); font-weight: var(--weight-semibold); }
 .persona-mensaje { font-size: var(--text-body-sm); color: var(--text-secondary); }
@@ -53,8 +53,8 @@
 .item-monto { white-space: nowrap; font-weight: var(--weight-semibold); }
 .item-detalle { font-size: var(--text-caption); color: var(--text-secondary); line-height: 1.4; }
 
-.faltante { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); background: var(--warning-bg, rgba(255, 159, 10, 0.12)); border-radius: var(--radius-md); font-size: var(--text-body-sm); }
-.faltante .material-icons { color: var(--orange-warning, #ff9f0a); }
+.faltante { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); background: var(--warning-bg, color-mix(in srgb, var(--amber-warning) 12%, transparent)); border-radius: var(--radius-md); font-size: var(--text-body-sm); }
+.faltante .material-icons { color: var(--orange-warning, var(--amber-warning)); }
 
 .acciones-persona { display: flex; flex-wrap: wrap; gap: var(--space-1); padding-top: var(--space-1); }
 

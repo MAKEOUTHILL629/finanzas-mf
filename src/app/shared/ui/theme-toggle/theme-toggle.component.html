@@ -1,0 +1,30 @@
+<div
+  *ngIf="variant === 'segmented'; else soloIcono"
+  class="erp-segmented"
+  role="radiogroup"
+  aria-label="Apariencia"
+  [style.--seg-count]="opciones.length"
+  [style.--seg-index]="indice"
+  (keydown)="teclado($event)"
+>
+  <button
+    type="button"
+    *ngFor="let o of opciones; trackBy: trackValor"
+    class="erp-segmented__item"
+    role="radio"
+    [attr.aria-checked]="preferencia === o.valor"
+    [attr.aria-label]="o.etiqueta"
+    [title]="o.etiqueta"
+    [tabindex]="preferencia === o.valor ? 0 : -1"
+    (click)="elegir(o.valor)"
+  >
+    <i class="material-icons" aria-hidden="true">{{ o.icono }}</i>
+    <span *ngIf="etiquetas">{{ o.etiqueta }}</span>
+  </button>
+</div>
+
+<ng-template #soloIcono>
+  <button type="button" appButton="ghost" icon class="tema-icono" (click)="alternar()" [title]="oscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'" [attr.aria-label]="oscuro ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+    <i class="material-icons" aria-hidden="true">{{ oscuro ? 'light_mode' : 'dark_mode' }}</i>
+  </button>
+</ng-template>

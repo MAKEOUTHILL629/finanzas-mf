@@ -1,32 +1,26 @@
 <section class="erp-page" aria-labelledby="titulo-liquidacion">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-liquidacion">Liquidación de fin de mes</h1>
-      <p class="erp-subtitle">Cuánto te debe cada persona al cierre del mes: tarjetas, préstamos, recurrentes, cruces de cuentas y la cuota del carro, menos lo que ya abonó.</p>
-    </div>
-    <div class="erp-actions">
-      <a class="erp-btn erp-btn--ghost" routerLink="/aportes-carro">
-        <i class="material-icons" aria-hidden="true">directions_car</i>
-        Aportes del carro
-      </a>
-      <a class="erp-btn erp-btn--secondary" routerLink="/recurrentes-persona">
-        <i class="material-icons" aria-hidden="true">autorenew</i>
-        Recurrentes por persona
-      </a>
-      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-        <i class="material-icons" aria-hidden="true">today</i>
-        Mes actual
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Liquidación de fin de mes" subtitulo="Cuánto te debe cada persona al cierre del mes: tarjetas, préstamos, recurrentes, cruces de cuentas y la cuota del carro, menos lo que ya abonó." idTitulo="titulo-liquidacion">
+    <a appButton="ghost" routerLink="/aportes-carro">
+      <i class="material-icons" aria-hidden="true">directions_car</i>
+      Aportes del carro
+    </a>
+    <a appButton="secondary" routerLink="/recurrentes-persona">
+      <i class="material-icons" aria-hidden="true">autorenew</i>
+      Recurrentes por persona
+    </a>
+    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
+      <i class="material-icons" aria-hidden="true">today</i>
+      Mes actual
+    </button>
+  </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo y persona">
     <div class="erp-field">
       <label class="erp-label" for="li-periodo">Periodo</label>
       <div class="erp-month-picker">
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
-        <input id="li-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <input id="li-periodo" appInput type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
       </div>
       <span class="erp-field-hint">{{ nombrePeriodo(periodo) }}</span>
     </div>
@@ -44,43 +38,39 @@
 
   <!-- Totales -->
   <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length > 0" aria-label="Totales del mes">
-    <div class="erp-card erp-stat">
+    <app-card class="erp-stat">
       <span class="erp-overline">Total a cobrar</span>
       <span class="erp-stat-value erp-num">{{ liquidacion.totales.totalCargos | moneda }}</span>
       <span class="erp-stat-hint">Cargos del mes y faltante de la cuota</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Abonos y a favor</span>
       <span class="erp-stat-value erp-num erp-gain">{{ liquidacion.totales.totalAbonosYFavor | moneda }}</span>
       <span class="erp-stat-hint">Pagos, cruces a favor y descuentos</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Saldo neto del mes</span>
       <span class="erp-stat-value erp-num" [class.erp-loss]="liquidacion.totales.saldoNetoFinal > 0" [class.erp-gain]="liquidacion.totales.saldoNetoFinal < 0">{{ liquidacion.totales.saldoNetoFinal | moneda }}</span>
       <span class="erp-stat-hint">{{ liquidacion.totales.saldoNetoFinal > 0 ? 'Lo que te deben en total' : liquidacion.totales.saldoNetoFinal < 0 ? 'Lo que tú debes en total' : 'Todo saldado' }}</span>
-    </div>
+    </app-card>
   </div>
 
   <!-- Carga -->
-  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando la liquidación">
+  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando la liquidación">
     <div class="erp-skeleton" style="height: 64px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3]"></div>
-  </div>
+  </app-card>
 
   <!-- Error -->
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
   <!-- Vacío -->
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length === 0">
-    <i class="material-icons" aria-hidden="true">fact_check</i>
-    <h2>Nadie debe nada en {{ nombrePeriodo(periodo) }}</h2>
-    <p>Aquí aparece lo que cada persona debe por cuotas de tarjeta, préstamos, recurrentes, cruces de cuentas o la cuota del carro. Prueba con otro mes.</p>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length === 0" icon="fact_check" titulo="Nadie debe nada en {{ nombrePeriodo(periodo) }}" descripcion="Aquí aparece lo que cada persona debe por cuotas de tarjeta, préstamos, recurrentes, cruces de cuentas o la cuota del carro. Prueba con otro mes."></app-empty-state>
 
   <!-- Una tarjeta por persona -->
   <div class="personas" *ngIf="!cargando && !error && personasLiquidacion.length > 0">
@@ -92,7 +82,7 @@
             <span class="persona-nombre">{{ l.persona.nombre }}</span>
             <span class="persona-mensaje" [class.erp-loss]="l.resumenNeto.estado === 'DEBE'" [class.erp-gain]="l.resumenNeto.estado === 'A_FAVOR'">{{ mensaje(l.persona.nombre, l.resumenNeto.saldoNetoFinal, l.resumenNeto.estado) }}</span>
           </span>
-          <span class="erp-badge erp-badge--{{ claseEstado(l.resumenNeto.estado) }}">{{ etiquetaEstado(l.resumenNeto.estado) }}</span>
+          <app-badge class="claseEstado(l.resumenNeto.estado) }}">{{ etiquetaEstado(l.resumenNeto.estado) }}</app-badge>
           <span class="persona-neto erp-num" [class.erp-loss]="l.resumenNeto.estado === 'DEBE'" [class.erp-gain]="l.resumenNeto.estado === 'A_FAVOR'">{{ l.resumenNeto.saldoNetoFinal | moneda }}</span>
           <i class="material-icons chevron" [class.chevron--abierto]="estaAbierta(l)" aria-hidden="true">expand_more</i>
         </button>
@@ -111,7 +101,7 @@
         <div class="carro" *ngIf="l.estadoAporteCarro as c">
           <div class="carro-cabecera">
             <span class="erp-overline"><i class="material-icons" aria-hidden="true">directions_car</i> {{ c.concepto }}</span>
-            <span class="erp-badge erp-badge--{{ claseEstadoPeriodo(c.estado) }}">{{ etiquetaEstadoPeriodo(c.estado) }}</span>
+            <app-badge class="claseEstadoPeriodo(c.estado) }}">{{ etiquetaEstadoPeriodo(c.estado) }}</app-badge>
           </div>
           <div class="erp-progress" [class.erp-progress--done]="c.estado === 'COMPLETADO' || c.estado === 'CON_SALDO_A_FAVOR'" role="progressbar" [attr.aria-valuenow]="c.progresoPorcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Avance de ' + c.concepto">
             <div class="erp-progress-bar" [style.width.%]="c.progresoPorcentaje"></div>
@@ -134,8 +124,8 @@
               <div class="item-texto">
                 <span class="item-concepto">{{ i.concepto }}</span>
                 <span class="item-meta erp-muted">
-                  {{ i.fecha | fechaCorta }} · <span class="erp-badge">{{ etiquetaOrigen(i.origen) }}</span>
-                  <span class="erp-badge erp-badge--warning" *ngIf="i.estado === 'PROYECTADO'">Proyectado</span>
+                  {{ i.fecha | fechaCorta }} · <app-badge>{{ etiquetaOrigen(i.origen) }}</app-badge>
+                  <app-badge tone="warning" *ngIf="i.estado === 'PROYECTADO'">Proyectado</app-badge>
                   <ng-container *ngIf="i.comentario"> · {{ i.comentario }}</ng-container>
                 </span>
                 <span class="item-detalle" *ngIf="detalle(i.detalle) as d">{{ d }}</span>
@@ -154,19 +144,19 @@
 
         <!-- Acciones -->
         <div class="acciones-persona">
-          <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirAbono(l)">
+          <button type="button" appButton="primary" size="sm" (click)="abrirAbono(l)">
             <i class="material-icons" aria-hidden="true">savings</i>
             Registrar abono / pago de fin de mes
           </button>
-          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="abrirCruce(l)">
+          <button type="button" appButton="secondary" size="sm" (click)="abrirCruce(l)">
             <i class="material-icons" aria-hidden="true">compare_arrows</i>
             Cruzar cuenta con otra persona
           </button>
-          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="tieneSaldoAFavor(l)" (click)="abrirExcedente(l)">
+          <button type="button" appButton="secondary" size="sm" *ngIf="tieneSaldoAFavor(l)" (click)="abrirExcedente(l)">
             <i class="material-icons" aria-hidden="true">savings</i>
             Aplicar saldo a favor
           </button>
-          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="abrirCompartir(l)">
+          <button type="button" appButton="secondary" size="sm" (click)="abrirCompartir(l)">
             <i class="material-icons" aria-hidden="true">share</i>
             {{ enlaceDe(l)?.vigente ? 'Enlace compartido' : 'Compartir cobro' }}
           </button>

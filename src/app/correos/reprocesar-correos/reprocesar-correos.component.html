@@ -12,7 +12,7 @@
   <ng-container *ngIf="fase === 'config'">
     <div class="erp-field">
       <label class="erp-label" for="rp-desde">Registrar lo que falte desde</label>
-      <input id="rp-desde" class="erp-input" type="date" [(ngModel)]="desde" [disabled]="sinCorte" name="desde" />
+      <input id="rp-desde" appInput type="date" [(ngModel)]="desde" [disabled]="sinCorte" name="desde" />
       <p class="erp-field-hint">
         Desde esta fecha en adelante, cada compra o movimiento que no esté registrado se crea. Antes de esa fecha los correos <strong>solo se enlazan</strong> con lo que ya tienes: nada de
         hace años se vuelve a registrar. Por defecto: el día siguiente a tu última compra registrada.
@@ -23,8 +23,8 @@
       <span>Sin fecha de corte (registrar todo lo que falte, incluso lo muy antiguo)</span>
     </label>
     <div class="erp-actions">
-      <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()">Cancelar</button>
-      <button type="button" class="erp-btn erp-btn--primary" (click)="simular()" [disabled]="!sinCorte && !desde">
+      <button type="button" appButton="ghost" (click)="cancelar.emit()">Cancelar</button>
+      <button type="button" appButton="primary" (click)="simular()" [disabled]="!sinCorte && !desde">
         <i class="material-icons" aria-hidden="true">preview</i>
         Ver qué pasaría
       </button>
@@ -72,7 +72,7 @@
 
     <details class="muestras" *ngIf="resumen.muestras.length > 0">
       <summary>Ver ejemplos ({{ resumen.muestras.length }})</summary>
-      <table class="erp-table">
+      <table appTable>
         <thead><tr><th>Fecha</th><th>Comercio</th><th class="erp-num">Monto</th><th>Qué pasa</th></tr></thead>
         <tbody>
           <tr *ngFor="let m of resumen.muestras">
@@ -100,14 +100,14 @@
     </div>
 
     <div class="erp-actions" *ngIf="fase === 'resumen'">
-      <button type="button" class="erp-btn erp-btn--ghost" (click)="volver()">Cambiar la fecha</button>
-      <button type="button" class="erp-btn erp-btn--primary" (click)="aplicar()" [disabled]="!registraAlgo">
+      <button type="button" appButton="ghost" (click)="volver()">Cambiar la fecha</button>
+      <button type="button" appButton="primary" (click)="aplicar()" [disabled]="!registraAlgo">
         <i class="material-icons" aria-hidden="true">done_all</i>
         Aplicar estos cambios
       </button>
     </div>
     <div class="erp-actions" *ngIf="fase === 'listo'">
-      <button type="button" class="erp-btn erp-btn--primary" (click)="cancelar.emit()">Cerrar</button>
+      <button type="button" appButton="primary" (click)="cancelar.emit()">Cerrar</button>
     </div>
   </ng-container>
 </div>

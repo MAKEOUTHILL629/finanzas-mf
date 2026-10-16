@@ -1,3 +1,4 @@
+import { token } from '../../shared/design-tokens';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -48,11 +49,11 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
       {
         data: [],
         label: 'Interes Pagado',
-        backgroundColor: '#DF265E',
-        borderColor: '#DF265E',
+        backgroundColor: token('--chart-4', '#FF3B30'),
+        borderColor: token('--chart-4', '#FF3B30'),
         pointBackgroundColor: 'rgba(148,159,177,1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
+        pointBorderColor: token('--bg-surface-solid', '#fff'),
+        pointHoverBackgroundColor: token('--bg-surface-solid', '#fff'),
         pointHoverBorderColor: 'rgba(148,159,177,0.8)',
         fill: 'origin',
       },
@@ -60,11 +61,11 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         data: [],
         label: 'Saldo Restante',
         yAxisID: 'y1',
-        backgroundColor: '#FAD02C',
-        borderColor: '#FAD02C',
+        backgroundColor: token('--chart-5', '#FF9500'),
+        borderColor: token('--chart-5', '#FF9500'),
         pointBackgroundColor: 'rgba(148,159,177,1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
+        pointBorderColor: token('--bg-surface-solid', '#fff'),
+        pointHoverBackgroundColor: token('--bg-surface-solid', '#fff'),
         pointHoverBorderColor: 'rgba(148,159,177,0.8)',
         fill: 'origin',
       },
@@ -74,8 +75,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         backgroundColor: 'rgba(77,83,96,0.08)',
         borderColor: 'rgba(77,83,96,0.5)',
         pointBackgroundColor: 'rgba(77,83,96,1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
+        pointBorderColor: token('--bg-surface-solid', '#fff'),
+        pointHoverBackgroundColor: token('--bg-surface-solid', '#fff'),
         pointHoverBorderColor: 'rgba(77,83,96,1)',
         fill: 'origin',
       },
@@ -97,10 +98,10 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
       y1: {
         position: 'right',
         grid: {
-          color: 'rgba(255,0,0,0.3)',
+          color: token('--divider', 'rgba(0,0,0,0.08)'),
         },
         ticks: {
-          color: '#0C2D48',
+          color: token('--text-secondary', '#86868B'),
         },
       },
     },

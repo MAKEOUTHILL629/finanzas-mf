@@ -6,28 +6,14 @@
 
 :host {
   /* === TOKENS DE MARCA (no cambian con el tema) === */
-  --blue-brand: #0071E3;
-  --green-success: #34C759;
-  --red-danger: #FF3B30;
-  --gold-premium: #D4AF37;
   /* Alias locales que apuntan a tokens globales del tema */
   --bg-section: var(--bg-surface);
   --input-bg: var(--bg-input);
   --input-bg-hover: var(--bg-input-hover);
 
   /* === ESPACIADO 8PT GRID === */
-  --space-1: 8px;
-  --space-2: 16px;
-  --space-3: 24px;
-  --space-4: 32px;
-  --space-5: 40px;
-  --space-6: 48px;
 
   /* === BORDER RADIUS === */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-pill: 9999px;
 
   display: block;
   font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
@@ -110,7 +96,7 @@
 .filter-group input:hover,
 .filter-group select:hover {
   background: var(--input-bg-hover);
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-glass);
 }
 
 /* FOCUS STATE - Ring Style */
@@ -119,7 +105,7 @@
   outline: none;
   background: var(--input-bg-hover);
   border-color: var(--blue-brand);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 20%, transparent);
 }
 
 /* Select personalizado */
@@ -180,14 +166,14 @@
 
 .multiselect-button:hover {
   background: var(--input-bg-hover);
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-glass);
 }
 
 .multiselect-button:focus {
   outline: none;
   background: var(--input-bg-hover);
   border-color: var(--blue-brand);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 20%, transparent);
 }
 
 .multiselect-button i {
@@ -239,7 +225,7 @@
 }
 
 .multiselect-option:hover {
-  background: rgba(0, 113, 227, 0.1);
+  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
 }
 
 .multiselect-option input[type="checkbox"] {
@@ -268,12 +254,12 @@
 }
 
 .multiselect-dropdown::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
   border-radius: var(--radius-sm);
 }
 
 .multiselect-dropdown::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-input-hover);
   border-radius: var(--radius-sm);
 }
 
@@ -308,7 +294,7 @@
 
 .checkbox-label:hover {
   background: var(--input-bg-hover);
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-glass);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -355,20 +341,20 @@
   min-height: 48px;
   font-size: 16px;
   font-weight: 600;
-  color: white;
+  color: var(--text-on-accent);
   background: var(--blue-brand);
   border: none;
   border-radius: var(--radius-pill);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   max-width: 200px;
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-blue) 30%, transparent);
 }
 
 .filter-button:hover {
-  background: #0077ED;
+  background: var(--brand-blue-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--brand-blue) 40%, transparent);
 }
 
 .filter-button:active {
@@ -376,7 +362,7 @@
 }
 
 .filter-button.reset {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-input-hover);
   color: var(--text-primary);
   border: 1px solid var(--border-glass);
   box-shadow: none;
@@ -386,8 +372,8 @@
 }
 
 .filter-button.reset:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: var(--bg-input-hover);
+  border-color: var(--border-glass);
 }
 
 .filter-button i {
@@ -425,7 +411,7 @@
 
 /* STICKY HEADER con BLUR - Según STYLE_APP.txt */
 .purchase-table th {
-  background: rgba(0, 113, 227, 0.15);
+  background: color-mix(in srgb, var(--brand-blue) 15%, transparent);
   backdrop-filter: blur(15px) saturate(180%);
   -webkit-backdrop-filter: blur(15px) saturate(180%);
   font-weight: 600;
@@ -443,7 +429,7 @@
 }
 
 .purchase-table th:hover {
-  background: rgba(0, 113, 227, 0.2);
+  background: color-mix(in srgb, var(--brand-blue) 20%, transparent);
 }
 
 .purchase-table th span {
@@ -459,7 +445,7 @@
 }
 
 .purchase-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
   transform: translateX(2px);
 }
 
@@ -514,7 +500,7 @@
   height: 32px;
   padding: 0;
   border-radius: 50%;
-  color: white;
+  color: var(--text-on-accent);
   font-weight: 700;
   font-size: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -546,27 +532,27 @@
 }
 
 .porcentaje-badge.completo {
-  background: linear-gradient(135deg, var(--green-success), #30D158);
-  color: white;
+  background: linear-gradient(135deg, var(--green-success), var(--green-success));
+  color: var(--text-on-accent);
 }
 
 .porcentaje-badge.parcial {
-  background: linear-gradient(135deg, #FFB800, #FFC933);
+  background: linear-gradient(135deg, var(--gold-premium), var(--gold-premium));
   color: var(--slate-900);
 }
 
 .porcentaje-badge.vacio {
-  background: linear-gradient(135deg, var(--red-danger), #FF453A);
-  color: white;
+  background: linear-gradient(135deg, var(--red-danger), var(--red-danger));
+  color: var(--text-on-accent);
   animation: badgePulse 2s ease-in-out infinite;
 }
 
 @keyframes badgePulse {
   0%, 100% {
-    box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--red-danger) 30%, transparent);
   }
   50% {
-    box-shadow: 0 4px 16px rgba(255, 59, 48, 0.5);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--red-danger) 50%, transparent);
   }
 }
 
@@ -620,43 +606,43 @@
 
 /* FAB Primary (Azul) */
 .fab-primary {
-  background: linear-gradient(135deg, var(--blue-brand) 0%, #0077ED 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--blue-brand) 0%, var(--brand-blue-hover) 100%);
+  color: var(--text-on-accent);
 }
 
 .fab-primary:hover {
-  background: linear-gradient(135deg, #0077ED 0%, #0086FF 100%);
+  background: linear-gradient(135deg, var(--brand-blue-hover) 0%, var(--brand-blue) 100%);
   transform: scale(1.1) translateY(-4px);
   box-shadow:
-    0 12px 32px rgba(0, 113, 227, 0.5),
-    0 4px 16px rgba(0, 113, 227, 0.3),
+    0 12px 32px color-mix(in srgb, var(--brand-blue) 50%, transparent),
+    0 4px 16px color-mix(in srgb, var(--brand-blue) 30%, transparent),
     inset 0 1px 0 var(--specular-light);
 }
 
 /* FAB Success (Verde) */
 .fab-success {
-  background: linear-gradient(135deg, var(--green-success) 0%, #30D158 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--green-success) 0%, var(--green-success) 100%);
+  color: var(--text-on-accent);
 }
 
 .fab-success:hover {
-  background: linear-gradient(135deg, #30D158 0%, #32DE5F 100%);
+  background: linear-gradient(135deg, var(--green-success) 0%, var(--green-success) 100%);
   transform: scale(1.1) translateY(-4px);
   box-shadow:
-    0 12px 32px rgba(52, 199, 89, 0.5),
-    0 4px 16px rgba(52, 199, 89, 0.3),
+    0 12px 32px color-mix(in srgb, var(--green-success) 50%, transparent),
+    0 4px 16px color-mix(in srgb, var(--green-success) 30%, transparent),
     inset 0 1px 0 var(--specular-light);
 }
 
 /* FAB Secondary (Gris) - Para refresh */
 .fab-secondary {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--bg-input-hover) 0%, var(--bg-input-hover) 100%);
+  color: var(--text-on-accent);
   border: 1px solid var(--border-glass);
 }
 
 .fab-secondary:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.15) 100%);
+  background: linear-gradient(135deg, var(--bg-input-hover) 0%, var(--bg-input-hover) 100%);
   transform: scale(1.1) translateY(-4px);
   box-shadow:
     0 12px 32px rgba(255, 255, 255, 0.2),
@@ -672,17 +658,17 @@
 
 /* FAB Gold (Dorado) - Para futuros botones premium */
 .fab-gold {
-  background: linear-gradient(135deg, var(--gold-premium) 0%, #E6C14A 100%);
+  background: linear-gradient(135deg, var(--gold-premium) 0%, var(--gold-premium) 100%);
   color: var(--slate-900);
 }
 
 .fab-gold:hover {
-  background: linear-gradient(135deg, #E6C14A 0%, #F0D45D 100%);
+  background: linear-gradient(135deg, var(--gold-premium) 0%, var(--gold-premium) 100%);
   transform: scale(1.1) translateY(-4px);
   box-shadow:
-    0 12px 32px rgba(212, 175, 55, 0.5),
-    0 4px 16px rgba(212, 175, 55, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    0 12px 32px color-mix(in srgb, var(--gold-premium) 50%, transparent),
+    0 4px 16px color-mix(in srgb, var(--gold-premium) 30%, transparent),
+    inset 0 1px 0 var(--specular-light);
 }
 
 .fab-button:active {
@@ -827,7 +813,7 @@
 
   .purchase-table tr {
     margin-bottom: var(--space-3);
-    background: rgba(11, 14, 20, 0.4);
+    background: var(--bg-surface-solid);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-md);
     padding: var(--space-2);
@@ -899,12 +885,12 @@
 }
 
 .table-responsive::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-input);
   border-radius: var(--radius-sm);
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-input-hover);
   border-radius: var(--radius-sm);
 }
 
@@ -942,8 +928,8 @@
   }
   50% {
     box-shadow:
-      0 8px 28px rgba(0, 113, 227, 0.4),
-      0 4px 12px rgba(0, 113, 227, 0.3);
+      0 8px 28px color-mix(in srgb, var(--brand-blue) 40%, transparent),
+      0 4px 12px color-mix(in srgb, var(--brand-blue) 30%, transparent);
   }
 }
 

@@ -119,11 +119,7 @@
     </div>
 
     <div class="nav-pie">
-      <button type="button" class="pie-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
-              [attr.aria-label]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
-        <i class="material-icons" aria-hidden="true">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
-        <span class="pie-etiqueta">{{ isDarkTheme ? 'Tema claro' : 'Tema oscuro' }}</span>
-      </button>
+      <app-theme-toggle class="pie-tema theme-toggle--block" [variant]="esCompacto ? 'icon' : 'segmented'" [etiquetas]="false"></app-theme-toggle>
       <button type="button" class="pie-btn pie-btn--salir" (click)="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
         <i class="material-icons" aria-hidden="true">logout</i>
         <span class="pie-etiqueta">Cerrar sesión</span>
@@ -173,8 +169,5 @@
 
 <!-- Sin sesión (o en una página pública: /p/<token>) no hay menú: solo el cambio de tema -->
 <ng-template #invitado>
-  <button type="button" class="tema-flotante" (click)="toggleTheme()"
-          [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'" [attr.aria-label]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
-    <i class="material-icons" aria-hidden="true">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
-  </button>
+  <app-theme-toggle class="tema-flotante" variant="icon"></app-theme-toggle>
 </ng-template>

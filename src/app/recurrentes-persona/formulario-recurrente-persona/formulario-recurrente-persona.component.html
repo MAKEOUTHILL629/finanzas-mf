@@ -24,19 +24,19 @@
 
     <div class="erp-field erp-span-2">
       <label class="erp-label" for="rf-concepto">Concepto<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="rf-concepto" class="erp-input" type="text" formControlName="concepto" maxlength="200" autocomplete="off" placeholder="Ej. Plan de celular" [attr.aria-invalid]="campoInvalido('concepto')" />
+      <input id="rf-concepto" appInput type="text" formControlName="concepto" maxlength="200" autocomplete="off" placeholder="Ej. Plan de celular" [attr.aria-invalid]="campoInvalido('concepto')" />
       <p class="erp-field-error" *ngIf="campoInvalido('concepto')">Escribe un concepto.</p>
     </div>
 
     <div class="erp-field">
       <label class="erp-label" for="rf-valor">Valor mensual<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="rf-valor" class="erp-input" type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valorMensual" [attr.aria-invalid]="campoInvalido('valorMensual')" />
+      <input id="rf-valor" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valorMensual" [attr.aria-invalid]="campoInvalido('valorMensual')" />
       <p class="erp-field-error" *ngIf="campoInvalido('valorMensual')">Mayor a 0, con máximo 2 decimales.</p>
     </div>
 
     <div class="erp-field">
       <label class="erp-label" for="rf-dia">Día del mes</label>
-      <input id="rf-dia" class="erp-input" type="number" min="1" max="31" step="1" formControlName="diaCobro" [attr.aria-invalid]="campoInvalido('diaCobro')" />
+      <input id="rf-dia" appInput type="number" min="1" max="31" step="1" formControlName="diaCobro" [attr.aria-invalid]="campoInvalido('diaCobro')" />
       <p class="erp-field-hint">En meses cortos se usa el último día.</p>
     </div>
 
@@ -66,24 +66,24 @@
 
     <div class="erp-field" *ngIf="plazoFijo">
       <label class="erp-label" for="rf-meses">Cantidad de meses<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="rf-meses" class="erp-input" type="number" min="1" max="600" step="1" formControlName="numeroMeses" [attr.aria-invalid]="plazoInvalido" />
+      <input id="rf-meses" appInput type="number" min="1" max="600" step="1" formControlName="numeroMeses" [attr.aria-invalid]="plazoInvalido" />
       <p class="erp-field-error" *ngIf="plazoInvalido">Un número entero entre 1 y 600.</p>
     </div>
 
     <div class="erp-field">
       <label class="erp-label" for="rf-inicio">Mes de inicio<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="rf-inicio" class="erp-input" type="month" formControlName="mesInicio" [attr.aria-invalid]="campoInvalido('mesInicio')" />
+      <input id="rf-inicio" appInput type="month" formControlName="mesInicio" [attr.aria-invalid]="campoInvalido('mesInicio')" />
       <p class="erp-field-hint" *ngIf="mesFin">Terminará en {{ nombrePeriodo(mesFin) }}.</p>
     </div>
 
     <div class="erp-field erp-span-2">
       <label class="erp-label" for="rf-notas">Notas</label>
-      <input id="rf-notas" class="erp-input" type="text" formControlName="notas" maxlength="1000" autocomplete="off" placeholder="Opcional" />
+      <input id="rf-notas" appInput type="text" formControlName="notas" maxlength="1000" autocomplete="off" placeholder="Opcional" />
     </div>
   </div>
 
   <div class="erp-form-actions">
-    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
-    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Crear recurrente' }}</button>
+    <button type="button" appButton="ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" appButton="primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Crear recurrente' }}</button>
   </div>
 </form>

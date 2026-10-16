@@ -43,7 +43,7 @@
 .producto-linea .erp-badge .material-icons { font-size: 14px; margin-right: 2px; }
 .producto-meta { font-size: var(--text-caption); }
 .producto-sugerencia { display: inline-flex; align-items: flex-start; gap: 6px; font-size: var(--text-body-sm); color: var(--text-secondary); line-height: 1.4; }
-.producto-sugerencia .material-icons { font-size: 16px; color: var(--orange-warning, #ff9f0a); margin-top: 2px; }
+.producto-sugerencia .material-icons { font-size: 16px; color: var(--orange-warning, var(--amber-warning)); margin-top: 2px; }
 .producto-acciones { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .producto-form {
   grid-column: 1 / -1;

@@ -4,19 +4,6 @@
    ============================================ */
 
 :host {
-  --brand-blue: #0071E3;
-  --green-success: #34C759;
-  --red-danger: #FF3B30;
-  --gold-premium: #D4AF37;
-  --space-1: 8px;
-  --space-2: 16px;
-  --space-3: 24px;
-  --space-4: 32px;
-  --space-6: 48px;
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-pill: 9999px;
 
   display: block;
   font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
@@ -83,8 +70,8 @@
   flex-direction: column;
   align-items: flex-end;
   padding: var(--space-2) var(--space-3);
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.15));
-  border: 1px solid rgba(0, 113, 227, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 10%, transparent), color-mix(in srgb, var(--brand-blue) 15%, transparent));
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 30%, transparent);
   border-radius: var(--radius-md);
 }
 
@@ -139,7 +126,7 @@
 }
 
 .persona-header:hover {
-  background: rgba(0, 113, 227, 0.05);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
 }
 
 .persona-header.expanded {
@@ -160,7 +147,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FFFFFF;
+  color: var(--text-on-accent);
   font-weight: 600;
   flex-shrink: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -204,7 +191,7 @@
 }
 
 .toggle-btn:hover {
-  background: rgba(0, 113, 227, 0.1);
+  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
   color: var(--brand-blue);
 }
 
@@ -237,7 +224,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-2) var(--space-3);
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-input);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -245,18 +232,18 @@
 }
 
 .pago-item:hover {
-  background: rgba(0, 113, 227, 0.05);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
   border-color: var(--brand-blue);
   transform: translateX(4px);
 }
 
 .pago-item.mes-actual {
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(52, 199, 89, 0.15));
-  border: 1px solid rgba(52, 199, 89, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--green-success) 10%, transparent), color-mix(in srgb, var(--green-success) 15%, transparent));
+  border: 1px solid color-mix(in srgb, var(--green-success) 30%, transparent);
 }
 
 .pago-item.mes-actual:hover {
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.15), rgba(52, 199, 89, 0.2));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--green-success) 15%, transparent), color-mix(in srgb, var(--green-success) 20%, transparent));
   border-color: var(--green-success);
 }
 
@@ -280,7 +267,7 @@
 .badge-mes-actual {
   padding: 2px 8px;
   background: var(--green-success);
-  color: #FFFFFF;
+  color: var(--text-on-accent);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -335,8 +322,8 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.05));
-  border: 2px dashed rgba(0, 113, 227, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 10%, transparent), color-mix(in srgb, var(--brand-blue) 5%, transparent));
+  border: 2px dashed color-mix(in srgb, var(--brand-blue) 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -7,7 +7,7 @@
 .pub-error p { margin: 0; color: var(--text-secondary); max-width: 420px; line-height: 1.5; }
 
 .pub-cab { display: flex; align-items: center; gap: var(--space-2); }
-.pub-avatar { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: #fff; font-weight: var(--weight-bold); font-size: 1.15rem; flex: none; }
+.pub-avatar { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: var(--text-on-accent); font-weight: var(--weight-bold); font-size: 1.15rem; flex: none; }
 .pub-cab h1 { margin: 0; font-size: var(--text-h1, 1.75rem); letter-spacing: -0.02em; }
 .pub-sub { margin: 2px 0 0; color: var(--text-secondary); font-size: var(--text-body-sm); }
 

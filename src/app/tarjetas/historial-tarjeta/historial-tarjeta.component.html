@@ -13,13 +13,13 @@
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
   <ng-container *ngIf="!cargando && historial as h">
     <!-- Plásticos: filtro por plástico -->
-    <div class="filtros erp-card" role="group" aria-label="Filtrar por plástico">
+    <app-card class="filtros" role="group" aria-label="Filtrar por plástico">
       <div class="chips">
         <button type="button" class="chip" [class.chip--on]="plasticoId === null" (click)="filtrarPlastico(null)" [attr.aria-pressed]="plasticoId === null">
           Todos los plásticos
@@ -32,24 +32,24 @@
       <div class="rango">
         <label class="erp-field">
           <span class="erp-label">Desde</span>
-          <input class="erp-input" type="date" [(ngModel)]="desde" (change)="cargar()" aria-label="Compras desde" />
+          <input appInput type="date" [(ngModel)]="desde" (change)="cargar()" aria-label="Compras desde" />
         </label>
         <label class="erp-field">
           <span class="erp-label">Hasta</span>
-          <input class="erp-input" type="date" [(ngModel)]="hasta" (change)="cargar()" aria-label="Compras hasta" />
+          <input appInput type="date" [(ngModel)]="hasta" (change)="cargar()" aria-label="Compras hasta" />
         </label>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="filtrado" (click)="limpiarFiltros()">Quitar filtros</button>
+        <button type="button" appButton="ghost" size="sm" *ngIf="filtrado" (click)="limpiarFiltros()">Quitar filtros</button>
       </div>
       <ul class="vigencias" *ngIf="h.plasticos.length > 1">
         <li *ngFor="let p of h.plasticos"><span class="erp-mono">{{ terminacion(p.ultimos4) }}</span> <span class="erp-muted">{{ vigencia(p) }}</span></li>
       </ul>
-    </div>
+    </app-card>
 
     <!-- Cifras -->
     <div class="erp-grid erp-grid--stats">
-      <div class="erp-card erp-stat"><span class="erp-overline">Compras</span><span class="erp-stat-value erp-num">{{ h.totales.compras }}</span></div>
-      <div class="erp-card erp-stat"><span class="erp-overline">Valor de las compras</span><span class="erp-stat-value erp-num">{{ h.totales.valorCompras | moneda }}</span></div>
-      <div class="erp-card erp-stat"><span class="erp-overline">Saldo por pagar en cuotas</span><span class="erp-stat-value erp-num">{{ h.totales.saldoPendiente | moneda }}</span><span class="erp-stat-hint">Cuotas que aún no se han pagado</span></div>
+      <app-card class="erp-stat"><span class="erp-overline">Compras</span><span class="erp-stat-value erp-num">{{ h.totales.compras }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Valor de las compras</span><span class="erp-stat-value erp-num">{{ h.totales.valorCompras | moneda }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Saldo por pagar en cuotas</span><span class="erp-stat-value erp-num">{{ h.totales.saldoPendiente | moneda }}</span><span class="erp-stat-hint">Cuotas que aún no se han pagado</span></app-card>
     </div>
 
     <div class="erp-card erp-empty" *ngIf="compras.length === 0">
@@ -58,9 +58,9 @@
       <p *ngIf="filtrado">Prueba con otro plástico o amplía el rango de fechas.</p>
     </div>
 
-    <div class="erp-card" *ngIf="compras.length > 0">
+    <app-card *ngIf="compras.length > 0">
       <div class="erp-table-wrap">
-        <table class="erp-table erp-table--compact erp-table--stack">
+        <table appTable compact stack>
           <thead>
             <tr>
               <th>Fecha</th>
@@ -92,7 +92,7 @@
               <td class="num" data-label="Saldo">{{ c.saldoPendiente | moneda }}</td>
               <td class="wrap" data-label="Responsables"><span class="erp-muted">{{ c.responsables.length ? responsables(c.responsables) : '—' }}</span></td>
               <td data-label="">
-                <a class="erp-btn erp-btn--ghost erp-btn--sm" [routerLink]="['/compra-credito-detalle', c.id]" [attr.aria-label]="'Ver detalle de ' + c.concepto">
+                <a appButton="ghost" size="sm" [routerLink]="['/compra-credito-detalle', c.id]" [attr.aria-label]="'Ver detalle de ' + c.concepto">
                   <i class="material-icons" aria-hidden="true">chevron_right</i>
                 </a>
               </td>
@@ -101,10 +101,10 @@
         </table>
       </div>
       <div class="mas" *ngIf="masPorTraer">
-        <button type="button" class="erp-btn erp-btn--secondary" (click)="cargarMas()" [disabled]="cargandoMas">
+        <button type="button" appButton="secondary" (click)="cargarMas()" [disabled]="cargandoMas">
           {{ cargandoMas ? 'Cargando…' : 'Mostrar más compras (' + compras.length + ' de ' + h.paginacion.total + ')' }}
         </button>
       </div>
-    </div>
+    </app-card>
   </ng-container>
 </section>

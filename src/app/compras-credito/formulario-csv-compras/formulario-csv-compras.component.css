@@ -4,15 +4,6 @@
    ============================================ */
 
 :host {
-  --brand-blue: #0071E3;
-  --green-success: #34C759;
-  --red-danger: #FF3B30;
-  --gold-premium: #D4AF37;
-  --space-2: 16px;
-  --space-3: 24px;
-  --space-4: 32px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
 }
 
 /* ============================================
@@ -57,7 +48,7 @@
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 59, 48, 0.1);
+  background: color-mix(in srgb, var(--red-danger) 10%, transparent);
   color: var(--red-danger);
   cursor: pointer;
   display: flex;
@@ -67,7 +58,7 @@
 }
 
 .btn-close:hover {
-  background: rgba(255, 59, 48, 0.2);
+  background: color-mix(in srgb, var(--red-danger) 20%, transparent);
   transform: scale(1.1);
 }
 
@@ -126,9 +117,9 @@
   justify-content: center;
   gap: 8px;
   padding: var(--space-4);
-  border: 2px dashed rgba(52, 199, 89, 0.3);
+  border: 2px dashed color-mix(in srgb, var(--green-success) 30%, transparent);
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.03), rgba(0, 113, 227, 0.03));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--green-success) 3%, transparent), color-mix(in srgb, var(--brand-blue) 3%, transparent));
   backdrop-filter: blur(10px);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -138,7 +129,7 @@
 
 .btn-create-scratch:hover {
   border-color: var(--green-success);
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.06), rgba(0, 113, 227, 0.03));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--green-success) 6%, transparent), color-mix(in srgb, var(--brand-blue) 3%, transparent));
   transform: translateY(-2px);
 }
 
@@ -160,22 +151,22 @@
 
 .upload-zone {
   position: relative;
-  border: 2px dashed rgba(0, 113, 227, 0.3);
+  border: 2px dashed color-mix(in srgb, var(--brand-blue) 30%, transparent);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.03), rgba(52, 199, 89, 0.03));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 3%, transparent), color-mix(in srgb, var(--green-success) 3%, transparent));
   backdrop-filter: blur(10px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .upload-zone:hover {
   border-color: var(--brand-blue);
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.06), rgba(52, 199, 89, 0.06));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 6%, transparent), color-mix(in srgb, var(--green-success) 6%, transparent));
 }
 
 .upload-zone.has-file {
   border-color: var(--green-success);
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.06), rgba(0, 113, 227, 0.03));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--green-success) 6%, transparent), color-mix(in srgb, var(--brand-blue) 3%, transparent));
 }
 
 .file-input {
@@ -260,7 +251,7 @@
 
 .format-example {
   padding: 12px;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-input);
   border-radius: 8px;
   margin-bottom: var(--space-2);
   overflow-x: auto;
@@ -338,21 +329,21 @@
 }
 
 .stat-badge.total {
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.15));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 10%, transparent), color-mix(in srgb, var(--brand-blue) 15%, transparent));
   color: var(--brand-blue);
-  border: 1px solid rgba(0, 113, 227, 0.3);
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 30%, transparent);
 }
 
 .stat-badge.success {
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.1), rgba(52, 199, 89, 0.15));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--green-success) 10%, transparent), color-mix(in srgb, var(--green-success) 15%, transparent));
   color: var(--green-success);
-  border: 1px solid rgba(52, 199, 89, 0.3);
+  border: 1px solid color-mix(in srgb, var(--green-success) 30%, transparent);
 }
 
 .stat-badge.error {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(255, 59, 48, 0.15));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--red-danger) 10%, transparent), color-mix(in srgb, var(--red-danger) 15%, transparent));
   color: var(--red-danger);
-  border: 1px solid rgba(255, 59, 48, 0.3);
+  border: 1px solid color-mix(in srgb, var(--red-danger) 30%, transparent);
 }
 
 .stat-badge i {
@@ -404,7 +395,7 @@
 .csv-table th {
   position: sticky;
   top: 0;
-  background: rgba(0, 113, 227, 0.05);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
   backdrop-filter: blur(25px) saturate(180%);
   font-weight: 600;
   color: var(--text-primary);
@@ -422,7 +413,7 @@
 }
 
 .csv-table tbody tr:hover {
-  background: rgba(0, 113, 227, 0.03);
+  background: color-mix(in srgb, var(--brand-blue) 3%, transparent);
 }
 
 .csv-table tbody tr:last-child {
@@ -431,11 +422,11 @@
 
 /* Filas con resultado */
 .csv-table tbody tr.row-success {
-  background: rgba(52, 199, 89, 0.05);
+  background: color-mix(in srgb, var(--green-success) 5%, transparent);
 }
 
 .csv-table tbody tr.row-error {
-  background: rgba(255, 59, 48, 0.05);
+  background: color-mix(in srgb, var(--red-danger) 5%, transparent);
 }
 
 /* Números financieros alineados a la derecha */
@@ -461,9 +452,9 @@
 .cell-input {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid rgba(0, 113, 227, 0.2);
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 20%, transparent);
   border-radius: 6px;
-  background: rgba(0, 113, 227, 0.03);
+  background: color-mix(in srgb, var(--brand-blue) 3%, transparent);
   font-size: 14px;
   color: var(--text-primary);
   outline: none;
@@ -473,13 +464,13 @@
 
 .cell-input:focus {
   border-color: var(--brand-blue);
-  background: rgba(0, 113, 227, 0.08);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+  background: color-mix(in srgb, var(--brand-blue) 8%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 10%, transparent);
 }
 
 .cell-input:hover:not(:focus) {
-  border-color: rgba(0, 113, 227, 0.4);
-  background: rgba(0, 113, 227, 0.05);
+  border-color: color-mix(in srgb, var(--brand-blue) 40%, transparent);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
 }
 
 .cell-input::placeholder {
@@ -527,18 +518,18 @@ select.cell-input option:checked {
 }
 
 .status-badge.pendiente {
-  background: linear-gradient(135deg, #FFB800, #FFC933);
-  color: #664D00;
+  background: linear-gradient(135deg, var(--gold-premium), var(--gold-premium));
+  color: var(--text-on-warning);
 }
 
 .status-badge.pagado {
-  background: linear-gradient(135deg, var(--green-success), #3FD962);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--green-success), var(--green-success));
+  color: var(--text-on-accent);
 }
 
 .status-badge.cancelado {
-  background: linear-gradient(135deg, var(--red-danger), #FF5347);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--red-danger), var(--red-danger));
+  color: var(--text-on-accent);
 }
 
 /* Celda de resultado */
@@ -584,7 +575,7 @@ select.cell-input option:checked {
 }
 
 .btn-danger-icon:hover {
-  background: rgba(255, 59, 48, 0.1);
+  background: color-mix(in srgb, var(--red-danger) 10%, transparent);
   transform: scale(1.1);
 }
 
@@ -633,13 +624,13 @@ select.cell-input option:checked {
 
 /* Botón Primario */
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand-blue), #0A84FF);
-  color: #FFFFFF;
-  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.3);
+  background: linear-gradient(135deg, var(--brand-blue), var(--brand-blue));
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-blue) 30%, transparent);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-blue) 40%, transparent);
 }
 
 /* Botón Secundario */
@@ -650,19 +641,19 @@ select.cell-input option:checked {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(0, 113, 227, 0.05);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
   border-color: var(--brand-blue);
 }
 
 /* Botón Success */
 .btn-success {
-  background: linear-gradient(135deg, var(--green-success), #3FD962);
-  color: #FFFFFF;
-  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+  background: linear-gradient(135deg, var(--green-success), var(--green-success));
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--green-success) 30%, transparent);
 }
 
 .btn-success:hover:not(:disabled) {
-  box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green-success) 40%, transparent);
 }
 
 /* Animación de spinning */
@@ -690,7 +681,7 @@ select.cell-input option:checked {
 
 .csv-container::-webkit-scrollbar-track,
 .table-responsive::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-input);
   border-radius: 4px;
 }
 
@@ -702,13 +693,13 @@ select.cell-input option:checked {
 
 .csv-container::-webkit-scrollbar-thumb:hover,
 .table-responsive::-webkit-scrollbar-thumb:hover {
-  background: #0A84FF;
+  background: var(--brand-blue);
 }
 
 .stat-badge.selected {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.18));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--gold-premium) 12%, transparent), color-mix(in srgb, var(--gold-premium) 18%, transparent));
   color: var(--gold-premium);
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  border: 1px solid color-mix(in srgb, var(--gold-premium) 35%, transparent);
   animation: fadeSlideIn 0.2s ease;
 }
 
@@ -721,13 +712,13 @@ select.cell-input option:checked {
    BOTÓN ELIMINAR EN LOTE
    ============================================ */
 .btn-danger {
-  background: linear-gradient(135deg, var(--red-danger), #FF5347);
-  color: #FFFFFF;
-  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+  background: linear-gradient(135deg, var(--red-danger), var(--red-danger));
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--red-danger) 30%, transparent);
 }
 
 .btn-danger:hover:not(:disabled) {
-  box-shadow: 0 8px 24px rgba(255, 59, 48, 0.45);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red-danger) 45%, transparent);
 }
 
 .btn-delete-selected {
@@ -770,8 +761,8 @@ select.cell-input option:checked {
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  border: 2px solid rgba(0, 113, 227, 0.35);
-  background: rgba(0, 113, 227, 0.04);
+  border: 2px solid color-mix(in srgb, var(--brand-blue) 35%, transparent);
+  background: color-mix(in srgb, var(--brand-blue) 4%, transparent);
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
@@ -782,7 +773,7 @@ select.cell-input option:checked {
 .custom-checkbox input[type="checkbox"]:checked + .checkmark {
   background: var(--brand-blue);
   border-color: var(--brand-blue);
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 18%, transparent);
 }
 
 .custom-checkbox .checkmark::after {
@@ -790,7 +781,7 @@ select.cell-input option:checked {
   display: block;
   width: 5px;
   height: 9px;
-  border: 2px solid #fff;
+  border: 2px solid var(--bg-surface-solid);
   border-top: none;
   border-left: none;
   transform: rotate(45deg) translateY(-1px);
@@ -804,17 +795,17 @@ select.cell-input option:checked {
 
 .custom-checkbox:hover .checkmark {
   border-color: var(--brand-blue);
-  background: rgba(0, 113, 227, 0.1);
+  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
 }
 
 /* Fila seleccionada */
 .csv-table tbody tr.row-selected {
-  background: rgba(0, 113, 227, 0.07) !important;
+  background: color-mix(in srgb, var(--brand-blue) 7%, transparent) !important;
   border-left: 3px solid var(--brand-blue);
 }
 
 .csv-table tbody tr.row-selected:hover {
-  background: rgba(0, 113, 227, 0.11) !important;
+  background: color-mix(in srgb, var(--brand-blue) 11%, transparent) !important;
 }
 
 /* ============================================
@@ -867,7 +858,7 @@ select.cell-input option:checked {
 
 .empty-table-state i {
   font-size: 48px;
-  color: rgba(0, 113, 227, 0.35);
+  color: color-mix(in srgb, var(--brand-blue) 35%, transparent);
 }
 
 .empty-table-state p {

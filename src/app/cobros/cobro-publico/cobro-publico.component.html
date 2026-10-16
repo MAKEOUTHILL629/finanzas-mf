@@ -11,7 +11,7 @@
     <i class="material-icons" aria-hidden="true">link_off</i>
     <h1>No pudimos abrir este enlace</h1>
     <p>{{ error }}</p>
-    <button type="button" class="erp-btn erp-btn--secondary" (click)="cargar()">Reintentar</button>
+    <button type="button" appButton="secondary" (click)="cargar()">Reintentar</button>
   </div>
 
   <div class="pub-hoja" *ngIf="!cargando && !error && cobro as c">
@@ -42,7 +42,7 @@
       <h2 id="pub-pagar"><i class="material-icons" aria-hidden="true">account_balance_wallet</i>Cómo pagar</h2>
       <div class="pub-instrucciones">
         <p>{{ c.instruccionesPago }}</p>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="copiarInstrucciones()"><i class="material-icons" aria-hidden="true">{{ copiado ? 'check' : 'content_copy' }}</i>{{ copiado ? 'Copiado' : 'Copiar' }}</button>
+        <button type="button" appButton="ghost" size="sm" (click)="copiarInstrucciones()"><i class="material-icons" aria-hidden="true">{{ copiado ? 'check' : 'content_copy' }}</i>{{ copiado ? 'Copiado' : 'Copiar' }}</button>
       </div>
     </section>
 
@@ -91,26 +91,26 @@
         <div class="erp-form-grid">
           <div class="erp-field">
             <label class="erp-label" for="pu-monto">¿Cuánto pagaste?<span class="erp-req" aria-hidden="true">*</span></label>
-            <input id="pu-monto" class="erp-input" type="number" inputmode="decimal" min="0" step="0.01" formControlName="monto" placeholder="0.00" [attr.aria-invalid]="intentado && montoInvalido" />
+            <input id="pu-monto" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="monto" placeholder="0.00" [attr.aria-invalid]="intentado && montoInvalido" />
             <p class="erp-field-error" *ngIf="intentado && montoInvalido">Escribe un valor mayor a 0 (máximo 2 decimales).</p>
           </div>
           <div class="erp-field">
             <label class="erp-label" for="pu-fecha">¿Cuándo?<span class="erp-req" aria-hidden="true">*</span></label>
-            <input id="pu-fecha" class="erp-input" type="date" formControlName="fechaPago" />
+            <input id="pu-fecha" appInput type="date" formControlName="fechaPago" />
           </div>
           <div class="erp-field">
             <label class="erp-label" for="pu-medio">¿Cómo?</label>
-            <select id="pu-medio" class="erp-select" formControlName="medio">
+            <select id="pu-medio" appInput formControlName="medio">
               <option *ngFor="let m of medios" [value]="m.valor">{{ m.etiqueta }}</option>
             </select>
           </div>
           <div class="erp-field">
             <label class="erp-label" for="pu-ref">Referencia (opcional)</label>
-            <input id="pu-ref" class="erp-input" type="text" formControlName="referencia" maxlength="80" autocomplete="off" placeholder="Número de aprobación" />
+            <input id="pu-ref" appInput type="text" formControlName="referencia" maxlength="80" autocomplete="off" placeholder="Número de aprobación" />
           </div>
           <div class="erp-field erp-span-2">
             <label class="erp-label" for="pu-comentario">Comentario (opcional)</label>
-            <textarea id="pu-comentario" class="erp-textarea" rows="2" maxlength="500" formControlName="comentario"></textarea>
+            <textarea id="pu-comentario" appInput rows="2" maxlength="500" formControlName="comentario"></textarea>
           </div>
 
           <div class="erp-field erp-span-2">
@@ -126,7 +126,7 @@
               <img *ngIf="vistaPrevia" [src]="vistaPrevia" alt="Vista previa del comprobante" />
               <i class="material-icons" aria-hidden="true" *ngIf="!vistaPrevia">picture_as_pdf</i>
               <span class="archivo-nombre">{{ k.nombre }}<small>{{ tamano(tamanoComprobante) }}</small></span>
-              <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="quitarArchivo()">Quitar</button>
+              <button type="button" appButton="ghost" size="sm" (click)="quitarArchivo()">Quitar</button>
             </div>
             <p class="erp-field-error" *ngIf="errorArchivo">{{ errorArchivo }}</p>
           </div>
@@ -136,7 +136,7 @@
           <i class="material-icons" aria-hidden="true">error</i><span>{{ errorReporte }}</span>
         </div>
 
-        <button type="submit" class="erp-btn erp-btn--primary pub-enviar" [disabled]="reportando || leyendoArchivo">
+        <button type="submit" appButton="primary" class="pub-enviar" [disabled]="reportando || leyendoArchivo">
           <i class="material-icons" aria-hidden="true">send</i>{{ reportando ? 'Enviando…' : 'Enviar aviso de pago' }}
         </button>
       </form>
@@ -153,7 +153,7 @@
             <span class="pub-item-detalle" *ngIf="r.estado === 'RECHAZADO' && r.motivoRechazo">Motivo: {{ r.motivoRechazo }}</span>
             <span class="pub-item-detalle" *ngIf="r.estado === 'APROBADO' && r.montoAprobado !== null && r.montoAprobado !== r.monto">Se abonaron {{ r.montoAprobado | moneda }}</span>
           </div>
-          <span class="erp-badge erp-badge--{{ claseEstado(r.estado) === 'neutral' ? '' : claseEstado(r.estado) }}">{{ estado(r.estado) }}</span>
+          <app-badge class="claseEstado(r.estado) === 'neutral' ? '' : claseEstado(r.estado) }}">{{ estado(r.estado) }}</app-badge>
         </li>
       </ul>
     </section>

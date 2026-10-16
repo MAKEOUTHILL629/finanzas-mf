@@ -9,14 +9,27 @@ import { FormatoFechaCortaPipe } from '../pipes/formato-fecha-corta.pipe';
 import { FormatoFechaPipe } from '../pipes/formato-fecha.pipe';
 import { FormatoMonedaPipe } from '../pipes/formato-moneda.pipe';
 import { Catalogos, ItemCategoria, ItemCuenta, ItemPersona, ItemTarjeta } from '../modelos/catalogos';
+import { BadgeComponent } from '../shared/ui/badge/badge.component';
+import { ButtonComponent } from '../shared/ui/button/button.component';
+import { CardComponent } from '../shared/ui/card/card.component';
+import { EmptyStateComponent } from '../shared/ui/empty-state/empty-state.component';
+import { FieldComponent, InputDirective } from '../shared/ui/field/field.component';
+import { PageHeaderComponent } from '../shared/ui/page-header/page-header.component';
 import { SelectComponent } from '../shared/ui/select/select.component';
+import { TableDirective } from '../shared/ui/table/table.directive';
+import { ThemeToggleComponent } from '../shared/ui/theme-toggle/theme-toggle.component';
+
+/** Componentes base del sistema de diseño: las plantillas los usan, así que toda prueba de un componente debe declararlos. */
+export const COMPONENTES_UI: Type<unknown>[] = [
+  BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, FieldComponent, InputDirective, PageHeaderComponent, SelectComponent, TableDirective, ThemeToggleComponent,
+];
 
 export const API = environment.apiUrl;
 
 /** Configura TestBed para un componente del módulo ERP: pipes propios, formularios, router y HTTP simulado. */
 export function configurarTestBed(declarations: Type<unknown>[], providers: Provider[] = []): void {
   TestBed.configureTestingModule({
-    declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe, SelectComponent],
+    declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe, ...COMPONENTES_UI],
     imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([])],
     providers: [provideHttpClient(), provideHttpClientTesting(), ...providers],
     schemas: [NO_ERRORS_SCHEMA],

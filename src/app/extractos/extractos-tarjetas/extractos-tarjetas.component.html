@@ -1,26 +1,20 @@
 <section class="erp-page" aria-labelledby="titulo-extractos">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-extractos">Extractos de tarjetas</h1>
-      <p class="erp-subtitle">Lo que cobra el banco en cada periodo, cuánto es tuyo y cuánto de terceros. Desde aquí pagas el extracto.</p>
-    </div>
-    <div class="erp-actions">
-      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-        <i class="material-icons" aria-hidden="true">today</i>
-        Mes actual
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Extractos de tarjetas" subtitulo="Lo que cobra el banco en cada periodo, cuánto es tuyo y cuánto de terceros. Desde aquí pagas el extracto." idTitulo="titulo-extractos">
+    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
+      <i class="material-icons" aria-hidden="true">today</i>
+      Mes actual
+    </button>
+  </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
     <div class="erp-field">
       <label class="erp-label" for="ext-periodo">Periodo de facturación</label>
       <div class="erp-month-picker">
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior">
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior">
           <i class="material-icons" aria-hidden="true">chevron_left</i>
         </button>
-        <input id="ext-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente">
+        <input id="ext-periodo" appInput type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente">
           <i class="material-icons" aria-hidden="true">chevron_right</i>
         </button>
       </div>
@@ -30,20 +24,20 @@
 
   <!-- Totales -->
   <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && resumenes.length > 0" aria-label="Totales del periodo">
-    <div class="erp-card erp-stat">
+    <app-card class="erp-stat">
       <span class="erp-overline">Total de extractos</span>
       <span class="erp-stat-value erp-num">{{ totales.extracto | moneda }}</span>
       <span class="erp-stat-hint">{{ resumenes.length }} {{ resumenes.length === 1 ? 'tarjeta' : 'tarjetas' }}</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Tu parte</span>
       <span class="erp-stat-value erp-num">{{ totales.propio | moneda }}</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">De terceros</span>
       <span class="erp-stat-value erp-num">{{ totales.terceros | moneda }}</span>
       <span class="erp-stat-hint">Lo que te deben por estas cuotas</span>
-    </div>
+    </app-card>
   </div>
 
   <!-- Carga -->
@@ -57,16 +51,12 @@
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       <strong>No se pudo cargar.</strong> {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
   <!-- Vacío -->
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && resumenes.length === 0">
-    <i class="material-icons" aria-hidden="true">credit_card_off</i>
-    <h2>No hay cuotas facturadas en {{ nombrePeriodo(periodo) }}</h2>
-    <p>Aquí aparecen las tarjetas que tienen cuotas cuyo periodo de facturación es este mes. Prueba con otro periodo.</p>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && resumenes.length === 0" icon="credit_card_off" titulo="No hay cuotas facturadas en {{ nombrePeriodo(periodo) }}" descripcion="Aquí aparecen las tarjetas que tienen cuotas cuyo periodo de facturación es este mes. Prueba con otro periodo."></app-empty-state>
 
   <!-- Tarjetas -->
   <div class="erp-grid" *ngIf="!cargando && !error && resumenes.length > 0">
@@ -113,12 +103,11 @@
       </div>
 
       <footer class="extracto-acciones">
-        <a class="erp-btn erp-btn--ghost" [routerLink]="['/pagos-mes', r.tarjeta_id]"
-           [queryParams]="paramsCuotas">
+        <a appButton="ghost" [routerLink]="['/pagos-mes', r.tarjeta_id]" [queryParams]="paramsCuotas">
           <i class="material-icons" aria-hidden="true">list_alt</i>
           Ver cuotas
         </a>
-        <button type="button" class="erp-btn erp-btn--primary" (click)="abrirPago(r)">
+        <button type="button" appButton="primary" (click)="abrirPago(r)">
           <i class="material-icons" aria-hidden="true">payments</i>
           Pagar extracto
         </button>

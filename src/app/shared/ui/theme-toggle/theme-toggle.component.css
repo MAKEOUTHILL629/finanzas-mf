@@ -1,0 +1,6 @@
+:host { display: inline-flex; max-width: 100%; }
+/* en la barra lateral ocupa todo el ancho y las tres opciones se reparten por igual */
+:host(.theme-toggle--block) { display: flex; width: 100%; }
+:host(.theme-toggle--block) .erp-segmented { width: 100%; }
+.tema-icono { color: var(--text-secondary); }
+.tema-icono:hover { color: var(--text-primary); }

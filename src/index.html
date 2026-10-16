@@ -1,12 +1,31 @@
 <!doctype html>
-<html lang="es" data-theme="dark">
+<html lang="es">
 <head>
   <meta charset="utf-8">
   <title>FinanzasMf</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F5F5F7">
+  <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <!-- El tema se fija ANTES de pintar el primer cuadro (sin destello claro/oscuro): preferencia guardada o, si no hay, la del sistema. -->
+  <script>
+    (function () {
+      var tema = null;
+      try { tema = localStorage.getItem('finanzas-theme'); } catch (e) {}
+      if (tema !== 'light' && tema !== 'dark') {
+        tema = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      var raiz = document.documentElement;
+      raiz.setAttribute('data-theme', tema);
+      raiz.classList.add('sin-transiciones');
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', tema === 'dark' ? '#000000' : '#F5F5F7');
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>

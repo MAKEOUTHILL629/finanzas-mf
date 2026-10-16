@@ -169,7 +169,7 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
-.seccion-titulo .material-icons { font-size: 16px; color: #f5b301; }
+.seccion-titulo .material-icons { font-size: 16px; color: var(--gold-premium); }
 
 .favoritos { margin-bottom: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border-glass); }
 
@@ -318,8 +318,8 @@
 }
 .item-fav .material-icons { font-size: 20px; }
 .item:hover .item-fav, .item-fav:focus-visible, .item-fav.fijado { opacity: 1; }
-.item-fav.fijado { color: #f5b301; }
-.item-fav:hover { background: var(--bg-input-focus); color: #f5b301; }
+.item-fav.fijado { color: var(--gold-premium); }
+.item-fav:hover { background: var(--bg-input-focus); color: var(--gold-premium); }
 @media (hover: none) { .item-fav { opacity: 0.7; } .item-fav.fijado { opacity: 1; } }
 
 .sin-resultados { margin: var(--space-2); text-align: center; color: var(--text-secondary); font-size: var(--text-body-sm); }
@@ -327,6 +327,7 @@
 /* ───────── Pie ───────── */
 .nav-pie {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   flex: none;
   padding: var(--space-1);
@@ -351,6 +352,7 @@
 .pie-etiqueta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pie-btn:hover { background: var(--bg-input-hover); color: var(--text-primary); }
 .pie-btn--salir:hover { background: var(--red-danger-bg); color: var(--red-danger); }
+.pie-tema { flex: 1 1 auto; min-width: 0; align-self: center; }
 
 /* ───────── Modo compacto (solo íconos) ───────── */
 .nav--compacto { width: var(--nav-ancho-compacto); }
@@ -556,16 +558,12 @@
   width: 48px;
   height: 48px;
   background: var(--bg-surface);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-pill);
-  color: var(--text-primary);
-  cursor: pointer;
   box-shadow: var(--shadow-md);
-  transition: transform var(--duration-normal) var(--ease-spring), background var(--duration-fast) var(--ease-in-out);
 }
-.tema-flotante:hover { transform: scale(1.06); background: var(--bg-surface-hover); }
 
 /* ───────── Foco visible y movimiento reducido ───────── */
 .icono-btn:focus-visible,
@@ -576,8 +574,7 @@
 .marca:focus-visible,
 .grupo-btn:focus-visible,
 .item-enlace:focus-visible,
-.barra-item:focus-visible,
-.tema-flotante:focus-visible {
+.barra-item:focus-visible {
   outline: 2px solid var(--border-focus);
   outline-offset: -2px;
 }

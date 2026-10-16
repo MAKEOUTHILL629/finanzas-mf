@@ -1,0 +1,289 @@
+/* ==============================================================
+   SISTEMA DE DISEÑO — TOKENS (única fuente de verdad)
+   Inspirado en las Human Interface Guidelines de Apple: limpio, sobrio, translúcido.
+
+   Reglas:
+   · Ningún componente define colores, radios, sombras ni tipografías propias: solo usa `var(--…)`.
+   · Todo lo que cambia entre Claro y Oscuro vive en los bloques de TEMA de este archivo.
+   · El tema lo fija `data-theme="light|dark"` en <html> (ThemeService / script de index.html).
+   · Hay tres capas: 1) primitivas (valores crudos), 2) semánticos (lo que usan las pantallas),
+     3) alias heredados (nombres antiguos que siguen funcionando, apuntan a los semánticos).
+   ============================================================== */
+
+/* ── 1 · PRIMITIVAS Y TOKENS QUE NO CAMBIAN CON EL TEMA ── */
+:root {
+  /* Tipografía: pila nativa de Apple; en otras plataformas cae a Inter / Segoe UI */
+  --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Roboto Mono", "Fira Code", monospace;
+
+  --text-hero:     clamp(2.25rem, 5vw, 3.5rem);
+  --text-h1:       clamp(1.75rem, 3.5vw, 2.25rem);
+  --text-h2:       clamp(1.375rem, 2.5vw, 1.75rem);
+  --text-h3:       clamp(1.125rem, 2vw, 1.375rem);
+  --text-body:     1rem;
+  --text-body-sm:  0.875rem;
+  --text-caption:  0.75rem;
+  --text-overline: 0.6875rem;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Cifras financieras: ancho fijo para que las columnas se alineen */
+  --num-features: "tnum" 1, "zero" 0;
+
+  /* Espaciado (malla de 8 pt) */
+  --space-0:  4px;
+  --space-1:  8px;
+  --space-2:  16px;
+  --space-3:  24px;
+  --space-4:  32px;
+  --space-5:  40px;
+  --space-6:  48px;
+  --space-8:  64px;
+  --space-10: 80px;
+  --space-12: 96px;
+
+  /* Radios suaves (tarjetas 16–20 px) */
+  --radius-xs:   6px;
+  --radius-sm:   10px;
+  --radius-md:   16px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-pill: 9999px;
+
+  /* Objetivos táctiles y contenedores */
+  --touch-target: 44px;
+  --layout-max:   1280px; /* equivalente a max-w-7xl */
+
+  /* Movimiento: curvas tipo iOS (el «resorte» sobrepasa un poco y se asienta) */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-slow:   400ms;
+
+  /* Capas */
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-overlay:  300;
+  --z-modal:    400;
+  --z-popover:  500;
+  --z-command:  700;
+  --z-toast:    1500; /* sobre la navegación (1000) y el velo del panel; bajo los modales (2000) */
+  --z-max:      9999;
+
+  /* Vidrio esmerilado: `backdrop-filter: blur(20px) saturate(180%)` */
+  --glass-blur:     20px;
+  --glass-saturate: 180%;
+
+  /* Contraste de texto sobre un color de acento (botones, avatares, insignias sólidas) */
+  --text-on-accent: #FFFFFF;
+  --text-on-warning: #3A2A00;
+}
+
+/* ── 2 · TEMA CLARO ── */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Fondos y superficies */
+  --bg-app:              #F5F5F7;                   /* Apple off-white */
+  --bg-app-alt:          #FFFFFF;
+  --bg-surface:          rgba(255, 255, 255, 0.72); /* vidrio */
+  --bg-surface-solid:    #FFFFFF;
+  --bg-surface-hover:    rgba(255, 255, 255, 0.92);
+  --bg-surface-elevated: #FFFFFF;
+  --bg-sidebar:          rgba(245, 245, 247, 0.78);
+  --bg-input:            rgba(0, 0, 0, 0.045);
+  --bg-input-hover:      rgba(0, 0, 0, 0.07);
+  --bg-input-focus:      #FFFFFF;
+
+  /* Texto */
+  --text-primary:   #1D1D1F;
+  --text-secondary: #86868B;
+  --text-tertiary:  #AEAEB2;
+  --text-disabled:  #C7C7CC;
+  --text-inverse:   #FFFFFF;
+
+  /* Acentos de sistema (variante clara) */
+  --system-blue:   #007AFF;
+  --system-green:  #34C759;
+  --system-red:    #FF3B30;
+  --system-orange: #FF9500;
+  --system-yellow: #FFCC00;
+  --system-teal:   #32ADE6;
+  --system-indigo: #5856D6;
+  --system-purple: #AF52DE;
+
+  /* Bordes */
+  --border-default: rgba(0, 0, 0, 0.06);
+  --border-subtle:  rgba(0, 0, 0, 0.04);
+  --border-glass:   rgba(0, 0, 0, 0.06);
+  --border-strong:  rgba(0, 0, 0, 0.14);  /* controles que deben verse (campos, botones secundarios) */
+  --divider:        rgba(0, 0, 0, 0.08);
+
+  /* Sombras difuminadas de varias capas y baja opacidad */
+  --shadow-card:     0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 20px -6px rgba(0, 0, 0, 0.06), 0 22px 44px -16px rgba(0, 0, 0, 0.06);
+  --shadow-dropdown: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04), 0 16px 32px -8px rgba(0, 0, 0, 0.14);
+  --shadow-modal:    0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(0, 0, 0, 0.06), 0 32px 64px -16px rgba(0, 0, 0, 0.22);
+  --specular-light:  rgba(255, 255, 255, 0.6);
+  --overlay-bg:      rgba(0, 0, 0, 0.32);
+
+  --scrollbar-thumb:       rgba(0, 0, 0, 0.16);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.30);
+
+  /* Tablas y listas desplegables */
+  --table-header-bg:  rgba(250, 250, 252, 0.92);
+  --table-row-hover:  rgba(0, 122, 255, 0.045);
+  --table-row-stripe: rgba(0, 0, 0, 0.02);
+  --table-border:     rgba(0, 0, 0, 0.06);
+  --select-option-bg:    #FFFFFF;
+  --select-option-hover: #F5F5F7;
+  --select-option-text:  #1D1D1F;
+}
+
+/* ── 3 · TEMA OSCURO ── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-app:              #000000;
+  --bg-app-alt:          #09090B;
+  --bg-surface:          rgba(28, 28, 30, 0.72);
+  --bg-surface-solid:    #1C1C1E;
+  --bg-surface-hover:    rgba(44, 44, 46, 0.86);
+  --bg-surface-elevated: #2C2C2E;
+  --bg-sidebar:          rgba(9, 9, 11, 0.78);
+  --bg-input:            rgba(255, 255, 255, 0.07);
+  --bg-input-hover:      rgba(255, 255, 255, 0.10);
+  --bg-input-focus:      rgba(255, 255, 255, 0.13);
+
+  --text-primary:   #F5F5F7;
+  --text-secondary: #A1A1A6;
+  --text-tertiary:  #6E6E73;
+  --text-disabled:  #48484A;
+  --text-inverse:   #1D1D1F;
+
+  --system-blue:   #0A84FF;
+  --system-green:  #30D158;
+  --system-red:    #FF453A;
+  --system-orange: #FF9F0A;
+  --system-yellow: #FFD60A;
+  --system-teal:   #64D2FF;
+  --system-indigo: #5E5CE6;
+  --system-purple: #BF5AF2;
+
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-subtle:  rgba(255, 255, 255, 0.05);
+  --border-glass:   rgba(255, 255, 255, 0.10);
+  --border-strong:  rgba(255, 255, 255, 0.18);
+  --divider:        rgba(255, 255, 255, 0.08);
+
+  --shadow-card:     0 0 0 0.5px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.30), 0 10px 24px -8px rgba(0, 0, 0, 0.45), 0 28px 56px -20px rgba(0, 0, 0, 0.55);
+  --shadow-dropdown: 0 0 0 0.5px rgba(255, 255, 255, 0.10), 0 6px 12px rgba(0, 0, 0, 0.35), 0 20px 40px -8px rgba(0, 0, 0, 0.60);
+  --shadow-modal:    0 0 0 0.5px rgba(255, 255, 255, 0.10), 0 12px 24px rgba(0, 0, 0, 0.40), 0 40px 80px -20px rgba(0, 0, 0, 0.70);
+  --specular-light:  rgba(255, 255, 255, 0.08);
+  --overlay-bg:      rgba(0, 0, 0, 0.62);
+
+  --scrollbar-thumb:       rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+
+  --table-header-bg:  rgba(28, 28, 30, 0.92);
+  --table-row-hover:  rgba(10, 132, 255, 0.08);
+  --table-row-stripe: rgba(255, 255, 255, 0.025);
+  --table-border:     rgba(255, 255, 255, 0.06);
+  --select-option-bg:    #1C1C1E;
+  --select-option-hover: #2C2C2E;
+  --select-option-text:  #F5F5F7;
+}
+
+/* Si el script de arranque no pudo fijar `data-theme`, se respeta la preferencia del sistema operativo. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg-app: #000000; --bg-app-alt: #09090B; --bg-surface: rgba(28, 28, 30, 0.72); --bg-surface-solid: #1C1C1E;
+    --bg-surface-hover: rgba(44, 44, 46, 0.86); --bg-surface-elevated: #2C2C2E; --bg-sidebar: rgba(9, 9, 11, 0.78);
+    --bg-input: rgba(255, 255, 255, 0.07); --bg-input-hover: rgba(255, 255, 255, 0.10); --bg-input-focus: rgba(255, 255, 255, 0.13);
+    --text-primary: #F5F5F7; --text-secondary: #A1A1A6; --text-tertiary: #6E6E73; --text-disabled: #48484A; --text-inverse: #1D1D1F;
+    --system-blue: #0A84FF; --system-green: #30D158; --system-red: #FF453A; --system-orange: #FF9F0A; --system-yellow: #FFD60A;
+    --system-teal: #64D2FF; --system-indigo: #5E5CE6; --system-purple: #BF5AF2;
+    --border-default: rgba(255, 255, 255, 0.08); --border-subtle: rgba(255, 255, 255, 0.05); --border-glass: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.18); --divider: rgba(255, 255, 255, 0.08);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.30), 0 10px 24px -8px rgba(0, 0, 0, 0.45); --specular-light: rgba(255, 255, 255, 0.08);
+    --overlay-bg: rgba(0, 0, 0, 0.62); --table-header-bg: rgba(28, 28, 30, 0.92); --table-row-hover: rgba(10, 132, 255, 0.08);
+    --table-border: rgba(255, 255, 255, 0.06); --select-option-bg: #1C1C1E; --select-option-hover: #2C2C2E; --select-option-text: #F5F5F7;
+  }
+}
+
+/* ── 4 · SEMÁNTICOS DE MARCA Y ESTADO (se derivan del acento del tema) ── */
+:root {
+  --brand-blue:        var(--system-blue);
+  --brand-blue-hover:  color-mix(in srgb, var(--system-blue) 82%, #000);
+  --brand-blue-active: color-mix(in srgb, var(--system-blue) 68%, #000);
+  --brand-blue-light:  color-mix(in srgb, var(--system-blue) 13%, transparent);
+  --brand-blue-glow:   color-mix(in srgb, var(--system-blue) 32%, transparent);
+  --text-link:         var(--system-blue);
+  --border-focus:      var(--system-blue);
+
+  --green-success:    var(--system-green);
+  --green-success-bg: color-mix(in srgb, var(--system-green) 14%, transparent);
+  --red-danger:       var(--system-red);
+  --red-danger-bg:    color-mix(in srgb, var(--system-red) 13%, transparent);
+  --border-error:     var(--system-red);
+  --amber-warning:    var(--system-orange);
+  --amber-warning-bg: color-mix(in srgb, var(--system-orange) 15%, transparent);
+  --gold-premium:     var(--system-yellow);
+  --gold-premium-bg:  color-mix(in srgb, var(--system-yellow) 16%, transparent);
+  --info-blue:        var(--system-indigo);
+  --info-blue-bg:     color-mix(in srgb, var(--system-indigo) 14%, transparent);
+
+  /* Visualización de datos */
+  --chart-1: var(--system-blue);
+  --chart-2: var(--system-teal);
+  --chart-3: var(--system-indigo);
+  --chart-4: var(--system-red);
+  --chart-5: var(--system-orange);
+  --chart-6: var(--system-green);
+
+  /* Sombras de color y de acento */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 10px -2px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.04), 0 10px 20px -6px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.04), 0 18px 36px -10px rgba(0, 0, 0, 0.14);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.05), 0 30px 60px -16px rgba(0, 0, 0, 0.20);
+  --shadow-glow-brand:   0 4px 14px -2px var(--brand-blue-glow);
+  --shadow-glow-success: 0 4px 14px -2px color-mix(in srgb, var(--system-green) 32%, transparent);
+  --shadow-glow-danger:  0 4px 14px -2px color-mix(in srgb, var(--system-red) 32%, transparent);
+
+  /* Superficies de acento (botón primario) */
+  --gradient-brand: linear-gradient(180deg, color-mix(in srgb, var(--system-blue) 92%, #fff) 0%, var(--system-blue) 100%);
+}
+
+/* ── 5 · ALIAS HEREDADOS (nombres antiguos → semánticos). No usarlos en código nuevo. ── */
+:root {
+  --blue-brand:      var(--brand-blue);
+  --orange-warning:  var(--amber-warning);
+  --text-muted:      var(--text-tertiary);
+  --bg-card:         var(--bg-surface-solid);
+  --bg-section:      var(--bg-surface);
+  --bg-overlay:      var(--overlay-bg);
+  --bg-glass-surface: var(--bg-surface);
+  --border-glass-light: var(--border-glass);
+  --input-bg:        var(--bg-input);
+  --input-bg-hover:  var(--bg-input-hover);
+  --success-bg:      var(--green-success-bg);
+  --warning-bg:      var(--amber-warning-bg);
+  --info-bg:         var(--brand-blue-light);
+  --duration-base:   var(--duration-normal);
+
+  /* paleta «slate/gray» antigua: ahora sigue al tema */
+  --slate-900: var(--bg-app);
+  --slate-800: var(--bg-surface-solid);
+  --slate-700: var(--bg-surface-elevated);
+  --white:     #FFFFFF;
+  --gray-bg:   var(--bg-app);
+  --gray-100:  var(--bg-input);
+  --gray-200:  var(--bg-input-hover);
+}

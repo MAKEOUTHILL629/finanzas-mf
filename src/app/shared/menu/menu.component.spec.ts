@@ -5,6 +5,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { AuthServiceService } from '../../services/auth-service.service';
 import { MenuStateService } from '../../services/menu-state.service';
 import { ThemeService } from '../../services/theme.service';
+import { ThemeToggleComponent } from '../ui/theme-toggle/theme-toggle.component';
 import { ToastService } from '../toast/toast.service';
 import { MenuComponent } from './menu.component';
 
@@ -34,13 +35,14 @@ describe('MenuComponent', () => {
     toast = { info: jasmine.createSpy('info') };
     await TestBed.configureTestingModule({
       imports: [RouterModule.forRoot([{ path: '**', children: [] }])],
-      declarations: [MenuComponent],
+      declarations: [MenuComponent, ThemeToggleComponent],
       providers: [
         { provide: AuthServiceService, useValue: auth },
         { provide: ToastService, useValue: toast },
         ThemeService,
       ],
     }).compileComponents();
+    TestBed.inject(ThemeService).animarCambios = false; // el cambio de tema es síncrono en las pruebas
     estado = TestBed.inject(MenuStateService);
     estado.fijarAncho(ancho);
     router = TestBed.inject(Router);
@@ -411,13 +413,16 @@ describe('MenuComponent', () => {
       expect(menu.drawerAbierto).toBe(false);
     });
 
-    it('alterna el tema y valida el token al iniciar', async () => {
+    it('el selector de tema cambia entre claro y oscuro y se valida el token al iniciar', async () => {
       await montar(1280);
       expect(auth.isAuthenticated).toHaveBeenCalled();
-      const antes = menu.isDarkTheme;
-      (q('.pie-btn:not(.pie-btn--salir)') as HTMLButtonElement).click();
+      expect(q('app-theme-toggle .erp-segmented')).not.toBeNull();
+      (q('app-theme-toggle .erp-segmented__item[aria-label="Claro"]') as HTMLButtonElement).click();
       refrescar();
-      expect(menu.isDarkTheme).toBe(!antes);
+      expect(menu.isDarkTheme).toBe(false);
+      (q('app-theme-toggle .erp-segmented__item[aria-label="Oscuro"]') as HTMLButtonElement).click();
+      refrescar();
+      expect(menu.isDarkTheme).toBe(true);
     });
   });
 });

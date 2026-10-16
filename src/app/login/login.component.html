@@ -1,8 +1,6 @@
 <div class="login-page">
-  <!-- Botón de tema flotante -->
-  <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="isDarkTheme ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'" aria-label="Cambiar tema">
-    <i class="material-icons">{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</i>
-  </button>
+  <!-- Selector de tema flotante -->
+  <app-theme-toggle class="theme-toggle-btn" variant="icon"></app-theme-toggle>
 
   <!-- Orbes decorativos de fondo -->
   <div class="bg-orb bg-orb--1" aria-hidden="true"></div>

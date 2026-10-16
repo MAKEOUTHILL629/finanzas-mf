@@ -1,28 +1,22 @@
 <section class="erp-page" aria-labelledby="titulo-personas">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-personas">Personas</h1>
-      <p class="erp-subtitle">Lo que cada persona debe pagar este mes y lo que te debe en total: cuotas de tus tarjetas, préstamos, gastos compartidos y cruces, menos lo que ya abonó.</p>
-    </div>
-    <div class="erp-actions">
-      <a class="erp-btn erp-btn--secondary" routerLink="/cobros">
-        <i class="material-icons" aria-hidden="true">request_quote</i>
-        Cobros
-      </a>
-      <button type="button" class="erp-btn erp-btn--ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
-        <i class="material-icons" aria-hidden="true">today</i>
-        Mes actual
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Personas" subtitulo="Lo que cada persona debe pagar este mes y lo que te debe en total: cuotas de tus tarjetas, préstamos, gastos compartidos y cruces, menos lo que ya abonó." idTitulo="titulo-personas">
+    <a appButton="secondary" routerLink="/cobros">
+      <i class="material-icons" aria-hidden="true">request_quote</i>
+      Cobros
+    </a>
+    <button type="button" appButton="ghost" *ngIf="!esMesActual()" (click)="irAlMesActual()">
+      <i class="material-icons" aria-hidden="true">today</i>
+      Mes actual
+    </button>
+  </app-page-header>
 
   <div class="erp-toolbar" role="search" aria-label="Elegir periodo">
     <div class="erp-field">
       <label class="erp-label" for="pe-periodo">Periodo</label>
       <div class="erp-month-picker">
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
-        <input id="pe-periodo" class="erp-input" type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--icon" (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(-1)" aria-label="Mes anterior"><i class="material-icons" aria-hidden="true">chevron_left</i></button>
+        <input id="pe-periodo" appInput type="month" [value]="periodo" (change)="onPeriodoChange($any($event.target).value)" />
+        <button type="button" appButton="ghost" icon (click)="moverPeriodo(1)" aria-label="Mes siguiente"><i class="material-icons" aria-hidden="true">chevron_right</i></button>
       </div>
       <span class="erp-field-hint">{{ nombrePeriodo(periodo) }}</span>
     </div>
@@ -34,26 +28,26 @@
 
   <!-- Totales -->
   <div class="erp-grid erp-grid--stats totales" *ngIf="datos && !error" aria-label="Totales">
-    <div class="erp-card erp-stat">
+    <app-card class="erp-stat">
       <span class="erp-overline">Total a pagar este mes</span>
       <span class="erp-stat-value erp-num">{{ datos.totales.pagoDelMes | moneda }}</span>
       <span class="erp-stat-hint">Cuotas y cargos de {{ nombrePeriodo(periodo) }}</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Te deben ahora</span>
       <span class="erp-stat-value erp-num" [class.erp-loss]="datos.totales.aPagarAhora > 0">{{ datos.totales.aPagarAhora | moneda }}</span>
       <span class="erp-stat-hint">Mes + saldo anterior − abonos</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Por vencer</span>
       <span class="erp-stat-value erp-num">{{ datos.totales.porVencer | moneda }}</span>
       <span class="erp-stat-hint">Cuotas de los meses siguientes</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Deuda total pendiente</span>
       <span class="erp-stat-value erp-num">{{ datos.totales.deudaTotal | moneda }}</span>
       <span class="erp-stat-hint">Lo exigible + lo que aún no vence</span>
-    </div>
+    </app-card>
   </div>
 
   <div class="erp-alert erp-alert--warning" role="status" *ngIf="datos && datos.totales.historicoSinCargar.cuotas > 0">
@@ -66,22 +60,18 @@
   </div>
 
   <div class="erp-grid personas-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando personas">
-    <div class="erp-card" *ngFor="let _ of [1, 2, 3]"><div class="erp-skeleton" style="height: 150px"></div></div>
+    <app-card *ngFor="let _ of [1, 2, 3]"><div class="erp-skeleton" style="height: 150px"></div></app-card>
   </div>
 
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && personas.length === 0">
-    <i class="material-icons" aria-hidden="true">groups</i>
-    <h2>Nadie te debe nada en {{ nombrePeriodo(periodo) }}</h2>
-    <p>Aquí aparece lo que cada persona debe cuando le asignas una parte de una compra con tarjeta, le prestas dinero o repartes un gasto. Prueba con otro mes.</p>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && personas.length === 0" icon="groups" titulo="Nadie te debe nada en {{ nombrePeriodo(periodo) }}" descripcion="Aquí aparece lo que cada persona debe cuando le asignas una parte de una compra con tarjeta, le prestas dinero o repartes un gasto. Prueba con otro mes."></app-empty-state>
 
   <div class="personas-grid" *ngIf="!cargando && !error && personas.length > 0">
     <article
@@ -135,11 +125,11 @@
       </p>
 
       <footer class="persona-acciones">
-        <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="alternar(p)" [attr.aria-expanded]="abierta === p.persona.id" [attr.aria-controls]="'detalle-' + p.persona.id">
+        <button type="button" appButton="secondary" size="sm" (click)="alternar(p)" [attr.aria-expanded]="abierta === p.persona.id" [attr.aria-controls]="'detalle-' + p.persona.id">
           <i class="material-icons" aria-hidden="true">{{ abierta === p.persona.id ? 'expand_less' : 'expand_more' }}</i>
           {{ abierta === p.persona.id ? 'Ocultar desglose' : 'Ver desglose' }}
         </button>
-        <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirAbono(p)" [attr.aria-label]="'Registrar abono de ' + p.persona.nombre">
+        <button type="button" appButton="primary" size="sm" (click)="abrirAbono(p)" [attr.aria-label]="'Registrar abono de ' + p.persona.nombre">
           <i class="material-icons" aria-hidden="true">savings</i>Abonar
         </button>
       </footer>

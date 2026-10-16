@@ -18,7 +18,7 @@
 
 .linea-aviso { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: var(--text-caption); color: var(--text-secondary); }
 .linea-aviso .material-icons { font-size: 18px; flex: none; }
-.linea-aviso--cruce { color: var(--orange-warning, #ff9f0a); }
+.linea-aviso--cruce { color: var(--orange-warning, var(--amber-warning)); }
 
 .resumen-total { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-1) var(--space-3); padding-top: var(--space-1); }
 .resumen-total .total { display: block; font-size: var(--text-h1, 2rem); line-height: 1.1; }

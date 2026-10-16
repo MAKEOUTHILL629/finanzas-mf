@@ -2,9 +2,9 @@
 .acciones-confirmacion { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-1); }
 
 .persona { display: inline-flex; align-items: center; gap: 10px; font-weight: var(--weight-semibold); }
-.avatar { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: #fff; font-size: 0.7rem; font-weight: var(--weight-bold); flex: none; }
+.avatar { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--text-on-accent); font-size: 0.7rem; font-weight: var(--weight-bold); flex: none; }
 
 .progreso-texto { display: block; font-size: var(--text-caption); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
 td .erp-progress { min-width: 90px; max-width: 140px; }
 .acciones { white-space: nowrap; text-align: right; }
-.peligro:hover { color: var(--red-danger, #ff453a); }
+.peligro:hover { color: var(--red-danger, var(--red-danger)); }

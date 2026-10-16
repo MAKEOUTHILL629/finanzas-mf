@@ -48,8 +48,8 @@ Convenciones:
 - **Dinero** solo con el pipe `moneda` (`$1,234.56`, negativos entre paréntesis) y números tabulares; nunca `number` con operaciones
   financieras en el cliente más allá de sumas de presentación.
 - **Fechas** de calendario: `formatoFecha` (largo) y `fechaCorta` (`15 oct 2026`, para tablas) leen epoch-ms / ISO medianoche en UTC.
-- **Estilos**: tokens del sistema de diseño en `src/styles.css` y clases globales `erp-*` (páginas, tarjetas, tablas apilables en móvil,
-  formularios, alertas, skeletons) en `src/styles-erp.css`. Tablas anchas: `erp-table--compact`, y `erp-table--sticky` fija la primera columna.
+- **Estilos**: tokens del sistema de diseño en `src/design-system/tokens.css` y clases globales `erp-*` (páginas, tarjetas, tablas apilables en móvil,
+  formularios, alertas, skeletons) en `src/design-system/components.css` (ver `src/design-system/README.md`). Tablas anchas: `erp-table--compact`, y `erp-table--sticky` fija la primera columna.
 - **Formularios** reactivos con `inject(FormBuilder)`; los modales usan `ModalService` + `<app-modal>` y destruyen el formulario al cerrar.
 - **Pruebas** (`ng test`, Edge headless: `CHROME_BIN=msedge`): `src/app/testing/erp-testing.ts` ofrece los helpers de `HttpTestingController`
   y el módulo de pruebas; `render-smoke.spec.ts` monta todas las pantallas nuevas. La lógica de cada pantalla vive en funciones puras con su spec.

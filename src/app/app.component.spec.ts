@@ -5,6 +5,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppComponent } from './app.component';
 import { ThemeService } from './services/theme.service';
+import { AppLayoutComponent } from './shared/ui/layout/app-layout.component';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -13,7 +14,8 @@ describe('AppComponent', () => {
         RouterModule.forRoot([])
       ],
       declarations: [
-        AppComponent
+        AppComponent,
+        AppLayoutComponent
       ],
       providers: [
         ThemeService,

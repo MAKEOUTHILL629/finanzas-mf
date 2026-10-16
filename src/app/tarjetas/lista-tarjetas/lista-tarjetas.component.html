@@ -1,16 +1,10 @@
 <section class="erp-page" aria-labelledby="titulo-tarjetas">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-tarjetas">Tarjetas</h1>
-      <p class="erp-subtitle">Configura el corte, el límite de pago, el cupo y las tasas de cada tarjeta.</p>
-    </div>
-    <div class="erp-actions">
-      <a class="erp-btn erp-btn--secondary" routerLink="/extractos">
-        <i class="material-icons" aria-hidden="true">receipt_long</i>
-        Ver extractos
-      </a>
-    </div>
-  </header>
+  <app-page-header titulo="Tarjetas" subtitulo="Configura el corte, el límite de pago, el cupo y las tasas de cada tarjeta." idTitulo="titulo-tarjetas">
+    <a appButton="secondary" routerLink="/extractos">
+      <i class="material-icons" aria-hidden="true">receipt_long</i>
+      Ver extractos
+    </a>
+  </app-page-header>
 
   <div class="erp-grid" *ngIf="cargando" aria-busy="true" aria-label="Cargando tarjetas">
     <div class="erp-skeleton" style="height: 240px"></div>
@@ -21,15 +15,11 @@
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && tarjetas.length === 0">
-    <i class="material-icons" aria-hidden="true">credit_card_off</i>
-    <h2>Aún no hay tarjetas</h2>
-    <p>Las tarjetas se registran en la base de datos; cuando existan aparecerán aquí para configurarlas.</p>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && tarjetas.length === 0" icon="credit_card_off" titulo="Aún no hay tarjetas" descripcion="Las tarjetas se registran en la base de datos; cuando existan aparecerán aquí para configurarlas."></app-empty-state>
 
   <div class="erp-grid" *ngIf="!cargando && !error && tarjetas.length > 0">
     <article class="erp-card tarjeta" *ngFor="let t of tarjetas; trackBy: trackById" [attr.aria-label]="nombre(t)">
@@ -68,15 +58,15 @@
       <footer class="tarjeta-acciones">
         <span class="erp-badge" [class.erp-badge--info]="t.permiteDolares">{{ t.permiteDolares ? 'Acepta USD' : 'Solo COP' }}</span>
         <div class="tarjeta-botones">
-          <a class="erp-btn erp-btn--ghost erp-btn--sm" [routerLink]="['/tarjetas', t.id]">
+          <a appButton="ghost" size="sm" [routerLink]="['/tarjetas', t.id]">
             <i class="material-icons" aria-hidden="true">receipt_long</i>
             Historial
           </a>
-          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="registrarReemplazo(t)">
+          <button type="button" appButton="ghost" size="sm" (click)="registrarReemplazo(t)">
             <i class="material-icons" aria-hidden="true">autorenew</i>
             Reemplazo
           </button>
-          <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" (click)="editar(t)">
+          <button type="button" appButton="secondary" size="sm" (click)="editar(t)">
             <i class="material-icons" aria-hidden="true">tune</i>
             Configurar
           </button>

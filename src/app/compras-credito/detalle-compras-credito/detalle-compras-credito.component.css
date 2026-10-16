@@ -4,19 +4,6 @@
    ============================================ */
 
 :host {
-  --brand-blue: #0071E3;
-  --green-success: #34C759;
-  --red-danger: #FF3B30;
-  --gold-premium: #D4AF37;
-  --space-1: 8px;
-  --space-2: 16px;
-  --space-3: 24px;
-  --space-4: 32px;
-  --space-6: 48px;
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-pill: 9999px;
 
   display: block;
   font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
@@ -46,7 +33,7 @@
   box-shadow:
     0 12px 40px -8px rgba(0, 0, 0, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 var(--specular-light),
     inset 0 -1px 0 rgba(0, 0, 0, 0.08);
   padding: var(--space-4);
 }
@@ -90,20 +77,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--brand-blue), #0A84FF);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--brand-blue), var(--brand-blue));
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-pill);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(0, 113, 227, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-blue) 30%, transparent);
 }
 
 .btn-recalcular:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-blue) 40%, transparent);
 }
 
 .btn-recalcular:active {
@@ -120,20 +107,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--red-danger), #FF5347);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--red-danger), var(--red-danger));
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-pill);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--red-danger) 30%, transparent);
 }
 
 .btn-delete:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 59, 48, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red-danger) 40%, transparent);
 }
 
 .btn-delete:active {
@@ -150,20 +137,20 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--green-success), #3FD962);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--green-success), var(--green-success));
+  color: var(--text-on-accent);
   border: none;
   border-radius: var(--radius-pill);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--green-success) 30%, transparent);
 }
 
 .btn-update:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green-success) 40%, transparent);
 }
 
 .btn-update:active:not(:disabled) {
@@ -196,7 +183,7 @@
 }
 
 .btn-cancel-edit:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-input);
   transform: translateY(-1px);
 }
 
@@ -223,7 +210,7 @@
   box-shadow:
     0 12px 40px -8px rgba(0, 0, 0, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 1px 0 var(--specular-light),
     inset 0 -1px 0 rgba(0, 0, 0, 0.08);
   overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -235,7 +222,7 @@
   box-shadow:
     0 20px 50px -10px rgba(0, 0, 0, 0.55),
     0 8px 20px rgba(0, 0, 0, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    inset 0 1px 0 var(--specular-light);
 }
 
 .card-header {
@@ -244,7 +231,7 @@
   gap: var(--space-2);
   padding: var(--space-3);
   border-bottom: 1px solid var(--border-glass);
-  background: rgba(0, 113, 227, 0.03);
+  background: color-mix(in srgb, var(--brand-blue) 3%, transparent);
 }
 
 .card-header i {
@@ -271,7 +258,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-1) 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .info-row:last-child {
@@ -305,11 +292,11 @@
 }
 
 .editable-row:hover {
-  background: rgba(0, 113, 227, 0.03);
+  background: color-mix(in srgb, var(--brand-blue) 3%, transparent);
 }
 
 .editable-row.editing {
-  background: rgba(0, 113, 227, 0.05);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
 }
 
 .edit-hint {
@@ -341,7 +328,7 @@
 }
 
 .edit-input:focus {
-  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 20%, transparent);
 }
 
 .edit-textarea {
@@ -361,7 +348,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   /* Fondo del select mismo */
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: var(--bg-input);
 }
 
 /* Opciones del desplegable — usan tokens del tema para soportar dark/light */
@@ -379,18 +366,18 @@ select.edit-select option:focus {
 }
 
 select.edit-select option:checked {
-  background: #0071E3;
-  color: #FFFFFF;
+  background: var(--brand-blue);
+  color: var(--text-on-accent);
 }
 
 [data-theme="light"] select.edit-select option {
-  background: #FFFFFF;
-  color: #111827;
+  background: var(--bg-surface-solid);
+  color: var(--text-primary);
 }
 
 [data-theme="light"] select.edit-select option:checked {
-  background: #0071E3;
-  color: #FFFFFF;
+  background: var(--brand-blue);
+  color: var(--text-on-accent);
 }
 
 .financial-input {
@@ -434,18 +421,18 @@ select.edit-select option:checked {
 }
 
 .status-badge.pendiente {
-  background: linear-gradient(135deg, #FFB800, #FFC933);
-  color: #664D00;
+  background: linear-gradient(135deg, var(--gold-premium), var(--gold-premium));
+  color: var(--text-on-warning);
 }
 
 .status-badge.pagado {
-  background: linear-gradient(135deg, var(--green-success), #3FD962);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--green-success), var(--green-success));
+  color: var(--text-on-accent);
 }
 
 .status-badge.cancelado {
-  background: linear-gradient(135deg, var(--red-danger), #FF5347);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--red-danger), var(--red-danger));
+  color: var(--text-on-accent);
 }
 
 /* ============================================
@@ -493,15 +480,15 @@ select.edit-select option:checked {
   display: flex;
   flex-direction: column;
   padding: var(--space-2);
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(255, 59, 48, 0.15));
-  border: 1px solid rgba(255, 59, 48, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--red-danger) 10%, transparent), color-mix(in srgb, var(--red-danger) 15%, transparent));
+  border: 1px solid color-mix(in srgb, var(--red-danger) 30%, transparent);
   border-radius: var(--radius-md);
   min-width: 160px;
 }
 
 .total-badge.primary {
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.15));
-  border: 1px solid rgba(0, 113, 227, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 10%, transparent), color-mix(in srgb, var(--brand-blue) 15%, transparent));
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 30%, transparent);
 }
 
 .badge-label {
@@ -530,7 +517,7 @@ select.edit-select option:checked {
   box-shadow:
     0 12px 40px -8px rgba(0, 0, 0, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    inset 0 1px 0 var(--specular-light);
   overflow: hidden;
 }
 
@@ -556,7 +543,7 @@ select.edit-select option:checked {
 .installments-table th {
   position: sticky;
   top: 0;
-  background: rgba(0, 113, 227, 0.05);
+  background: color-mix(in srgb, var(--brand-blue) 5%, transparent);
   backdrop-filter: blur(25px) saturate(180%);
   font-weight: 600;
   color: var(--text-primary);
@@ -574,7 +561,7 @@ select.edit-select option:checked {
 }
 
 .installments-table tbody tr:hover {
-  background: rgba(0, 113, 227, 0.03);
+  background: color-mix(in srgb, var(--brand-blue) 3%, transparent);
 }
 
 .installments-table tbody tr:last-child {
@@ -597,8 +584,8 @@ select.edit-select option:checked {
   min-width: 32px;
   height: 32px;
   padding: 4px 8px;
-  background: linear-gradient(135deg, var(--brand-blue), #0A84FF);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--brand-blue), var(--brand-blue));
+  color: var(--text-on-accent);
   border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
@@ -630,7 +617,7 @@ select.edit-select option:checked {
   box-shadow:
     0 12px 40px -8px rgba(0, 0, 0, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    inset 0 1px 0 var(--specular-light);
   padding: var(--space-4);
 }
 
@@ -678,7 +665,7 @@ select.edit-select option:checked {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay-bg);
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
@@ -734,8 +721,8 @@ select.edit-select option:checked {
   justify-content: center;
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.1), rgba(255, 59, 48, 0.2));
-  border: 2px solid rgba(255, 59, 48, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--red-danger) 10%, transparent), color-mix(in srgb, var(--red-danger) 20%, transparent));
+  border: 2px solid color-mix(in srgb, var(--red-danger) 30%, transparent);
   border-radius: 50%;
   margin-bottom: var(--space-2);
 }
@@ -764,8 +751,8 @@ select.edit-select option:checked {
 }
 
 .delete-info {
-  background: rgba(255, 59, 48, 0.05);
-  border: 1px solid rgba(255, 59, 48, 0.2);
+  background: color-mix(in srgb, var(--red-danger) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red-danger) 20%, transparent);
   border-radius: var(--radius-md);
   padding: var(--space-3);
   display: flex;
@@ -801,7 +788,7 @@ select.edit-select option:checked {
   gap: var(--space-2);
   padding: var(--space-4);
   border-top: 1px solid var(--border-glass);
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-input);
 }
 
 .btn-cancel,
@@ -826,20 +813,20 @@ select.edit-select option:checked {
 }
 
 .btn-cancel:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-input);
   transform: translateY(-1px);
 }
 
 .btn-confirm-delete {
-  background: linear-gradient(135deg, var(--red-danger), #FF5347);
+  background: linear-gradient(135deg, var(--red-danger), var(--red-danger));
   border: none;
-  color: #FFFFFF;
-  box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--red-danger) 30%, transparent);
 }
 
 .btn-confirm-delete:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 59, 48, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--red-danger) 40%, transparent);
 }
 
 .btn-confirm-delete:active:not(:disabled) {
@@ -886,8 +873,8 @@ select.edit-select option:checked {
   justify-content: center;
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1), rgba(0, 113, 227, 0.2));
-  border: 2px solid rgba(0, 113, 227, 0.3);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-blue) 10%, transparent), color-mix(in srgb, var(--brand-blue) 20%, transparent));
+  border: 2px solid color-mix(in srgb, var(--brand-blue) 30%, transparent);
   border-radius: 50%;
   margin-bottom: var(--space-2);
 }
@@ -922,8 +909,8 @@ select.edit-select option:checked {
 }
 
 .change-item {
-  background: rgba(0, 113, 227, 0.03);
-  border: 1px solid rgba(0, 113, 227, 0.1);
+  background: color-mix(in srgb, var(--brand-blue) 3%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-blue) 10%, transparent);
   border-radius: var(--radius-md);
   padding: var(--space-3);
 }
@@ -981,7 +968,7 @@ select.edit-select option:checked {
   gap: var(--space-2);
   padding: var(--space-4);
   border-top: 1px solid var(--border-glass);
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--bg-input);
 }
 
 .btn-confirm-update {
@@ -991,20 +978,20 @@ select.edit-select option:checked {
   justify-content: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--green-success), #3FD962);
+  background: linear-gradient(135deg, var(--green-success), var(--green-success));
   border: none;
   border-radius: var(--radius-pill);
-  color: #FFFFFF;
+  color: var(--text-on-accent);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--green-success) 30%, transparent);
 }
 
 .btn-confirm-update:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--green-success) 40%, transparent);
 }
 
 .btn-confirm-update:active:not(:disabled) {
@@ -1126,7 +1113,7 @@ select.edit-select option:checked {
 }
 
 .table-responsive::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--bg-input);
   border-radius: 4px;
 }
 
@@ -1136,7 +1123,7 @@ select.edit-select option:checked {
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
-  background: #0A84FF;
+  background: var(--brand-blue);
 }
 
 /* ============================================

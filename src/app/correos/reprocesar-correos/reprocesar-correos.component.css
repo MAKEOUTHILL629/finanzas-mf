@@ -4,10 +4,10 @@
 .accion:first-child { border-top: 0; }
 .accion-titulo { min-width: 0; }
 .accion-n { font-size: var(--text-h3); }
-.erp-text-success { color: var(--green-success, #30d158); }
+.erp-text-success { color: var(--green-success, var(--green-success)); }
 .erp-text-info { color: var(--brand-blue); }
-.erp-text-warning { color: var(--orange-warning, #ff9f0a); }
-.erp-text-danger { color: var(--red-danger, #ff453a); }
+.erp-text-warning { color: var(--orange-warning, var(--amber-warning)); }
+.erp-text-danger { color: var(--red-danger, var(--red-danger)); }
 .erp-text-neutral { color: var(--text-secondary); }
 
 .pendientes ul, .aprendizajes ul { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: var(--text-body-sm); }

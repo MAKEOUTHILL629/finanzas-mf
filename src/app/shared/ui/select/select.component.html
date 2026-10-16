@@ -1,16 +1,5 @@
 <div class="ui-select" [class.ui-select--cargando]="cargandoSinDatos" [class.ui-select--invalido]="invalido">
-  <select
-    #campo
-    class="erp-select"
-    [id]="inputId"
-    [disabled]="deshabilitado || cargandoSinDatos || (sinOpciones && !valor)"
-    [attr.aria-invalid]="invalido ? 'true' : null"
-    [attr.aria-label]="ariaLabel"
-    [attr.aria-describedby]="ariaDescribedby"
-    [attr.aria-busy]="cargandoSinDatos ? 'true' : null"
-    (change)="alCambiar($event)"
-    (blur)="alSalir()"
-  >
+  <select #campo appInput [id]="inputId" [disabled]="deshabilitado || cargandoSinDatos || (sinOpciones && !valor)" [attr.aria-invalid]="invalido ? 'true' : null" [attr.aria-label]="ariaLabel" [attr.aria-describedby]="ariaDescribedby" [attr.aria-busy]="cargandoSinDatos ? 'true' : null" (change)="alCambiar($event)" (blur)="alSalir()">
     <ng-container *ngIf="cargandoSinDatos; else listo">
       <option value="" selected>{{ catalogo ? 'Cargando…' : placeholder }}</option>
     </ng-container>

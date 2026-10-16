@@ -1,49 +1,43 @@
 <section class="erp-page" aria-labelledby="titulo-prestamos">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-prestamos">Préstamos</h1>
-      <p class="erp-subtitle">Lo que prestaste, su saldo, el corte de cobro y las aprobaciones de cada persona.</p>
-    </div>
-    <div class="erp-actions">
-      <a class="erp-btn erp-btn--secondary" routerLink="/cortes-cobro">
-        <i class="material-icons" aria-hidden="true">event_repeat</i>
-        Cortes de cobro
-      </a>
-      <button type="button" class="erp-btn erp-btn--primary" (click)="abrirFormulario()">
-        <i class="material-icons" aria-hidden="true">add</i>
-        Nuevo préstamo
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Préstamos" subtitulo="Lo que prestaste, su saldo, el corte de cobro y las aprobaciones de cada persona." idTitulo="titulo-prestamos">
+    <a appButton="secondary" routerLink="/cortes-cobro">
+      <i class="material-icons" aria-hidden="true">event_repeat</i>
+      Cortes de cobro
+    </a>
+    <button type="button" appButton="primary" (click)="abrirFormulario()">
+      <i class="material-icons" aria-hidden="true">add</i>
+      Nuevo préstamo
+    </button>
+  </app-page-header>
 
   <!-- Totales -->
   <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error" aria-label="Resumen de préstamos">
-    <div class="erp-card erp-stat">
+    <app-card class="erp-stat">
       <span class="erp-overline">Por cobrar</span>
       <span class="erp-stat-value erp-num">{{ totales.saldoPorCobrar | moneda }}</span>
       <span class="erp-stat-hint">{{ totales.pendientes }} {{ totales.pendientes === 1 ? 'préstamo pendiente' : 'préstamos pendientes' }}</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Aprobaciones por resolver</span>
       <span class="erp-stat-value erp-num" [class.erp-loss]="totales.aprobacionesPendientes > 0">{{ totales.aprobacionesPendientes }}</span>
       <span class="erp-stat-hint">Se resuelven desde el detalle de cada préstamo</span>
-    </div>
-    <div class="erp-card erp-stat">
+    </app-card>
+    <app-card class="erp-stat">
       <span class="erp-overline">Pagados</span>
       <span class="erp-stat-value erp-num erp-gain">{{ totales.pagados }}</span>
       <span class="erp-stat-hint">de {{ prestamos.length }} en total</span>
-    </div>
+    </app-card>
   </div>
 
   <!-- Filtros -->
   <form class="erp-toolbar" [formGroup]="filtros" role="search" aria-label="Filtrar préstamos" (submit)="$event.preventDefault()">
     <div class="erp-field filtro-texto">
       <label class="erp-label" for="pr-texto">Buscar</label>
-      <input id="pr-texto" class="erp-input" type="search" formControlName="texto" placeholder="Concepto o comentario" autocomplete="off" />
+      <input id="pr-texto" appInput type="search" formControlName="texto" placeholder="Concepto o comentario" autocomplete="off" />
     </div>
     <div class="erp-field">
       <label class="erp-label" for="pr-estado">Estado</label>
-      <select id="pr-estado" class="erp-select" formControlName="estado">
+      <select id="pr-estado" appInput formControlName="estado">
         <option value="">Todos</option>
         <option value="Pendiente">Pendiente</option>
         <option value="Pagado">Pagado</option>
@@ -56,7 +50,7 @@
     </div>
     <div class="erp-field">
       <label class="erp-label" for="pr-corte">Corte</label>
-      <select id="pr-corte" class="erp-select" formControlName="corte">
+      <select id="pr-corte" appInput formControlName="corte">
         <option value="">Todos</option>
         <option value="sin">Sin corte</option>
         <option *ngFor="let c of cortes" [value]="c.id">{{ c.concepto }}</option>
@@ -64,44 +58,41 @@
     </div>
     <div class="erp-field">
       <label class="erp-label" for="pr-desde">Cobro desde</label>
-      <input id="pr-desde" class="erp-input" type="date" formControlName="desde" />
+      <input id="pr-desde" appInput type="date" formControlName="desde" />
     </div>
     <div class="erp-field">
       <label class="erp-label" for="pr-hasta">Cobro hasta</label>
-      <input id="pr-hasta" class="erp-input" type="date" formControlName="hasta" />
+      <input id="pr-hasta" appInput type="date" formControlName="hasta" />
     </div>
-    <button type="button" class="erp-btn erp-btn--ghost" *ngIf="hayFiltros" (click)="reiniciarFiltros()">
+    <button type="button" appButton="ghost" *ngIf="hayFiltros" (click)="reiniciarFiltros()">
       <i class="material-icons" aria-hidden="true">filter_alt_off</i>
       Quitar filtros
     </button>
   </form>
 
   <!-- Carga -->
-  <div class="erp-card" *ngIf="cargando" aria-busy="true" aria-label="Cargando préstamos">
+  <app-card *ngIf="cargando" aria-busy="true" aria-label="Cargando préstamos">
     <div class="erp-skeleton" style="height: 44px; margin-bottom: 12px" *ngFor="let _ of [1, 2, 3, 4, 5]"></div>
-  </div>
+  </app-card>
 
   <!-- Error -->
   <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && error">
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       <strong>No se pudo cargar.</strong> {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
   <!-- Vacío -->
-  <div class="erp-card erp-empty" *ngIf="!cargando && !error && visibles.length === 0">
-    <i class="material-icons" aria-hidden="true">account_balance_wallet</i>
-    <h2>{{ prestamos.length === 0 ? 'Aún no hay préstamos' : 'Ningún préstamo coincide' }}</h2>
-    <p>{{ prestamos.length === 0 ? 'Registra el primero con el botón «Nuevo préstamo».' : 'Prueba quitando algún filtro.' }}</p>
-    <button type="button" class="erp-btn erp-btn--secondary" *ngIf="hayFiltros" (click)="reiniciarFiltros()">Quitar filtros</button>
-  </div>
+  <app-empty-state *ngIf="!cargando && !error && visibles.length === 0" icon="account_balance_wallet" titulo="{{ prestamos.length === 0 ? 'Aún no hay préstamos' : 'Ningún préstamo coincide' }}" descripcion="{{ prestamos.length === 0 ? 'Registra el primero con el botón «Nuevo préstamo».' : 'Prueba quitando algún filtro.' }}">
+    <button type="button" appButton="secondary" *ngIf="hayFiltros" (click)="reiniciarFiltros()">Quitar filtros</button>
+  </app-empty-state>
 
   <!-- Tabla -->
-  <div class="erp-card tabla-card" *ngIf="!cargando && !error && visibles.length > 0">
+  <app-card class="tabla-card" *ngIf="!cargando && !error && visibles.length > 0">
     <div class="erp-table-wrap">
-      <table class="erp-table erp-table--stack erp-table--compact">
+      <table appTable compact stack>
         <caption class="erp-sr-only">Préstamos ({{ visibles.length }})</caption>
         <thead>
           <tr>
@@ -125,13 +116,13 @@
             <td data-label="Saldo" class="num">{{ saldo(p) | moneda }}</td>
             <td data-label="Cobro y corte">{{ p.fechaCobro | fechaCorta }}<span class="sub">{{ nombreCorte(p.corteId) }}</span></td>
             <td data-label="Estado">
-              <span class="erp-badge erp-badge--{{ claseEstado(p.estado) }}">{{ p.estado }}</span>
+              <app-badge class="claseEstado(p.estado) }}">{{ p.estado }}</app-badge>
             </td>
             <td data-label="Aprobaciones">
               <ng-container *ngIf="resumirAprobaciones(p) as r">
-                <span class="erp-badge erp-badge--warning" *ngIf="r.pendientes > 0">{{ r.pendientes }} pendiente{{ r.pendientes === 1 ? '' : 's' }}</span>
-                <span class="erp-badge erp-badge--danger" *ngIf="r.pendientes === 0 && r.rechazadas > 0">{{ r.rechazadas }} rechazada{{ r.rechazadas === 1 ? '' : 's' }}</span>
-                <span class="erp-badge erp-badge--success" *ngIf="r.pendientes === 0 && r.rechazadas === 0 && r.total > 0">Aprobado</span>
+                <app-badge tone="warning" *ngIf="r.pendientes > 0">{{ r.pendientes }} pendiente{{ r.pendientes === 1 ? '' : 's' }}</app-badge>
+                <app-badge tone="danger" *ngIf="r.pendientes === 0 && r.rechazadas > 0">{{ r.rechazadas }} rechazada{{ r.rechazadas === 1 ? '' : 's' }}</app-badge>
+                <app-badge tone="success" *ngIf="r.pendientes === 0 && r.rechazadas === 0 && r.total > 0">Aprobado</app-badge>
                 <span class="erp-muted" *ngIf="r.total === 0">—</span>
               </ng-container>
             </td>
@@ -141,9 +132,9 @@
     </div>
     <div class="paginacion">
       <span class="erp-muted">Mostrando {{ filasMostradas.length }} de {{ visibles.length }}</span>
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" *ngIf="filasMostradas.length < visibles.length" (click)="verMas()">Ver más</button>
+      <button type="button" appButton="secondary" size="sm" *ngIf="filasMostradas.length < visibles.length" (click)="verMas()">Ver más</button>
     </div>
-  </div>
+  </app-card>
 </section>
 
 <app-modal [modalId]="modalId">

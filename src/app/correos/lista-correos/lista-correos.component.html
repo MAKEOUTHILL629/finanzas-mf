@@ -1,16 +1,10 @@
 <section class="erp-page" aria-labelledby="titulo-correos">
-  <header class="erp-header">
-    <div>
-      <h1 id="titulo-correos">Correos del banco</h1>
-      <p class="erp-subtitle">Los correos de Bancolombia llegan solos y se convierten en movimientos. Aquí revisas los que necesitan tu decisión.</p>
-    </div>
-    <div class="erp-actions">
-      <button type="button" class="erp-btn erp-btn--ghost" (click)="cargar()" [disabled]="cargando">
-        <i class="material-icons" aria-hidden="true">refresh</i>
-        Actualizar
-      </button>
-    </div>
-  </header>
+  <app-page-header titulo="Correos del banco" subtitulo="Los correos de Bancolombia llegan solos y se convierten en movimientos. Aquí revisas los que necesitan tu decisión." idTitulo="titulo-correos">
+    <button type="button" appButton="ghost" (click)="cargar()" [disabled]="cargando">
+      <i class="material-icons" aria-hidden="true">refresh</i>
+      Actualizar
+    </button>
+  </app-page-header>
 
   <app-productos-detectados (cambiado)="cargar()" (reprocesar)="abrirReproceso()"></app-productos-detectados>
 
@@ -28,8 +22,8 @@
       <strong id="descartar-titulo">¿Descartar «{{ confirmandoDescarte.asunto }}»?</strong>
       <p class="aviso-texto">{{ efectoDeDescartar(confirmandoDescarte) }}</p>
       <div class="erp-actions">
-        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" (click)="confirmarDescarte()" [disabled]="trabajando">{{ trabajando ? 'Descartando…' : 'Sí, descartar' }}</button>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="cancelarDescarte()" [disabled]="trabajando">Cancelar</button>
+        <button type="button" appButton="danger" size="sm" (click)="confirmarDescarte()" [disabled]="trabajando">{{ trabajando ? 'Descartando…' : 'Sí, descartar' }}</button>
+        <button type="button" appButton="ghost" size="sm" (click)="cancelarDescarte()" [disabled]="trabajando">Cancelar</button>
       </div>
     </div>
   </div>
@@ -44,7 +38,7 @@
     <i class="material-icons" aria-hidden="true">error</i>
     <div>
       {{ error }}
-      <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+      <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
     </div>
   </div>
 
@@ -61,7 +55,7 @@
           <h2>{{ vista(n).comercio || n.asunto }}</h2>
           <span class="erp-muted">{{ n.fecha_correo | date: 'dd/MM/yyyy HH:mm' }}<ng-container *ngIf="vista(n).tipo"> · {{ vista(n).tipo }}<ng-container *ngIf="vista(n).metodo"> · {{ vista(n).metodo }}</ng-container></ng-container></span>
         </div>
-        <span class="erp-badge erp-badge--{{ claseEstado(n.estado_procesamiento) }}">{{ etiquetaEstado(n.estado_procesamiento) }}</span>
+        <app-badge class="claseEstado(n.estado_procesamiento) }}">{{ etiquetaEstado(n.estado_procesamiento) }}</app-badge>
       </header>
 
       <div class="correo-monto">
@@ -71,11 +65,11 @@
       </div>
 
       <div class="correo-marcas" *ngIf="vinculo(n.vinculo, vista(n).motivo) as v">
-        <span class="erp-badge erp-badge--{{ v.clase === 'neutral' ? '' : v.clase }}"><i class="material-icons" aria-hidden="true">{{ v.icono }}</i>{{ v.texto }}</span>
-        <span class="erp-badge" *ngIf="nombrePersona(n.persona_id) as quien"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</span>
+        <app-badge class="v.clase === 'neutral' ? '' : v.clase }}"><i class="material-icons" aria-hidden="true">{{ v.icono }}</i>{{ v.texto }}</app-badge>
+        <app-badge *ngIf="nombrePersona(n.persona_id) as quien"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</app-badge>
       </div>
       <div class="correo-marcas" *ngIf="!n.vinculo && nombrePersona(n.persona_id) as quien">
-        <span class="erp-badge"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</span>
+        <app-badge><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</app-badge>
       </div>
 
       <p class="correo-motivo erp-muted" *ngIf="explicar(vista(n).motivo) as m">{{ m }}</p>
@@ -84,19 +78,19 @@
       </p>
 
       <footer class="correo-acciones">
-        <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="n.compra_credito_generada_id" [routerLink]="['/compra-credito-detalle', n.compra_credito_generada_id]">
+        <a appButton="ghost" size="sm" *ngIf="n.compra_credito_generada_id" [routerLink]="['/compra-credito-detalle', n.compra_credito_generada_id]">
           <i class="material-icons" aria-hidden="true">shopping_cart</i>Ver compra
         </a>
-        <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="n.transaccion_generada_id" routerLink="/transacciones">
+        <a appButton="ghost" size="sm" *ngIf="n.transaccion_generada_id" routerLink="/transacciones">
           <i class="material-icons" aria-hidden="true">receipt_long</i>Ver transacciones
         </a>
-        <a class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="vista(n).linkCorreo" [href]="vista(n).linkCorreo" target="_blank" rel="noopener noreferrer">
+        <a appButton="ghost" size="sm" *ngIf="vista(n).linkCorreo" [href]="vista(n).linkCorreo" target="_blank" rel="noopener noreferrer">
           <i class="material-icons" aria-hidden="true">open_in_new</i>Abrir correo
         </a>
-        <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" *ngIf="deshacer(n)" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">undo</i>Deshacer</button>
+        <button type="button" appButton="ghost" size="sm" *ngIf="deshacer(n)" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">undo</i>Deshacer</button>
         <ng-container *ngIf="n.estado_procesamiento === 'PENDIENTE'">
-          <button type="button" class="erp-btn erp-btn--ghost erp-btn--sm" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">delete_outline</i>Descartar</button>
-          <button type="button" class="erp-btn erp-btn--primary erp-btn--sm" (click)="abrirConciliar(n)"><i class="material-icons" aria-hidden="true">task_alt</i>Conciliar</button>
+          <button type="button" appButton="ghost" size="sm" (click)="pedirDescarte(n)"><i class="material-icons" aria-hidden="true">delete_outline</i>Descartar</button>
+          <button type="button" appButton="primary" size="sm" (click)="abrirConciliar(n)"><i class="material-icons" aria-hidden="true">task_alt</i>Conciliar</button>
         </ng-container>
       </footer>
     </article>

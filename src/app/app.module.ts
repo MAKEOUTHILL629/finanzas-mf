@@ -26,6 +26,15 @@ import { CsrfInterceptor } from './core/interceptors/csrf-interceptor.intercepto
 import { MenuComponent } from './shared/menu/menu.component';
 import { ModalComponent } from './shared/modal/modal.component';
 import { SelectComponent } from './shared/ui/select/select.component';
+import { AppLayoutComponent } from './shared/ui/layout/app-layout.component';
+import { ThemeToggleComponent } from './shared/ui/theme-toggle/theme-toggle.component';
+import { CardComponent } from './shared/ui/card/card.component';
+import { ButtonComponent } from './shared/ui/button/button.component';
+import { BadgeComponent } from './shared/ui/badge/badge.component';
+import { FieldComponent, InputDirective } from './shared/ui/field/field.component';
+import { TableDirective } from './shared/ui/table/table.directive';
+import { PageHeaderComponent } from './shared/ui/page-header/page-header.component';
+import { EmptyStateComponent } from './shared/ui/empty-state/empty-state.component';
 import { FormatoFechaPipe } from './pipes/formato-fecha.pipe';
 import { FormatoTarjetaPipe } from './pipes/formato-tarjeta.pipe';
 import { FormatoPersonaPipe } from './pipes/formato-persona.pipe';
@@ -113,10 +122,25 @@ import { FormularioCruceComponent } from './deudas/formulario-cruce/formulario-c
 /**
  * Agrupación de declaraciones por dominio de la aplicación
  */
-const SHARED_DECLARATIONS = [
-  MenuComponent,
+/** Biblioteca de componentes base del sistema de diseño (shared/ui): las pantallas solo usan estos. */
+const UI_DECLARATIONS = [
+  AppLayoutComponent,
+  ThemeToggleComponent,
+  CardComponent,
+  ButtonComponent,
+  BadgeComponent,
+  FieldComponent,
+  InputDirective,
+  TableDirective,
+  PageHeaderComponent,
+  EmptyStateComponent,
   ModalComponent,
-  SelectComponent,
+  SelectComponent
+];
+
+const SHARED_DECLARATIONS = [
+  ...UI_DECLARATIONS,
+  MenuComponent,
   FormatoFechaPipe,
   FormatoTarjetaPipe,
   FormatoPersonaPipe,

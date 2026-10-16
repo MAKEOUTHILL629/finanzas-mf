@@ -42,12 +42,12 @@
 .aporte-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .aporte-nota { font-size: var(--text-caption); max-width: 48ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aporte-acciones { display: flex; gap: 2px; }
-.peligro:hover { color: var(--red-danger, #ff453a); }
+.peligro:hover { color: var(--red-danger, var(--red-danger)); }
 
-.chip--efectivo { background: var(--success-bg, rgba(52, 199, 89, 0.14)); color: var(--green-success); }
-.chip--transferencia { background: var(--info-bg, rgba(10, 132, 255, 0.14)); color: var(--text-link); }
-.chip--cruce { background: var(--warning-bg, rgba(255, 159, 10, 0.16)); color: var(--orange-warning, #ff9f0a); }
-.chip--favor { background: var(--info-bg, rgba(94, 92, 230, 0.16)); color: var(--chart-5, #5e5ce6); }
+.chip--efectivo { background: var(--success-bg, color-mix(in srgb, var(--green-success) 14%, transparent)); color: var(--green-success); }
+.chip--transferencia { background: var(--info-bg, color-mix(in srgb, var(--brand-blue) 14%, transparent)); color: var(--text-link); }
+.chip--cruce { background: var(--warning-bg, color-mix(in srgb, var(--amber-warning) 16%, transparent)); color: var(--orange-warning, var(--amber-warning)); }
+.chip--favor { background: var(--info-bg, color-mix(in srgb, var(--system-indigo) 16%, transparent)); color: var(--chart-5, var(--system-indigo)); }
 
 .desglose { margin-top: var(--space-1); }
 .metodo-icono { font-size: 18px; vertical-align: middle; margin-right: 6px; color: var(--text-secondary); }

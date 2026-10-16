@@ -1,3 +1,4 @@
+import { token } from '../shared/design-tokens';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ChartConfiguration } from 'chart.js';
 import { Subject } from 'rxjs';
@@ -17,16 +18,23 @@ export interface PiezaDesembolso {
   color: string;
 }
 
-/** Colores de datos del sistema de diseño (`--chart-*` son universales, no cambian con el tema). */
-const COLORES = { egresos: '#FF5630', tarjetas: '#0071E3', recurrentes: '#5243AA', ingresos: '#36B37E', terceros: '#00A3BF', neto: '#FFAB00' };
+/** Colores de datos del sistema de diseño (`--chart-*`): se leen del tema vigente, no se escriben a mano. */
+const colores = () => ({
+  egresos: token('--chart-4', '#FF3B30'),
+  tarjetas: token('--chart-1', '#007AFF'),
+  recurrentes: token('--chart-3', '#5856D6'),
+  ingresos: token('--chart-6', '#34C759'),
+  terceros: token('--chart-2', '#32ADE6'),
+  neto: token('--chart-5', '#FF9500'),
+});
 
 /** Las tres partes del desembolso bruto, solo las que tienen valor. */
 export function piezasDeDesembolso(f: FlujoCaja): PiezaDesembolso[] {
   return (
     [
-      { clave: 'egresos', etiqueta: 'Egresos directos', valor: Number(f.total_egresos_directos), color: COLORES.egresos },
-      { clave: 'tarjetas', etiqueta: 'Cuotas de tarjetas', valor: Number(f.total_tarjetas), color: COLORES.tarjetas },
-      { clave: 'recurrentes', etiqueta: 'Gastos recurrentes', valor: Number(f.total_esperado_recurrentes), color: COLORES.recurrentes },
+      { clave: 'egresos', etiqueta: 'Egresos directos', valor: Number(f.total_egresos_directos), color: colores().egresos },
+      { clave: 'tarjetas', etiqueta: 'Cuotas de tarjetas', valor: Number(f.total_tarjetas), color: colores().tarjetas },
+      { clave: 'recurrentes', etiqueta: 'Gastos recurrentes', valor: Number(f.total_esperado_recurrentes), color: colores().recurrentes },
     ] as PiezaDesembolso[]
   ).filter((p) => p.valor > 0);
 }
@@ -55,8 +63,8 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
   barrasData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [{ data: [] }] };
   barrasOpciones: ChartConfiguration<'bar'>['options'] = {};
 
-  private colorTexto = '#9CA3AF';
-  private colorRejilla = 'rgba(255,255,255,0.08)';
+  private colorTexto = token('--text-secondary', '#86868B');
+  private colorRejilla = token('--divider', 'rgba(0,0,0,0.08)');
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -66,8 +74,9 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.themeService.isDarkMode$.pipe(takeUntil(this.destroy$)).subscribe((oscuro) => {
-      this.colorTexto = oscuro ? '#9CA3AF' : '#6B7280';
-      this.colorRejilla = oscuro ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+      // el servicio de tema publica el cambio cuando ya aplicó las variables: se leen los colores del tema nuevo
+      this.colorTexto = token('--text-secondary', oscuro ? '#A1A1A6' : '#86868B');
+      this.colorRejilla = token('--divider', oscuro ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)');
       if (this.flujo) this.construirGraficos(this.flujo);
     });
     this.cargar();
@@ -150,7 +159,7 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
       datasets: [
         {
           data: [Number(f.total_ingresos), Number(f.desembolso_bruto_mes), Number(f.total_por_cobrar_terceros), Number(f.gasto_neto_real_tuyo)],
-          backgroundColor: [COLORES.ingresos, COLORES.egresos, COLORES.terceros, COLORES.neto],
+          backgroundColor: [colores().ingresos, colores().egresos, colores().terceros, colores().neto],
           borderRadius: 8,
           maxBarThickness: 56,
         },

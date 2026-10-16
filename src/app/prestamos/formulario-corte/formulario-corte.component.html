@@ -9,32 +9,31 @@
   <div class="erp-form-grid">
     <div class="erp-field erp-span-2">
       <label class="erp-label" for="co-concepto">Concepto<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="co-concepto" class="erp-input" type="text" formControlName="concepto" maxlength="255" autocomplete="off"
-             placeholder="Ej. Corte quincena 1 de noviembre" [attr.aria-invalid]="campoInvalido('concepto')" />
+      <input id="co-concepto" appInput type="text" formControlName="concepto" maxlength="255" autocomplete="off" placeholder="Ej. Corte quincena 1 de noviembre" [attr.aria-invalid]="campoInvalido('concepto')" />
       <p class="erp-field-error" *ngIf="campoInvalido('concepto')">Escribe un concepto.</p>
     </div>
 
     <div class="erp-field">
       <label class="erp-label" for="co-inicio">Inicio<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="co-inicio" class="erp-input" type="date" formControlName="fechaInicio" />
+      <input id="co-inicio" appInput type="date" formControlName="fechaInicio" />
     </div>
 
     <div class="erp-field">
       <label class="erp-label" for="co-fin">Final<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="co-fin" class="erp-input" type="date" formControlName="fechaFinal" />
+      <input id="co-fin" appInput type="date" formControlName="fechaFinal" />
       <p class="erp-field-error" *ngIf="form.errors?.['fechasInvertidas']">La fecha final no puede ser anterior a la de inicio.</p>
     </div>
 
     <div class="erp-field erp-span-2">
       <label class="erp-label" for="co-estado">Estado</label>
-      <select id="co-estado" class="erp-select" formControlName="estado">
+      <select id="co-estado" appInput formControlName="estado">
         <option *ngFor="let e of estados" [value]="e.valor">{{ e.etiqueta }}</option>
       </select>
     </div>
   </div>
 
   <div class="erp-form-actions">
-    <button type="button" class="erp-btn erp-btn--ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
-    <button type="submit" class="erp-btn erp-btn--primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear corte' }}</button>
+    <button type="button" appButton="ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button type="submit" appButton="primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Crear corte' }}</button>
   </div>
 </form>

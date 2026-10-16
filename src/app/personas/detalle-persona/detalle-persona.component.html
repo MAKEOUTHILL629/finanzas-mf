@@ -4,7 +4,7 @@
   <i class="material-icons" aria-hidden="true">error</i>
   <div>
     {{ error }}
-    <button type="button" class="erp-btn erp-btn--secondary erp-btn--sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
+    <button type="button" appButton="secondary" size="sm" style="margin-left: 12px" (click)="cargar()">Reintentar</button>
   </div>
 </div>
 
@@ -61,7 +61,7 @@
       </button>
 
       <div class="erp-table-wrap" [id]="'tarjeta-' + personaId + '-' + claveTarjeta(t)" *ngIf="estaAbierta(t)">
-        <table class="erp-table erp-table--stack erp-table--compact">
+        <table appTable compact stack>
           <caption class="erp-sr-only">Compras con {{ nombreTarjeta(t) }} que le tocan a {{ d.persona.nombre }}</caption>
           <thead>
             <tr>
@@ -151,6 +151,6 @@
   </section>
 
   <p class="pie">
-    <a class="erp-btn erp-btn--ghost erp-btn--sm" routerLink="/liquidacion"><i class="material-icons" aria-hidden="true">fact_check</i>Ver liquidación completa</a>
+    <a appButton="ghost" size="sm" routerLink="/liquidacion"><i class="material-icons" aria-hidden="true">fact_check</i>Ver liquidación completa</a>
   </p>
 </div>
