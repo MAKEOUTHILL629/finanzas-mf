@@ -1,17 +1,8 @@
-<div class="sp" [class.sp--cargando]="cargandoSinDatos" [class.sp--invalido]="invalido">
-  <select appInput [id]="inputId" [disabled]="deshabilitado || cargandoSinDatos || (sinOpciones && !valor)" [attr.aria-invalid]="invalido ? 'true' : null" [attr.aria-label]="ariaLabel" [attr.aria-describedby]="ariaDescribedby" [attr.aria-busy]="cargandoSinDatos ? 'true' : null" (change)="alCambiar($event)" (blur)="alSalir()">
-    <option value="" [selected]="valor === null" [disabled]="!permitirVacio && opciones.length > 0">{{ cargandoSinDatos ? 'Cargando…' : sinOpciones ? 'Sin opciones' : placeholder }}</option>
-    <ng-container *ngFor="let g of grupos">
-      <optgroup [label]="g.nombre" *ngIf="g.nombre; else sinGrupo">
-        <option *ngFor="let o of g.opciones; trackBy: trackOpcion" [value]="o.valor" [selected]="esSeleccionada(o)">{{ o.etiqueta }}{{ o.detalle ? ' — ' + o.detalle : '' }}</option>
-      </optgroup>
-      <ng-template #sinGrupo>
-        <option *ngFor="let o of g.opciones; trackBy: trackOpcion" [value]="o.valor" [selected]="esSeleccionada(o)">{{ o.etiqueta }}{{ o.detalle ? ' — ' + o.detalle : '' }}</option>
-      </ng-template>
-    </ng-container>
-  </select>
-  <span class="sp-esqueleto erp-skeleton" *ngIf="cargandoSinDatos" aria-hidden="true"></span>
-</div>
+<app-searchable-select
+  [opciones]="opciones" [valor]="valor" [inputId]="inputId" [placeholder]="placeholder" [permitirVacio]="permitirVacio" [invalido]="invalido"
+  placeholderBusqueda="Buscar por nombre, *1927, crédito, débito…"
+  [ariaLabel]="ariaLabel" [ariaDescribedby]="ariaDescribedby" [cargando]="cargandoSinDatos" [deshabilitado]="deshabilitado || (sinOpciones && !valor)"
+  (elegido)="alElegir($event)" (tocado)="alSalir()"></app-searchable-select>
 
 <p class="erp-field-error sp-aviso" *ngIf="error" role="alert">
   {{ error }}

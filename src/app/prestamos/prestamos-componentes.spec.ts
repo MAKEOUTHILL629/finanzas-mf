@@ -56,8 +56,10 @@ describe('FormularioPrestamosComponent', () => {
 
   it('propone el corte que contiene hoy y ofrece las personas del catálogo en el selector', () => {
     iniciar([corte(1, '2020-01-01', '2020-01-31', 'PASADO'), corte(9, '2000-01-01', '2999-12-31', 'ACTIVO')]);
-    const opciones = (fixture.nativeElement as HTMLElement).querySelectorAll('#pf-responsable option');
-    expect(Array.from(opciones).map((o) => o.textContent?.trim())).toEqual(['Selecciona una persona', 'Andrés', 'Papá']);
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#pf-responsable')!.click(); // abre el combobox
+    fixture.detectChanges();
+    const opciones = document.querySelectorAll('.ss-opcion-texto'); // la lista del combobox vive en <body>
+    expect(Array.from(opciones).map((o) => o.textContent?.trim())).toEqual(['Andrés', 'Papá']);
     expect(c.form.controls.corteId.value).toBe(9);
   });
 

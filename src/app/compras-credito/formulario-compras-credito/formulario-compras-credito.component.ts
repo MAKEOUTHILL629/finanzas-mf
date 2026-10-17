@@ -1,13 +1,17 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, forkJoin } from 'rxjs';
 import { map, startWith, debounceTime, distinctUntilChanged, takeUntil, finalize } from 'rxjs/operators';
 import { ApiServicesService } from '../../services/api-services.service';
 import { ModalService } from '../../services/modal.service';
-import { ItemPersona, ItemPlasticoCatalogo, ItemTarjeta } from '../../modelos/catalogos';
+import { ItemPersona, ItemPlasticoCatalogo, ItemTarjeta, OpcionSelect } from '../../modelos/catalogos';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
+import { ComercioHabitual, DEFAULTS_VACIOS, DefaultsFormularios } from '../../modelos/sugerencias';
 import { CatalogosService } from '../../services/catalogos.service';
+import { SugerenciasService } from '../../services/sugerencias.service';
+import { hoyIso } from '../../shared/periodo.helper';
+import { GRUPO_ACTIVAS, GRUPO_HISTORICAS } from '../../shared/ui/select/select.helpers';
 import { esCompraRetroactiva, plasticoParaFecha, terminacion, vigenciaLegible } from '../../tarjetas/tarjetas.constants';
 
 @Component({
@@ -27,7 +31,10 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
   // Datos
   concepts: string[] = [];
-  conceptsMap: Map<string, ComprasCredito> = new Map();
+  /** Lo habitual de cada comercio que ya usaste (por el concepto en minúsculas). */
+  private comercios = new Map<string, ComercioHabitual>();
+  /** Lo que el historial sugiere para arrancar (tarjeta, cuotas, persona). */
+  private defaults: DefaultsFormularios = DEFAULTS_VACIOS;
   creditCards: ItemTarjeta[] = [];
   personas: ItemPersona[] = [];
   personasDisponibles: ItemPersona[] = [];
@@ -58,7 +65,8 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private apiService: ApiServicesService,
     private modalService: ModalService,
-    private catalogos: CatalogosService
+    private catalogos: CatalogosService,
+    private sugerencias: SugerenciasService
   ) {}
 
   ngOnInit(): void {
@@ -79,12 +87,9 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
   // ==================== INICIALIZACIÓN ====================
 
+  /** Hoy en hora de Colombia. */
   private getTodayDate(): string {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    return hoyIso();
   }
 
   private initializeForm(): void {
@@ -125,38 +130,60 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   private suscribirCatalogos(): void {
     this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
       this.creditCards = e.datos;
+      this.aplicarTarjetaPorDefecto();
       const currentCardId = this.purchaseForm.get('cardId')?.value;
       if (currentCardId && e.datos.length > 0) this.applyCardInterestRate(Number(currentCardId));
     });
     this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => {
       this.personas = e.datos;
       this.updatePersonasDisponibles();
+      this.aplicarPersonaPorDefecto();
     });
     this.catalogos.asegurar(['tarjetas', 'personas']);
   }
 
+  /**
+   * Comercios que ya usaste (con lo habitual de cada uno) y valores por defecto del historial. Es opcional: si la consulta falla el
+   * formulario queda como siempre, sin sugerencias.
+   */
   private loadConcepts(): void {
     this.isLoadingConcepts = true;
-    this.apiService.get<ComprasCredito[]>('compras-credito')
+    forkJoin([this.sugerencias.comercios(), this.sugerencias.defaults()])
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.isLoadingConcepts = false)
+        finalize(() => (this.isLoadingConcepts = false))
       )
-      .subscribe({
-        next: compras => {
-          this.concepts = Array.from(new Set(
-            compras.map(c => c.concepto?.trim()).filter(c => !!c)
-          )) as string[];
-
-          // Crear mapa para autocompletado inteligente
-          compras.forEach(compra => {
-            if (compra.concepto) {
-              this.conceptsMap.set(compra.concepto.trim(), compra);
-            }
-          });
-        },
-        error: err => { void err; }
+      .subscribe(([comercios, defaults]) => {
+        this.concepts = comercios.map((c) => c.concepto);
+        this.comercios = new Map(comercios.map((c) => [c.concepto.toLowerCase(), c]));
+        this.defaults = defaults;
+        this.aplicarDefaults();
       });
+  }
+
+  // ==================== VALORES POR DEFECTO ====================
+
+  /** Tarjeta, cuotas y persona con los que arranca el formulario: lo que más se usa (nunca pisa lo que el usuario ya eligió). */
+  private aplicarDefaults(): void {
+    const cuotas = this.purchaseForm.get('installments');
+    if (cuotas && !cuotas.dirty && this.defaults.cuotas >= 1) cuotas.setValue(this.defaults.cuotas);
+    this.aplicarTarjetaPorDefecto();
+    this.aplicarPersonaPorDefecto();
+  }
+
+  private aplicarTarjetaPorDefecto(): void {
+    const control = this.purchaseForm?.get('cardId');
+    const id = this.defaults.tarjetaCreditoId;
+    if (!control || control.dirty || control.value || id === null) return;
+    if (this.creditCards.some((t) => t.id === id && t.tipo !== 'DEBITO')) control.setValue(id);
+  }
+
+  /** La persona que se propone como responsable: la última a la que se le asignó una compra o, si no, tú. */
+  private aplicarPersonaPorDefecto(): void {
+    const control = this.responsableForm?.get('personaId');
+    const id = this.defaults.ultimaPersonaCompraId ?? this.defaults.personaPropiaId;
+    if (!control || control.dirty || control.value || id === null || this.responsables.length > 0) return;
+    if (this.personasDisponibles.some((p) => p.id === id)) control.setValue(id);
   }
 
   /** Escucha cambios en la tarjeta seleccionada y auto-rellena el campo de interés */
@@ -186,6 +213,11 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
           this.interestAutoFilled = false;
         }
       });
+
+    // Las cuotas de la compra se reflejan en las que se le asignan al responsable propuesto
+    this.purchaseForm.get('installments')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.sincronizarResponsable());
   }
 
   /** ¿La compra es anterior al plástico activo y la tarjeta tiene plásticos anteriores? Entonces se deja elegir. */
@@ -195,6 +227,26 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
   get plasticosElegibles(): ItemPlasticoCatalogo[] {
     return this.selectedCard?.plasticos ?? [];
+  }
+
+  private opcionesPlasticoCache: { origen: ItemPlasticoCatalogo[]; opciones: OpcionSelect[] } | null = null;
+
+  /** Plásticos de la tarjeta para el selector: «Activas» y «Históricas / Reemplazadas» (se busca por los 4 dígitos). */
+  get opcionesPlastico(): OpcionSelect[] {
+    const origen = this.plasticosElegibles;
+    if (this.opcionesPlasticoCache?.origen !== origen) {
+      this.opcionesPlasticoCache = {
+        origen,
+        opciones: origen.map((p) => ({
+          valor: p.id,
+          etiqueta: terminacion(p.ultimos4),
+          detalle: `${p.esActivo ? 'activo' : 'archivado'} · ${vigenciaLegible(p)}`,
+          busqueda: p.ultimos4,
+          grupo: p.esActivo ? GRUPO_ACTIVAS : GRUPO_HISTORICAS,
+        })),
+      };
+    }
+    return this.opcionesPlasticoCache.opciones;
   }
 
   /** Deja seleccionado el plástico que regía en la fecha de la compra (o nada si no es retroactiva). */
@@ -269,40 +321,35 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       .subscribe(value => {
         const currentConcept = (value || '').trim();
         if (currentConcept && this.concepts.length > 0 && !this.isLoadingConcepts) {
-          this.isNewConcept = !this.concepts.some(c => c.toLowerCase() === currentConcept.toLowerCase());
-
-          // Autocompletado inteligente (búsqueda case-insensitive)
-          if (!this.isNewConcept) {
-            const conceptKey = Array.from(this.conceptsMap.keys())
-              .find(k => k.toLowerCase() === currentConcept.toLowerCase());
-            const compraExistente = conceptKey ? this.conceptsMap.get(conceptKey) : undefined;
-            if (compraExistente) {
-              this.autoFillFromConcept(compraExistente);
-            }
-          }
+          const habitual = this.comercios.get(currentConcept.toLowerCase());
+          this.isNewConcept = !habitual;
+          // Autocompletado inteligente: lo habitual de ese comercio (cuotas, tarjeta, valor, responsable)
+          if (habitual) this.autoFillFromConcept(habitual);
         } else {
           this.isNewConcept = false;
         }
       });
   }
 
-  private autoFillFromConcept(compra: ComprasCredito): void {
+  private autoFillFromConcept(habitual: ComercioHabitual): void {
     const valueControl = this.purchaseForm.get('purchaseValue');
     const installmentsControl = this.purchaseForm.get('installments');
-    const interestControl = this.purchaseForm.get('interest');
     const cardControl = this.purchaseForm.get('cardId');
 
-    if (valueControl && !valueControl.dirty && compra.valorCompra) {
-      valueControl.setValue(this.formatCurrency(compra.valorCompra));
+    if (valueControl && !valueControl.dirty && habitual.ultimoValor) {
+      valueControl.setValue(this.formatCurrency(habitual.ultimoValor));
     }
-    if (installmentsControl && !installmentsControl.dirty && compra.numeroCuotas) {
-      installmentsControl.setValue(compra.numeroCuotas);
+    if (installmentsControl && !installmentsControl.dirty && habitual.cuotas) {
+      installmentsControl.setValue(habitual.cuotas);
     }
-    if (interestControl && !interestControl.dirty && compra.interes !== undefined) {
-      interestControl.setValue(compra.interes);
+    if (cardControl && !cardControl.dirty && habitual.tarjetaId && this.creditCards.some((t) => t.id === habitual.tarjetaId && t.tipo !== 'DEBITO')) {
+      cardControl.setValue(habitual.tarjetaId);
     }
-    if (cardControl && !cardControl.dirty && compra.tarjeta) {
-      cardControl.setValue(compra.tarjeta);
+    // el responsable habitual de ese comercio se deja elegido (sin agregarlo: el usuario confirma con «Agregar»)
+    const persona = this.responsableForm.get('personaId');
+    if (persona && !persona.dirty && habitual.personaId && this.responsables.length === 0 && this.personasDisponibles.some((p) => p.id === habitual.personaId)) {
+      persona.setValue(habitual.personaId);
+      this.showResponsablesSection = true;
     }
   }
 
@@ -329,6 +376,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     if (numericValue === '') {
       inputElement.value = '';
       this.purchaseForm.get('purchaseValue')?.patchValue('', { emitEvent: false });
+      this.sincronizarResponsable();
       return;
     }
 
@@ -336,6 +384,19 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
 
     inputElement.value = formatted;
     this.purchaseForm.get('purchaseValue')?.patchValue(formatted, { emitEvent: false });
+    this.sincronizarResponsable();
+  }
+
+  /**
+   * Si ya hay una persona elegida en el formulario de responsable (p. ej. la sugerida), su monto y sus cuotas siguen al valor y a las
+   * cuotas de la compra: se eligió antes de escribir el valor, y sin esto «Agregar» guardaría $0.
+   */
+  private sincronizarResponsable(): void {
+    if (!this.responsableForm?.get('personaId')?.value) return;
+    const porcentaje = this.responsableForm.get('porcentajePago')?.value;
+    if (porcentaje !== null && porcentaje !== undefined && porcentaje !== '') this.updateCantidadPago(Number(porcentaje));
+    const cuotas = this.responsableForm.get('cantidadCuotas');
+    if (cuotas && !cuotas.dirty) cuotas.setValue(this.purchaseForm.get('installments')?.value || 1, { emitEvent: false });
   }
 
   handleInterestInput(event: Event): void {
@@ -582,6 +643,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     // el valor de la compra anterior si no se resetea explícitamente)
     this.calcularPorcentajeRestante();
     this.updatePersonasDisponibles();
+    this.sugerencias.invalidar(); // la compra recién guardada ya cuenta para lo habitual
     this.loadConcepts();
   }
 

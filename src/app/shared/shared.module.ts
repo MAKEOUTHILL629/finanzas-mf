@@ -16,6 +16,7 @@ import { EmptyStateComponent } from './ui/empty-state/empty-state.component';
 import { FieldComponent, InputDirective } from './ui/field/field.component';
 import { LogoComponent } from './ui/logo/logo.component';
 import { PageHeaderComponent } from './ui/page-header/page-header.component';
+import { SearchableSelectComponent } from './ui/searchable-select/searchable-select.component';
 import { SelectComponent } from './ui/select/select.component';
 import { SelectProductoComponent } from './ui/select-producto/select-producto.component';
 import { SkeletonComponent } from './ui/skeleton/skeleton.component';
@@ -35,6 +36,7 @@ const UI = [
   LogoComponent,
   ModalComponent,
   PageHeaderComponent,
+  SearchableSelectComponent,
   SelectComponent,
   SelectProductoComponent,
   SkeletonComponent,

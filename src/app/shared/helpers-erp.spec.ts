@@ -55,10 +55,16 @@ describe('periodo.helper', () => {
     expect(finDePeriodo('2026-12')).toBe('2026-12-31');
   });
 
-  it('periodoActual y hoyIso usan el calendario local', () => {
-    const d = new Date(2026, 9, 5, 23, 30);
-    expect(periodoActual(d)).toBe('2026-10');
+  it('periodoActual y hoyIso usan la hora de Colombia, sin importar el huso del navegador', () => {
+    // 05/10/2026 23:30 en Bogotá (UTC-5) = 06/10 04:30 UTC: en un servidor en UTC ya sería «6 de octubre»
+    const d = new Date('2026-10-06T04:30:00Z');
     expect(hoyIso(d)).toBe('2026-10-05');
+    expect(periodoActual(d)).toBe('2026-10');
+    // cruce de mes y de año: 31/12 22:00 en Bogotá = 01/01 03:00 UTC
+    expect(hoyIso(new Date('2027-01-01T03:00:00Z'))).toBe('2026-12-31');
+    expect(periodoActual(new Date('2027-01-01T03:00:00Z'))).toBe('2026-12');
+    // y a las 05:00 UTC ya es el día siguiente en Bogotá
+    expect(hoyIso(new Date('2027-01-01T05:00:00Z'))).toBe('2027-01-01');
   });
 });
 

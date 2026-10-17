@@ -1,8 +1,11 @@
-import { TestBed } from '@angular/core/testing';
+import { Provider } from '@angular/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComercioHabitual } from '../modelos/sugerencias';
 import { Transaccion } from '../modelos/erp';
 import { ModalService } from '../services/modal.service';
+import { desdeDatetimeLocalBogota, hoyIso } from '../shared/periodo.helper';
 import { ToastService } from '../shared/toast/toast.service';
-import { API, categoriaItem, configurarTestBed, cuentaItem, errorHttp, esperar, http, responderCatalogos, tarjetaItem, verificarHttp } from '../testing/erp-testing';
+import { API, categoriaItem, configurarTestBed, cuentaItem, errorHttp, esperar, http, responderCatalogos, sugerenciasDe, tarjetaItem, verificarHttp } from '../testing/erp-testing';
 import {
   FormularioTransaccionComponent,
   aDatetimeLocal,
@@ -63,8 +66,19 @@ describe('transacciones.constants', () => {
 describe('formulario de transacción: construcción de cuerpos', () => {
   const base = valoresDeTransaccion(tx());
 
-  it('aDatetimeLocal usa la hora local sin segundos', () => {
-    expect(aDatetimeLocal(new Date(2026, 9, 5, 8, 7))).toBe('2026-10-05T08:07');
+  it('aDatetimeLocal usa la hora de Colombia sin segundos, sin importar el huso del navegador', () => {
+    expect(aDatetimeLocal(new Date('2026-10-05T13:07:00Z'))).toBe('2026-10-05T08:07');
+    expect(aDatetimeLocal(new Date('2026-10-06T04:30:00Z'))).toBe('2026-10-05T23:30'); // el día todavía es el 5 en Bogotá
+    expect(aDatetimeLocal(new Date('2027-01-01T05:00:00Z'))).toBe('2027-01-01T00:00'); // medianoche: «00», no «24»
+  });
+
+  it('lo que se escribe en el formulario se entiende como hora de Colombia al enviarlo y al comparar', () => {
+    expect(desdeDatetimeLocalBogota('2026-10-05T08:07').toISOString()).toBe('2026-10-05T13:07:00.000Z');
+    const original = tx({ fecha_transaccion: '2026-10-05T15:30:00.000Z' });
+    const v = valoresDeTransaccion(original);
+    expect(v.fechaTransaccion).toBe('2026-10-05T10:30');
+    expect(calcularCambiosTransaccion(original, v)).toEqual({}); // sin tocar la fecha no hay cambio
+    expect(calcularCambiosTransaccion(original, { ...v, fechaTransaccion: '2026-10-05T11:00' })).toEqual({ fechaTransaccion: '2026-10-05T16:00:00.000Z' });
   });
 
   it('el alta solo incluye las referencias que el tipo admite', () => {
@@ -85,7 +99,7 @@ describe('formulario de transacción: construcción de cuerpos', () => {
   it('moneda extranjera envía la tasa; la fecha viaja en ISO UTC', () => {
     const usd = construirAlta({ ...base, monedaOriginal: 'usd', montoOriginal: '49.99', tasaCambio: 4150.1234 });
     expect(usd).toEqual(jasmine.objectContaining({ monedaOriginal: 'USD', montoOriginal: '49.99', tasaCambio: '4150.1234' }));
-    expect(usd.fechaTransaccion).toBe(new Date(base.fechaTransaccion).toISOString());
+    expect(usd.fechaTransaccion).toBe('2026-10-05T15:30:00.000Z'); // 10:30 en Bogotá
   });
 
   it('notas vacías no se envían; las notas con texto sí (recortadas)', () => {
@@ -108,14 +122,92 @@ describe('formulario de transacción: construcción de cuerpos', () => {
 describe('FormularioTransaccionComponent', () => {
   afterEach(() => verificarHttp());
 
-  function crear(transaccion: Transaccion | null = null) {
-    configurarTestBed([FormularioTransaccionComponent]);
+  function crear(transaccion: Transaccion | null = null, providers: Provider[] = []) {
+    TestBed.resetTestingModule();
+    configurarTestBed([FormularioTransaccionComponent], providers);
     const fixture = TestBed.createComponent(FormularioTransaccionComponent);
     fixture.componentRef.setInput('transaccion', transaccion);
     fixture.detectChanges();
     responderCatalogos({ cuentas: [cuenta(3), cuenta(7)], categorias: [categoria(5, 'Alimentación')], tarjetas: [tarjetaItem(4, 'Visa', { descripcion: 'Oro', nombre: 'Visa · Oro' })] });
     return fixture.componentInstance;
   }
+
+  describe('valores por defecto inteligentes', () => {
+    const comercio = (extra: Partial<ComercioHabitual> = {}): ComercioHabitual => ({
+      concepto: 'Mercado Éxito', veces: 9, ultimaFecha: '2026-10-01', cuotas: null, ultimoValor: null, tarjetaId: null, categoriaId: 5, cuentaId: 7, personaId: null, ...extra,
+    });
+
+    it('la fecha y hora de arranque son las de Colombia', () => {
+      const c = crear();
+      const fecha = c.form.controls.fechaTransaccion.value as string;
+      expect(fecha.slice(0, 10)).toBe(hoyIso());
+      expect(Math.abs(desdeDatetimeLocalBogota(fecha).getTime() - Date.now())).toBeLessThan(120_000); // el «ahora» de Colombia, a lo sumo 2 minutos de diferencia
+    });
+
+    it('sin historial el formulario arranca vacío', () => {
+      const c = crear();
+      expect(c.form.controls.cuentaOrigenId.value).toBeNull();
+    });
+
+    it('un egreso arranca en la cuenta que más usas; un ingreso, recibiendo en ella; una transferencia, solo con el origen', () => {
+      const c = crear(null, [sugerenciasDe({ cuentaId: 7 })]);
+      expect(c.form.controls.cuentaOrigenId.value).toBe(7);
+      c.form.patchValue({ tipoTransaccion: 'INGRESO' });
+      expect(c.form.controls.cuentaDestinoId.value).toBe(7);
+      c.form.patchValue({ tipoTransaccion: 'TRANSFERENCIA' });
+      expect(c.form.controls.cuentaOrigenId.value).toBe(7);
+      expect(c.form.controls.cuentaDestinoId.value).toBeNull(); // el destino lo elige el usuario
+    });
+
+    it('un pago de tarjeta propone la tarjeta de crédito que más usas', () => {
+      const c = crear(null, [sugerenciasDe({ cuentaId: 7, tarjetaCreditoId: 4 })]);
+      c.form.patchValue({ tipoTransaccion: 'PAGO_TARJETA' });
+      expect(c.form.controls.tarjetaPagadaId.value).toBe(4);
+      expect(c.form.controls.cuentaOrigenId.value).toBe(7);
+    });
+
+    it('no usa una cuenta que ya no existe ni pisa lo que el usuario eligió', () => {
+      expect(crear(null, [sugerenciasDe({ cuentaId: 999 })]).form.controls.cuentaOrigenId.value).toBeNull();
+      const c = crear(null, [sugerenciasDe({ cuentaId: 7 })]);
+      c.form.controls.cuentaOrigenId.setValue(3);
+      c.form.controls.cuentaOrigenId.markAsDirty();
+      c.form.patchValue({ tipoTransaccion: 'PAGO_TARJETA' });
+      c.form.patchValue({ tipoTransaccion: 'EGRESO' });
+      expect(c.form.controls.cuentaOrigenId.value).toBe(3);
+    });
+
+    it('al editar no se cambia nada por sugerencias', () => {
+      const c = crear(tx({ id: 11, cuenta_origen_id: 3 }), [sugerenciasDe({ cuentaId: 7 })]);
+      expect(c.form.controls.cuentaOrigenId.value).toBe(3);
+    });
+
+    it('el concepto ofrece los comercios que ya usaste y, al escribir uno, propone su categoría y su cuenta habituales', fakeAsync(() => {
+      const c = crear(null, [sugerenciasDe({ cuentaId: 3 }, [comercio(), comercio({ concepto: 'Taxi', categoriaId: null, cuentaId: null })])]);
+      expect(c.comercios.map((x) => x.concepto)).toEqual(['Mercado Éxito', 'Taxi']);
+      c.form.controls.concepto.setValue('MERCADO éxito');
+      tick(400);
+      expect(c.form.controls.categoriaId.value).toBe(5);
+      expect(c.form.controls.cuentaOrigenId.value).toBe(7); // la de ese comercio, no la general
+    }));
+
+    it('lo que ya elegiste no se pisa al escribir un comercio habitual', fakeAsync(() => {
+      const c = crear(null, [sugerenciasDe({ cuentaId: 3 }, [comercio()])]);
+      c.form.controls.categoriaId.setValue(8);
+      c.form.controls.categoriaId.markAsDirty();
+      c.form.controls.concepto.setValue('Mercado Éxito');
+      tick(400);
+      expect(c.form.controls.categoriaId.value).toBe(8);
+    }));
+
+    it('tras registrar, el formulario vuelve a arrancar con lo habitual', () => {
+      const c = crear(null, [sugerenciasDe({ cuentaId: 7 })]);
+      c.form.patchValue({ concepto: 'Mercado', montoOriginal: 1000 });
+      c.enviar();
+      esperar('POST', 'transacciones').flush(tx());
+      expect(c.form.controls.concepto.value).toBe('');
+      expect(c.form.controls.cuentaOrigenId.value).toBe(7);
+    });
+  });
 
   it('un egreso exige la cuenta de origen; al elegirla queda válido', () => {
     const c = crear();

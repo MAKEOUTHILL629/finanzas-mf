@@ -1,10 +1,4 @@
 :host { display: block; min-width: 0; }
-.sp { position: relative; }
-.sp select { width: 100%; }
-/* Esqueleto dentro del campo mientras cargan los catálogos: mismo alto que el select, sin saltos de layout. */
-.sp-esqueleto { position: absolute; inset: 0; border-radius: 12px; pointer-events: none; opacity: 0.55; }
-.sp--cargando select { color: transparent; }
-.sp--invalido select { border-color: var(--border-error); }
 .sp-aviso { margin: 6px 0 0; }
 .sp-enlace {
   margin-left: 6px;
@@ -18,4 +12,3 @@
   cursor: pointer;
 }
 .sp-enlace:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
-@media (prefers-reduced-motion: reduce) { .sp-esqueleto { animation: none; } }

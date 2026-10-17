@@ -6,6 +6,7 @@ import { AporteDiario, PeriodoCarro, PersonaResumen, ResultadoAporteDiario } fro
 import { ItemCuenta, ItemPersona } from '../../modelos/catalogos';
 import { AportesCarroService } from '../../services/aportes-carro.service';
 import { CatalogosService } from '../../services/catalogos.service';
+import { SugerenciasService } from '../../services/sugerencias.service';
 import { sumarMonedas } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { nombrePeriodo, periodoActual, hoyIso } from '../../shared/periodo.helper';
@@ -14,10 +15,12 @@ import {
   LineaFormulario,
   METODOS_APORTE_CARRO,
   OpcionPeriodo,
+  avisoCambioACruce,
   avisoCruce,
   clasificarMetodo,
   construirAporteDiario,
   etiquetaMetodo,
+  metodoTrasCambiarPersona,
   opcionesDePeriodo,
   periodosConExcedente,
   personaTrasCambiarMetodo,
@@ -65,7 +68,12 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
   cuentas: ItemCuenta[] = [];
   opcionesPeriodo: OpcionPeriodo[] = [];
   cargando = true;
-  private filtros = new WeakMap<FilaLinea, { clave: string; fn: (p: ItemPersona) => boolean }>();
+  /** Las personas que más aportan al carro (Smart Sorting): van primero en el selector; todas las demás siguen debajo. */
+  frecuentes: number[] = [];
+  /** Aviso de las líneas cuyo método cambió solo al elegir a un tercero. */
+  private avisosCambio = new WeakMap<FilaLinea, string>();
+  /** Último tercero (no responsable ni tú) que aportó: se propone en los cruces de cuentas. */
+  private ultimoTercero: number | null = null;
   readonly soloPesos = (c: ItemCuenta): boolean => c.moneda === 'COP';
   enviando = false;
   errorServidor: string | null = null;
@@ -82,7 +90,8 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
 
   constructor(
     private aportesService: AportesCarroService,
-    private catalogos: CatalogosService
+    private catalogos: CatalogosService,
+    private sugerencias: SugerenciasService
   ) {}
 
   get lineas(): FormArray<FilaLinea> {
@@ -120,6 +129,12 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
         this.cargarLineas();
       });
     this.catalogos.asegurar(['personas', 'cuentas']);
+
+    // Quiénes aportan más (para ordenar el selector) y el último tercero: opcional, nunca bloquea el formulario.
+    this.sugerencias.defaults().pipe(takeUntil(this.destroy$)).subscribe((d) => {
+      this.frecuentes = d.personaAporteIds;
+      this.ultimoTercero = d.ultimaPersonaAporteId;
+    });
   }
 
   ngOnDestroy(): void {
@@ -162,6 +177,8 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
     });
     // Al cambiar el método se ajustan la persona y la cuenta sugeridas (y el origen del saldo a favor).
     fila.controls.metodo.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((m) => this.alCambiarMetodo(fila, m));
+    // Cualquier persona se puede elegir: si es un tercero, el método pasa solo a «Cruce de cuentas» (lo que acepta el servidor).
+    fila.controls.personaId.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((p) => this.alCambiarPersona(fila, p));
     this.lineas.push(fila);
   }
 
@@ -171,12 +188,35 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
 
   private alCambiarMetodo(fila: FilaLinea, metodo: string | null): void {
     if (!metodo) return;
-    const persona = personaTrasCambiarMetodo(metodo, fila.controls.personaId.value, this.responsable?.id ?? null, this.miPersonaId);
+    let persona = personaTrasCambiarMetodo(metodo, fila.controls.personaId.value, this.responsable?.id ?? null, this.miPersonaId);
+    // en un cruce se propone al tercero que aportó la última vez (si lo hay)
+    if (persona === null && clasificarMetodo(metodo) === 'CRUCE_CUENTAS' && this.ultimoTercero !== null && this.ultimoTercero !== this.responsable?.id && this.ultimoTercero !== this.miPersonaId) {
+      persona = this.ultimoTercero;
+    }
+    this.avisosCambio.delete(fila);
     fila.controls.personaId.setValue(persona);
     if (!pideCuenta(metodo)) fila.controls.cuentaFinancieraId.setValue(null);
     if (clasificarMetodo(metodo) === 'SALDO_A_FAVOR' && fila.controls.origenObligacionMesId.value === null) {
       fila.controls.origenObligacionMesId.setValue(this.origenSugerido());
     }
+  }
+
+  private alCambiarPersona(fila: FilaLinea, personaId: number | null): void {
+    const antes = fila.controls.metodo.value;
+    const r = metodoTrasCambiarPersona(antes, personaId, this.responsable?.id ?? null, this.miPersonaId);
+    if (!r.cambio) {
+      this.avisosCambio.delete(fila);
+      return;
+    }
+    fila.controls.metodo.setValue(r.metodo, { emitEvent: false }); // sin pasar por alCambiarMetodo: la persona elegida se respeta
+    fila.controls.cuentaFinancieraId.setValue(null);
+    fila.controls.origenObligacionMesId.setValue(null);
+    this.avisosCambio.set(fila, avisoCambioACruce(primerNombre(this.nombrePersona(personaId)), antes));
+  }
+
+  /** Texto cuando la línea pasó sola a «Cruce de cuentas» por haber elegido a un tercero. */
+  avisoCambio(fila: FilaLinea): string | null {
+    return this.avisosCambio.get(fila) ?? null;
   }
 
   // ── derivados ──
@@ -186,31 +226,9 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
     return this.personas.find((p) => p.esPropia)?.id ?? null;
   }
 
-  /** Quiénes pueden figurar en una línea según su método (en un cruce, cualquiera; en lo demás, el responsable o tú). */
-  opcionesPersona(fila: FilaLinea): ItemPersona[] {
-    const clase = clasificarMetodo(fila.controls.metodo.value);
-    if (clase === 'CRUCE_CUENTAS' || clase === 'OTRO') return this.personas;
-    const permitidos = new Set([this.responsable?.id, this.miPersonaId]);
-    const lista = this.personas.filter((p) => permitidos.has(p.id));
-    // al editar, la persona que ya estaba debe poder verse aunque no cumpla
-    const actual = this.personas.find((p) => p.id === fila.controls.personaId.value);
-    return actual && !lista.includes(actual) ? [...lista, actual] : lista;
-  }
-
-  /**
-   * Mismo criterio que `opcionesPersona` pero como filtro del selector del catálogo. Se memoriza por fila: devolver una función nueva
-   * en cada ciclo de detección haría que el selector recalcule sus opciones sin parar.
-   */
-  filtroPersona(fila: FilaLinea): (p: ItemPersona) => boolean {
-    const clase = clasificarMetodo(fila.controls.metodo.value);
-    const clave = `${clase}|${this.miPersonaId}|${this.responsable?.id ?? ''}`;
-    const previo = this.filtros.get(fila);
-    if (previo?.clave === clave) return previo.fn;
-    const abierto = clase === 'CRUCE_CUENTAS' || clase === 'OTRO';
-    const permitidos = new Set([this.responsable?.id, this.miPersonaId]);
-    const fn = (p: ItemPersona): boolean => abierto || permitidos.has(p.id);
-    this.filtros.set(fila, { clave, fn });
-    return fn;
+  /** Todas las personas pueden figurar en una línea: el método se ajusta solo (ver `alCambiarPersona`). */
+  get opcionesPersona(): ItemPersona[] {
+    return this.personas;
   }
 
   get periodosOrigen(): PeriodoCarro[] {

@@ -5,7 +5,7 @@ import { ItemPlasticoCatalogo } from '../../../modelos/catalogos';
 import { CatalogosService } from '../../../services/catalogos.service';
 import { configurarTestBed, cuentaItem, errorHttp, esperar, responderCatalogos, tarjetaItem, verificarHttp } from '../../../testing/erp-testing';
 import { SelectProductoComponent } from './select-producto.component';
-import { GRUPO_CREDITO, GRUPO_CUENTAS, GRUPO_DEBITO, claveProducto, esTarjetaDeCredito, gruposDe4, opcionesDeProductos, parsearProducto, productoPorUltimos4 } from './productos.helpers';
+import { GRUPO_CREDITO, GRUPO_CUENTAS, GRUPO_DEBITO, GRUPO_HISTORICAS, claveProducto, esTarjetaDeCredito, gruposDe4, opcionesDeProductos, parsearProducto, productoPorUltimos4 } from './productos.helpers';
 
 const plastico = (id: number, ultimos4: string, esActivo = true): ItemPlasticoCatalogo => ({ id, ultimos4, esActivo, vigenteDesde: null, vigenteHasta: null });
 
@@ -124,22 +124,68 @@ describe('SelectProductoComponent', () => {
     return f;
   }
 
-  const select = (f: { nativeElement: HTMLElement }) => f.nativeElement.querySelector('select') as HTMLSelectElement;
-  const etiquetas = (f: { nativeElement: HTMLElement }) => Array.from(select(f).querySelectorAll('optgroup')).map((g) => [g.label, Array.from(g.querySelectorAll('option')).map((o) => o.textContent?.trim())]);
+  type Fx = { nativeElement: HTMLElement; detectChanges(): void };
+  const boton = (f: Fx) => f.nativeElement.querySelector('button.ss-boton') as HTMLButtonElement;
+  const abrir = (f: Fx) => {
+    if (!document.querySelector('.ss-panel')) boton(f).click();
+    f.detectChanges();
+  };
+  const grupos = (f: Fx) => {
+    abrir(f);
+    return Array.from(document.querySelectorAll('.ss-lista > li')).reduce<Array<[string, string[]]>>((acc, li) => {
+      const el = li as HTMLElement;
+      if (el.classList.contains('ss-grupo')) acc.push([el.textContent?.trim() ?? '', []]);
+      else if (el.classList.contains('ss-opcion')) {
+        if (acc.length === 0) acc.push(['', []]);
+        const texto = el.querySelector('.ss-opcion-texto')?.textContent?.trim() ?? '';
+        const detalle = el.querySelector('.ss-opcion-detalle')?.textContent?.trim();
+        acc[acc.length - 1][1].push(detalle ? `${texto} — ${detalle}` : texto);
+      }
+      return acc;
+    }, []);
+  };
+  const elegirOpcion = (f: Fx, texto: string) => {
+    abrir(f);
+    (Array.from(document.querySelectorAll('.ss-opcion')).find((o) => o.textContent?.includes(texto)) as HTMLElement).click();
+    f.detectChanges();
+  };
+  const valorMostrado = (f: Fx) => boton(f).querySelector('.ss-valor')?.textContent?.trim();
 
   it('muestra un esqueleto mientras cargan y luego las tres secciones agrupadas', async () => {
     const f = iniciar();
-    expect(f.nativeElement.querySelector('.sp--cargando')).not.toBeNull();
-    expect(select(f).disabled).toBeTrue();
+    expect(f.nativeElement.querySelector('.ss-esqueleto')).not.toBeNull();
+    expect(boton(f).disabled).toBeTrue();
     responderCatalogos({ tarjetas: TARJETAS, cuentas: CUENTAS });
     await f.whenStable();
     f.detectChanges();
-    expect(f.nativeElement.querySelector('.sp--cargando')).toBeNull();
-    expect(etiquetas(f)).toEqual([
+    expect(f.nativeElement.querySelector('.ss-esqueleto')).toBeNull();
+    expect(grupos(f)).toEqual([
       [GRUPO_CREDITO, ['American Express ··1927 — antes ··0088, ··9587', 'Mastercard ··9491 — antes ··5052']],
       [GRUPO_DEBITO, ['Débito ··7992 — cuenta Bancolombia Principal · antes ··4278']],
       [GRUPO_CUENTAS, ['Bancolombia Principal ··3698', 'Bancolombia Padre ··4248']],
     ]);
+  });
+
+  it('se busca por los últimos 4 dígitos de cualquier plástico, por tipo de producto o por el nombre de la cuenta', async () => {
+    const f = iniciar();
+    responderCatalogos({ tarjetas: TARJETAS, cuentas: CUENTAS });
+    await f.whenStable();
+    f.detectChanges();
+    abrir(f);
+    const buscar = (texto: string) => {
+      const input = document.querySelector('input.ss-buscador') as HTMLInputElement;
+      input.value = texto;
+      input.dispatchEvent(new Event('input'));
+      f.detectChanges();
+      return grupos(f).flatMap(([, o]) => o.map((x) => x.split(' — ')[0]));
+    };
+    expect(buscar('*0088')).toEqual(['American Express ··1927']); // plástico anterior
+    expect(buscar('9587')).toEqual(['American Express ··1927']);
+    expect(buscar('4278')).toEqual(['Débito ··7992']); // plástico anterior de la tarjeta de débito
+    expect(buscar('débito')).toEqual(['Débito ··7992']);
+    expect(buscar('crédito')).toEqual(['American Express ··1927', 'Mastercard ··9491']);
+    expect(buscar('padre')).toEqual(['Bancolombia Padre ··4248']);
+    expect(buscar('principal')).toEqual(['Débito ··7992', 'Bancolombia Principal ··3698']); // la débito es de esa cuenta
   });
 
   it('entrega la clave elegida al formulario y avisa con el producto elegido', async () => {
@@ -147,13 +193,11 @@ describe('SelectProductoComponent', () => {
     responderCatalogos({ tarjetas: TARJETAS, cuentas: CUENTAS });
     await f.whenStable();
     f.detectChanges();
-    select(f).value = 't:3';
-    select(f).dispatchEvent(new Event('change'));
+    elegirOpcion(f, 'Débito ··7992');
     expect(f.componentInstance.control.value).toBe('t:3');
     expect(f.componentInstance.elegido).toEqual({ tipo: 'TARJETA', id: 3 });
-    select(f).value = '';
-    select(f).dispatchEvent(new Event('change'));
-    expect(f.componentInstance.control.value).toBeNull();
+    expect(valorMostrado(f)).toBe('Débito ··7992');
+    expect(f.nativeElement.querySelector('.ss-limpiar')).toBeNull(); // el producto es obligatorio: no se quita
   });
 
   it('elige solo el producto de los últimos 4 y lo avisa; no pisa lo que el formulario ya traía ni lo que el usuario eligió', async () => {
@@ -163,7 +207,7 @@ describe('SelectProductoComponent', () => {
     f.detectChanges();
     expect(f.componentInstance.control.value).toBe('t:1');
     expect(f.componentInstance.auto).toEqual({ clave: 't:1', ultimos4: '0088' });
-    expect(select(f).value).toBe('t:1');
+    expect(valorMostrado(f)).toBe('American Express ··1927');
 
     const g = iniciar({ ultimos4: '0088', instrumento: 'TC', valor: 't:2' });
     responderCatalogos({ tarjetas: TARJETAS, cuentas: CUENTAS });
@@ -195,15 +239,16 @@ describe('SelectProductoComponent', () => {
     await f.whenStable();
     f.detectChanges();
     expect(f.nativeElement.textContent).toContain('No hay tarjetas ni cuentas registradas');
-    expect(select(f).disabled).toBeTrue();
+    expect(boton(f).disabled).toBeTrue();
   });
 
-  it('conserva la selección del formulario aunque el catálogo llegue después', async () => {
+  it('conserva la selección del formulario aunque el catálogo llegue después, y una cuenta inactiva elegida se lista como «histórica»', async () => {
     const f = iniciar({ valor: 'c:22' }); // cuenta inactiva: no se pierde
     responderCatalogos({ tarjetas: TARJETAS, cuentas: CUENTAS });
     await f.whenStable();
     f.detectChanges();
-    expect(select(f).value).toBe('c:22');
+    expect(valorMostrado(f)).toBe('Cuenta vieja ··1111 (inactiva)');
+    expect(grupos(f).map(([g]) => g)).toEqual([GRUPO_CREDITO, GRUPO_DEBITO, GRUPO_CUENTAS, GRUPO_HISTORICAS]);
     expect(TestBed.inject(CatalogosService).datos('cuentas').length).toBe(3);
   });
 });

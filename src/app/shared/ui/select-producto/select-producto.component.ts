@@ -5,12 +5,6 @@ import { EstadoCatalogo, ItemCuenta, ItemTarjeta, OpcionSelect } from '../../../
 import { CatalogosService } from '../../../services/catalogos.service';
 import { ProductoElegido, opcionesDeProductos, parsearProducto, productoPorUltimos4 } from './productos.helpers';
 
-/** Grupos de opciones para pintar los `<optgroup>`, en el orden en que aparecen. */
-export interface GrupoOpciones {
-  nombre: string;
-  opciones: OpcionSelect[];
-}
-
 /**
  * Selector único de producto: tarjetas de crédito, tarjetas de débito y cuentas en una sola lista agrupada.
  *  · Entrega una clave de texto (`t:12` tarjeta, `c:3` cuenta; ver `parsearProducto`) o `null`.
@@ -52,7 +46,6 @@ export class SelectProductoComponent implements ControlValueAccessor, OnInit, On
   estadoTarjetas: EstadoCatalogo<ItemTarjeta> | null = null;
   estadoCuentas: EstadoCatalogo<ItemCuenta> | null = null;
   opciones: OpcionSelect[] = [];
-  grupos: GrupoOpciones[] = [];
 
   private suscripcion?: Subscription;
   private seEligio = false;
@@ -102,22 +95,14 @@ export class SelectProductoComponent implements ControlValueAccessor, OnInit, On
     this.catalogos.recargar(['tarjetas', 'cuentas']);
   }
 
-  alCambiar(evento: Event): void {
-    const texto = (evento.target as HTMLSelectElement).value;
+  /** El combobox eligió (o limpió) un producto. */
+  alElegir(opcion: OpcionSelect | null): void {
     this.seEligio = true;
-    this.fijar(texto === '' ? null : texto);
+    this.fijar(opcion ? String(opcion.valor) : null);
   }
 
   alSalir(): void {
     this.alTocarFn();
-  }
-
-  esSeleccionada(o: OpcionSelect): boolean {
-    return this.valor !== null && String(o.valor) === this.valor;
-  }
-
-  trackOpcion(_: number, o: OpcionSelect): number | string {
-    return o.valor;
   }
 
   /** Elige el producto de esos últimos 4 dígitos (si hay uno solo). `true` si lo encontró. */
@@ -168,15 +153,6 @@ export class SelectProductoComponent implements ControlValueAccessor, OnInit, On
       incluirDebito: this.incluirDebito,
       incluirCuentas: this.incluirCuentas,
     });
-    const grupos: GrupoOpciones[] = [];
-    for (const o of this.opciones) {
-      const nombre = o.grupo ?? '';
-      const ultimo = grupos[grupos.length - 1];
-      if (ultimo && ultimo.nombre === nombre) ultimo.opciones.push(o);
-      else grupos.push({ nombre, opciones: [o] });
-    }
-    this.grupos = grupos;
-
     this.programarAutoseleccion();
   }
 

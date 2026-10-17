@@ -66,6 +66,13 @@ Convenciones:
   El **selector único** `<app-select-producto>` (`shared/ui/select-producto`) agrupa tarjetas de crédito, de débito y cuentas, y elige solo el producto por los últimos 4 del correo mirando también
   los plásticos anteriores (`productoPorUltimos4`); una tarjeta de débito se manda como `tarjetaId` y el servidor registra el movimiento en su cuenta. Un aviso en dólares sin tasa pide la **TRM**;
   `fecha` corrige el día. Los cuerpos de `PATCH conciliar` y `POST asignar` pasan por `depurarCuerpo` (sin `""`/`null`, ids como número) y los errores del servidor nombran el campo (`TRM: …`).
+- **Formularios inteligentes y selectores buscables** (plan V2 fase 4): todos los selectores de personas, cuentas, tarjetas y categorías (`<app-select>`) y el de producto de los correos son el combobox buscable `<app-searchable-select>`
+  (`shared/ui/searchable-select`; `searchable-select.helpers.ts` tiene la búsqueda pura: sin tildes, `*1927`, todas las palabras, grupos). `SugerenciasService` (`services/sugerencias.service.ts`, 5 min en memoria, **nunca falla**: sin
+  respuesta el formulario arranca como siempre) trae `GET /api/sugerencias/formularios` y `/comercios`, y con eso: la compra a crédito arranca con la tarjeta que más usas, 1 cuota, la persona de la última compra y, al escribir un
+  comercio que ya usaste, su valor, cuotas, tarjeta y responsable habituales; la transacción, con tu cuenta/tarjeta habitual y categoría y cuenta del comercio (lista `datalist`). «Hoy» y la hora son las de **Colombia**
+  (`hoyIso`, `aDatetimeLocal` → `America/Bogota`) aunque el navegador esté en otro huso. **Aportes del carro**: el selector de persona ofrece a TODAS (antes solo al responsable y a ti); como el servidor solo admite un tercero
+  como «Cruce de cuentas», al elegirlo el método pasa solo a cruce con un aviso (`metodoTrasCambiarPersona`), y las personas que más aportan van primero. Lo que sigue con `<select>` nativo: listas fijas (método, estado, tipo) y la
+  importación CSV (cientos de filas).
 - **Cobros** (`cobros/`): `FormularioCobroComponent` calcula en vivo cuánto le toca a cada uno (misma aritmética en centavos que el backend, en `cobros.constants.ts`);
   `CompartirCobroComponent` genera el enlace (copiar o WhatsApp) y `AprobarReporteComponent` registra el pago reportado: enlazando el ingreso que ya llegó por correo, creándolo en una cuenta o solo anotándolo.
 - **Página pública** (`cobros/cobro-publico`): `app-menu` no se muestra en `/p/…` aunque haya sesión (`MenuStateService.rutaPublica$`). Las fotos del comprobante se reducen en el navegador

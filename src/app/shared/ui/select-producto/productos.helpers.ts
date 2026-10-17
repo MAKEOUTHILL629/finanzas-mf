@@ -1,5 +1,5 @@
 import { ItemCuenta, ItemTarjeta, OpcionSelect } from '../../../modelos/catalogos';
-import { etiquetaDeCatalogo } from '../select/select.helpers';
+import { GRUPO_HISTORICAS, busquedaDeCatalogo, esTarjetaHistorica, etiquetaDeCatalogo } from '../select/select.helpers';
 
 /**
  * Un «producto» es una tarjeta (de crédito o de débito) o una cuenta. Los selectores que mezclan ambos usan una clave de texto
@@ -14,6 +14,7 @@ export interface ProductoElegido {
 export const GRUPO_CREDITO = 'Tarjetas de crédito';
 export const GRUPO_DEBITO = 'Tarjetas de débito';
 export const GRUPO_CUENTAS = 'Cuentas';
+export { GRUPO_HISTORICAS };
 
 export const claveProducto = (tipo: TipoProducto, id: number): string => `${tipo === 'TARJETA' ? 't' : 'c'}:${id}`;
 
@@ -50,6 +51,7 @@ export function opcionesDeProductos(tarjetas: ReadonlyArray<ItemTarjeta>, cuenta
   const credito: OpcionSelect[] = [];
   const debito: OpcionSelect[] = [];
   const delasCuentas: OpcionSelect[] = [];
+  const historicas: OpcionSelect[] = [];
 
   for (const t of tarjetas) {
     const esDebito = t.tipo === 'DEBITO';
@@ -58,15 +60,32 @@ export function opcionesDeProductos(tarjetas: ReadonlyArray<ItemTarjeta>, cuenta
     const anteriores = t.plasticos.filter((p) => p.ultimos4 !== t.ultimos4Activo).map((p) => `··${p.ultimos4}`);
     const cuenta = esDebito && t.cuentaId ? cuentas.find((c) => c.id === t.cuentaId) : undefined;
     const detalle = [cuenta ? `cuenta ${cuenta.nombre}` : null, anteriores.length ? `antes ${anteriores.join(', ')}` : null].filter(Boolean).join(' · ');
-    (esDebito ? debito : credito).push({ valor: clave, etiqueta: t.etiqueta || t.nombre, detalle: detalle || undefined, grupo: esDebito ? GRUPO_DEBITO : GRUPO_CREDITO });
+    const historica = esTarjetaHistorica(t);
+    const opcion: OpcionSelect = {
+      valor: clave,
+      etiqueta: t.etiqueta || t.nombre,
+      detalle: detalle || undefined,
+      busqueda: [busquedaDeCatalogo('tarjetas', t), cuenta?.nombre].filter(Boolean).join(' '),
+      grupo: historica ? GRUPO_HISTORICAS : esDebito ? GRUPO_DEBITO : GRUPO_CREDITO,
+    };
+    (historica ? historicas : esDebito ? debito : credito).push(opcion);
   }
   for (const c of cuentas) {
     const clave = claveProducto('CUENTA', c.id);
     if (!incluirCuentas && clave !== o.valorActual) continue;
-    if (c.activa === false && clave !== o.valorActual) continue;
-    delasCuentas.push({ valor: clave, etiqueta: etiquetaDeCatalogo('cuentas', c), detalle: c.moneda && c.moneda !== 'COP' ? c.moneda : undefined, grupo: GRUPO_CUENTAS });
+    const inactiva = c.activa === false;
+    if (inactiva && clave !== o.valorActual) continue;
+    const opcion: OpcionSelect = {
+      valor: clave,
+      etiqueta: etiquetaDeCatalogo('cuentas', c),
+      detalle: c.moneda && c.moneda !== 'COP' ? c.moneda : undefined,
+      busqueda: busquedaDeCatalogo('cuentas', c),
+      grupo: inactiva ? GRUPO_HISTORICAS : GRUPO_CUENTAS,
+    };
+    (inactiva ? historicas : delasCuentas).push(opcion);
   }
-  return [...credito, ...debito, ...delasCuentas]; // el orden de cada grupo es el del catálogo (vigentes primero)
+  // el orden de cada grupo es el del catálogo (vigentes primero); lo histórico va al final
+  return [...credito, ...debito, ...delasCuentas, ...historicas];
 }
 
 type Clase = 'CREDITO' | 'DEBITO' | 'CUENTA';

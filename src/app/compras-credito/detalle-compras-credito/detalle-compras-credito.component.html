@@ -93,16 +93,14 @@
         <div class="info-row editable-row" (dblclick)="activarEdicion('tarjeta')" [class.editing]="camposEditando['tarjeta']">
           <span class="label">Tarjeta</span>
           <span class="value" *ngIf="!camposEditando['tarjeta']">{{ compraEditada.tarjeta || compraCredito?.tarjeta || 1 | formatoTarjeta }}</span>
-          <select
+          <app-select
             *ngIf="camposEditando['tarjeta']"
-            class="edit-input edit-select"
-            [value]="compraEditada.tarjeta || compraCredito?.tarjeta"
-            (change)="actualizarCampo('tarjeta', +$any($event.target).value); desactivarEdicion('tarjeta')"
-            (blur)="desactivarEdicion('tarjeta')"
-            autofocus
-          >
-            <option *ngFor="let tarjeta of tarjetas" [value]="tarjeta.id">{{ tarjeta.franquicia }}</option>
-          </select>
+            class="edit-select"
+            inputId="dc-tarjeta" catalogo="tarjetas" ariaLabel="Tarjeta de la compra" [permitirVacio]="false" [abrirAlMostrar]="true"
+            [ngModel]="compraEditada.tarjeta || compraCredito?.tarjeta"
+            (ngModelChange)="actualizarCampo('tarjeta', +$event)"
+            (tocado)="desactivarEdicion('tarjeta')"
+          ></app-select>
           <i class="material-icons edit-hint" *ngIf="!camposEditando['tarjeta']">edit</i>
         </div>
         <div class="info-row" *ngIf="$any(compraCredito)?.plasticoUltimos4">

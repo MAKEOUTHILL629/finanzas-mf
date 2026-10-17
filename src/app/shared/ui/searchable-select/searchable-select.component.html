@@ -1,0 +1,41 @@
+<div class="ss" [class.ss--cargando]="cargando" [class.ss--invalido]="invalido" [class.ss--abierto]="abierto" [class.ss--vacio]="!seleccionada">
+  <button #boton type="button" class="ss-boton" role="combobox" [id]="inputId" [disabled]="bloqueado"
+          aria-haspopup="listbox" [attr.aria-expanded]="abierto" [attr.aria-controls]="abierto ? uid + '-lista' : null"
+          [attr.aria-invalid]="invalido ? 'true' : null" [attr.aria-label]="ariaLabel" [attr.aria-describedby]="ariaDescribedby" [attr.aria-busy]="cargando ? 'true' : null"
+          (click)="alternar()" (keydown)="teclasBoton($event)">
+    <span class="ss-valor">{{ cargando ? 'Cargando…' : (seleccionada?.etiqueta ?? placeholder) }}</span>
+    <i class="material-icons ss-flecha" aria-hidden="true">expand_more</i>
+  </button>
+  <button type="button" class="ss-limpiar" *ngIf="puedeLimpiar" (click)="limpiar($event)" aria-label="Quitar la selección" appTooltip="Quitar la selección">
+    <i class="material-icons" aria-hidden="true">close</i>
+  </button>
+  <span class="ss-esqueleto erp-skeleton" *ngIf="cargando" aria-hidden="true"></span>
+
+  <div #capa class="ss-capa" *ngIf="abierto">
+    <div class="ss-velo" *ngIf="hoja" (click)="cerrar(true)" aria-hidden="true"></div>
+    <div class="ss-panel" [class.ss-panel--hoja]="hoja" [ngStyle]="estilo">
+      <div class="ss-busqueda">
+        <i class="material-icons" aria-hidden="true">search</i>
+        <input #buscador type="text" class="ss-buscador" role="searchbox" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"
+               [value]="consulta" [placeholder]="placeholderBusqueda" aria-label="Buscar"
+               [attr.aria-controls]="uid + '-lista'" [attr.aria-activedescendant]="idActiva"
+               (input)="alEscribir($any($event.target).value)" (keydown)="teclasBuscador($event)" />
+      </div>
+      <ul #lista class="ss-lista" role="listbox" [id]="uid + '-lista'" [attr.aria-label]="ariaLabel || placeholder">
+        <ng-container *ngFor="let f of filas; trackBy: trackFila">
+          <li *ngIf="f.tipo === 'grupo'" class="ss-grupo" role="presentation">{{ f.nombre }}</li>
+          <li *ngIf="f.tipo === 'opcion'" class="ss-opcion" role="option" [id]="idOpcion(f.indice)"
+              [class.ss-opcion--activa]="f.indice === activa" [class.ss-opcion--elegida]="esSeleccionada(f.opcion)" [class.ss-opcion--off]="f.opcion.deshabilitada"
+              [attr.aria-selected]="esSeleccionada(f.opcion)" [attr.aria-disabled]="f.opcion.deshabilitada ? 'true' : null"
+              (mousedown)="$event.preventDefault()" (click)="elegir(f.opcion)" (mousemove)="alPasarSobre(f.indice)">
+            <span class="ss-opcion-texto">{{ f.opcion.etiqueta }}</span>
+            <span class="ss-opcion-detalle" *ngIf="f.opcion.detalle">{{ f.opcion.detalle }}</span>
+            <i class="material-icons ss-opcion-check" *ngIf="esSeleccionada(f.opcion)" aria-hidden="true">check</i>
+          </li>
+        </ng-container>
+        <li class="ss-sin-resultados" *ngIf="visibles.length === 0" role="presentation">{{ opciones.length === 0 ? 'No hay opciones disponibles.' : textoSinResultados }}</li>
+      </ul>
+      <p class="ss-sr" role="status" aria-live="polite">{{ visibles.length }} {{ visibles.length === 1 ? 'resultado' : 'resultados' }}</p>
+    </div>
+  </div>
+</div>

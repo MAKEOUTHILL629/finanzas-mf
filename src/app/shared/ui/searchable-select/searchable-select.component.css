@@ -1,0 +1,115 @@
+:host { display: block; min-width: 0; }
+.ss { position: relative; }
+
+/* Campo: igual que un <select> del sistema de diseño */
+.ss-boton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 calc(var(--space-2) + 22px) 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-in-out), background var(--duration-fast) var(--ease-in-out), box-shadow var(--duration-fast) var(--ease-in-out);
+}
+.ss-boton:hover:not(:disabled) { background: var(--bg-input-hover); }
+.ss-boton:focus-visible, .ss--abierto .ss-boton {
+  outline: none;
+  background: var(--bg-input-focus);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 4px var(--brand-blue-light);
+}
+.ss-boton:disabled { opacity: 0.5; cursor: not-allowed; }
+.ss--invalido .ss-boton { border-color: var(--border-error); }
+.ss--vacio .ss-valor { color: var(--text-tertiary); }
+.ss--cargando .ss-valor { color: transparent; }
+.ss-valor { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-flecha { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--text-secondary); pointer-events: none; transition: transform var(--duration-fast) var(--ease-in-out); }
+.ss--abierto .ss-flecha { transform: translateY(-50%) rotate(180deg); }
+.ss-esqueleto { position: absolute; inset: 0; border-radius: var(--radius-sm); pointer-events: none; opacity: 0.55; }
+
+.ss-limpiar {
+  position: absolute;
+  right: 34px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.ss-limpiar:hover { background: var(--bg-input-hover); color: var(--text-primary); }
+.ss-limpiar:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.ss-limpiar .material-icons { font-size: 16px; }
+
+/* Lista: por encima de los diálogos (z-index 2000). En escritorio es `fixed` junto al campo. */
+.ss-panel {
+  position: fixed;
+  z-index: 2100;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-elevated);
+  box-shadow: var(--shadow-dropdown);
+}
+.ss-busqueda { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--divider); }
+.ss-busqueda .material-icons { font-size: 20px; color: var(--text-secondary); }
+.ss-buscador { flex: 1 1 auto; min-width: 0; min-height: 36px; padding: 0; border: 0; background: transparent; color: var(--text-primary); font: inherit; font-size: var(--text-body-sm); }
+.ss-buscador:focus { outline: none; }
+.ss-buscador::placeholder { color: var(--text-tertiary); }
+
+.ss-lista { flex: 1 1 auto; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.ss-grupo { padding: 10px 10px 4px; color: var(--text-secondary); font-size: var(--text-overline); font-weight: var(--weight-semibold); letter-spacing: 0.06em; text-transform: uppercase; }
+.ss-opcion {
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--select-option-text);
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.ss-opcion--activa { background: var(--select-option-hover); }
+.ss-opcion--elegida .ss-opcion-texto { font-weight: var(--weight-semibold); }
+.ss-opcion--off { opacity: 0.45; cursor: not-allowed; }
+.ss-opcion-texto { flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ss-opcion-detalle { flex: 1 1 auto; min-width: 0; color: var(--text-secondary); font-size: var(--text-caption); overflow-wrap: anywhere; }
+.ss-opcion-check { align-self: center; margin-left: auto; font-size: 18px; color: var(--brand-blue); }
+.ss-sin-resultados { padding: 14px 10px; color: var(--text-secondary); font-size: var(--text-body-sm); text-align: center; }
+.ss-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Pantallas angostas: hoja inferior con velo, el buscador arriba y la lista debajo */
+.ss-velo { position: fixed; inset: 0; z-index: 2090; background: var(--overlay-bg); }
+.ss-panel--hoja {
+  inset: auto 0 0 0 !important;
+  width: auto !important;
+  max-height: min(75dvh, 560px) !important;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-bottom: none;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ss-panel--hoja .ss-busqueda { padding: 10px 16px; }
+.ss-panel--hoja .ss-buscador { min-height: 44px; font-size: 16px; } /* 16 px evita el zoom de iOS al enfocar */
+.ss-panel--hoja .ss-opcion { min-height: 48px; align-items: center; flex-wrap: wrap; row-gap: 2px; }
+
+@media (prefers-reduced-motion: reduce) { .ss-boton, .ss-flecha { transition: none; } .ss-esqueleto { animation: none; } }

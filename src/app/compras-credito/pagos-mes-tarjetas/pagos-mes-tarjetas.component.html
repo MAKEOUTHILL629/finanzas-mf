@@ -135,12 +135,8 @@
             <span class="label-icon">💳</span>
             <span class="label-text">Tarjeta</span>
           </label>
-          <select class="input-glass" [(ngModel)]="tarjetaFiltro" (ngModelChange)="aplicarFiltros()">
-            <option [value]="0">Todas las tarjetas</option>
-            <option *ngFor="let tarjeta of tarjetas" [value]="tarjeta.id">
-              {{ tarjeta.etiqueta }}
-            </option>
-          </select>
+          <app-select catalogo="tarjetas" placeholder="Todas las tarjetas" ariaLabel="Filtrar por tarjeta"
+                      [ngModel]="tarjetaFiltro || null" (ngModelChange)="tarjetaFiltro = $event ?? 0; aplicarFiltros()"></app-select>
         </div>
 
         <!-- Buscador de Fechas Inteligente -->

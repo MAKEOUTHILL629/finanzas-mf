@@ -9,7 +9,10 @@ import { environment } from '../../environments/environment';
 import { FormatoFechaCortaPipe } from '../pipes/formato-fecha-corta.pipe';
 import { FormatoFechaPipe } from '../pipes/formato-fecha.pipe';
 import { FormatoMonedaPipe } from '../pipes/formato-moneda.pipe';
+import { of } from 'rxjs';
 import { Catalogos, ItemCategoria, ItemCuenta, ItemPersona, ItemTarjeta } from '../modelos/catalogos';
+import { ComercioHabitual, DEFAULTS_VACIOS, DefaultsFormularios } from '../modelos/sugerencias';
+import { SugerenciasService } from '../services/sugerencias.service';
 import { AccionesComponent } from '../shared/ui/acciones/acciones.component';
 import { AppleTableComponent } from '../shared/ui/apple-table/apple-table.component';
 import { AccionesFilaDirective, CeldaTablaDirective, TarjetaFilaDirective } from '../shared/ui/apple-table/apple-table.types';
@@ -23,6 +26,7 @@ import { EmptyStateComponent } from '../shared/ui/empty-state/empty-state.compon
 import { FieldComponent, InputDirective } from '../shared/ui/field/field.component';
 import { LogoComponent } from '../shared/ui/logo/logo.component';
 import { PageHeaderComponent } from '../shared/ui/page-header/page-header.component';
+import { SearchableSelectComponent } from '../shared/ui/searchable-select/searchable-select.component';
 import { SelectComponent } from '../shared/ui/select/select.component';
 import { SelectProductoComponent } from '../shared/ui/select-producto/select-producto.component';
 import { TableDirective } from '../shared/ui/table/table.directive';
@@ -31,7 +35,7 @@ import { TooltipDirective } from '../shared/ui/tooltip/tooltip.directive';
 
 /** Componentes base del sistema de diseño: las plantillas los usan, así que toda prueba de un componente debe declararlos. */
 export const COMPONENTES_UI: Type<unknown>[] = [
-  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SelectComponent, SelectProductoComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
+  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SearchableSelectComponent, SelectComponent, SelectProductoComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
 ];
 /** Directivas independientes (standalone): van en `imports`, no en `declarations`. */
 export const DIRECTIVAS_UI = [TooltipDirective];
@@ -61,13 +65,21 @@ export function estilosDePrueba(): void {
   document.head.appendChild(estilo);
 }
 
+/**
+ * `SugerenciasService` de mentira: devuelve estos valores al instante, sin HTTP. Por defecto cada prueba usa uno SIN sugerencias
+ * (los formularios arrancan como siempre); pásalo en `providers` para probar los valores inteligentes.
+ */
+export function sugerenciasDe(defaults: Partial<DefaultsFormularios> = {}, comercios: ComercioHabitual[] = []) {
+  return { provide: SugerenciasService, useValue: { defaults: () => of({ ...DEFAULTS_VACIOS, ...defaults }), comercios: () => of(comercios), invalidar: () => undefined } };
+}
+
 /** Configura TestBed para un componente del módulo ERP: pipes propios, formularios, router y HTTP simulado. */
-export function configurarTestBed(declarations: Type<unknown>[], providers: Provider[] = []): void {
+export function configurarTestBed(declarations: Type<unknown>[], providers: Provider[] = [], imports: any[] = []): void {
   estilosDePrueba();
   TestBed.configureTestingModule({
     declarations: [...declarations, FormatoMonedaPipe, FormatoFechaPipe, FormatoFechaCortaPipe, ...COMPONENTES_UI],
-    imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([]), ...DIRECTIVAS_UI],
-    providers: [provideHttpClient(), provideHttpClientTesting(), provideNoopAnimations(), ...providers],
+    imports: [ReactiveFormsModule, FormsModule, RouterModule.forRoot([]), ...DIRECTIVAS_UI, ...imports],
+    providers: [provideHttpClient(), provideHttpClientTesting(), provideNoopAnimations(), sugerenciasDe(), ...providers],
     schemas: [NO_ERRORS_SCHEMA],
   });
 }

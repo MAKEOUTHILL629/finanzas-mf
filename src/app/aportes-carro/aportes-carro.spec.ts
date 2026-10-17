@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AporteDiario, DetalleAporteDiario, PeriodoCarro, ResumenCarro } from '../modelos/aportes';
 import { AportesCarroService } from '../services/aportes-carro.service';
-import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona as personaCatalogo, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
+import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona as personaCatalogo, responder, responderCatalogos, sugerenciasDe, verificarHttp } from '../testing/erp-testing';
 import { desplazarPeriodo, periodoActual } from '../shared/periodo.helper';
 import { AportesCarroComponent } from './aportes-carro.component';
 import {
@@ -19,6 +20,7 @@ import {
   hayFiltros,
   opcionesDePeriodo,
   periodosConExcedente,
+  metodoTrasCambiarPersona,
   personaTrasCambiarMetodo,
   personasEnAportes,
   pideCuenta,
@@ -113,6 +115,19 @@ describe('Aportes del carro — lógica', () => {
     expect(personaTrasCambiarMetodo('TRANSFERENCIA', 1, 4, 1)).toBe(1); // tú también puedes entregar
     expect(personaTrasCambiarMetodo('SALDO_A_FAVOR', 1, 4, 1)).toBe(4);
     expect(personaTrasCambiarMetodo('Carrera', 2, 4)).toBe(2); // heredado: no se toca
+  });
+
+  it('al elegir a una persona el método se ajusta a lo que acepta el servidor: un tercero solo puede aportar como cruce', () => {
+    // responsable 4, tú 1, tercero 2
+    expect(metodoTrasCambiarPersona('EFECTIVO', 2, 4, 1)).toEqual({ metodo: 'CRUCE_CUENTAS', cambio: true });
+    expect(metodoTrasCambiarPersona('TRANSFERENCIA', 2, 4, 1)).toEqual({ metodo: 'CRUCE_CUENTAS', cambio: true });
+    expect(metodoTrasCambiarPersona('SALDO_A_FAVOR', 2, 4, 1)).toEqual({ metodo: 'CRUCE_CUENTAS', cambio: true });
+    expect(metodoTrasCambiarPersona('SALDO_A_FAVOR', 1, 4, 1).cambio).toBeTrue(); // el saldo a favor es solo del responsable
+    expect(metodoTrasCambiarPersona('EFECTIVO', 4, 4, 1).cambio).toBeFalse();
+    expect(metodoTrasCambiarPersona('EFECTIVO', 1, 4, 1).cambio).toBeFalse(); // tú también puedes entregar efectivo
+    expect(metodoTrasCambiarPersona('CRUCE_CUENTAS', 2, 4, 1).cambio).toBeFalse();
+    expect(metodoTrasCambiarPersona('Carrera', 2, 4, 1)).toEqual({ metodo: 'Carrera', cambio: false }); // heredado: no se toca
+    expect(metodoTrasCambiarPersona('EFECTIVO', null, 4, 1).cambio).toBeFalse(); // sin persona no hay nada que ajustar
   });
 
   it('aviso del cruce: a quién se le carga el valor', () => {
@@ -343,8 +358,9 @@ describe('AportesCarroComponent', () => {
 describe('FormularioAporteDiarioComponent', () => {
   afterEach(() => verificarHttp());
 
-  function montar(entradas: Partial<FormularioAporteDiarioComponent> = {}) {
-    configurarTestBed([FormularioAporteDiarioComponent]);
+  function montar(entradas: Partial<FormularioAporteDiarioComponent> = {}, providers: Provider[] = []) {
+    TestBed.resetTestingModule(); // algunas pruebas montan dos formularios
+    configurarTestBed([FormularioAporteDiarioComponent], providers);
     const f = TestBed.createComponent(FormularioAporteDiarioComponent);
     Object.assign(f.componentInstance, { periodos: [periodo(), conExcedente()], responsable: papa, cuotaBase: 1000000, periodoInicial: '2026-09' }, entradas);
     f.detectChanges();
@@ -371,13 +387,70 @@ describe('FormularioAporteDiarioComponent', () => {
     const fila = c.lineas.at(1);
     fila.controls.metodo.setValue('CRUCE_CUENTAS');
     expect(fila.controls.personaId.value).toBeNull(); // hay que elegir
-    expect(c.opcionesPersona(fila).map((p) => p.nombre)).toEqual(['Felipe', 'Andrés Gómez', 'Luis Fernando']); // en un cruce, cualquiera
     fila.controls.personaId.setValue(2);
     const t = texto(f);
     expect(t).toContain('Quién asume la deuda');
     expect(t).toContain('se cargará automáticamente a la cuenta por cobrar de Andrés a fin de mes');
-    // con efectivo, solo el responsable o tú
-    expect(c.opcionesPersona(c.lineas.at(0)).map((p) => p.nombre)).toEqual(['Felipe', 'Luis Fernando']);
+  });
+
+  it('el selector de persona ofrece a TODAS las personas con cualquier método (no solo al responsable y a ti)', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    expect(c.opcionesPersona.map((p) => p.nombre)).toEqual(['Felipe', 'Andrés Gómez', 'Luis Fernando']);
+    (f.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#fa-persona-0')!.click(); // línea de efectivo
+    f.detectChanges();
+    expect(Array.from(document.querySelectorAll('.ss-opcion-texto')).map((x) => x.textContent?.trim())).toEqual(['Felipe', 'Andrés Gómez', 'Luis Fernando']);
+  });
+
+  it('las personas que más aportan van primero (Frecuentes) y las demás siguen debajo', () => {
+    const f = montar({}, [sugerenciasDe({ personaAporteIds: [2, 4], ultimaPersonaAporteId: 2 })]);
+    const c = f.componentInstance;
+    expect(c.frecuentes).toEqual([2, 4]);
+    (f.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#fa-persona-0')!.click();
+    f.detectChanges();
+    expect(Array.from(document.querySelectorAll('.ss-opcion-texto')).map((x) => x.textContent?.trim())).toEqual(['Andrés Gómez', 'Luis Fernando', 'Felipe']);
+    expect(Array.from(document.querySelectorAll('.ss-grupo')).map((x) => x.textContent?.trim())).toEqual(['Frecuentes', 'Todas las personas']);
+  });
+
+  it('elegir a un tercero con efectivo pasa solo a «Cruce de cuentas» y lo explica; volver al responsable no deja el aviso', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    const fila = c.lineas.at(0);
+    fila.controls.cuentaFinancieraId.setValue(9);
+    fila.controls.personaId.setValue(2); // Andrés, que no es el responsable
+    f.detectChanges();
+    expect(fila.controls.metodo.value).toBe('CRUCE_CUENTAS');
+    expect(fila.controls.personaId.value).toBe(2); // la persona elegida se respeta
+    expect(fila.controls.cuentaFinancieraId.value).toBeNull(); // un cruce no entra a una cuenta
+    expect(c.avisoCambio(fila)).toContain('Andrés no es el responsable de la cuota');
+    expect(c.avisoCambio(fila)).toContain('«Efectivo» a «Cruce de cuentas»');
+    expect(texto(f)).toContain('pasó de «Efectivo» a «Cruce de cuentas»');
+
+    fila.controls.metodo.setValue('EFECTIVO'); // el usuario lo cambia a mano: un tercero vuelve al responsable
+    expect(fila.controls.personaId.value).toBe(4);
+    expect(c.avisoCambio(fila)).toBeNull();
+  });
+
+  it('un aporte de un tercero con el método ya ajustado se envía como cruce (no como efectivo, que el servidor rechazaría)', () => {
+    const f = montar();
+    const c = f.componentInstance;
+    c.lineas.at(0).patchValue({ valor: 50000, personaId: 2 });
+    c.enviar();
+    const req = esperar('POST', 'obligaciones-aportes/aportes-diarios');
+    expect(req.request.body.detalles).toEqual([jasmine.objectContaining({ metodo: 'CRUCE_CUENTAS', personaId: 2, valor: '50000' })]);
+    req.flush({ aporteDiario: aporte(), periodo: periodo(), transaccionesCreadas: 0, crucesGenerados: 1 });
+  });
+
+  it('en un cruce se propone al último tercero que aportó (no al responsable ni a ti)', () => {
+    const f = montar({}, [sugerenciasDe({ ultimaPersonaAporteId: 2 })]);
+    const c = f.componentInstance;
+    c.agregarLinea();
+    c.lineas.at(1).controls.metodo.setValue('CRUCE_CUENTAS');
+    expect(c.lineas.at(1).controls.personaId.value).toBe(2);
+    const g = montar({}, [sugerenciasDe({ ultimaPersonaAporteId: 4 })]); // el último fue el responsable: hay que elegir
+    g.componentInstance.agregarLinea();
+    g.componentInstance.lineas.at(1).controls.metodo.setValue('CRUCE_CUENTAS');
+    expect(g.componentInstance.lineas.at(1).controls.personaId.value).toBeNull();
   });
 
   it('suma el total, proyecta el mes y no deja guardar con valores inválidos', () => {

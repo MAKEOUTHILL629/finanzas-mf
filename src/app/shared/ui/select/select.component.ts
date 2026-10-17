@@ -1,15 +1,17 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild, forwardRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { EstadoCatalogo, OpcionSelect, TipoCatalogo } from '../../../modelos/catalogos';
 import { CatalogosService } from '../../../services/catalogos.service';
-import { opcionesDeCatalogo, TEXTO_CATALOGO, valoresIguales } from './select.helpers';
+import { opcionesDeCatalogo, TEXTO_CATALOGO } from './select.helpers';
 
 export type ValorSelect = number | string | null;
 
 /**
- * Selector del sistema de diseño. Es un `<select>` nativo (en móvil abre el selector del sistema) que:
+ * Selector del sistema de diseño: un combobox BUSCABLE (`<app-searchable-select>`; en pantallas angostas, una hoja inferior) que:
  *  · se alimenta de un catálogo compartido (`catalogo="personas|tarjetas|cuentas|categorias"`) o de una lista (`opciones`);
+ *  · busca por nombre, últimos 4 dígitos (`*1927`, también los de plásticos anteriores), tipo de producto, etc., y agrupa
+ *    («Activas» / «Históricas», «Frecuentes» / «Todas las personas»);
  *  · muestra un esqueleto mientras carga, un mensaje de vacío y un error con «Reintentar» (nunca queda mudo ni vacío sin explicación);
  *  · conserva el valor seleccionado aunque el catálogo llegue después que el valor del formulario;
  *  · funciona con `formControlName` / `ngModel` y entrega el `id` numérico (o `null`).
@@ -44,10 +46,14 @@ export class SelectComponent implements ControlValueAccessor, OnInit, OnChanges,
   @Input() textoVacio: string | null = null;
   /** Enlace para crear lo que falta (aparece solo cuando el catálogo está vacío). */
   @Input() enlaceCrear: { texto: string; ruta: string } | null = null;
+  /** Abre la lista al aparecer (editores en línea de una celda). */
+  @Input() abrirAlMostrar = false;
+  /** Personas: ids más usados que van primero («Frecuentes»); todas las demás siguen debajo. */
+  @Input() frecuentes: ReadonlyArray<number> | null = null;
   /** Se emite al cambiar la selección con la opción elegida (para formularios que necesitan más que el id). */
   @Output() elegido = new EventEmitter<OpcionSelect | null>();
-
-  @ViewChild('campo') campo?: ElementRef<HTMLSelectElement>;
+  /** Se cerró la lista (se eligió algo o no): el campo fue «tocado». */
+  @Output() tocado = new EventEmitter<void>();
 
   valor: ValorSelect = null;
   deshabilitado = false;
@@ -95,9 +101,8 @@ export class SelectComponent implements ControlValueAccessor, OnInit, OnChanges,
     if (this.catalogo) this.catalogos.recargar([this.catalogo]);
   }
 
-  alCambiar(evento: Event): void {
-    const texto = (evento.target as HTMLSelectElement).value;
-    const opcion = texto === '' ? null : this.opcionesVisibles.find((o) => String(o.valor) === texto) ?? null;
+  /** El combobox eligió (o limpió) una opción. */
+  alElegir(opcion: OpcionSelect | null): void {
     this.valor = opcion ? opcion.valor : null;
     this.alCambiarFn(this.valor);
     this.elegido.emit(opcion);
@@ -105,14 +110,7 @@ export class SelectComponent implements ControlValueAccessor, OnInit, OnChanges,
 
   alSalir(): void {
     this.alTocarFn();
-  }
-
-  esSeleccionada(o: OpcionSelect): boolean {
-    return valoresIguales(o.valor, this.valor);
-  }
-
-  trackOpcion(_: number, o: OpcionSelect): number | string {
-    return o.valor;
+    this.tocado.emit();
   }
 
   // ── ControlValueAccessor ──
@@ -161,6 +159,7 @@ export class SelectComponent implements ControlValueAccessor, OnInit, OnChanges,
         etiquetar: this.etiquetar,
         soloActivas: this.soloActivas,
         incluirDebito: this.incluirDebito,
+        frecuentes: this.frecuentes,
         valorActual: this.valor,
       });
     } else {

@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AporteDiario, DetalleAporteDiario, EliminadoAporteDiario, MetodoCanonico, PeriodoCarro, ResumenCarro, ResultadoAplicarExcedente, ResultadoAporteDiario, ResultadoGuardarPeriodo } from '../modelos/aportes';
+import { OpcionSelect } from '../modelos/catalogos';
 import { AportesCarroService } from '../services/aportes-carro.service';
 import { ModalService } from '../services/modal.service';
 import { mensajeDeError } from '../shared/http-error.helper';
@@ -168,6 +169,18 @@ export class AportesCarroComponent implements OnInit, OnDestroy {
 
   get personasFiltro(): Array<{ id: number; nombre: string }> {
     return personasEnAportes(this.periodos);
+  }
+
+  private opcionesPersonasCache: { origen: Array<{ id: number; nombre: string }>; opciones: OpcionSelect[] } | null = null;
+
+  /** Personas que aparecen en los aportes, como opciones del buscador (misma lista mientras no cambien los aportes). */
+  get opcionesPersonasFiltro(): OpcionSelect[] {
+    const origen = this.personasFiltro;
+    const previo = this.opcionesPersonasCache;
+    if (!previo || previo.origen.length !== origen.length || previo.origen.some((p, i) => p.id !== origen[i].id)) {
+      this.opcionesPersonasCache = { origen, opciones: origen.map((p) => ({ valor: p.id, etiqueta: p.nombre })) };
+    }
+    return (this.opcionesPersonasCache as { opciones: OpcionSelect[] }).opciones;
   }
 
   get filtrando(): boolean {

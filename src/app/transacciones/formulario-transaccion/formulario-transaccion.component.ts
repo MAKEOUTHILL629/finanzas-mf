@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, ValidationErrors, Validators } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject, combineLatest } from 'rxjs';
+import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
 import {
   ActualizarTransaccion,
   CrearTransaccion,
@@ -10,16 +10,18 @@ import {
   Transaccion,
 } from '../../modelos/erp';
 import { ItemCategoria, ItemCuenta } from '../../modelos/catalogos';
+import { ComercioHabitual, DEFAULTS_VACIOS, DefaultsFormularios } from '../../modelos/sugerencias';
 import { CatalogosService } from '../../services/catalogos.service';
+import { SugerenciasService } from '../../services/sugerencias.service';
 import { TransaccionesService } from '../../services/transacciones.service';
 import { esImporteValido } from '../../shared/dinero.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
+import { aDatetimeLocalBogota, desdeDatetimeLocalBogota } from '../../shared/periodo.helper';
 import { ESTADOS_TRANSACCION, TIPOS_TRANSACCION, reglasDeTipo } from '../transacciones.constants';
 
-/** `Date` → valor de `<input type="datetime-local">` (hora local, sin segundos). */
+/** `Date` → valor de `<input type="datetime-local">` en hora de Colombia, sin segundos (así «ahora» es el de Colombia en cualquier navegador). */
 export function aDatetimeLocal(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return aDatetimeLocalBogota(d);
 }
 
 export interface ValoresTransaccion {
@@ -65,7 +67,7 @@ export function construirAlta(v: ValoresTransaccion): CrearTransaccion {
     ...(r.requiereDestino && v.cuentaDestinoId !== null ? { cuentaDestinoId: Number(v.cuentaDestinoId) } : {}),
     ...(r.requiereTarjeta && v.tarjetaPagadaId !== null ? { tarjetaPagadaId: Number(v.tarjetaPagadaId) } : {}),
     ...(v.categoriaId !== null ? { categoriaId: Number(v.categoriaId) } : {}),
-    fechaTransaccion: new Date(v.fechaTransaccion).toISOString(),
+    fechaTransaccion: desdeDatetimeLocalBogota(v.fechaTransaccion).toISOString(),
     concepto: v.concepto.trim(),
     monedaOriginal: moneda,
     montoOriginal: String(v.montoOriginal),
@@ -104,7 +106,7 @@ export function calcularCambiosTransaccion(original: Transaccion, v: ValoresTran
   if (!mismo(v.cuentaDestinoId, base.cuentaDestinoId)) cambios.cuentaDestinoId = v.cuentaDestinoId === null ? null : Number(v.cuentaDestinoId);
   if (!mismo(v.tarjetaPagadaId, base.tarjetaPagadaId)) cambios.tarjetaPagadaId = v.tarjetaPagadaId === null ? null : Number(v.tarjetaPagadaId);
   if (!mismo(v.categoriaId, base.categoriaId)) cambios.categoriaId = v.categoriaId === null ? null : Number(v.categoriaId);
-  if (v.fechaTransaccion !== base.fechaTransaccion) cambios.fechaTransaccion = new Date(v.fechaTransaccion).toISOString();
+  if (v.fechaTransaccion !== base.fechaTransaccion) cambios.fechaTransaccion = desdeDatetimeLocalBogota(v.fechaTransaccion).toISOString();
   if (v.concepto.trim() !== base.concepto.trim()) cambios.concepto = v.concepto.trim();
   if (Number(v.montoOriginal) !== Number(base.montoOriginal)) cambios.montoOriginal = String(v.montoOriginal);
   if (v.monedaOriginal !== 'COP' && Number(v.tasaCambio) !== Number(base.tasaCambio)) cambios.tasaCambio = String(v.tasaCambio);
@@ -157,7 +159,14 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
     { validators: (g): ValidationErrors | null => this.validarReglas(g.getRawValue() as ValoresTransaccion) }
   );
 
-  constructor(private transaccionesService: TransaccionesService, private catalogos: CatalogosService) {}
+  /** Comercios que ya usaste (para sugerir al escribir el concepto) y lo que el historial dice que arranque preseleccionado. */
+  comercios: ComercioHabitual[] = [];
+  private comerciosPorConcepto = new Map<string, ComercioHabitual>();
+  private defaults: DefaultsFormularios = DEFAULTS_VACIOS;
+  /** La cuenta de destino la puso la sugerencia (no el usuario): se retira si el tipo deja de ser un ingreso. */
+  private destinoSugerido = false;
+
+  constructor(private transaccionesService: TransaccionesService, private catalogos: CatalogosService, private sugerencias: SugerenciasService) {}
 
   get esEdicion(): boolean {
     return !!this.transaccion;
@@ -189,8 +198,64 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
     }
 
     this.actualizarFiltroCategorias();
-    this.form.controls.tipoTransaccion.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.actualizarFiltroCategorias());
+    this.form.controls.tipoTransaccion.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.actualizarFiltroCategorias();
+      this.aplicarDefaults();
+    });
     this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.limpiarReferenciasQueNoAplican());
+
+    // Solo en el alta: lo habitual (cuenta, tarjeta) y los comercios que ya usaste. Opcional: sin historial todo queda como siempre.
+    if (!this.transaccion) {
+      combineLatest([this.sugerencias.defaults(), this.sugerencias.comercios(), this.catalogos.estado$('cuentas'), this.catalogos.estado$('tarjetas')])
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(([defaults, comercios]) => {
+          this.defaults = defaults;
+          this.comercios = comercios.slice(0, 200);
+          this.comerciosPorConcepto = new Map(comercios.map((c) => [c.concepto.toLowerCase(), c]));
+          this.aplicarDefaults();
+        });
+      this.form.controls.concepto.valueChanges.pipe(debounceTime(300), takeUntil(this.destroy$)).subscribe((c) => this.alEscribirConcepto(c));
+    }
+  }
+
+  // ── valores por defecto inteligentes (plan V2, fase 4) ──
+
+  private cuentaExiste(id: number | null): id is number {
+    return id !== null && this.catalogos.datos('cuentas').some((c) => c.id === id && c.activa);
+  }
+
+  /** Cuenta y tarjeta habituales en los campos que el tipo pide y siguen vacíos (nunca pisa lo que el usuario eligió). */
+  private aplicarDefaults(): void {
+    if (this.transaccion) return;
+    const r = this.reglas;
+    const { cuentaOrigenId, cuentaDestinoId, tarjetaPagadaId } = this.form.controls;
+    const libre = (c: { value: unknown; dirty: boolean }) => c.value === null && !c.dirty;
+    // el destino que se propuso para un ingreso no se arrastra a una transferencia (quedaría igual al origen): ahí lo elige el usuario
+    if (this.destinoSugerido && r.requiereOrigen && !cuentaDestinoId.dirty) {
+      cuentaDestinoId.setValue(null);
+      this.destinoSugerido = false;
+    }
+    if (r.requiereOrigen && libre(cuentaOrigenId) && this.cuentaExiste(this.defaults.cuentaId)) cuentaOrigenId.setValue(this.defaults.cuentaId);
+    // en un ingreso la cuenta habitual es donde se recibe
+    if (r.requiereDestino && !r.requiereOrigen && libre(cuentaDestinoId) && this.cuentaExiste(this.defaults.cuentaId)) {
+      cuentaDestinoId.setValue(this.defaults.cuentaId);
+      this.destinoSugerido = true;
+    }
+    const tc = this.defaults.tarjetaCreditoId;
+    if (r.requiereTarjeta && libre(tarjetaPagadaId) && tc !== null && this.catalogos.datos('tarjetas').some((t) => t.id === tc && t.tipo !== 'DEBITO')) tarjetaPagadaId.setValue(tc);
+  }
+
+  /** Si el concepto es un comercio que ya usaste, se propone su categoría y su cuenta habituales (sin pisar lo ya elegido). */
+  private alEscribirConcepto(concepto: string | null): void {
+    const habitual = this.comerciosPorConcepto.get((concepto ?? '').trim().toLowerCase());
+    if (!habitual || this.transaccion) return;
+    const { categoriaId, cuentaOrigenId } = this.form.controls;
+    if (habitual.categoriaId !== null && categoriaId.value === null && !categoriaId.dirty && this.catalogos.datos('categorias').some((c) => c.id === habitual.categoriaId)) {
+      categoriaId.setValue(habitual.categoriaId);
+    }
+    if (this.reglas.requiereOrigen && habitual.cuentaId !== null && !cuentaOrigenId.dirty && this.cuentaExiste(habitual.cuentaId)) {
+      cuentaOrigenId.setValue(habitual.cuentaId);
+    }
   }
 
   private actualizarFiltroCategorias(): void {
@@ -261,6 +326,8 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
 
   private reiniciar(): void {
     this.form.reset(valoresIniciales() as never);
+    this.sugerencias.invalidar(); // lo recién registrado ya cuenta para lo habitual
+    this.aplicarDefaults();
   }
 
   campoInvalido(nombre: string): boolean {

@@ -159,6 +159,25 @@ export function personaTrasCambiarMetodo(metodo: string, personaActual: number |
   return personaActual !== null && (personaActual === responsableId || personaActual === miPersonaId) ? personaActual : responsableId;
 }
 
+/**
+ * Método tras elegir a una persona. El servidor solo acepta efectivo y transferencia a nombre del responsable de la cuota (o tuyo) y el
+ * saldo a favor a nombre del responsable: lo que entrega un tercero entra como «Cruce de cuentas» (se abona a la cuota y se le carga a
+ * su cuenta por cobrar). Así el selector puede ofrecer a TODAS las personas: al elegir a un tercero el método pasa solo a cruce.
+ */
+export function metodoTrasCambiarPersona(metodo: string | null, personaId: number | null, responsableId: number | null, miPersonaId: number | null = null): { metodo: string | null; cambio: boolean } {
+  if (personaId === null) return { metodo, cambio: false };
+  const clase = clasificarMetodo(metodo);
+  const esResponsable = personaId === responsableId;
+  const esYo = miPersonaId !== null && personaId === miPersonaId;
+  const permitido = clase === 'EFECTIVO' || clase === 'TRANSFERENCIA' ? esResponsable || esYo : clase === 'SALDO_A_FAVOR' ? esResponsable : true;
+  return permitido ? { metodo, cambio: false } : { metodo: 'CRUCE_CUENTAS', cambio: true };
+}
+
+/** Aviso bajo una línea que pasó sola a «Cruce de cuentas» al elegir a un tercero. */
+export function avisoCambioACruce(nombre: string | null | undefined, metodoAnterior: string | null): string {
+  return `${nombre || 'La persona'} no es el responsable de la cuota: el aporte pasó de «${etiquetaMetodo(metodoAnterior)}» a «Cruce de cuentas» (se abona a la cuota y se le carga a su cuenta por cobrar).`;
+}
+
 /** Aviso bajo una línea de cruce: qué va a pasar con el valor. */
 export function avisoCruce(nombre: string | null | undefined, esResponsable = false): string {
   if (esResponsable) return 'El valor se abona a la cuota del carro sin cargar a nadie (descuento de una deuda tuya con el responsable).';

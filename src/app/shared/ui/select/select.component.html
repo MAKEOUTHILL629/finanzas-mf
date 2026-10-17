@@ -1,15 +1,7 @@
-<div class="ui-select" [class.ui-select--cargando]="cargandoSinDatos" [class.ui-select--invalido]="invalido">
-  <select #campo appInput [id]="inputId" [disabled]="deshabilitado || cargandoSinDatos || (sinOpciones && !valor)" [attr.aria-invalid]="invalido ? 'true' : null" [attr.aria-label]="ariaLabel" [attr.aria-describedby]="ariaDescribedby" [attr.aria-busy]="cargandoSinDatos ? 'true' : null" (change)="alCambiar($event)" (blur)="alSalir()">
-    <ng-container *ngIf="cargandoSinDatos; else listo">
-      <option value="" selected>{{ catalogo ? 'Cargando…' : placeholder }}</option>
-    </ng-container>
-    <ng-template #listo>
-      <option value="" [selected]="valor === null" [disabled]="!permitirVacio && opcionesVisibles.length > 0">{{ sinOpciones ? 'Sin opciones' : placeholder }}</option>
-      <option *ngFor="let o of opcionesVisibles; trackBy: trackOpcion" [value]="o.valor" [selected]="esSeleccionada(o)" [disabled]="o.deshabilitada">{{ o.etiqueta }}</option>
-    </ng-template>
-  </select>
-  <span class="ui-select-esqueleto erp-skeleton" *ngIf="cargandoSinDatos" aria-hidden="true"></span>
-</div>
+<app-searchable-select
+  [opciones]="opcionesVisibles" [valor]="valor" [inputId]="inputId" [placeholder]="placeholder" [permitirVacio]="permitirVacio" [invalido]="invalido"
+  [ariaLabel]="ariaLabel" [ariaDescribedby]="ariaDescribedby" [abrirAlMostrar]="abrirAlMostrar" [cargando]="cargandoSinDatos" [deshabilitado]="deshabilitado || (sinOpciones && !valor)"
+  (elegido)="alElegir($event)" (tocado)="alSalir()"></app-searchable-select>
 
 <p class="erp-field-error ui-select-error" *ngIf="error" role="alert">
   {{ error }}

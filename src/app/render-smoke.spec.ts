@@ -199,7 +199,9 @@ describe('Renderizado de las pantallas (humo)', () => {
     f.componentInstance.form.patchValue({ tipoTransaccion: 'PAGO_TARJETA' });
     t = texto(f);
     expect(t).toContain('Tarjeta que se paga');
-    expect(t).toContain('Visa · Oro');
+    f.nativeElement.querySelector('#tx-tarjeta')?.click(); // abre el combobox de tarjetas
+    f.detectChanges();
+    expect(document.body.textContent).toContain('Visa · Oro'); // la lista del combobox vive en <body>
     f.componentInstance.form.patchValue({ monedaOriginal: 'USD' });
     expect(texto(f)).toContain('Tasa de cambio a COP');
   });

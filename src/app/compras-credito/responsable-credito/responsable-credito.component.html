@@ -44,19 +44,13 @@
                   <span class="persona-name">{{ getPersonaNombre(responsable.persona || 0) }}</span>
                   <i class="material-icons edit-hint-table">edit</i>
                 </div>
-                <select
+                <app-select
                   *ngIf="estaEditando(responsable, 'persona')"
-                  class="edit-input-table"
-                  [(ngModel)]="responsableEditando[responsable.id || 0].persona"
-                  (blur)="guardarEdicionResponsable(responsable, 'persona')"
-                  (keydown.enter)="guardarEdicionResponsable(responsable, 'persona')"
-                  (keydown.escape)="cancelarEdicionResponsable(responsable, 'persona')"
-                  autofocus
-                >
-                  <option *ngFor="let persona of personas" [value]="persona.id">
-                    {{ persona.nombre }}
-                  </option>
-                </select>
+                  catalogo="personas" ariaLabel="Persona responsable" [permitirVacio]="false" [abrirAlMostrar]="true"
+                  [ngModel]="responsableEditando[responsable.id || 0].persona"
+                  (ngModelChange)="responsableEditando[responsable.id || 0].persona = $event; guardarEdicionResponsable(responsable, 'persona')"
+                  (tocado)="estaEditando(responsable, 'persona') && cancelarEdicionResponsable(responsable, 'persona')"
+                ></app-select>
               </td>
               <td
                 class="text-right editable-cell"

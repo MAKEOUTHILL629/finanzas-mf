@@ -39,7 +39,8 @@ Tipografía: `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text"
 | `<button appButton="primary\|secondary\|ghost\|danger" size="sm\|lg" icon block loading>` | Botón (también en `<a>`). Objetivo táctil de 44 px. |
 | `<app-badge tone icon solid>` | Insignia de estado. |
 | `<app-field label for hint error required>` + `appInput` | Campo de formulario; `appInput` estiliza `input`, `select` y `textarea` nativos. |
-| `<app-select catalogo="…">` | Selector de catálogos (personas, tarjetas, cuentas, categorías) con carga, vacío y error. |
+| `<app-searchable-select [opciones] formControlName>` | **Combobox buscable** (estilo Spotlight): buscador al abrir (nombre, detalle y datos extra como `*1927`, sin tildes), grupos con encabezados (`grupo`), teclado `↑ ↓ Enter Esc`, botón de limpiar y, en pantallas angostas, hoja inferior. La lista se lleva a `<body>` (un diálogo con `transform` la recortaría). `[abrirAlMostrar]` para editores en línea de una celda. |
+| `<app-select catalogo="…">` | Selector de catálogos (personas, tarjetas, cuentas, categorías) sobre el combobox: carga, vacío y error con «Reintentar». Tarjetas y cuentas: «Activas» / «Históricas / Reemplazadas»; personas: `[frecuentes]` (las más usadas primero, **todas** las demás debajo). |
 | `<app-select-producto formControlName ultimos4 instrumento>` | Selector único de **tarjetas de crédito, de débito y cuentas** (grupos); entrega `t:ID` / `c:ID` y elige solo el producto de los últimos 4 dígitos dados. |
 | `<table appTable compact stack sticky>` | Tabla; en móvil cada fila se vuelve una tarjeta. |
 | `<app-empty-state icon titulo descripcion>` | Estado vacío con la acción para empezar. |

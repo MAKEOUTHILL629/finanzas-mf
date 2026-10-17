@@ -64,7 +64,7 @@
           <div class="erp-field">
             <label class="erp-label" [for]="'fa-persona-' + i">{{ esMetodo(fila, 'CRUCE_CUENTAS') ? 'Quién asume la deuda' : 'Persona' }}</label>
             <app-select [inputId]="'fa-persona-' + i" catalogo="personas" formControlName="personaId" placeholder="Selecciona…" [permitirVacio]="false"
-                        [filtro]="filtroPersona(fila)" [invalido]="lineaInvalida(fila, 'personaId')"></app-select>
+                        [frecuentes]="frecuentes" [invalido]="lineaInvalida(fila, 'personaId')"></app-select>
             <p class="erp-field-error" *ngIf="lineaInvalida(fila, 'personaId')">Elige la persona.</p>
           </div>
 
@@ -88,7 +88,10 @@
           </div>
         </div>
 
-        <p class="linea-aviso linea-aviso--cruce" *ngIf="esMetodo(fila, 'CRUCE_CUENTAS') && fila.controls.personaId.value !== null">
+        <p class="linea-aviso" *ngIf="avisoCambio(fila) as aviso" role="status">
+          <i class="material-icons" aria-hidden="true">swap_horiz</i>{{ aviso }}
+        </p>
+        <p class="linea-aviso linea-aviso--cruce" *ngIf="esMetodo(fila, 'CRUCE_CUENTAS') && fila.controls.personaId.value !== null && !avisoCambio(fila)">
           <i class="material-icons" aria-hidden="true">compare_arrows</i>{{ textoCruce(fila) }}
         </p>
         <p class="linea-aviso" *ngIf="esMetodo(fila, 'SALDO_A_FAVOR') && periodosOrigen.length === 0">

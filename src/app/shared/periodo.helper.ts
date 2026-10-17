@@ -7,9 +7,29 @@ export function esPeriodoValido(valor: unknown): valor is string {
   return typeof valor === 'string' && PERIODO.test(valor);
 }
 
-/** Periodo del mes en curso según el reloj del navegador. */
+/** Zona horaria de la app: «hoy» es el día en Colombia aunque el navegador (o un servidor) esté en otro huso. */
+export const ZONA_HORARIA = 'America/Bogota';
+const FORMATO_BOGOTA = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA_HORARIA, year: 'numeric', month: '2-digit', day: '2-digit' });
+
+const FORMATO_BOGOTA_HORA = new Intl.DateTimeFormat('en-CA', {
+  timeZone: ZONA_HORARIA, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+});
+
+/** Un instante como valor de `<input type="datetime-local">` (`yyyy-MM-ddTHH:mm`) en hora de Colombia. */
+export function aDatetimeLocalBogota(d: Date): string {
+  const p = Object.fromEntries(FORMATO_BOGOTA_HORA.formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p['year']}-${p['month']}-${p['day']}T${p['hour']}:${p['minute']}`;
+}
+
+/** Lo contrario: el `datetime-local` que escribió el usuario se entiende en hora de Colombia (UTC-5, sin horario de verano). */
+export function desdeDatetimeLocalBogota(valor: string): Date {
+  const completo = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor) ? `${valor}:00` : valor;
+  return new Date(`${completo}-05:00`);
+}
+
+/** Periodo del mes en curso (en hora de Colombia). */
 export function periodoActual(ahora: Date = new Date()): string {
-  return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+  return hoyIso(ahora).slice(0, 7);
 }
 
 /** `2026-12` + 1 → `2027-01`; admite desplazamientos negativos y mayores a 12. */
@@ -27,11 +47,10 @@ export function nombrePeriodo(periodo: string | null | undefined): string {
   return m ? `${months[Number(m[2]) - 1]} ${m[1]}` : '';
 }
 
-/** Fecha de hoy (calendario local) como `yyyy-MM-dd`, lista para un `<input type="date">`. */
+/** Fecha de hoy en hora de Colombia (`America/Bogota`) como `yyyy-MM-dd`, lista para un `<input type="date">`. */
 export function hoyIso(ahora: Date = new Date()): string {
-  const mm = String(ahora.getMonth() + 1).padStart(2, '0');
-  const dd = String(ahora.getDate()).padStart(2, '0');
-  return `${ahora.getFullYear()}-${mm}-${dd}`;
+  const partes = Object.fromEntries(FORMATO_BOGOTA.formatToParts(ahora).map((p) => [p.type, p.value]));
+  return `${partes['year']}-${partes['month']}-${partes['day']}`;
 }
 
 /** Último día (`yyyy-MM-dd`) de un periodo. */

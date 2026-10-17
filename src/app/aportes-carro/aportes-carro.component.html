@@ -95,10 +95,8 @@
       </div>
       <div class="erp-field">
         <label class="erp-label" for="ac-f-persona">Persona</label>
-        <select id="ac-f-persona" appInput [ngModel]="filtros.personaId" (ngModelChange)="cambiarFiltro('personaId', $event)" name="personaId">
-          <option [ngValue]="null">Todas</option>
-          <option *ngFor="let p of personasFiltro" [ngValue]="p.id">{{ p.nombre }}</option>
-        </select>
+        <app-select inputId="ac-f-persona" [opciones]="opcionesPersonasFiltro" placeholder="Todas" ariaLabel="Filtrar por persona"
+                    [ngModel]="filtros.personaId" (ngModelChange)="cambiarFiltro('personaId', $event)" [ngModelOptions]="{ standalone: true }"></app-select>
       </div>
       <div class="erp-field">
         <label class="erp-label" for="ac-f-metodo">Método</label>

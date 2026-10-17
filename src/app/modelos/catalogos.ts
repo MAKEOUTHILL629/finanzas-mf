@@ -112,4 +112,6 @@ export interface OpcionSelect {
   deshabilitada?: boolean;
   /** Encabezado del grupo (`<optgroup>`) al que pertenece, en los selectores que agrupan sus opciones. */
   grupo?: string;
+  /** Texto extra en el que también se busca (últimos 4 dígitos, alias, tipo…); no se muestra. */
+  busqueda?: string;
 }

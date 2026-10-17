@@ -23,7 +23,8 @@
   <div class="erp-form-grid">
     <div class="erp-field erp-span-2">
       <label class="erp-label" for="tx-concepto">Concepto<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="tx-concepto" appInput type="text" formControlName="concepto" maxlength="255" autocomplete="off" placeholder="Ej. Mercado de la semana" [attr.aria-invalid]="campoInvalido('concepto')" />
+      <input id="tx-concepto" appInput type="text" formControlName="concepto" maxlength="255" autocomplete="off" placeholder="Ej. Mercado de la semana" list="tx-comercios" [attr.aria-invalid]="campoInvalido('concepto')" />
+      <datalist id="tx-comercios"><option *ngFor="let c of comercios" [value]="c.concepto"></option></datalist>
       <p class="erp-field-error" *ngIf="campoInvalido('concepto')">Escribe un concepto.</p>
     </div>
 
