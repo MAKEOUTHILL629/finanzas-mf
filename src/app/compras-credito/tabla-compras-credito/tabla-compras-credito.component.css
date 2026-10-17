@@ -2,6 +2,7 @@
 .compras { gap: var(--space-2); }
 
 .concepto { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--weight-semibold); }
+.concepto-marca { display: inline-flex; margin-top: 4px; }
 .concepto-detalle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-caption); }
 
 .responsables { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }

@@ -25,7 +25,7 @@ const compra = (extra: Partial<ComprasCredito>): ComprasCredito => ({
 const COMPRAS: ComprasCredito[] = [
   compra({ id: 1 }),
   compra({ id: 2, concepto: 'Celular Xiaomi', descripcion: undefined, valorCompra: 900000, pagoMensual: 150000, numeroCuotas: 6, estado: 'Pagado', tarjeta: 2, responsables: '3', porcentajePago: 60 }),
-  compra({ id: 3, concepto: 'Unificación de deuda', valorCompra: 5000000, pagoMensual: 300000, estado: 'Refinanciada', responsables: '', porcentajePago: 0 }),
+  { ...compra({ id: 3, concepto: 'Unificación de deuda', valorCompra: 5000000, pagoMensual: 300000, estado: 'Refinanciada', responsables: '', porcentajePago: 0 }), esRefinanciamiento: true } as ComprasCredito,
 ];
 
 const TARJETAS = [tarjetaItem(1, 'Visa', { etiqueta: 'Visa ··1927' }), tarjetaItem(2, 'Amex', { etiqueta: 'Amex ··9587' })];
@@ -72,6 +72,14 @@ describe('TablaComprasCreditoComponent', () => {
       expect(c.totalMensual).toBe(233333); // solo la compra pendiente
       expect(c.pendientes).toBe(1);
       expect(qa('.resumen app-card').length).toBe(3);
+    });
+
+    it('la compra que es una unificación de deuda lo muestra con una insignia junto al concepto', () => {
+      const filas = qa('tbody tr');
+      const marcada = filas.filter((tr) => tr.querySelector('.concepto-marca'));
+      expect(marcada.length).toBe(1);
+      expect(marcada[0].querySelector('.concepto')!.textContent).toContain('Unificación de deuda');
+      expect(marcada[0].querySelector('.concepto-marca')!.textContent).toContain('Unificación de deuda');
     });
 
     it('los contadores de los estados rápidos suman cada estado', () => {
@@ -132,6 +140,14 @@ describe('TablaComprasCreditoComponent', () => {
       c.alAccionar('nueva');
       c.alAccionar('csv');
       expect(abrir.calls.allArgs()).toEqual([['compra-credito-form'], ['csv-upload-form']]);
+    });
+
+    it('«Simular / Unificar deuda» abre el asistente de refinanciamiento', () => {
+      const abrir = spyOn(TestBed.inject(ModalService), 'open');
+      const accion = c.secundarias.find((a) => a.id === 'unificar')!;
+      expect(accion.etiqueta).toBe('Simular / Unificar deuda');
+      c.alAccionar('unificar');
+      expect(abrir).toHaveBeenCalledWith('unificar-deuda');
     });
 
     it('«Procesar pagos» llama al servidor y recarga la lista', () => {
@@ -209,7 +225,9 @@ describe('tonoEstadoCompra', () => {
     expect(tonoEstadoCompra('Pagado')).toBe('success');
     expect(tonoEstadoCompra('Pendiente')).toBe('warning');
     expect(tonoEstadoCompra('Refinanciada')).toBe('info');
-    expect(tonoEstadoCompra('Ajuste Interes')).toBe('neutral');
+    expect(tonoEstadoCompra('REFINANCIADA')).toBe('info');
+    expect(tonoEstadoCompra('Ajuste Interes')).toBe('info'); // refinanciamientos registrados a mano
+    expect(tonoEstadoCompra('Cancelado')).toBe('neutral');
     expect(tonoEstadoCompra(undefined)).toBe('neutral');
   });
 });

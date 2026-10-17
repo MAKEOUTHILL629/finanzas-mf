@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
-import { ComprasCredito } from '../../modelos/compras-credito';
+import { ComprasCredito, ComprasCreditoMultimoneda } from '../../modelos/compras-credito';
 import { ApiServicesService } from '../../services/api-services.service';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
@@ -12,6 +12,7 @@ import { mensajeDeError } from '../../shared/http-error.helper';
 import { AccionUI } from '../../shared/ui/acciones/acciones.component';
 import { ColumnaTabla, OrdenTabla } from '../../shared/ui/apple-table/apple-table.types';
 import { DefinicionFiltro, EstadoFiltros, SegmentoFiltro, estadoVacio } from '../../shared/ui/filter-bar/filter-bar.types';
+import { MODAL_UNIFICAR_DEUDA } from '../unificar-deuda/unificar-deuda.component';
 import { ContextoCompras, SEGMENTOS_COMPRAS, conteoPorSegmento, filtrarCompras, idsResponsables, segmentoDe } from './compras-filtros';
 
 interface ResponsableVista {
@@ -49,8 +50,8 @@ export function tonoEstadoCompra(estado: string | undefined): 'success' | 'warni
 export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   readonly tonoEstado = tonoEstadoCompra;
 
-  comprasCredito: ComprasCredito[] = [];
-  filtradas: ComprasCredito[] = [];
+  comprasCredito: ComprasCreditoMultimoneda[] = [];
+  filtradas: ComprasCreditoMultimoneda[] = [];
   isLoading = false;
   isRefreshing = false;
   error: string | null = null;
@@ -154,7 +155,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   loadProducts(): void {
     this.isLoading = true;
     this.error = null;
-    this.apiService.get<ComprasCredito[]>('compras-credito').pipe(takeUntil(this.destroy$)).subscribe({
+    this.apiService.get<ComprasCreditoMultimoneda[]>('compras-credito').pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.comprasCredito = data;
         this.isLoading = false;
@@ -170,7 +171,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   refreshCompras(): void {
     this.isRefreshing = true;
     this.refrescarAcciones();
-    this.apiService.get<ComprasCredito[]>('compras-credito').pipe(takeUntil(this.destroy$)).subscribe({
+    this.apiService.get<ComprasCreditoMultimoneda[]>('compras-credito').pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.comprasCredito = data;
         this.isRefreshing = false;
@@ -242,6 +243,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
 
   private refrescarAcciones(): void {
     this.secundarias = [
+      { id: 'unificar', etiqueta: 'Simular / Unificar deuda', icono: 'merge_type', tooltip: 'Simular un refinanciamiento y unificar varias compras de una tarjeta en una sola deuda' },
       { id: 'pagar', etiqueta: 'Procesar pagos', icono: 'paid', tooltip: 'Marcar como pagadas las cuotas que ya vencieron' },
       { id: 'csv', etiqueta: 'Carga masiva', icono: 'upload_file', tooltip: 'Cargar varias compras desde un archivo CSV' },
       {
@@ -256,6 +258,7 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
 
   alAccionar(id: string): void {
     if (id === 'nueva') this.openCreditForm();
+    else if (id === 'unificar') this.modalService.open(MODAL_UNIFICAR_DEUDA);
     else if (id === 'pagar') this.pagarProductosTarjetaCredito();
     else if (id === 'csv') this.openCSVUploadForm();
     else if (id === 'refrescar') this.refreshCompras();

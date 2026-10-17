@@ -1,377 +1,238 @@
+<section class="erp-page insp" aria-labelledby="titulo-compra">
+  <a class="erp-back" routerLink="/compras-credito"><i class="material-icons" aria-hidden="true">arrow_back</i> Compras a crédito</a>
 
-<div class="purchase-detail">
-  <!-- Header con Glass Morphism -->
-  <div class="detail-header">
-    <div class="header-content">
-      <div class="header-title">
-        <i class="material-icons">receipt_long</i>
-        <h1>Detalle de Compra</h1>
-      </div>
-      <div class="header-actions">
-        <button class="btn-update" (click)="prepararActualizacion()" [disabled]="!hayCambios || actualizando" *ngIf="hayCambios" aria-label="Actualizar compra">
-          <i class="material-icons">save</i>
-          <span>{{ actualizando ? 'Actualizando...' : 'Actualizar Compra' }}</span>
-        </button>
-        <button class="btn-cancel-edit" (click)="cancelarEdicion()" *ngIf="hayCambios" aria-label="Cancelar edición">
-          <i class="material-icons">close</i>
-          <span>Cancelar</span>
-        </button>
-        <button class="btn-recalcular" (click)="recalcularCuotas()" aria-label="Recalcular cuotas">
-          <i class="material-icons">calculate</i>
-          <span>Recalcular Cuotas</span>
-        </button>
-        <button class="btn-delete" (click)="confirmarEliminacion()" aria-label="Eliminar compra">
-          <i class="material-icons">delete_outline</i>
-          <span>Eliminar Compra</span>
-        </button>
-      </div>
-    </div>
+  <!-- Cargando / error -->
+  <div class="insp-esqueleto" *ngIf="cargando" role="status" aria-label="Cargando la compra">
+    <app-skeleton alto="132px"></app-skeleton>
+    <div class="insp-bento"><app-skeleton alto="260px"></app-skeleton><app-skeleton alto="260px"></app-skeleton></div>
   </div>
 
-  <!-- Cards de Información -->
-  <div class="info-cards-grid">
-    <!-- Card: Información General -->
-    <div class="info-card surface-glass">
-      <div class="card-header">
-        <i class="material-icons">info</i>
-        <h3>Información General</h3>
-      </div>
-      <div class="card-body">
-        <div class="info-row editable-row" (dblclick)="activarEdicion('concepto')" [class.editing]="camposEditando['concepto']">
-          <span class="label">Concepto</span>
-          <span class="value" *ngIf="!camposEditando['concepto']">{{ compraEditada.concepto || compraCredito?.concepto || '-' }}</span>
-          <input
-            *ngIf="camposEditando['concepto']"
-            type="text"
-            class="edit-input"
-            [value]="compraEditada.concepto || compraCredito?.concepto"
-            (input)="actualizarCampo('concepto', $any($event.target).value)"
-            (blur)="desactivarEdicion('concepto')"
-            (keyup.enter)="desactivarEdicion('concepto')"
-            (keyup.escape)="desactivarEdicion('concepto')"
-            placeholder="Ingrese el concepto"
-            autofocus
-          />
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['concepto']">edit</i>
-        </div>
-        <div class="info-row editable-row" (dblclick)="activarEdicion('descripcion')" [class.editing]="camposEditando['descripcion']">
-          <span class="label">Descripción</span>
-          <span class="value" *ngIf="!camposEditando['descripcion']">{{ compraEditada.descripcion || compraCredito?.descripcion || '-' }}</span>
-          <textarea
-            *ngIf="camposEditando['descripcion']"
-            class="edit-input edit-textarea"
-            [value]="compraEditada.descripcion || compraCredito?.descripcion"
-            (input)="actualizarCampo('descripcion', $any($event.target).value)"
-            (blur)="desactivarEdicion('descripcion')"
-            placeholder="Ingrese la descripción"
-            rows="2"
-            autofocus
-          ></textarea>
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['descripcion']">edit</i>
-        </div>
-        <div class="info-row editable-row" (dblclick)="activarEdicion('estado')" [class.editing]="camposEditando['estado']">
-          <span class="label">Estado</span>
-          <span class="value" *ngIf="!camposEditando['estado']">
-            <span class="status-badge" [class]="(compraEditada.estado || compraCredito?.estado || 'Pendiente').toLowerCase()">
-              {{ compraEditada.estado || compraCredito?.estado || 'Pendiente' }}
-            </span>
-          </span>
-          <select
-            *ngIf="camposEditando['estado']"
-            class="edit-input edit-select"
-            [value]="compraEditada.estado || compraCredito?.estado"
-            (change)="actualizarCampo('estado', $any($event.target).value); desactivarEdicion('estado')"
-            (blur)="desactivarEdicion('estado')"
-            autofocus
-          >
-            <option value="pendiente">Pendiente</option>
-            <option value="pagado">Pagado</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['estado']">edit</i>
-        </div>
-        <div class="info-row editable-row" (dblclick)="activarEdicion('tarjeta')" [class.editing]="camposEditando['tarjeta']">
-          <span class="label">Tarjeta</span>
-          <span class="value" *ngIf="!camposEditando['tarjeta']">{{ compraEditada.tarjeta || compraCredito?.tarjeta || 1 | formatoTarjeta }}</span>
-          <app-select
-            *ngIf="camposEditando['tarjeta']"
-            class="edit-select"
-            inputId="dc-tarjeta" catalogo="tarjetas" ariaLabel="Tarjeta de la compra" [permitirVacio]="false" [abrirAlMostrar]="true"
-            [ngModel]="compraEditada.tarjeta || compraCredito?.tarjeta"
-            (ngModelChange)="actualizarCampo('tarjeta', +$event)"
-            (tocado)="desactivarEdicion('tarjeta')"
-          ></app-select>
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['tarjeta']">edit</i>
-        </div>
-        <div class="info-row" *ngIf="$any(compraCredito)?.plasticoUltimos4">
-          <span class="label">Plástico</span>
-          <span class="value financial-num">··{{ $any(compraCredito).plasticoUltimos4 }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card: Detalles Financieros -->
-    <div class="info-card surface-glass">
-      <div class="card-header">
-        <i class="material-icons">account_balance_wallet</i>
-        <h3>Detalles Financieros</h3>
-      </div>
-      <div class="card-body">
-        <div class="info-row editable-row" (dblclick)="activarEdicion('valorCompra')" [class.editing]="camposEditando['valorCompra']">
-          <span class="label">Valor de Compra</span>
-          <span class="value financial-num" *ngIf="!camposEditando['valorCompra']">{{ (compraEditada.valorCompra || compraCredito?.valorCompra) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-          <div class="input-group-inline" *ngIf="camposEditando['valorCompra']">
-            <span class="currency-symbol">$</span>
-            <input
-              type="text"
-              class="edit-input financial-input"
-              [value]="formatCurrency(compraEditada.valorCompra || compraCredito?.valorCompra)"
-              (input)="handleCurrencyInput($event, 'valorCompra')"
-              (blur)="desactivarEdicion('valorCompra')"
-              (keyup.enter)="desactivarEdicion('valorCompra')"
-              (keyup.escape)="desactivarEdicion('valorCompra')"
-              placeholder="0"
-              autofocus
-            />
-          </div>
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['valorCompra']">edit</i>
-        </div>
-        <div class="info-row editable-row" (dblclick)="activarEdicion('fechaCompra')" [class.editing]="camposEditando['fechaCompra']">
-          <span class="label">Fecha de Compra</span>
-          <span class="value" *ngIf="!camposEditando['fechaCompra']">{{ (compraEditada.fechaCompra || compraCredito?.fechaCompra) | formatoFecha }}</span>
-          <input
-            *ngIf="camposEditando['fechaCompra']"
-            type="date"
-            class="edit-input"
-            [value]="getDateForInput(compraEditada.fechaCompra || compraCredito?.fechaCompra)"
-            (change)="actualizarCampo('fechaCompra', $any($event.target).value)"
-            (blur)="desactivarEdicion('fechaCompra')"
-            autofocus
-          />
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['fechaCompra']">edit</i>
-        </div>
-        <div class="info-row editable-row" (dblclick)="activarEdicion('numeroCuotas')" [class.editing]="camposEditando['numeroCuotas']">
-          <span class="label">Número de Cuotas</span>
-          <span class="value financial-num" *ngIf="!camposEditando['numeroCuotas']">{{ compraEditada.numeroCuotas || compraCredito?.numeroCuotas }}</span>
-          <input
-            *ngIf="camposEditando['numeroCuotas']"
-            type="number"
-            class="edit-input financial-input"
-            [value]="compraEditada.numeroCuotas || compraCredito?.numeroCuotas"
-            (input)="actualizarCampo('numeroCuotas', +$any($event.target).value)"
-            (blur)="desactivarEdicion('numeroCuotas')"
-            (keyup.enter)="desactivarEdicion('numeroCuotas')"
-            (keyup.escape)="desactivarEdicion('numeroCuotas')"
-            min="1"
-            autofocus
-          />
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['numeroCuotas']">edit</i>
-        </div>
-        <div class="info-row">
-          <span class="label">Pago Mensual</span>
-          <span class="value financial-num highlight">{{ compraCredito?.pagoMensual | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-        </div>
-        <div class="info-row editable-row" (dblclick)="activarEdicion('interes')" [class.editing]="camposEditando['interes']">
-          <span class="label">Interés</span>
-          <span class="value financial-num" *ngIf="!camposEditando['interes']">{{ compraEditada.interes ?? compraCredito?.interes }}%</span>
-          <div class="input-group-inline" *ngIf="camposEditando['interes']">
-            <input
-              type="number"
-              class="edit-input financial-input"
-              [value]="compraEditada.interes ?? compraCredito?.interes"
-              (input)="actualizarCampo('interes', +$any($event.target).value)"
-              (blur)="desactivarEdicion('interes')"
-              (keyup.enter)="desactivarEdicion('interes')"
-              (keyup.escape)="desactivarEdicion('interes')"
-              step="0.1"
-              min="0"
-              placeholder="0.0"
-              autofocus
-            />
-            <span class="percent-symbol">%</span>
-          </div>
-          <i class="material-icons edit-hint" *ngIf="!camposEditando['interes']">edit</i>
-        </div>
-        <div class="info-row">
-          <span class="label">Fecha Última Cuota</span>
-          <span class="value">{{ compraCredito?.fechaUltimaCuota | formatoFecha }}</span>
-        </div>
-      </div>
-    </div>
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="!cargando && errorCarga">
+    <i class="material-icons" aria-hidden="true">error</i>
+    <div>{{ errorCarga }} <button type="button" appButton="secondary" size="sm" (click)="reintentar()">Reintentar</button></div>
   </div>
 
-  <!-- Sección de Cuotas -->
-  <section class="installments-section" *ngIf="cuotaDetalles && cuotaDetalles.length > 0">
-    <div class="section-header">
-      <div class="section-title">
-        <i class="material-icons">event_note</i>
-        <h2>Detalle de Cuotas</h2>
-      </div>
-      <div class="totals-badges">
-        <div class="total-badge">
-          <span class="badge-label">Total Intereses</span>
-          <span class="badge-value financial-num">{{ obtenerTotalPagadoInteres() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+  <ng-container *ngIf="compraCredito as compra">
+    <!-- ───────── Resumen ───────── -->
+    <header class="insp-resumen erp-card">
+      <div class="insp-resumen-principal">
+        <div class="insp-chips">
+          <app-badge [tone]="estadoVisual.tono" [icon]="estadoVisual.icono">{{ estadoVisual.etiqueta }}</app-badge>
+          <app-badge tone="info" icon="merge_type" *ngIf="esMaestra">Unificación de deuda</app-badge>
+          <a class="insp-enlace-refi" *ngIf="unificada" [routerLink]="['/compra-credito-detalle', compra.refinanciamientoId]" [appTooltip]="'Ver el refinanciamiento que unificó esta compra'">
+            <app-badge tone="info" icon="link">Unificada en Refinanciamiento #{{ compra.refinanciamientoId }}</app-badge>
+          </a>
         </div>
-        <div class="total-badge primary">
-          <span class="badge-label">Total Pagado</span>
-          <span class="badge-value financial-num">{{ obtenerTotalPagado() | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+        <h1 class="insp-titulo" id="titulo-compra">{{ compra.concepto || 'Compra a crédito' }}</h1>
+        <p class="insp-sub">
+          <span><i class="material-icons" aria-hidden="true">event</i>{{ compra.fechaCompra | formatoFecha }}</span>
+          <span *ngIf="nombreTarjeta"><i class="material-icons" aria-hidden="true">credit_card</i>{{ nombreTarjeta }}</span>
+          <app-badge *ngIf="compra.plasticoUltimos4" icon="contactless">Plástico ··{{ compra.plasticoUltimos4 }}</app-badge>
+        </p>
+      </div>
+      <div class="insp-resumen-valor">
+        <span class="erp-overline">Valor de la compra</span>
+        <strong class="insp-valor erp-num">{{ compra.valorCompra | moneda }}</strong>
+        <span class="erp-muted insp-valor-sub">
+          COP · {{ compra.numeroCuotas }} {{ compra.numeroCuotas === 1 ? 'cuota' : 'cuotas' }}
+          <ng-container *ngIf="noEsCop && compra.valorMonedaOriginal"> · {{ compra.monedaOriginal }} {{ compra.valorMonedaOriginal | number: '1.2-2' }}</ng-container>
+        </span>
+      </div>
+      <div class="insp-acciones"><app-acciones [secundarias]="acciones" (accion)="alAccionar($event)"></app-acciones></div>
+    </header>
+
+    <!-- Aviso de datos por completar -->
+    <button type="button" class="insp-pastilla" *ngIf="faltantes.length > 0" (click)="mostrarFaltantes()" [attr.aria-label]="textoFaltantes + '. Pulsa para verlos'">
+      <i class="material-icons" aria-hidden="true">edit_note</i>
+      <span class="insp-pastilla-texto"><strong>{{ textoFaltantes }}</strong><span class="insp-pastilla-lista">{{ faltantesTexto }}</span></span>
+      <i class="material-icons insp-pastilla-flecha" aria-hidden="true">chevron_right</i>
+    </button>
+
+    <!-- Unificada: ya no se modifica -->
+    <div class="erp-alert erp-alert--info" role="note" *ngIf="unificada">
+      <i class="material-icons" aria-hidden="true">info</i>
+      <div>
+        Esta compra se unificó en el <a [routerLink]="['/compra-credito-detalle', compra.refinanciamientoId]">Refinanciamiento #{{ compra.refinanciamientoId }}</a>: sus cuotas pendientes ya no se cobran por separado, así que su valor, cuotas e interés no se modifican.
+        Aún puedes corregir el concepto, la descripción y el plástico.
+      </div>
+    </div>
+
+    <!-- ───────── Bento ───────── -->
+    <div class="insp-bento">
+      <app-card class="insp-tarjeta insp-datos" titulo="Datos">
+        <app-campo-editable idCampo="campo-concepto" etiqueta="Concepto" tipo="texto" [valor]="compra.concepto" [requerido]="true" [maxlength]="255" [guardando]="guardando.has('concepto')" [error]="errores['concepto']" (guardar)="guardarCampo('concepto', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-descripcion" etiqueta="Descripción" tipo="textarea" [valor]="compra.descripcion" [maxlength]="1000" placeholder="Agregar una descripción" [faltante]="esFaltante('descripcion')" [resaltar]="resaltando && esFaltante('descripcion')" [guardando]="guardando.has('descripcion')" [error]="errores['descripcion']" ayuda="Ctrl + Enter para guardar" (guardar)="guardarCampo('descripcion', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-estado" etiqueta="Estado" tipo="seleccion" [valor]="compra.estado" [texto]="estadoBloqueado ? estadoVisual.etiqueta : null" [opciones]="opcionesEstado" [requerido]="true" [soloLectura]="estadoBloqueado" [guardando]="guardando.has('estado')" [error]="errores['estado']" (guardar)="guardarCampo('estado', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-tarjeta" etiqueta="Tarjeta" tipo="seleccion" catalogo="tarjetas" [valor]="compra.tarjeta" [texto]="nombreTarjeta" [requerido]="true" [soloLectura]="finanzasBloqueadas" [resaltar]="resaltando && esFaltante('tarjeta')" [faltante]="esFaltante('tarjeta')" [guardando]="guardando.has('tarjeta')" [error]="errores['tarjeta']" (guardar)="guardarCampo('tarjeta', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-plastico" etiqueta="Plástico" tipo="seleccion" [opciones]="opcionesPlastico" [valor]="compra.plasticoId" [texto]="compra.plasticoUltimos4 ? '··' + compra.plasticoUltimos4 : null" placeholder="Elegir el plástico" textoVacio="Esta tarjeta no tiene plásticos registrados." [requerido]="true" [soloLectura]="!compra.tarjeta" [faltante]="esFaltante('plastico')" [resaltar]="resaltando && esFaltante('plastico')" [guardando]="guardando.has('plastico')" [error]="errores['plastico']" (guardar)="guardarCampo('plastico', $event)"></app-campo-editable>
+      </app-card>
+
+      <app-card class="insp-tarjeta insp-finanzas" titulo="Detalle financiero">
+        <app-campo-editable idCampo="campo-valorCompra" etiqueta="Valor de la compra" tipo="moneda" [valor]="compra.valorCompra" [requerido]="true" [soloLectura]="finanzasBloqueadas" [guardando]="guardando.has('valorCompra')" [error]="errores['valorCompra']" (guardar)="guardarCampo('valorCompra', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-fechaCompra" etiqueta="Fecha de compra" tipo="fecha" [valor]="fechaCompraIso" [texto]="(compra.fechaCompra | formatoFecha) || null" [requerido]="true" [soloLectura]="finanzasBloqueadas" [guardando]="guardando.has('fechaCompra')" [error]="errores['fechaCompra']" (guardar)="guardarCampo('fechaCompra', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-numeroCuotas" etiqueta="Número de cuotas" tipo="entero" [valor]="compra.numeroCuotas" [min]="1" [max]="120" [requerido]="true" [soloLectura]="finanzasBloqueadas" [guardando]="guardando.has('numeroCuotas')" [error]="errores['numeroCuotas']" (guardar)="guardarCampo('numeroCuotas', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-interes" etiqueta="Interés mensual" tipo="decimal" sufijo="%" [paso]="0.01" [valor]="compra.interes" [min]="0" [max]="20" [requerido]="true" [soloLectura]="finanzasBloqueadas" [guardando]="guardando.has('interes')" [error]="errores['interes']" (guardar)="guardarCampo('interes', $event)"></app-campo-editable>
+        <app-campo-editable *ngIf="noEsCop" idCampo="campo-trm" [etiqueta]="'TRM (' + compra.monedaOriginal + ' a COP)'" tipo="decimal" [paso]="0.0001" [valor]="compra.tasaCambioAplicada" [min]="0.0001" [requerido]="true" [faltante]="esFaltante('trm')" [resaltar]="resaltando && esFaltante('trm')" ayuda="Al guardarla queda como TRM definitiva" [soloLectura]="unificada" [guardando]="guardando.has('trm')" [error]="errores['trm']" (guardar)="guardarCampo('trm', $event)"></app-campo-editable>
+        <div class="insp-dato"><span class="insp-dato-etiqueta">Cuota mensual</span><span class="insp-dato-valor erp-num">{{ compra.pagoMensual | moneda }}</span></div>
+        <div class="insp-dato"><span class="insp-dato-etiqueta">Última cuota</span><span class="insp-dato-valor">{{ compra.fechaUltimaCuota | formatoFecha }}</span></div>
+      </app-card>
+
+      <!-- Avance de las cuotas -->
+      <app-card class="insp-tarjeta insp-progreso" titulo="Avance de las cuotas" *ngIf="progreso.total > 0">
+        <div class="insp-progreso-cab">
+          <strong class="insp-progreso-texto">
+            <ng-container *ngIf="!unificada && !progreso.completa">Cuota {{ progreso.actual }} de {{ progreso.total }}</ng-container>
+            <ng-container *ngIf="!unificada && progreso.completa">Cuota {{ progreso.total }} de {{ progreso.total }} · Completada</ng-container>
+            <ng-container *ngIf="unificada">Unificada: {{ progreso.pagadas }} de {{ progreso.total }} pagadas antes</ng-container>
+          </strong>
+          <span class="erp-muted erp-num">{{ progreso.porcentaje | number: '1.0-1' }} %</span>
         </div>
-      </div>
+        <div class="erp-progress" role="progressbar" [attr.aria-valuenow]="progreso.porcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Cuotas pagadas: ' + progreso.pagadas + ' de ' + progreso.total">
+          <div class="erp-progress-bar" [style.width.%]="progreso.porcentaje"></div>
+        </div>
+        <dl class="insp-kpis">
+          <div class="insp-kpi">
+            <dt>Saldo de capital pendiente</dt>
+            <dd class="erp-num">{{ (unificada ? compra.saldoRefinanciado : progreso.saldoCapital) | moneda }}</dd>
+            <span class="erp-muted" *ngIf="unificada">Lo que se llevó la unificación</span>
+          </div>
+          <div class="insp-kpi">
+            <dt>Cuota mensual</dt>
+            <dd class="erp-num">{{ compra.pagoMensual | moneda }}</dd>
+            <span class="erp-muted" *ngIf="progreso.proxima && !unificada">Próxima: {{ progreso.proxima.fechaPago | formatoFecha }}</span>
+          </div>
+          <div class="insp-kpi">
+            <dt>Total intereses</dt>
+            <dd class="erp-num">{{ totalIntereses | moneda }}</dd>
+          </div>
+          <div class="insp-kpi">
+            <dt>Total a pagar</dt>
+            <dd class="erp-num">{{ totalPagado | moneda }}</dd>
+          </div>
+        </dl>
+      </app-card>
+
+      <!-- Refinanciamiento -->
+      <app-card class="insp-tarjeta insp-refi" titulo="Refinanciamiento" *ngIf="unificada || esMaestra">
+        <ng-container *ngIf="unificada">
+          <p class="insp-refi-texto">
+            Esta compra la absorbió el
+            <a [routerLink]="['/compra-credito-detalle', compra.refinanciamientoId]"><strong>Refinanciamiento #{{ compra.refinanciamientoId }}</strong><ng-container *ngIf="refinanciamiento?.concepto"> · {{ refinanciamiento?.concepto }}</ng-container></a>.
+          </p>
+          <dl class="insp-kpis" *ngIf="refinanciamiento as r">
+            <div class="insp-kpi"><dt>Cuota fija</dt><dd class="erp-num">{{ r.cuotaMensual | moneda }}</dd></div>
+            <div class="insp-kpi"><dt>Cuotas</dt><dd class="erp-num">{{ r.numeroCuotas }}</dd></div>
+            <div class="insp-kpi"><dt>Tasa mensual</dt><dd class="erp-num">{{ r.tasaMensual | number: '1.2-2' }} %</dd></div>
+          </dl>
+          <button type="button" appButton="secondary" size="sm" (click)="irACompra(compra.refinanciamientoId)"><i class="material-icons" aria-hidden="true">open_in_new</i> Ver el refinanciamiento</button>
+        </ng-container>
+
+        <ng-container *ngIf="esMaestra">
+          <p class="insp-refi-texto" *ngIf="refinanciamiento as r">
+            Unifica <strong>{{ r.absorbidas.length }} {{ r.absorbidas.length === 1 ? 'compra' : 'compras' }}</strong> con un saldo de capital de <strong class="erp-num">{{ r.saldoUnificado | moneda }}</strong>
+            a <strong>{{ r.numeroCuotas }} cuotas</strong> de <strong class="erp-num">{{ r.cuotaMensual | moneda }}</strong> ({{ r.tasaMensual | number: '1.2-2' }} % mensual).
+            <ng-container *ngIf="r.sistemaAmortizacion !== 'FRANCES'"> Se registró a mano antes de la unificación automática.</ng-container>
+          </p>
+          <ul class="insp-absorbidas" *ngIf="refinanciamiento?.absorbidas?.length" aria-label="Compras unificadas">
+            <li *ngFor="let a of refinanciamiento?.absorbidas">
+              <a class="insp-absorbida" [routerLink]="['/compra-credito-detalle', a.id]">
+                <span class="insp-absorbida-nombre">{{ a.concepto }}<span class="erp-muted"> · {{ a.fechaCompra | formatoFecha }}</span></span>
+                <span class="insp-absorbida-cifras erp-num"><strong>{{ a.saldoRefinanciado | moneda }}</strong><span class="erp-muted">de {{ a.valorCompra | moneda }}</span></span>
+                <i class="material-icons" aria-hidden="true">chevron_right</i>
+              </a>
+            </li>
+          </ul>
+          <p class="erp-muted" *ngIf="refinanciamiento && refinanciamiento.absorbidas.length === 0">No quedan compras unificadas en este refinanciamiento.</p>
+        </ng-container>
+      </app-card>
     </div>
 
-    <!-- Tabla con Glass Morphism -->
-    <div class="table-wrapper surface-glass">
-      <div class="table-responsive">
-        <table class="installments-table">
-          <thead>
-            <tr>
-              <th>Cuota</th>
-              <th>Fecha de Pago</th>
-              <th class="text-right">Saldo Restante</th>
-              <th class="text-right">Interés Pagado</th>
-              <th class="text-right">Aporte a Capital</th>
-              <th class="text-right">Pago Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let installment of cuotaDetalles">
-              <td class="cuota-number">
-                <span class="badge-cuota">{{ installment.numeroCuota }}</span>
-              </td>
-              <td>{{ installment.fechaPago | formatoFecha }}</td>
-              <td class="text-right financial-num">{{ installment.saldoRestante | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-              <td class="text-right financial-num interest">{{ installment.interesPagado | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-              <td class="text-right financial-num capital">{{ installment.aporteCapital | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-              <td class="text-right financial-num total">{{ installment.pagoTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- ───────── Cuotas ───────── -->
+    <section class="insp-cuotas" *ngIf="cuotaDetalles.length > 0" aria-labelledby="titulo-cuotas">
+      <div class="insp-seccion-cab">
+        <h2 id="titulo-cuotas" class="insp-seccion-titulo">Detalle de cuotas</h2>
+        <span class="erp-muted" *ngIf="cuotasRefinanciadas > 0">{{ cuotasRefinanciadas }} {{ cuotasRefinanciadas === 1 ? 'cuota absorbida' : 'cuotas absorbidas' }} por la unificación</span>
       </div>
-    </div>
+      <app-card padding="none" class="insp-tabla">
+        <div class="erp-table-wrap">
+          <table appTable compact stack>
+            <thead>
+              <tr>
+                <th scope="col">Cuota</th>
+                <th scope="col">Fecha de pago</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="text-right">Saldo restante</th>
+                <th scope="col" class="text-right">Interés</th>
+                <th scope="col" class="text-right">Capital</th>
+                <th scope="col" class="text-right">Pago total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let q of cuotaDetalles; trackBy: porNumero" [class.insp-fila-tenue]="estadoCuota(q).tono === 'info'">
+                <td data-label="Cuota"><span class="insp-num-cuota">{{ q.numeroCuota }}</span></td>
+                <td data-label="Fecha de pago">{{ q.fechaPago | formatoFecha }}</td>
+                <td data-label="Estado"><app-badge [tone]="estadoCuota(q).tono">{{ estadoCuota(q).texto }}</app-badge></td>
+                <td data-label="Saldo restante" class="text-right erp-num">{{ q.saldoRestante | moneda }}</td>
+                <td data-label="Interés" class="text-right erp-num">{{ q.interesPagado | moneda }}</td>
+                <td data-label="Capital" class="text-right erp-num">{{ q.aporteCapital | moneda }}</td>
+                <td data-label="Pago total" class="text-right erp-num insp-total-cuota">{{ q.pagoTotal | moneda }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-card>
 
-    <!-- Chart con Glass Container -->
-    <div class="chart-container surface-glass">
-      <div class="chart-header">
-        <i class="material-icons">show_chart</i>
-        <h3>Evolución de Cuotas</h3>
-      </div>
-      <div class="chart-wrapper">
-        <canvas
-          baseChart
-          [data]="lineChartData"
-          [options]="lineChartOptions"
-          [type]="lineChartType"
-        ></canvas>
-      </div>
-    </div>
-  </section>
+      <app-card class="insp-grafica" titulo="Evolución de las cuotas">
+        <div class="insp-grafica-lienzo">
+          <canvas baseChart [data]="lineChartData" [options]="lineChartOptions" [type]="lineChartType"></canvas>
+        </div>
+      </app-card>
+    </section>
 
-  <!-- Responsables -->
-  <div class="responsables-wrapper">
-    <app-responsable-credito
-      #responsableComponent
-      [compra]="compraCredito || {}"
-      (cambiosResponsables)="onCambiosResponsables($event)"
-    ></app-responsable-credito>
+    <!-- ───────── Responsables ───────── -->
+    <section class="insp-responsables" id="seccion-responsables" [class.insp-responsables--resaltado]="resaltando && esFaltante('responsables')" aria-label="Responsables de la compra">
+      <div class="insp-guardar" role="status" *ngIf="hayCambiosResponsables">
+        <span><i class="material-icons" aria-hidden="true">edit</i> Tienes cambios sin guardar en los responsables</span>
+        <span class="insp-guardar-botones">
+          <button type="button" appButton="ghost" size="sm" (click)="descartarResponsables()" [disabled]="guardandoResponsables">Descartar</button>
+          <button type="button" appButton="primary" size="sm" (click)="guardarResponsables()" [loading]="guardandoResponsables">Guardar responsables</button>
+        </span>
+      </div>
+      <app-responsable-credito #responsableComponent [compra]="compra" (cambiosResponsables)="onCambiosResponsables($event)" (guardado)="alCambiarResponsables()"></app-responsable-credito>
+    </section>
+  </ng-container>
+</section>
+
+<!-- Eliminar -->
+<app-modal [modalId]="MODAL_ELIMINAR" titulo="Eliminar compra a crédito">
+  <div class="insp-confirmar" *ngIf="compraCredito as compra">
+    <div class="insp-confirmar-icono insp-confirmar-icono--peligro" aria-hidden="true"><i class="material-icons">warning</i></div>
+    <h2 class="erp-form-title">¿Eliminar esta compra?</h2>
+    <p class="erp-muted">Esta acción no se puede deshacer. Se eliminará con su tabla de cuotas y sus responsables:</p>
+    <dl class="insp-resumen-borrado">
+      <div><dt>Concepto</dt><dd>{{ compra.concepto }}</dd></div>
+      <div><dt>Valor</dt><dd class="erp-num">{{ compra.valorCompra | moneda }}</dd></div>
+      <div><dt>Cuotas</dt><dd class="erp-num">{{ compra.numeroCuotas }}</dd></div>
+    </dl>
+    <div class="erp-form-actions">
+      <button type="button" appButton="ghost" (click)="cancelarEliminacion()" [disabled]="eliminando">Cancelar</button>
+      <button type="button" appButton="danger" (click)="eliminarCompra()" [loading]="eliminando"><i class="material-icons" aria-hidden="true">delete_forever</i> Eliminar</button>
+    </div>
   </div>
+</app-modal>
 
-  <!-- Modal de Confirmación de Actualización -->
-  <div class="modal-overlay" *ngIf="mostrarModalConfirmacion" (click)="cerrarModalConfirmacion()">
-    <div class="modal-confirm surface-glass" (click)="$event.stopPropagation()">
-      <div class="modal-confirm-header">
-        <div class="confirm-icon">
-          <i class="material-icons">update</i>
-        </div>
-        <h2>Confirmar Actualización</h2>
-      </div>
-      <div class="modal-confirm-body">
-        <p class="confirm-text">Se realizarán los siguientes cambios:</p>
-        <div class="changes-list">
-          <div class="change-item" *ngFor="let cambio of obtenerCambios()">
-            <div class="change-field">{{ cambio.campo }}</div>
-            <div class="change-values">
-              <div class="value-before">
-                <span class="value-label">Anterior:</span>
-                <span class="value-content" [ngClass]="{'financial-num': cambio.campo === 'Valor de Compra' || cambio.campo === 'Número de Cuotas' || cambio.campo === 'Interés'}">
-                  <ng-container *ngIf="cambio.campo === 'Valor de Compra'">
-                    {{ cambio.valorAnterior | currency:'COP':'symbol-narrow':'1.0-0' }}
-                  </ng-container>
-                  <ng-container *ngIf="cambio.campo === 'Interés'">
-                    {{ cambio.valorAnterior }}%
-                  </ng-container>
-                  <ng-container *ngIf="cambio.campo !== 'Valor de Compra' && cambio.campo !== 'Interés'">
-                    {{ cambio.valorAnterior }}
-                  </ng-container>
-                </span>
-              </div>
-              <i class="material-icons arrow-icon">arrow_forward</i>
-              <div class="value-after">
-                <span class="value-label">Nuevo:</span>
-                <span class="value-content highlight" [ngClass]="{'financial-num': cambio.campo === 'Valor de Compra' || cambio.campo === 'Número de Cuotas' || cambio.campo === 'Interés'}">
-                  <ng-container *ngIf="cambio.campo === 'Valor de Compra'">
-                    {{ cambio.valorNuevo | currency:'COP':'symbol-narrow':'1.0-0' }}
-                  </ng-container>
-                  <ng-container *ngIf="cambio.campo === 'Interés'">
-                    {{ cambio.valorNuevo }}%
-                  </ng-container>
-                  <ng-container *ngIf="cambio.campo !== 'Valor de Compra' && cambio.campo !== 'Interés'">
-                    {{ cambio.valorNuevo }}
-                  </ng-container>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-confirm-footer">
-        <button class="btn-cancel" (click)="cerrarModalConfirmacion()">
-          <i class="material-icons">close</i>
-          <span>Cancelar</span>
-        </button>
-        <button class="btn-confirm-update" (click)="actualizarCompra()" [disabled]="actualizando">
-          <i class="material-icons">check_circle</i>
-          <span>{{ actualizando ? 'Actualizando...' : 'Confirmar Actualización' }}</span>
-        </button>
-      </div>
+<!-- Deshacer la unificación -->
+<app-modal [modalId]="MODAL_DESHACER" titulo="Deshacer la unificación de deuda">
+  <div class="insp-confirmar" *ngIf="compraCredito as compra">
+    <div class="insp-confirmar-icono" aria-hidden="true"><i class="material-icons">undo</i></div>
+    <h2 class="erp-form-title">¿Deshacer la unificación?</h2>
+    <p class="erp-muted">
+      Las {{ refinanciamiento?.absorbidas?.length ?? 0 }} compras unificadas volverán a cobrarse como antes (con sus cuotas y sus cargos a cada persona) y se borrará esta obligación nueva
+      <strong>«{{ compra.concepto }}»</strong>. Solo se puede mientras no tenga cuotas pagadas.
+    </p>
+    <div class="erp-form-actions">
+      <button type="button" appButton="ghost" (click)="cerrarModal()" [disabled]="deshaciendo">Cancelar</button>
+      <button type="button" appButton="primary" (click)="deshacerUnificacion()" [loading]="deshaciendo"><i class="material-icons" aria-hidden="true">undo</i> Deshacer unificación</button>
     </div>
   </div>
-
-  <!-- Modal de Confirmación de Eliminación -->
-  <div class="modal-overlay" *ngIf="mostrarModalEliminacion" (click)="cancelarEliminacion()">
-    <div class="modal-delete surface-glass" (click)="$event.stopPropagation()">
-      <div class="modal-delete-header">
-        <div class="warning-icon">
-          <i class="material-icons">warning</i>
-        </div>
-        <h2>¿Eliminar Compra de Crédito?</h2>
-      </div>
-      <div class="modal-delete-body">
-        <p class="warning-text">Esta acción no se puede deshacer. Se eliminará permanentemente:</p>
-        <div class="delete-info">
-          <div class="info-item">
-            <span class="label">Concepto:</span>
-            <span class="value">{{ compraCredito?.concepto }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Valor:</span>
-            <span class="value financial-num highlight-danger">{{ compraCredito?.valorCompra | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">Cuotas:</span>
-            <span class="value">{{ compraCredito?.numeroCuotas }} cuotas</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-delete-footer">
-        <button class="btn-cancel" (click)="cancelarEliminacion()">
-          <i class="material-icons">close</i>
-          <span>Cancelar</span>
-        </button>
-        <button class="btn-confirm-delete" (click)="eliminarCompra()" [disabled]="eliminando">
-          <i class="material-icons">delete_forever</i>
-          <span>{{ eliminando ? 'Eliminando...' : 'Eliminar' }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+</app-modal>

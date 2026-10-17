@@ -6,6 +6,8 @@ import { CatalogosService } from '../../services/catalogos.service';
 import { ApiServicesService } from '../../services/api-services.service';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { ComprasCredito, ResponsableCompraCredito } from '../../modelos/compras-credito';
+import { mensajeDeError } from '../../shared/http-error.helper';
+import { ToastService } from '../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-responsable-credito',
@@ -34,6 +36,9 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
 
   private destroy$ = new Subject<void>();
 
+  /** Se agregó, quitó o actualizó un responsable en el servidor (el padre vuelve a leer la compra: cambia el % asignado). */
+  @Output() guardado = new EventEmitter<void>();
+
   // Comunicación con componente padre
   @Output() cambiosResponsables = new EventEmitter<{
     hayUsuarios: boolean;
@@ -45,7 +50,8 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
     private fb: FormBuilder,
     private apiService: ApiServicesService,
     private sharedListasService: SharedListasService,
-    private catalogos: CatalogosService
+    private catalogos: CatalogosService,
+    private toast: ToastService
   ) {
     this.responsableForm = this.fb.group({
       personaId: ['', Validators.required],
@@ -179,8 +185,9 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
             this.updatePersonasDisponibles();
             this.responsableForm.reset();
             this.loadResponsables();
+            this.guardado.emit();
           },
-          error: (error) => { void error; }
+          error: (error) => this.toast.error(mensajeDeError(error, 'No se pudo agregar el responsable.'))
         });
     }
   }
@@ -436,9 +443,10 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
           this.loadResponsables();
           this.cancelarEliminacion();
           this.eliminando = false;
+          this.guardado.emit();
         },
         error: (error) => {
-          void error;
+          this.toast.error(mensajeDeError(error, 'No se pudo quitar el responsable.'));
           this.eliminando = false;
         }
       });
@@ -454,6 +462,7 @@ export class ResponsableCreditoComponent implements OnInit, OnChanges, OnDestroy
       .then(() => {
         // Recargar lista después de actualizar
         this.loadResponsables();
+        this.guardado.emit();
       })
       .catch(error => {
         void error;

@@ -29,6 +29,15 @@ export interface ComprasCreditoMultimoneda extends ComprasCredito {
   trmConfirmada?: boolean | null;
   /** Plástico guardado en la compra (las anteriores a esta función no lo tienen: el historial de la tarjeta lo deduce por fecha). */
   plasticoUltimos4?: string | null;
+  /** La compra maestra que la unificó en un refinanciamiento (`null` = no fue unificada). */
+  refinanciamientoId?: number | null;
+  /** La compra ES la obligación nueva de un refinanciamiento. */
+  esRefinanciamiento?: boolean;
+  /** Capital pendiente que se llevó la obligación nueva (solo en las unificadas). */
+  saldoRefinanciado?: number | null;
+  /** `CAPITAL_FIJO` (compras normales) | `FRANCES` (cuota fija: los refinanciamientos creados por el asistente). */
+  sistemaAmortizacion?: string;
+  cuotaFijaPactada?: number | null;
 }
 
 

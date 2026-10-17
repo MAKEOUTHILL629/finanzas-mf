@@ -11,10 +11,13 @@ export interface ContextoCompras {
 export const SEGMENTOS_COMPRAS = ['todas', 'pendientes', 'pagadas', 'refinanciadas'] as const;
 export type SegmentoCompras = (typeof SEGMENTOS_COMPRAS)[number];
 
-/** Normaliza el estado que guarda la base («Pendiente», «Pagado», «Refinanciada»…) a un segmento. */
+/**
+ * Normaliza el estado que guarda la base («Pendiente», «Pagado», «REFINANCIADA»…) a un segmento. «Refinanciada» es el estado que deja el
+ * asistente de unificación de deuda y «Ajuste Interes» el de los refinanciamientos que se registraron a mano antes: las dos van en el mismo grupo.
+ */
 export function segmentoDe(compra: Pick<ComprasCredito, 'estado'>): SegmentoCompras | null {
   const e = normalizeSearchText(compra.estado ?? '');
-  if (e.startsWith('refinanci') || e.includes('pagada por refinanc')) return 'refinanciadas';
+  if (e.startsWith('refinanci') || e.startsWith('ajuste') || e.includes('pagada por refinanc')) return 'refinanciadas';
   if (e.startsWith('pendiente')) return 'pendientes';
   if (e.startsWith('pagad')) return 'pagadas';
   return null;
@@ -50,7 +53,7 @@ function dentroDelRango(valor: Date | string | number | undefined | null, rango:
 }
 
 /** Aplica la barra de filtros a la lista (todo en memoria: son cientos de compras). */
-export function filtrarCompras(compras: ComprasCredito[], estado: EstadoFiltros, ctx: ContextoCompras): ComprasCredito[] {
+export function filtrarCompras<T extends ComprasCredito>(compras: T[], estado: EstadoFiltros, ctx: ContextoCompras): T[] {
   const q = normalizeSearchText(estado.busqueda ?? '');
   const palabras = q ? q.split(/\s+/).filter(Boolean) : [];
   const v = estado.valores;

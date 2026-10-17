@@ -10,6 +10,7 @@ import { FormatoTarjetaPipe } from '../pipes/formato-tarjeta.pipe';
 import { ModalComponent } from './modal/modal.component';
 import { BadgeComponent } from './ui/badge/badge.component';
 import { ButtonComponent } from './ui/button/button.component';
+import { CampoEditableComponent } from './ui/campo-editable/campo-editable.component';
 import { CardComponent } from './ui/card/card.component';
 import { ContadorComponent } from './ui/contador/contador.component';
 import { EmptyStateComponent } from './ui/empty-state/empty-state.component';
@@ -28,6 +29,7 @@ import { TooltipDirective } from './ui/tooltip/tooltip.directive';
 const UI = [
   BadgeComponent,
   ButtonComponent,
+  CampoEditableComponent,
   CardComponent,
   ContadorComponent,
   EmptyStateComponent,

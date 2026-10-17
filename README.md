@@ -55,6 +55,23 @@ Convenciones:
 - **Pruebas** (`ng test`, Edge headless: `CHROME_BIN=msedge`): `src/app/testing/erp-testing.ts` ofrece los helpers de `HttpTestingController`
   y el módulo de pruebas; `render-smoke.spec.ts` monta todas las pantallas nuevas. La lógica de cada pantalla vive en funciones puras con su spec.
 
+## Detalle de compra y unificación de deuda (plan V2, fase 5)
+
+- **Detalle como «inspector»** (`compras-credito/detalle-compras-credito`): arriba un resumen (valor en COP, insignia **Pagada / En curso / Refinanciada**, fecha, tarjeta y plástico) y, debajo, tarjetas
+  tipo bento con los datos. El aviso **«Faltan X datos por completar»** (`datosFaltantesDeCompra`: tarjeta, plástico, descripción, responsables, interés, TRM sin confirmar) lleva al primer dato que falta
+  y resalta los campos vacíos con «Agregar…». Cada dato se edita **en el sitio** con `<app-campo-editable>` (`shared/ui/campo-editable`: texto, dinero con formato, fecha, número o selector buscable;
+  Enter/salir guarda, Escape cancela): cada cambio es un `PATCH /api/compras-credito/:id` inmediato con solo ese campo — la página no se recarga ni pierde el lugar; si el servidor lo rechaza vuelve el
+  valor anterior y se explica. Valor, fecha, cuotas, interés y tarjeta recalculan las cuotas y vuelven a leer la tabla. El avance muestra «Cuota X de Y», el saldo de capital pendiente, la cuota mensual
+  y los totales (`progresoDeCuotas`). Los responsables se guardan con su barra «Guardar responsables».
+- **Refinanciamiento**: una compra absorbida muestra «Unificada en Refinanciamiento #N» (enlace a la maestra), no deja cambiar sus finanzas y sus cuotas absorbidas se ven atenuadas; la maestra lista las
+  compras que unificó (con el capital que se llevó cada una) y, si la creó el asistente, ofrece **Deshacer unificación**. Las compras de la lista con estado `REFINANCIADA` o el legado «Ajuste Interes» van en el
+  segmento «Refinanciadas».
+- **Asistente «Simular / Unificar deuda»** (`compras-credito/unificar-deuda`, acción de la cabecera de Compras a crédito): 1) elegir la tarjeta (arranca con la habitual) y las compras con cuotas pendientes
+  (saldo de capital, cuota y responsables de cada una); 2) simular con lo que dijo el asesor: **número de cuotas**, **tasa mensual (M.V.) o efectiva anual (E.A.)** —se muestra su equivalente— y la **cuota**, que se
+  calcula sola con la fórmula francesa (`shared/amortizacion-francesa.helper.ts`, espejo del backend) y se puede escribir a mano si el banco da otra (entonces se usa la **tasa real** que implica); la simulación
+  oficial (`POST /api/refinanciamientos/simular`) compara lo que pagas hoy con lo que pagarías (diferencia mensual y total) y trae la tabla de cuotas; 3) confirmar: una sola operación atómica en el servidor y
+  se abre el detalle de la deuda nueva. La lógica pura (totales, pedido, lectura de diferencias) está en `unificar-deuda.helper.ts`.
+
 ## Correos inteligentes y cobros a personas
 
 - **Productos detectados** (`correos/productos-detectados`): los correos traen solo los últimos 4 dígitos. El panel los agrupa, propone a cuál de tus cuentas o tarjetas pertenece cada uno

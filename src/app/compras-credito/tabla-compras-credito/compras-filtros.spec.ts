@@ -38,7 +38,9 @@ describe('filtros de Compras Crédito', () => {
     expect(segmentoDe({ estado: 'PAGADO' })).toBe('pagadas');
     expect(segmentoDe({ estado: 'Refinanciada' })).toBe('refinanciadas');
     expect(segmentoDe({ estado: 'Pagada por refinanciamiento' })).toBe('refinanciadas');
-    expect(segmentoDe({ estado: 'Ajuste Interes' })).toBeNull();
+    expect(segmentoDe({ estado: 'REFINANCIADA' })).toBe('refinanciadas'); // el que deja el asistente de unificación
+    expect(segmentoDe({ estado: 'Ajuste Interes' })).toBe('refinanciadas'); // el de los refinanciamientos registrados a mano
+    expect(segmentoDe({ estado: 'Cancelado' })).toBeNull();
     expect(segmentoDe({})).toBeNull();
   });
 
@@ -46,7 +48,7 @@ describe('filtros de Compras Crédito', () => {
     expect(ids(filtrarCompras(DATOS, estadoVacio('todas'), ctx))).toEqual([1, 2, 3, 4]);
     expect(ids(filtrarCompras(DATOS, estadoVacio('pendientes'), ctx))).toEqual([1]);
     expect(ids(filtrarCompras(DATOS, estadoVacio('pagadas'), ctx))).toEqual([2]);
-    expect(ids(filtrarCompras(DATOS, estadoVacio('refinanciadas'), ctx))).toEqual([3]);
+    expect(ids(filtrarCompras(DATOS, estadoVacio('refinanciadas'), ctx))).toEqual([3, 4]);
   });
 
   it('el buscador es global: concepto, descripción, tarjeta, personas y monto; sin tildes y por palabras', () => {
@@ -78,7 +80,7 @@ describe('filtros de Compras Crédito', () => {
   });
 
   it('los contadores por segmento respetan el resto de filtros', () => {
-    expect(conteoPorSegmento(DATOS, estadoVacio('todas'), ctx)).toEqual({ todas: 4, pendientes: 1, pagadas: 1, refinanciadas: 1 });
+    expect(conteoPorSegmento(DATOS, estadoVacio('todas'), ctx)).toEqual({ todas: 4, pendientes: 1, pagadas: 1, refinanciadas: 2 });
     const solo = conteoPorSegmento(DATOS, { ...estadoVacio('pagadas'), valores: { tarjetas: [1] } }, ctx);
     expect(solo).toEqual({ todas: 2, pendientes: 1, pagadas: 0, refinanciadas: 1 }); // el segmento elegido no recorta los contadores
   });

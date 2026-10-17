@@ -59,6 +59,7 @@
       <ng-template appCelda="concepto" let-c>
         <span class="concepto" [title]="c.concepto">{{ c.concepto }}</span>
         <span class="erp-muted concepto-detalle" *ngIf="c.descripcion">{{ c.descripcion }}</span>
+        <app-badge class="concepto-marca" tone="info" icon="merge_type" *ngIf="c.esRefinanciamiento">Unificación de deuda</app-badge>
       </ng-template>
 
       <ng-template appCelda="responsables" let-c>
@@ -87,6 +88,10 @@
 
 <app-modal>
   <app-formulario-compras-credito></app-formulario-compras-credito>
+</app-modal>
+
+<app-modal modalId="unificar-deuda" titulo="Simular / Unificar deuda" ancho="amplio">
+  <app-unificar-deuda></app-unificar-deuda>
 </app-modal>
 
 <app-modal modalId="csv-upload-form">

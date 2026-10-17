@@ -1,0 +1,84 @@
+<div class="ce" [attr.id]="idCampo" [class.ce--editando]="editando" [class.ce--faltante]="faltante && vacio" [class.ce--resaltado]="resaltar" [class.ce--lectura]="soloLectura" [class.ce--guardando]="guardando">
+  <span class="ce-etiqueta" [id]="idEtiqueta">{{ etiqueta }}</span>
+
+  <div class="ce-contenido">
+    <!-- Ver -->
+    <button
+      type="button"
+      class="ce-valor"
+      *ngIf="!editando"
+      [disabled]="bloqueado"
+      [attr.aria-labelledby]="idEtiqueta"
+      [attr.aria-label]="soloLectura ? null : 'Editar ' + etiqueta + (vacio ? '' : ': ' + textoVisible)"
+      (click)="editar()"
+    >
+      <span class="ce-texto" [class.ce-texto--vacio]="vacio" [class.ce-texto--invitacion]="vacio && faltante">
+        <ng-container *ngIf="!vacio">{{ prefijo }}{{ textoVisible }}{{ sufijo ? ' ' + sufijo : '' }}</ng-container>
+        <ng-container *ngIf="vacio">{{ faltante ? invitacion : '—' }}</ng-container>
+      </span>
+      <i class="material-icons ce-icono" aria-hidden="true" *ngIf="!soloLectura && !guardando">edit</i>
+      <i class="material-icons ce-giro" aria-hidden="true" *ngIf="guardando">sync</i>
+    </button>
+
+    <!-- Editar -->
+    <ng-container *ngIf="editando">
+      <app-select
+        *ngIf="tipo === 'seleccion'"
+        class="ce-seleccion"
+        [inputId]="idCampo ? idCampo + '-control' : null"
+        [catalogo]="catalogo"
+        [opciones]="opciones"
+        [filtro]="filtro"
+        [textoVacio]="textoVacio"
+        [ariaLabel]="etiqueta"
+        [permitirVacio]="!requerido"
+        [abrirAlMostrar]="true"
+        [ngModel]="valor"
+        (ngModelChange)="elegir($event)"
+        (tocado)="alCerrarLista()"
+      ></app-select>
+
+      <div class="ce-entrada" *ngIf="tipo !== 'seleccion'">
+        <span class="ce-adorno" *ngIf="prefijo" aria-hidden="true">{{ prefijo }}</span>
+        <textarea
+          #entrada
+          *ngIf="tipo === 'textarea'"
+          appInput
+          rows="3"
+          class="ce-control"
+          [value]="borrador"
+          [attr.maxlength]="maxlength"
+          [attr.aria-labelledby]="idEtiqueta"
+          [attr.aria-invalid]="errorLocal ? 'true' : null"
+          [placeholder]="placeholder"
+          (input)="alEscribir($event)"
+          (keydown)="alPulsarTecla($event)"
+          (blur)="confirmar()"
+        ></textarea>
+        <input
+          #entrada
+          *ngIf="tipo !== 'textarea'"
+          appInput
+          class="ce-control"
+          [type]="tipoInput"
+          [attr.inputmode]="modoTeclado"
+          [value]="borrador"
+          [attr.maxlength]="maxlength"
+          [attr.min]="min"
+          [attr.max]="max"
+          [attr.step]="tipo === 'decimal' ? paso : tipo === 'entero' ? 1 : null"
+          [attr.aria-labelledby]="idEtiqueta"
+          [attr.aria-invalid]="errorLocal ? 'true' : null"
+          [placeholder]="placeholder"
+          (input)="alEscribir($event)"
+          (keydown)="alPulsarTecla($event)"
+          (blur)="confirmar()"
+        />
+        <span class="ce-adorno" *ngIf="sufijo" aria-hidden="true">{{ sufijo }}</span>
+      </div>
+    </ng-container>
+
+    <p class="ce-error" role="alert" *ngIf="errorLocal || error">{{ errorLocal || error }}</p>
+    <p class="ce-ayuda" *ngIf="ayuda && editando && !errorLocal">{{ ayuda }}</p>
+  </div>
+</div>

@@ -19,6 +19,7 @@ import { AccionesFilaDirective, CeldaTablaDirective, TarjetaFilaDirective } from
 import { FilterBarComponent } from '../shared/ui/filter-bar/filter-bar.component';
 import { BadgeComponent } from '../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../shared/ui/button/button.component';
+import { CampoEditableComponent } from '../shared/ui/campo-editable/campo-editable.component';
 import { CardComponent } from '../shared/ui/card/card.component';
 import { ContadorComponent } from '../shared/ui/contador/contador.component';
 import { SkeletonComponent } from '../shared/ui/skeleton/skeleton.component';
@@ -35,7 +36,7 @@ import { TooltipDirective } from '../shared/ui/tooltip/tooltip.directive';
 
 /** Componentes base del sistema de diseño: las plantillas los usan, así que toda prueba de un componente debe declararlos. */
 export const COMPONENTES_UI: Type<unknown>[] = [
-  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SearchableSelectComponent, SelectComponent, SelectProductoComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
+  AccionesComponent, AccionesFilaDirective, AppleTableComponent, BadgeComponent, ButtonComponent, CampoEditableComponent, CeldaTablaDirective, FilterBarComponent, TarjetaFilaDirective, CardComponent, ContadorComponent, EmptyStateComponent, FieldComponent, InputDirective, LogoComponent, PageHeaderComponent, SearchableSelectComponent, SelectComponent, SelectProductoComponent, SkeletonComponent, TableDirective, ThemeToggleComponent,
 ];
 /** Directivas independientes (standalone): van en `imports`, no en `declarations`. */
 export const DIRECTIVAS_UI = [TooltipDirective];

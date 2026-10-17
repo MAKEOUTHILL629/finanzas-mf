@@ -16,6 +16,7 @@ import { ResponsableCreditoComponent } from './responsable-credito/responsable-c
 import { PagosMesTarjetasComponent } from './pagos-mes-tarjetas/pagos-mes-tarjetas.component';
 import { PagosMesTarjetasDetalleComponent } from './pagos-mes-tarjetas-detalle/pagos-mes-tarjetas-detalle.component';
 import { BalanceMesComponent } from './balance-mes/balance-mes.component';
+import { UnificarDeudaComponent } from './unificar-deuda/unificar-deuda.component';
 
 /** Rutas de `RUTAS_COMPRAS` (se cargan de forma diferida desde `app-routing.module.ts`). */
 export const RUTAS_COMPRAS: Routes = [
@@ -34,7 +35,7 @@ export const RUTAS_PAGOS_MES: Routes = [
 ];
 
 @NgModule({
-  declarations: [TablaComprasCreditoComponent, FormularioComprasCreditoComponent, FormularioCsvComprasComponent, DetalleComprasCreditoComponent, ResponsableCreditoComponent, PagosMesTarjetasComponent, PagosMesTarjetasDetalleComponent, BalanceMesComponent],
+  declarations: [TablaComprasCreditoComponent, FormularioComprasCreditoComponent, FormularioCsvComprasComponent, DetalleComprasCreditoComponent, ResponsableCreditoComponent, PagosMesTarjetasComponent, PagosMesTarjetasDetalleComponent, BalanceMesComponent, UnificarDeudaComponent],
   imports: [SharedModule, DatosUiModule, MatAutocompleteModule, MatInputModule, MatProgressSpinnerModule, BaseChartDirective]
 })
 export class ComprasCreditoModule {}

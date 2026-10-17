@@ -1,0 +1,236 @@
+<section class="uni" aria-labelledby="titulo-unificar">
+  <header class="uni-cabecera">
+    <h2 class="erp-form-title" id="titulo-unificar">Simular / Unificar deuda</h2>
+    <p class="erp-subtitle">Refinancia varias compras de una tarjeta en una sola obligación y mira cuánto cambia tu cuota.</p>
+  </header>
+
+  <ol class="uni-pasos" aria-label="Pasos del asistente">
+    <li *ngFor="let nombre of pasos; let i = index" class="uni-paso" [class.uni-paso--activo]="paso === i + 1" [class.uni-paso--hecho]="paso > i + 1" [attr.aria-current]="paso === i + 1 ? 'step' : null">
+      <span class="uni-paso-num" aria-hidden="true">
+        <i class="material-icons" *ngIf="paso > i + 1">check</i><ng-container *ngIf="paso <= i + 1">{{ i + 1 }}</ng-container>
+      </span>
+      <span class="uni-paso-txt">{{ nombre }}</span>
+    </li>
+  </ol>
+
+  <!-- ───────── Paso 1: tarjeta y compras ───────── -->
+  <div class="uni-cuerpo" *ngIf="paso === 1">
+    <app-field label="Tarjeta de crédito" for="uni-tarjeta" [required]="true">
+      <app-select inputId="uni-tarjeta" catalogo="tarjetas" ariaLabel="Tarjeta cuya deuda se unifica" placeholder="Elige la tarjeta" [permitirVacio]="false" [ngModel]="tarjetaId" (ngModelChange)="elegirTarjeta($event)"></app-select>
+    </app-field>
+
+    <div class="uni-esqueleto" *ngIf="cargandoCandidatas" role="status" aria-label="Cargando las compras de la tarjeta">
+      <app-skeleton *ngFor="let n of [1, 2, 3]" alto="64px"></app-skeleton>
+    </div>
+
+    <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorCandidatas">
+      <i class="material-icons" aria-hidden="true">error</i>
+      <div>{{ errorCandidatas }} <button type="button" appButton="secondary" size="sm" (click)="reintentarCandidatas()">Reintentar</button></div>
+    </div>
+
+    <p class="uni-vacio" *ngIf="!tarjetaId && !cargandoCandidatas">Elige la tarjeta para ver las compras que todavía tienen cuotas por pagar.</p>
+    <app-empty-state *ngIf="tarjetaId && !cargandoCandidatas && !errorCandidatas && candidatas.length === 0" icon="task_alt" titulo="Nada para unificar" descripcion="Esta tarjeta no tiene compras con cuotas pendientes."></app-empty-state>
+
+    <ng-container *ngIf="tarjetaId && !cargandoCandidatas && !errorCandidatas && candidatas.length > 0">
+      <div class="uni-herramientas">
+        <input appInput type="search" class="uni-buscar" placeholder="Buscar una compra…" aria-label="Buscar una compra" [(ngModel)]="busqueda" *ngIf="candidatas.length > 8" />
+        <span class="uni-contador erp-muted" aria-live="polite">{{ totales.cantidad }} de {{ candidatas.length }} elegidas</span>
+        <button type="button" appButton="ghost" size="sm" (click)="todasSeleccionadas ? limpiarSeleccion() : seleccionarTodas()">{{ todasSeleccionadas ? 'Quitar todas' : 'Elegir todas' }}</button>
+      </div>
+
+      <ul class="uni-lista" aria-label="Compras con cuotas pendientes">
+        <li *ngFor="let c of candidatasVisibles; trackBy: porId" class="uni-item" [class.uni-item--elegida]="seleccion.has(c.id)">
+          <label class="uni-fila">
+            <input type="checkbox" class="uni-check" [checked]="seleccion.has(c.id)" (change)="alternar(c.id)" [attr.aria-label]="'Unificar ' + c.concepto" />
+            <span class="uni-info">
+              <span class="uni-concepto">{{ c.concepto }}</span>
+              <span class="uni-meta erp-muted">
+                {{ c.fechaCompra | formatoFecha }} · {{ c.cuotasPendientes }} {{ c.cuotasPendientes === 1 ? 'cuota pendiente' : 'cuotas pendientes' }}<ng-container *ngIf="c.plasticoUltimos4"> · ··{{ c.plasticoUltimos4 }}</ng-container>
+              </span>
+              <span class="uni-chips">
+                <app-badge tone="info" icon="merge_type" *ngIf="c.esRefinanciamiento">Unificación anterior</app-badge>
+                <ul class="uni-avatares" *ngIf="responsablesDe(c).length > 0" aria-label="Responsables">
+                  <li *ngFor="let r of responsablesDe(c)" class="uni-avatar" [style.background]="r.color || 'var(--brand-blue)'" [title]="r.nombre" [attr.aria-label]="r.nombre">{{ r.iniciales }}</li>
+                </ul>
+              </span>
+            </span>
+            <span class="uni-cifras erp-num">
+              <span class="uni-saldo">{{ c.saldoCapital | moneda }}</span>
+              <span class="erp-muted uni-cuota">cuota {{ c.cuotaProxima | moneda }}</span>
+            </span>
+          </label>
+        </li>
+      </ul>
+      <p class="uni-vacio" *ngIf="candidatasVisibles.length === 0">Ninguna compra coincide con «{{ busqueda }}».</p>
+    </ng-container>
+
+    <div class="uni-total" *ngIf="totales.cantidad > 0" aria-live="polite">
+      <div><span class="erp-overline">Saldo a unificar</span><strong class="erp-num">{{ totales.saldo | moneda }}</strong></div>
+      <div><span class="erp-overline">Pagas hoy al mes</span><strong class="erp-num">{{ totales.cuotaActual | moneda }}</strong></div>
+    </div>
+  </div>
+
+  <!-- ───────── Paso 2: simulación ───────── -->
+  <div class="uni-cuerpo uni-simulacion" *ngIf="paso === 2">
+    <form class="uni-form erp-form" [formGroup]="form" (ngSubmit)="siguiente()" novalidate>
+      <div class="uni-resumen-saldo">
+        <span class="erp-overline">Saldo a refinanciar</span>
+        <strong class="erp-num">{{ totales.saldo | moneda }}</strong>
+        <span class="erp-muted">{{ totales.cantidad }} {{ totales.cantidad === 1 ? 'compra' : 'compras' }} · hoy pagas {{ totales.cuotaActual | moneda }} al mes</span>
+      </div>
+
+      <app-field label="Número de cuotas" for="uni-cuotas" [required]="true" [error]="erroresCampo['numeroCuotas'] || null" hint="Los meses que te da el banco para pagar">
+        <input appInput id="uni-cuotas" type="number" inputmode="numeric" min="1" [max]="maxCuotas" step="1" formControlName="numeroCuotas" placeholder="Ej: 36" [invalid]="!!erroresCampo['numeroCuotas']" />
+      </app-field>
+
+      <div class="uni-tasa">
+        <div class="uni-tasa-cab">
+          <label class="erp-label" for="uni-tasa">Tasa de interés</label>
+          <div class="erp-segmented" role="radiogroup" aria-label="Tipo de tasa" [style.--seg-count]="2" [style.--seg-index]="form.controls.tipoTasa.value === 'mensual' ? 0 : 1">
+            <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="form.controls.tipoTasa.value === 'mensual'" (click)="elegirTipoTasa('mensual')">Mensual (M.V.)</button>
+            <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="form.controls.tipoTasa.value === 'anual'" (click)="elegirTipoTasa('anual')">Anual (E.A.)</button>
+          </div>
+        </div>
+        <app-field [error]="erroresCampo['tasa'] || null" [hint]="equivalenteTasa ? 'Equivale a ' + (equivalenteTasa.valor | number: '1.2-2') + ' % ' + equivalenteTasa.etiqueta : 'La que te dijo el asesor, en %'">
+          <input appInput id="uni-tasa" type="number" inputmode="decimal" min="0" step="0.01" formControlName="tasa" [placeholder]="form.controls.tipoTasa.value === 'mensual' ? 'Ej: 1.89' : 'Ej: 25.2'" aria-label="Tasa de interés en porcentaje" [invalid]="!!erroresCampo['tasa']" />
+        </app-field>
+      </div>
+
+      <app-field label="Cuota mensual" for="uni-cuota" [error]="erroresCampo['cuotaMensual'] || null" [hint]="cuotaAMano ? 'La que escribiste manda sobre la calculada.' : 'Se calcula sola con la fórmula francesa (cuota fija). Cámbiala si el banco te dio otra, con seguros.'">
+        <div class="uni-cuota-fila">
+          <input appInput id="uni-cuota" type="number" inputmode="decimal" min="0" step="0.01" formControlName="cuotaMensual" placeholder="Se calcula con la tasa" [invalid]="!!erroresCampo['cuotaMensual']" />
+          <button type="button" appButton="ghost" size="sm" *ngIf="cuotaAMano" (click)="usarCuotaCalculada()">Usar la calculada</button>
+        </div>
+      </app-field>
+
+      <app-field label="Fecha del refinanciamiento" for="uni-fecha" hint="De ella sale la fecha de la primera cuota">
+        <input appInput id="uni-fecha" type="date" formControlName="fecha" />
+      </app-field>
+    </form>
+
+    <div class="uni-resultado" [class.uni-resultado--cargando]="simulando" aria-live="polite">
+      <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorSimulacion">
+        <i class="material-icons" aria-hidden="true">error</i><div>{{ errorSimulacion }}</div>
+      </div>
+
+      <p class="uni-vacio" *ngIf="!simulacion && !errorSimulacion && !simulando">Escribe las cuotas y la tasa (o la cuota que te dio el banco) para ver la simulación.</p>
+      <div class="uni-esqueleto" *ngIf="!simulacion && simulando"><app-skeleton alto="120px"></app-skeleton><app-skeleton alto="80px"></app-skeleton></div>
+
+      <ng-container *ngIf="simulacion as s">
+        <div class="uni-comparacion">
+          <div class="uni-cifra">
+            <span class="erp-overline">Hoy pagas</span>
+            <strong class="erp-num">{{ s.resultado.cuotaActualCombinada | moneda }}</strong>
+            <span class="erp-muted">al mes</span>
+          </div>
+          <i class="material-icons uni-flecha" aria-hidden="true">arrow_forward</i>
+          <div class="uni-cifra uni-cifra--nueva">
+            <span class="erp-overline">Pagarías</span>
+            <strong class="erp-num">{{ s.resultado.cuotaUsada | moneda }}</strong>
+            <span class="erp-muted">× {{ s.resultado.numeroCuotas }} cuotas</span>
+          </div>
+        </div>
+
+        <p class="uni-lectura" *ngIf="difMensual" [ngClass]="'uni-lectura--' + difMensual.tono">
+          <i class="material-icons" aria-hidden="true">{{ difMensual.tono === 'ahorro' ? 'trending_down' : difMensual.tono === 'aumento' ? 'trending_up' : 'drag_handle' }}</i>
+          <span>{{ difMensual.verbo }}<ng-container *ngIf="difMensual.tono !== 'igual'">: <strong class="erp-num">{{ difMensual.monto | moneda }}</strong></ng-container></span>
+        </p>
+
+        <dl class="uni-datos">
+          <div><dt>Total a pagar</dt><dd class="erp-num">{{ s.resultado.totalAPagar | moneda }}</dd></div>
+          <div><dt>Intereses</dt><dd class="erp-num">{{ s.resultado.interesTotal | moneda }}</dd></div>
+          <div><dt>Sin refinanciar faltaba</dt><dd class="erp-num">{{ s.resultado.restantePorPagar | moneda }}</dd></div>
+          <div><dt>Plazo</dt><dd class="erp-num">{{ s.resultado.numeroCuotas }} {{ s.resultado.numeroCuotas === 1 ? 'mes' : 'meses' }}</dd></div>
+
+          <div><dt>Tasa mensual</dt><dd class="erp-num">{{ s.resultado.tasaMensualPct | number: '1.2-2' }} %</dd></div>
+          <div><dt>Tasa efectiva anual</dt><dd class="erp-num">{{ s.resultado.tasaEfectivaAnualPct | number: '1.2-2' }} %</dd></div>
+          <div class="uni-dato-destacado" *ngIf="difTotal" [ngClass]="'uni-dato-destacado--' + difTotal.tono">
+            <dt>{{ difTotal.verbo }}</dt><dd class="erp-num"><ng-container *ngIf="difTotal.tono !== 'igual'">{{ difTotal.monto | moneda }}</ng-container><ng-container *ngIf="difTotal.tono === 'igual'">—</ng-container></dd>
+          </div>
+        </dl>
+
+        <p class="erp-alert erp-alert--info" role="note" *ngIf="avisoTasaReal"><i class="material-icons" aria-hidden="true">info</i><span>{{ avisoTasaReal }}</span></p>
+
+        <details class="erp-details uni-tabla-det">
+          <summary>Ver las {{ s.resultado.cuotas.length }} cuotas</summary>
+          <div class="erp-table-wrap">
+            <table appTable compact stack>
+              <thead>
+                <tr><th scope="col">Cuota</th><th scope="col">Fecha</th><th scope="col" class="text-right">Interés</th><th scope="col" class="text-right">Capital</th><th scope="col" class="text-right">Pago</th><th scope="col" class="text-right">Saldo</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let q of s.resultado.cuotas">
+                  <td data-label="Cuota">{{ q.numeroCuota }}</td>
+                  <td data-label="Fecha">{{ q.fechaPago | formatoFecha }}</td>
+                  <td data-label="Interés" class="text-right erp-num">{{ q.interesPagado | moneda }}</td>
+                  <td data-label="Capital" class="text-right erp-num">{{ q.aporteCapital | moneda }}</td>
+                  <td data-label="Pago" class="text-right erp-num">{{ q.pagoTotal | moneda }}</td>
+                  <td data-label="Saldo" class="text-right erp-num">{{ q.saldoRestante | moneda }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- ───────── Paso 3: confirmar ───────── -->
+  <div class="uni-cuerpo" *ngIf="paso === 3 && simulacion as s">
+    <div class="uni-confirmar">
+      <p class="uni-confirmar-resumen">
+        Vas a unificar <strong>{{ comprasElegidas.length }} {{ comprasElegidas.length === 1 ? 'compra' : 'compras' }}</strong> de
+        <strong>{{ tarjeta?.nombre || 'la tarjeta' }}</strong> en una obligación de <strong class="erp-num">{{ s.resultado.saldo | moneda }}</strong> a
+        <strong>{{ s.resultado.numeroCuotas }} cuotas</strong> de <strong class="erp-num">{{ s.resultado.cuotaUsada | moneda }}</strong>.
+      </p>
+
+      <div class="uni-comparacion uni-comparacion--compacta">
+        <div class="uni-cifra"><span class="erp-overline">Hoy pagas</span><strong class="erp-num">{{ s.resultado.cuotaActualCombinada | moneda }}</strong></div>
+        <i class="material-icons uni-flecha" aria-hidden="true">arrow_forward</i>
+        <div class="uni-cifra uni-cifra--nueva"><span class="erp-overline">Pagarías</span><strong class="erp-num">{{ s.resultado.cuotaUsada | moneda }}</strong></div>
+      </div>
+      <p class="uni-lectura" *ngIf="difTotal" [ngClass]="'uni-lectura--' + difTotal.tono">
+        <i class="material-icons" aria-hidden="true">{{ difTotal.tono === 'ahorro' ? 'trending_down' : difTotal.tono === 'aumento' ? 'trending_up' : 'drag_handle' }}</i>
+        <span>{{ difTotal.verbo }}<ng-container *ngIf="difTotal.tono !== 'igual'">: <strong class="erp-num">{{ difTotal.monto | moneda }}</strong></ng-container></span>
+      </p>
+
+      <app-field label="Nombre de la obligación" for="uni-concepto" hint="Si lo dejas vacío se llamará «{{ conceptoSugerido }}»">
+        <input appInput id="uni-concepto" type="text" maxlength="255" [(ngModel)]="concepto" [placeholder]="conceptoSugerido" />
+      </app-field>
+      <app-field label="Descripción (opcional)" for="uni-descripcion">
+        <textarea appInput id="uni-descripcion" rows="2" maxlength="1000" [(ngModel)]="descripcion" placeholder="Ej: Oferta del banco por llamada"></textarea>
+      </app-field>
+
+      <div class="uni-quien" *ngIf="responsablesDeLaNueva().length > 0">
+        <span class="erp-overline">Quién paga la obligación nueva</span>
+        <ul class="erp-list">
+          <li *ngFor="let r of responsablesDeLaNueva()">
+            <span class="uni-avatar" [style.background]="r.color || 'var(--brand-blue)'" aria-hidden="true">{{ r.iniciales }}</span>
+            <span class="uni-quien-nombre">{{ r.nombre }}</span>
+            <span class="erp-num erp-muted">{{ r.porcentaje | number: '1.0-2' }} % · {{ r.monto | moneda }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="erp-alert erp-alert--info" role="note">
+        <i class="material-icons" aria-hidden="true">info</i>
+        <div>
+          Las compras elegidas quedarán como <strong>Refinanciada</strong> y dejarán de cobrarse por separado; cada persona seguirá debiendo su parte, ahora desde la obligación nueva.
+          Todo se guarda en una sola operación y puedes deshacerlo mientras no pagues ninguna cuota nueva.
+        </div>
+      </div>
+
+      <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorEjecucion"><i class="material-icons" aria-hidden="true">error</i><div>{{ errorEjecucion }}</div></div>
+    </div>
+  </div>
+
+  <footer class="uni-pie">
+    <button type="button" appButton="ghost" (click)="paso === 1 ? cancelar() : atras()" [disabled]="ejecutando">{{ paso === 1 ? 'Cancelar' : 'Atrás' }}</button>
+    <button type="button" appButton="primary" *ngIf="paso < 3" (click)="siguiente()" [disabled]="!puedeAvanzar" [appTooltip]="paso === 1 && totales.cantidad === 0 ? 'Elige al menos una compra' : ''">
+      Siguiente <i class="material-icons" aria-hidden="true">arrow_forward</i>
+    </button>
+    <button type="button" appButton="primary" *ngIf="paso === 3" (click)="confirmar()" [loading]="ejecutando" [disabled]="!puedeAvanzar">
+      <i class="material-icons" aria-hidden="true">merge_type</i> Unificar deuda
+    </button>
+  </footer>
+</section>
