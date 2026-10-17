@@ -21,6 +21,8 @@ import { EstadoCuentaComponent } from './deudas/estado-cuenta/estado-cuenta.comp
 import { ListaCrucesComponent } from './deudas/lista-cruces/lista-cruces.component';
 import { CobrosComponent } from './cobros/cobros.component';
 import { CobroPublicoComponent } from './cobros/cobro-publico/cobro-publico.component';
+import { MetodosPagoPublicoComponent } from './cobros/metodos-pago-publico/metodos-pago-publico.component';
+import { ModalComponent } from './shared/modal/modal.component';
 import { FormularioCobroComponent } from './cobros/formulario-cobro/formulario-cobro.component';
 import { CompartirCobroComponent } from './cobros/compartir-cobro/compartir-cobro.component';
 import { ProductosDetectadosComponent } from './correos/productos-detectados/productos-detectados.component';
@@ -339,12 +341,12 @@ describe('Renderizado — correos inteligentes y cobros a personas (humo)', () =
     f.detectChanges();
     http().expectOne((r) => r.url === `${API}/cobros/enlaces`).flush([]);
     const t = texto(f);
-    for (const esperado of ['Compartir con Andrés Gómez', 'Octubre 2026', 'Mensaje para Andrés Gómez', '¿Cómo te paga?', 'El enlace dura', 'Generar enlace']) expect(t).toContain(esperado);
+    for (const esperado of ['Compartir con Andrés Gómez', 'Octubre 2026', 'Mensaje para Andrés Gómez', 'Indicaciones para pagar', 'El enlace dura', 'Generar enlace']) expect(t).toContain(esperado);
   });
 
   it('Página pública: saldo, detalle con porcentaje y cuota, cómo pagar, formulario con comprobante y avisos anteriores', () => {
     const token = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG';
-    configurarTestBed([CobroPublicoComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token }) } } }]);
+    configurarTestBed([CobroPublicoComponent, MetodosPagoPublicoComponent, ModalComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token }) } } }]);
     const f = TestBed.createComponent(CobroPublicoComponent);
     f.detectChanges();
     http().expectOne(`${API}/publico/cobros/${token}`).flush({
@@ -357,11 +359,13 @@ describe('Renderizado — correos inteligentes y cobros a personas (humo)', () =
       resumen: { totalCargos: 500000, totalAbonosYFavor: 30000, saldoNetoFinal: 470000, estado: 'DEBE', saldoAnterior: 50000, saldoTotalAcumulado: 520000 },
       mensaje: 'Hola Andrés, este es el resumen.', instruccionesPago: 'Bre-B @felipe', venceEn: '2099-01-01T00:00:00.000Z', actualizadoEn: '2026-10-20T12:00:00.000Z',
       reportes: [{ id: 1, monto: 100000, fechaPago: '2026-10-10T00:00:00.000Z', estado: 'RECHAZADO', motivoRechazo: 'No lo veo', montoAprobado: null, creadoEn: null, conComprobante: true }],
+      metodosPago: [{ id: 1, tipo: 'NEQUI', entidad: 'Nequi', numero: '3001234567', titular: 'Felipe Hernández', documento: null, instrucciones: null, tieneQr: false }],
+      objeciones: [],
     });
     const t = texto(f);
     for (const esperado of [
       'Hola, Andrés', 'Resumen de Octubre 2026', 'de parte de Felipe Hernández', 'Le debes a Felipe', '$520,000.00', 'De meses anteriores', '$50,000.00',
-      'Cómo pagar', 'Bre-B @felipe', 'Compras con tarjeta de crédito', 'Cuota 2 de 6 · 50 % de $200,000.00 · compra de $1,200,000.00 · Visa', 'Pagos y abonos', 'Faltan $400,000.00',
+      '¿Dónde puedes pagar?', 'Bre-B @felipe', '300 123 4567', 'Copiar número', 'No reconozco este total', 'fue rechazado', 'Compras con tarjeta de crédito', 'Cuota 2 de 6 · 50 % de $200,000.00 · compra de $1,200,000.00 · Visa', 'Pagos y abonos', 'Faltan $400,000.00',
       'Avisar que pagué', 'Adjuntar foto o PDF', 'Enviar aviso de pago', 'Mis avisos de pago', 'Rechazado', 'No lo veo', 'Este enlace es personal',
     ]) expect(t).toContain(esperado);
     // sin menú ni datos de otras personas: solo la hoja pública

@@ -209,6 +209,7 @@ export type OrigenMovimiento =
   | 'CRUCE_ENTRE_PERSONAS'
   | 'SALDO_A_FAVOR_CARRO'
   | 'PAGO_RECIBIDO'
+  | 'DESCUENTO'
   | 'OTRO';
 
 export interface ItemLiquidacion {

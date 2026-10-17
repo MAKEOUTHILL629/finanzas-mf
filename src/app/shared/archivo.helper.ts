@@ -95,3 +95,37 @@ export async function prepararComprobante(archivo: File): Promise<ComprobanteEnv
   }
   throw new Error('La imagen sigue siendo demasiado pesada. Prueba con una captura de pantalla del comprobante.');
 }
+
+/** El backend acepta un QR de hasta 400 KB; se deja margen. */
+export const MAX_BYTES_QR = 380_000;
+/** Un QR se reduce menos que una foto (necesita bordes nítidos para que lo lea la cámara). */
+export const LADO_MAX_QR = 900;
+
+/**
+ * Prepara la imagen del QR de un medio de pago: solo imágenes, a lo sumo 900 px de lado, en PNG (bordes nítidos) o, si pesa
+ * demasiado, en JPEG. Lanza un `Error` con un mensaje para mostrar al usuario.
+ */
+export async function prepararQr(archivo: File): Promise<ComprobanteEnvio> {
+  if (!TIPOS_IMAGEN.includes(archivo.type)) throw new Error('El QR debe ser una imagen (JPG, PNG o WebP).');
+  const imagen = await cargarImagen(archivo);
+  const { ancho, alto } = escalarDimensiones(imagen.naturalWidth, imagen.naturalHeight, LADO_MAX_QR);
+  const lienzo = document.createElement('canvas');
+  lienzo.width = ancho;
+  lienzo.height = alto;
+  const contexto = lienzo.getContext('2d');
+  if (!contexto) throw new Error('Tu navegador no pudo procesar la imagen.');
+  contexto.fillStyle = '#ffffff';
+  contexto.fillRect(0, 0, ancho, alto);
+  contexto.drawImage(imagen, 0, 0, ancho, alto);
+
+  const nombre = archivo.name.replace(/\.[^.]+$/, '');
+  const png = lienzo.toDataURL('image/png');
+  const datosPng = png.slice(png.indexOf(',') + 1);
+  if (bytesDeBase64(datosPng) <= MAX_BYTES_QR) return { nombre: `${nombre}.png`, tipo: 'image/png', datos: datosPng };
+  for (const calidad of [0.92, 0.8, 0.65]) {
+    const jpeg = lienzo.toDataURL('image/jpeg', calidad);
+    const datos = jpeg.slice(jpeg.indexOf(',') + 1);
+    if (bytesDeBase64(datos) <= MAX_BYTES_QR) return { nombre: `${nombre}.jpg`, tipo: 'image/jpeg', datos };
+  }
+  throw new Error('La imagen del QR pesa demasiado. Recórtala para que solo se vea el código.');
+}

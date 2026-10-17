@@ -32,6 +32,7 @@ const ETIQUETA_ORIGEN: Record<OrigenMovimiento, string> = {
   CRUCE_ENTRE_PERSONAS: 'Cruce entre personas',
   SALDO_A_FAVOR_CARRO: 'Saldo a favor del carro',
   PAGO_RECIBIDO: 'Pago recibido',
+  DESCUENTO: 'Descuento del propietario',
   OTRO: 'Movimiento',
 };
 

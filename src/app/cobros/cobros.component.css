@@ -26,9 +26,9 @@
 
 .cobro, .reporte { display: flex; flex-direction: column; gap: var(--space-2); }
 .cobro--anulado { opacity: 0.6; }
-.cobro-cabecera { display: flex; align-items: flex-start; gap: var(--space-2); }
+.cobro-cabecera { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-1) var(--space-2); }
 .cobro-icono { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--brand-blue-light); color: var(--brand-blue); }
-.cobro-titulo { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.cobro-titulo { min-width: 0; flex: 1 1 140px; display: flex; flex-direction: column; gap: 2px; }
 .cobro-titulo h2 { margin: 0; font-size: var(--text-h3); font-weight: var(--weight-semibold); letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .cobro-titulo .erp-muted { font-size: var(--text-caption); }
 .cobro-montos { display: flex; flex-wrap: wrap; gap: var(--space-3); }
@@ -42,3 +42,8 @@
 .rechazo .erp-actions { justify-content: flex-end; }
 .cobro-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-1); margin-top: auto; }
 .cobro-acciones a { text-decoration: none; }
+
+/* ── Fase 6 ── */
+.parcial { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; font-size: var(--text-body-sm); line-height: 1.4; }
+.badge-boton { padding: 0; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-pill); }
+.badge-boton:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }

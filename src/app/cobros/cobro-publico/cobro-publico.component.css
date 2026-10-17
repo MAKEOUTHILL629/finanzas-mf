@@ -71,3 +71,44 @@
 @media (min-width: 640px) {
   .pub { padding-top: var(--space-5, 40px); }
 }
+
+/* ───────── Fase 6: rechazo, observaciones y abono parcial ───────── */
+.pub-rechazo strong { display: block; }
+.pub-rechazo-motivo { margin: 4px 0 0; font-style: italic; overflow-wrap: anywhere; }
+.pub-rechazo-ayuda { margin: 4px 0 0; font-size: var(--text-body-sm); opacity: 0.9; }
+
+.pub-item-lado { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
+.pub-observar { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px 0 8px; border: 1px solid transparent; border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); font: inherit; font-size: var(--text-caption); font-weight: var(--weight-medium); cursor: pointer; transition: background var(--duration-fast) var(--ease-in-out), color var(--duration-fast) var(--ease-in-out); }
+.pub-observar .material-icons { font-size: 16px; }
+.pub-observar:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.pub-observar:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+@media (pointer: coarse) { .pub-observar { min-height: 36px; } }
+.pub-observar--total { align-self: flex-start; margin-top: 4px; border-color: var(--border-default); }
+.pub-observar-enviada { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-caption); color: var(--amber-warning); font-weight: var(--weight-medium); }
+.pub-observar-enviada .material-icons { font-size: 16px; }
+
+.pub-monto-ayuda { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pub-monto-ayuda p { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: var(--text-caption); line-height: 1.4; }
+.pub-monto-ayuda .material-icons { font-size: 16px; margin-top: 1px; }
+.pub-parcial { color: var(--text-link); }
+.pub-exceso { color: var(--amber-warning); }
+.pub-todo { min-height: 34px; padding: 0 12px; border: none; border-radius: var(--radius-pill); background: var(--brand-blue-light); color: var(--text-link); font: inherit; font-size: var(--text-caption); font-weight: var(--weight-semibold); cursor: pointer; }
+.pub-todo:hover { filter: brightness(0.96); }
+.pub-todo:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+.pub-item-lado app-badge { white-space: nowrap; }
+
+.pub-obs-lista { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.pub-obs { display: flex; flex-direction: column; gap: 6px; padding: var(--space-2); border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-input); }
+.pub-obs--resuelta { background: transparent; }
+.pub-obs-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px var(--space-1); }
+.pub-obs-que { font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.pub-obs-texto { margin: 0; line-height: 1.45; overflow-wrap: anywhere; }
+.pub-obs-respuesta { display: flex; gap: 8px; padding: 10px; border-radius: var(--radius-sm); background: var(--brand-blue-light); }
+.pub-obs-respuesta > .material-icons { font-size: 18px; color: var(--text-link); margin-top: 1px; }
+.pub-obs-respuesta p { margin: 0; line-height: 1.45; overflow-wrap: anywhere; }
+.pub-obs-respuesta p + p { margin-top: 4px; }
+
+.pub-obs-form { min-width: 0; }
+.pub-obs-blanco { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 10px var(--space-2); border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-default); }
+.pub-obs-blanco-texto { overflow-wrap: anywhere; font-weight: var(--weight-medium); }

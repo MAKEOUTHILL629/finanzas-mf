@@ -1,0 +1,121 @@
+<div class="erp-alert erp-alert--danger" role="alert" *ngIf="error">
+  <i class="material-icons" aria-hidden="true">error</i>
+  <div>{{ error }} <button type="button" appButton="secondary" size="sm" (click)="cargar()">Reintentar</button></div>
+</div>
+
+<div class="mp-cab">
+  <p class="erp-muted mp-intro">Dónde pueden pagarte. Los que estén activos aparecen en el enlace de cada persona, con un botón para copiar el número.</p>
+  <button type="button" appButton="primary" size="sm" (click)="abrirNuevo()"><i class="material-icons" aria-hidden="true">add</i>Agregar medio de pago</button>
+</div>
+
+<div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="mp-eliminar-titulo" *ngIf="confirmandoEliminar as m">
+  <i class="material-icons" aria-hidden="true">warning</i>
+  <div>
+    <strong id="mp-eliminar-titulo">¿Eliminar «{{ m.entidad }}»?</strong>
+    <p class="mp-aviso">Dejará de aparecer en los enlaces. Si solo quieres ocultarlo un tiempo, mejor desactívalo.</p>
+    <div class="erp-actions">
+      <button type="button" appButton="danger" size="sm" (click)="confirmarEliminar()" [loading]="trabajando">Sí, eliminar</button>
+      <button type="button" appButton="ghost" size="sm" (click)="confirmandoEliminar = null" [disabled]="trabajando">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="cargando" aria-busy="true" aria-label="Cargando"><div class="erp-skeleton" style="height: 96px; margin-bottom: 12px" *ngFor="let _ of [1, 2]"></div></div>
+
+<app-empty-state *ngIf="!cargando && !error && metodos.length === 0" icon="account_balance_wallet" titulo="Aún no tienes medios de pago" descripcion="Agrega tu cuenta, Nequi, Daviplata o tu llave Bre-B para que quien te debe sepa a dónde transferir.">
+  <button type="button" appButton="primary" (click)="abrirNuevo()"><i class="material-icons" aria-hidden="true">add</i>Agregar medio de pago</button>
+</app-empty-state>
+
+<ul class="mp-lista" *ngIf="!cargando && metodos.length > 0" aria-label="Tus medios de pago">
+  <li class="erp-card mp-item" *ngFor="let m of metodos; trackBy: trackById; let primero = first; let ultimo = last" [class.mp-item--inactivo]="!m.activo">
+    <span class="mp-icono" [ngClass]="clase(m.tipo)" aria-hidden="true"><i class="material-icons">{{ icono(m.tipo) }}</i></span>
+    <div class="mp-info">
+      <strong>{{ m.entidad }}</strong>
+      <span class="mp-numero erp-mono">{{ legible(m.tipo, m.numero) }}</span>
+      <span class="erp-muted mp-meta">{{ etiqueta(m.tipo) }}<ng-container *ngIf="m.titular"> · {{ m.titular }}</ng-container><ng-container *ngIf="m.tieneQr"> · con QR</ng-container></span>
+    </div>
+    <div class="mp-acciones">
+      <button type="button" class="mp-interruptor" role="switch" [attr.aria-checked]="m.activo" [attr.aria-label]="(m.activo ? 'Ocultar ' : 'Mostrar ') + m.entidad + ' en los enlaces'" (click)="alternarActivo(m)" [disabled]="trabajando">
+        <span class="mp-interruptor-pista"><span class="mp-interruptor-perilla"></span></span>
+        <span class="mp-interruptor-texto">{{ m.activo ? 'Visible' : 'Oculto' }}</span>
+      </button>
+      <span class="mp-botones">
+        <button type="button" appButton="ghost" size="sm" icon (click)="mover(m, -1)" [disabled]="primero || trabajando" [attr.aria-label]="'Subir ' + m.entidad" appTooltip="Subir"><i class="material-icons" aria-hidden="true">arrow_upward</i></button>
+        <button type="button" appButton="ghost" size="sm" icon (click)="mover(m, 1)" [disabled]="ultimo || trabajando" [attr.aria-label]="'Bajar ' + m.entidad" appTooltip="Bajar"><i class="material-icons" aria-hidden="true">arrow_downward</i></button>
+        <button type="button" appButton="ghost" size="sm" icon (click)="abrirEditar(m)" [attr.aria-label]="'Editar ' + m.entidad" appTooltip="Editar"><i class="material-icons" aria-hidden="true">edit</i></button>
+        <button type="button" appButton="ghost" size="sm" icon (click)="pedirEliminar(m)" [attr.aria-label]="'Eliminar ' + m.entidad" appTooltip="Eliminar"><i class="material-icons" aria-hidden="true">delete_outline</i></button>
+      </span>
+    </div>
+  </li>
+</ul>
+
+<!-- Así lo ve la persona -->
+<section class="mp-previa" *ngIf="!cargando && vistaPrevia.length > 0" aria-label="Vista previa para la persona">
+  <h2 class="mp-previa-titulo"><i class="material-icons" aria-hidden="true">visibility</i>Así lo ve la persona ({{ activos }} {{ activos === 1 ? 'medio' : 'medios' }})</h2>
+  <app-metodos-pago-publico [metodos]="vistaPrevia" token="vista-previa" [instrucciones]="null"></app-metodos-pago-publico>
+</section>
+
+<!-- Formulario -->
+<app-modal [modalId]="modalId" titulo="Medio de pago">
+  <form class="erp-form" [formGroup]="form" (ngSubmit)="guardar()" novalidate *ngIf="formularioAbierto">
+    <div>
+      <h2 class="erp-form-title" id="mp-form-titulo">{{ editando ? 'Editar medio de pago' : 'Agregar medio de pago' }}</h2>
+      <p class="erp-subtitle">Lo verán las personas a las que les compartas su enlace de cobro.</p>
+    </div>
+
+    <app-field label="Tipo" for="mp-tipo" [required]="true">
+      <app-select inputId="mp-tipo" ariaLabel="Tipo de medio de pago" [opciones]="opcionesTipo" [permitirVacio]="false" formControlName="tipo" (elegido)="alElegirTipo($event?.valor ?? null)"></app-select>
+    </app-field>
+
+    <app-field label="Entidad" for="mp-entidad" [required]="true" [error]="intentado && form.controls.entidad.invalid ? 'Escribe el banco o la billetera.' : null">
+      <input appInput id="mp-entidad" type="text" list="mp-entidades" formControlName="entidad" maxlength="80" autocomplete="off" placeholder="Ej. Bancolombia" />
+      <datalist id="mp-entidades"><option *ngFor="let e of entidades" [value]="e"></option></datalist>
+    </app-field>
+
+    <app-field [label]="opcionTipo.numeroEtiqueta" for="mp-numero" [required]="true" [error]="intentado && errorNumero ? errorNumero : null" [hint]="opcionTipo.numeroEjemplo ? 'Ej. ' + opcionTipo.numeroEjemplo : null">
+      <input appInput id="mp-numero" type="text" inputmode="text" formControlName="numero" maxlength="60" autocomplete="off" [placeholder]="opcionTipo.numeroEjemplo" [invalid]="intentado && !!errorNumero" />
+    </app-field>
+
+    <div class="erp-form-grid">
+      <app-field label="Titular (opcional)" for="mp-titular">
+        <input appInput id="mp-titular" type="text" formControlName="titular" maxlength="120" autocomplete="off" placeholder="Nombre de quien recibe" />
+      </app-field>
+      <app-field label="Documento (opcional)" for="mp-documento" hint="Algunos bancos lo piden para transferir">
+        <input appInput id="mp-documento" type="text" formControlName="documento" maxlength="30" autocomplete="off" />
+      </app-field>
+    </div>
+
+    <app-field label="Indicaciones (opcional)" for="mp-instrucciones">
+      <textarea appInput id="mp-instrucciones" rows="2" maxlength="500" formControlName="instrucciones" placeholder="Ej. Pon tu nombre en la descripción"></textarea>
+    </app-field>
+
+    <app-field label="Cuenta de la app (opcional)" for="mp-cuenta" hint="Solo para que lo identifiques; la persona no la ve.">
+      <app-select inputId="mp-cuenta" catalogo="cuentas" ariaLabel="Cuenta de la app" placeholder="Ninguna" formControlName="cuentaId"></app-select>
+    </app-field>
+
+    <!-- QR -->
+    <div class="erp-field">
+      <span class="erp-label" id="mp-qr-label">Código QR (opcional)</span>
+      <div class="mp-qr" *ngIf="vistaQrNuevo || mostrarQrActual; else sinQr">
+        <img [src]="vistaQrNuevo || qrActualUrl" alt="Código QR del medio de pago" *ngIf="vistaQrNuevo || qrActualUrl" />
+        <span class="mp-qr-skel erp-skeleton" *ngIf="!vistaQrNuevo && !qrActualUrl"></span>
+        <button type="button" appButton="ghost" size="sm" (click)="quitarQr()">Quitar</button>
+      </div>
+      <ng-template #sinQr>
+        <label class="erp-btn erp-btn--secondary mp-qr-boton" for="mp-qr-archivo"><i class="material-icons" aria-hidden="true">qr_code_2</i>{{ leyendoQr ? 'Preparando…' : 'Subir imagen del QR' }}</label>
+        <input id="mp-qr-archivo" class="erp-sr-only" type="file" accept="image/*" aria-labelledby="mp-qr-label" (change)="alElegirQr($event)" [disabled]="leyendoQr" />
+        <span class="erp-field-hint">Una captura del QR de tu app (se reduce sola).</span>
+      </ng-template>
+      <p class="erp-field-error" *ngIf="errorQr">{{ errorQr }}</p>
+    </div>
+
+    <label class="erp-check"><input type="checkbox" formControlName="activo" /><span>Mostrarlo en los enlaces de cobro</span></label>
+
+    <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorForm"><i class="material-icons" aria-hidden="true">error</i><span>{{ errorForm }}</span></div>
+
+    <div class="erp-form-actions">
+      <button type="button" appButton="ghost" (click)="cerrarFormulario()" [disabled]="guardando">Cancelar</button>
+      <button type="submit" appButton="primary" [loading]="guardando" [disabled]="leyendoQr"><i class="material-icons" aria-hidden="true">check</i>{{ editando ? 'Guardar cambios' : 'Agregar' }}</button>
+    </div>
+  </form>
+</app-modal>

@@ -27,10 +27,11 @@ import {
 } from './cobros.constants';
 import { AccionUI } from '../shared/ui/acciones/acciones.component';
 
-export type PestanaCobros = 'gastos' | 'reportes' | 'ingresos' | 'enlaces';
+export type PestanaCobros = 'gastos' | 'reportes' | 'observaciones' | 'ingresos' | 'enlaces' | 'metodos';
 export const MODAL_COBRO = 'cobro-form';
 export const MODAL_APROBAR = 'cobro-aprobar';
 export const MODAL_COMPARTIR_COBRO = 'cobro-compartir';
+export const MODAL_DESCUENTO_COBRO = 'cobro-descuento';
 
 /** Pagos reportados: los pendientes primero (más antiguos antes), luego lo ya revisado (más reciente primero). */
 export function ordenarReportes(reportes: ReportePago[]): ReportePago[] {
@@ -59,6 +60,7 @@ export class CobrosComponent implements OnInit, OnDestroy {
   readonly modalCobro = MODAL_COBRO;
   readonly modalAprobar = MODAL_APROBAR;
   readonly modalCompartir = MODAL_COMPARTIR_COBRO;
+  readonly modalDescuento = MODAL_DESCUENTO_COBRO;
 
   readonly nombrePeriodo = nombrePeriodo;
   readonly categoria = etiquetaCategoria;
@@ -87,6 +89,10 @@ export class CobrosComponent implements OnInit, OnDestroy {
   formularioAbierto = false;
   aprobando: ReportePago | null = null;
   compartiendo: { personaId: number; nombre: string | null; celular: string | null } | null = null;
+  /** Enlace al que se le está haciendo un descuento directo. */
+  descontando: EnlaceCobro | null = null;
+  /** Sube cuando algo cambió y la lista de observaciones debe volver a leerse. */
+  refrescoObservaciones = 0;
   confirmandoAnular: CobroPuntual | null = null;
   rechazando: ReportePago | null = null;
   motivoRechazo = '';
@@ -106,7 +112,7 @@ export class CobrosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab === 'gastos' || tab === 'reportes' || tab === 'ingresos' || tab === 'enlaces') this.pestana = tab;
+    if (tab === 'gastos' || tab === 'reportes' || tab === 'observaciones' || tab === 'ingresos' || tab === 'enlaces' || tab === 'metodos') this.pestana = tab;
     const periodo = this.route.snapshot.queryParamMap.get('periodo');
     if (esPeriodoValido(periodo)) this.periodo = periodo;
 
@@ -114,6 +120,7 @@ export class CobrosComponent implements OnInit, OnDestroy {
       if (id !== this.modalCobro) this.formularioAbierto = false;
       if (id !== this.modalAprobar) this.aprobando = null;
       if (id !== this.modalCompartir) this.compartiendo = null;
+      if (id !== this.modalDescuento) this.descontando = null;
     });
     this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
     this.catalogos.estado$('cuentas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.cuentas = e.datos.filter((c) => c.activa)));
@@ -174,6 +181,11 @@ export class CobrosComponent implements OnInit, OnDestroy {
 
   get pendientes(): number {
     return this.reportes.filter((r) => r.estado === 'PENDIENTE').length;
+  }
+
+  /** Observaciones de las personas que esperan tu respuesta (suma de los enlaces del mes). */
+  get observacionesAbiertas(): number {
+    return this.enlaces.reduce((a, e) => a + (e.objecionesAbiertas ?? 0), 0);
   }
 
   get reportesVisibles(): ReportePago[] {
@@ -340,6 +352,29 @@ export class CobrosComponent implements OnInit, OnDestroy {
 
   onEnlaceCambiado(): void {
     this.cargar();
+  }
+
+  // ── descuentos y observaciones ──
+
+  abrirDescuento(e: EnlaceCobro): void {
+    this.descontando = e;
+    this.modalService.open(this.modalDescuento);
+  }
+
+  /** Se aplicó o deshizo un descuento: el saldo del enlace cambió, así que se vuelve a leer todo. */
+  onDescuentoCambio(): void {
+    this.cargar();
+    this.refrescoObservaciones++;
+  }
+
+  /** Se resolvió o se deshizo una observación: cambia el saldo y el contador del enlace. */
+  onObservacionesCambio(): void {
+    this.cargar();
+  }
+
+  /** Pasa a la pestaña de observaciones de un enlace. */
+  verObservaciones(): void {
+    this.pestana = 'observaciones';
   }
 
   refrescarEnlace(e: EnlaceCobro): void {

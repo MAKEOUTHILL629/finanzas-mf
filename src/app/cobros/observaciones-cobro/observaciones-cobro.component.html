@@ -1,0 +1,95 @@
+<div class="chips chips--sub" role="group" aria-label="Filtrar observaciones">
+  <button type="button" class="chip" [class.chip--activo]="filtro === 'ABIERTA'" (click)="filtro = 'ABIERTA'">Por responder <span class="chip-n erp-num" [class.chip-n--alerta]="contar('ABIERTA') > 0">{{ contar('ABIERTA') }}</span></button>
+  <button type="button" class="chip" [class.chip--activo]="filtro === 'RESUELTA'" (click)="filtro = 'RESUELTA'">Resueltas <span class="chip-n erp-num">{{ contar('RESUELTA') }}</span></button>
+  <button type="button" class="chip" [class.chip--activo]="filtro === ''" (click)="filtro = ''">Todas</button>
+</div>
+
+<div class="erp-alert erp-alert--danger" role="alert" *ngIf="error">
+  <i class="material-icons" aria-hidden="true">error</i>
+  <div>{{ error }} <button type="button" appButton="secondary" size="sm" (click)="cargar()">Reintentar</button></div>
+</div>
+
+<div *ngIf="cargando" aria-busy="true" aria-label="Cargando"><div class="erp-skeleton" style="height: 120px; margin-bottom: 12px" *ngFor="let _ of [1, 2]"></div></div>
+
+<app-empty-state *ngIf="!cargando && !error && visibles.length === 0" icon="forum" [titulo]="filtro === 'ABIERTA' ? 'Nada por responder en ' + nombrePeriodo(periodo) : 'No hay observaciones en esta vista'" descripcion="Cuando una persona abra su enlace y diga «No reconozco este cobro», su observación aparece aquí para que la mantengas, la ajustes o la descuentes."></app-empty-state>
+
+<div class="erp-grid" *ngIf="!cargando && visibles.length > 0">
+  <article class="erp-card obs" *ngFor="let o of visibles; trackBy: trackById" [attr.aria-label]="'Observación de ' + o.persona" [class.obs--abierta]="o.estado === 'ABIERTA'">
+    <header class="cobro-cabecera">
+      <span class="cobro-icono" aria-hidden="true"><i class="material-icons">{{ o.estado === 'ABIERTA' ? 'flag' : 'task_alt' }}</i></span>
+      <div class="cobro-titulo">
+        <h2>{{ o.persona }}</h2>
+        <span class="erp-muted">{{ nombrePeriodo(o.periodo) }} · {{ o.creadaEn | date: 'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+      <app-badge [tone]="tono(o)">{{ o.estado === 'ABIERTA' ? 'Por responder' : etiquetaResolucion(o.resolucion) }}</app-badge>
+    </header>
+
+    <div class="obs-que">
+      <span class="erp-overline">{{ o.alcance === 'TOTAL' ? 'Objeta el total' : 'Objeta este cobro' }}</span>
+      <div class="obs-linea">
+        <strong class="obs-concepto">{{ o.alcance === 'TOTAL' ? 'Todo lo que debe' : o.concepto }}</strong>
+        <strong class="erp-num" *ngIf="o.monto !== null">{{ o.monto | moneda }}</strong>
+        <strong class="erp-num" *ngIf="o.alcance === 'TOTAL'">{{ saldoDe(o) | moneda }}</strong>
+      </div>
+    </div>
+    <p class="obs-comentario">«{{ o.comentario }}»</p>
+    <p class="erp-muted notas" *ngIf="o.montoPropuesto !== null">Cree que debe {{ o.montoPropuesto | moneda }}.</p>
+
+    <!-- Respuesta ya dada -->
+    <div class="obs-respuesta" *ngIf="o.estado === 'RESUELTA'">
+      <i class="material-icons" aria-hidden="true">reply</i>
+      <div>
+        <p *ngIf="o.respuesta">{{ o.respuesta }}</p>
+        <p class="erp-gain" *ngIf="o.montoAjuste !== null">Se le descontaron <strong class="erp-num">{{ o.montoAjuste | moneda }}</strong>.</p>
+        <p class="erp-muted" *ngIf="o.resueltaEn">{{ o.resueltaEn | date: 'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+    </div>
+
+    <!-- Resolver -->
+    <div class="resolver" *ngIf="borrador && borrador.objecion.id === o.id">
+      <div class="resolver-acciones" role="radiogroup" aria-label="Qué vas a hacer">
+        <button type="button" class="resolver-accion" role="radio" *ngFor="let a of acciones(o)" [attr.aria-checked]="borrador.accion === a.valor" [class.resolver-accion--activa]="borrador.accion === a.valor" (click)="elegirAccion(a.valor)">
+          <i class="material-icons" aria-hidden="true">{{ a.icono }}</i><span>{{ a.etiqueta }}</span>
+        </button>
+      </div>
+
+      <div class="erp-field" *ngIf="pideMonto">
+        <label class="erp-label" [for]="'obs-monto-' + o.id">{{ borrador.accion === 'AJUSTAR' ? 'Monto nuevo a cobrar por este rubro' : '¿Cuánto le descuentas?' }}</label>
+        <input [id]="'obs-monto-' + o.id" appInput type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="borrador.monto" name="monto" placeholder="0.00" />
+        <p class="erp-field-hint" *ngIf="borrador.accion === 'AJUSTAR' && o.monto !== null">Hoy le cobras {{ o.monto | moneda }} por esto.</p>
+      </div>
+
+      <div class="erp-field">
+        <label class="erp-label" [for]="'obs-resp-' + o.id">{{ borrador.accion === 'MANTENER' ? 'Explícale por qué se mantiene (obligatorio)' : 'Mensaje para la persona (opcional)' }}</label>
+        <textarea [id]="'obs-resp-' + o.id" appInput rows="2" maxlength="1000" [(ngModel)]="borrador.respuesta" name="respuesta" [placeholder]="borrador.accion === 'MANTENER' ? 'Ej. Está en el recibo que te mandé por WhatsApp' : 'Ej. Tienes razón, ya lo ajusté'"></textarea>
+        <p class="erp-field-error" *ngIf="intentado && borrador.accion === 'MANTENER' && borrador.respuesta.trim().length < 3">Escribe el motivo: la persona lo va a leer.</p>
+      </div>
+
+      <!-- Así queda su total -->
+      <div class="previa" *ngIf="previa as p" aria-live="polite">
+        <p class="erp-field-error" *ngIf="p.error">{{ p.error }}</p>
+        <ng-container *ngIf="!p.error && p.descuento !== null && p.saldoNuevo !== null">
+          <div class="previa-cifras">
+            <div><span class="erp-overline">Ahora debe</span><strong class="erp-num">{{ p.saldoActual | moneda }}</strong></div>
+            <div><span class="erp-overline">Pasaría a deber</span><strong class="erp-num erp-gain">{{ p.saldoNuevo | moneda }}</strong></div>
+          </div>
+          <p class="erp-muted notas">Descuento de {{ p.descuento | moneda }}. La persona verá su total actualizado en su enlace apenas confirmes.</p>
+        </ng-container>
+      </div>
+
+      <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorResolucion"><i class="material-icons" aria-hidden="true">error</i><span>{{ errorResolucion }}</span></div>
+
+      <div class="erp-actions">
+        <button type="button" appButton="ghost" size="sm" (click)="cancelarResolucion()" [disabled]="trabajando">Cancelar</button>
+        <button type="button" appButton="primary" size="sm" (click)="confirmar()" [loading]="trabajando" [disabled]="!puedeConfirmar && intentado">
+          <i class="material-icons" aria-hidden="true">check</i>Confirmar
+        </button>
+      </div>
+    </div>
+
+    <footer class="cobro-acciones" *ngIf="!borrador || borrador.objecion.id !== o.id">
+      <button type="button" appButton="primary" size="sm" *ngIf="o.estado === 'ABIERTA'" (click)="abrirResolucion(o)"><i class="material-icons" aria-hidden="true">rule</i>Resolver</button>
+      <button type="button" appButton="ghost" size="sm" *ngIf="o.estado === 'RESUELTA' && o.movimientoId !== null" (click)="deshacer(o)" [loading]="deshaciendo === o.id"><i class="material-icons" aria-hidden="true">undo</i>Deshacer el ajuste</button>
+    </footer>
+  </article>
+</div>

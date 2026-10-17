@@ -72,6 +72,21 @@ Convenciones:
   oficial (`POST /api/refinanciamientos/simular`) compara lo que pagas hoy con lo que pagarías (diferencia mensual y total) y trae la tabla de cuotas; 3) confirmar: una sola operación atómica en el servidor y
   se abre el detalle de la deuda nueva. La lógica pura (totales, pedido, lectura de diferencias) está en `unificar-deuda.helper.ts`.
 
+## Enlace de cobro compartido (plan V2, fase 6)
+
+- **¿Dónde puedes pagar?** (`cobros/metodos-pago-publico`, la usa también la vista previa del propietario): en el enlace público (`/p/:token`) cada medio de pago activo del propietario es una
+  tarjeta estilo Apple Wallet (Nequi, Daviplata, cuenta, llave Bre-B…) con el número legible (`numeroLegible`), titular, documento e indicaciones, y un botón **«Copiar número»** que confirma con
+  **«¡Copiado!»** (copia el número limpio, sin espacios ni +57: `textoACopiar`). El QR, si existe, se muestra bajo demanda. Solo aparece si la persona todavía debe algo.
+- **Observaciones de la persona**: cada cobro del detalle (y el total) tiene **«Observar» / «No reconozco este total»**; abre un formulario con **comentario obligatorio** (y, opcional, cuánto cree que
+  debe). Las observaciones y la respuesta del propietario salen en «Mis observaciones»; un rubro con observación abierta dice «Observación enviada». Un **pago rechazado** se muestra como una alerta
+  clara arriba, con el comentario del propietario (`reporteRechazadoReciente`), hasta que la persona envíe otro aviso. **Abono parcial**: al escribir menos de lo que debe se avisa cuánto quedaría
+  (`analisisMonto`), con «Pagar todo»; el aviso queda marcado «Abono parcial».
+- **Administración** (`/cobros`, todo lo nuevo vive en pestañas): **Observaciones** (`observaciones-cobro`, con contador) — cada una se **mantiene** (con explicación obligatoria), se **ajusta** (monto nuevo
+  del rubro), se **excluye** o se **descuenta**, y mientras se escribe se ve «Ahora debe → Pasaría a deber» (`descuentoDeAccion`, espejo del servidor); al confirmar, el enlace de la persona se recalcula en el acto
+  y el ajuste se puede **deshacer**. **Enlaces compartidos**: botón «Descuento» (`descuento-enlace`: descuento directo con motivo y lista de ajustes vigentes) e insignia de observaciones abiertas.
+  **Medios de pago** (`metodos-pago`): agregar/editar con validación por tipo (`errorDeNumeroMetodo`), QR (`prepararQr`), mostrar/ocultar con un interruptor, ordenar, eliminar y vista previa de cómo lo ve la persona.
+  **Pagos reportados** marca el abono parcial («quedaría pendiente $X»).
+
 ## Correos inteligentes y cobros a personas
 
 - **Productos detectados** (`correos/productos-detectados`): los correos traen solo los últimos 4 dígitos. El panel los agrupa, propone a cuál de tus cuentas o tarjetas pertenece cada uno

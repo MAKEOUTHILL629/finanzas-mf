@@ -1,0 +1,46 @@
+<section class="mp" aria-labelledby="pub-donde">
+  <h2 id="pub-donde" class="mp-titulo"><i class="material-icons" aria-hidden="true">account_balance_wallet</i>¿Dónde puedes pagar?</h2>
+
+  <ul class="mp-lista" *ngIf="metodos.length > 0">
+    <li class="wallet" *ngFor="let m of metodos; trackBy: trackId" [ngClass]="clase(m.tipo)">
+      <header class="wallet-cab">
+        <span class="wallet-icono" aria-hidden="true"><i class="material-icons">{{ icono(m.tipo) }}</i></span>
+        <div class="wallet-entidad">
+          <strong>{{ m.entidad }}</strong>
+          <span *ngIf="etiqueta(m.tipo).toLowerCase() !== m.entidad.trim().toLowerCase()">{{ etiqueta(m.tipo) }}</span>
+        </div>
+      </header>
+
+      <p class="wallet-numero" [attr.aria-label]="'Número: ' + m.numero">{{ legible(m.tipo, m.numero) }}</p>
+
+      <dl class="wallet-datos" *ngIf="m.titular || m.documento">
+        <div *ngIf="m.titular"><dt>Titular</dt><dd>{{ m.titular }}</dd></div>
+        <div *ngIf="m.documento"><dt>Documento</dt><dd>{{ m.documento }}</dd></div>
+      </dl>
+      <p class="wallet-nota" *ngIf="m.instrucciones">{{ m.instrucciones }}</p>
+
+      <div class="wallet-acciones">
+        <button type="button" class="wallet-boton wallet-boton--principal" [class.wallet-boton--listo]="copiado === m.id" (click)="copiar(m)" [attr.aria-label]="'Copiar el número de ' + m.entidad">
+          <i class="material-icons" aria-hidden="true">{{ copiado === m.id ? 'check' : 'content_copy' }}</i>{{ copiado === m.id ? '¡Copiado!' : 'Copiar número' }}
+        </button>
+        <button type="button" class="wallet-boton" *ngIf="m.tieneQr" (click)="alternarQr(m)" [attr.aria-expanded]="qrAbierto === m.id">
+          <i class="material-icons" aria-hidden="true">qr_code_2</i>{{ qrAbierto === m.id ? 'Ocultar QR' : 'Ver QR' }}
+        </button>
+      </div>
+      <p class="wallet-error" role="alert" *ngIf="errorCopia === m.id">No se pudo copiar. Selecciona el número y cópialo a mano.</p>
+      <div class="wallet-qr" *ngIf="qrAbierto === m.id">
+        <img [src]="urlQr(m)" [alt]="'Código QR para pagar en ' + m.entidad" width="220" height="220" loading="lazy" />
+      </div>
+    </li>
+  </ul>
+
+  <div class="mp-indicaciones" *ngIf="instrucciones">
+    <i class="material-icons" aria-hidden="true">info</i>
+    <p>{{ instrucciones }}</p>
+    <button type="button" class="mp-copiar" (click)="copiarIndicaciones()">
+      <i class="material-icons" aria-hidden="true">{{ copiado === 'indicaciones' ? 'check' : 'content_copy' }}</i>{{ copiado === 'indicaciones' ? '¡Copiado!' : 'Copiar' }}
+    </button>
+  </div>
+
+  <span class="erp-sr-only" role="status" aria-live="polite">{{ copiado !== null ? 'Copiado al portapapeles' : '' }}</span>
+</section>

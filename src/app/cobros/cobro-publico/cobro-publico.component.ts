@@ -4,14 +4,27 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { CobroPublico, ComprobanteEnvio, ItemCobroPublico, MedioPago, ResumenCobro } from '../../modelos/cobros-personas';
+import { CobroPublico, ComprobanteEnvio, ItemCobroPublico, MedioPago, ObjecionPublica, ReportePublico, ResumenCobro } from '../../modelos/cobros-personas';
 import { CobroPublicoService } from '../../services/cobro-publico.service';
+import { ModalService } from '../../services/modal.service';
 import { prepararComprobante, tamanoLegible } from '../../shared/archivo.helper';
 import { esImporteValido } from '../../shared/dinero.helper';
 import { iniciales } from '../../deudas/deudas.constants';
 import { hoyIso, nombrePeriodo } from '../../shared/periodo.helper';
 import { copiarAlPortapapeles } from '../../shared/portapapeles.helper';
 import { MEDIOS_PAGO, claseEstadoReporte, etiquetaEstadoReporte, etiquetaMedio, lineaDetalle, vencimientoLegible } from '../cobros.constants';
+import { AnalisisMonto, analisisMonto, etiquetaResolucion, reporteRechazadoReciente, tonoObjecion } from '../cobros-fase6.helpers';
+
+export const MODAL_OBJETAR_COBRO = 'objetar-cobro';
+
+/** Sobre qué cobro la persona deja su observación. */
+export interface BlancoObservacion {
+  alcance: 'ITEM' | 'TOTAL';
+  clave?: string;
+  concepto: string | null;
+  /** Lo que la persona ve en ese renglón (`null` si es el total). */
+  monto: number | null;
+}
 
 export interface ResumenSaldo {
   /** Texto de arriba: «Debes a Felipe», «Estás al día», «Tienes saldo a favor». */
@@ -62,6 +75,9 @@ export class CobroPublicoComponent implements OnInit, OnDestroy {
   readonly claseEstado = claseEstadoReporte;
   readonly medio = etiquetaMedio;
   readonly tamano = tamanoLegible;
+  readonly resolucion = etiquetaResolucion;
+  readonly tonoObjecion = tonoObjecion;
+  readonly MODAL_OBJETAR = MODAL_OBJETAR_COBRO;
 
   token = '';
   cobro: CobroPublico | null = null;
@@ -72,12 +88,21 @@ export class CobroPublicoComponent implements OnInit, OnDestroy {
   reportando = false;
   errorReporte: string | null = null;
   enviado: string | null = null;
+  /** Si el último aviso fue un abono parcial: lo que sigue pendiente. */
+  avisoParcial: number | null = null;
   comprobante: ComprobanteEnvio | null = null;
   vistaPrevia: string | null = null;
   leyendoArchivo = false;
   errorArchivo: string | null = null;
   intentado = false;
   copiado = false;
+
+  // observaciones sobre el cobro
+  observando: BlancoObservacion | null = null;
+  enviandoObservacion = false;
+  errorObservacion: string | null = null;
+  observacionEnviada: string | null = null;
+  intentoObservacion = false;
 
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
@@ -90,13 +115,19 @@ export class CobroPublicoComponent implements OnInit, OnDestroy {
     comentario: ['', Validators.maxLength(500)],
   });
 
+  formObservacion = this.fb.nonNullable.group({
+    comentario: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(1000)]],
+    montoPropuesto: ['' as number | string],
+  });
+
   private tituloAnterior = '';
 
   constructor(
     private route: ActivatedRoute,
     private servicio: CobroPublicoService,
     private meta: Meta,
-    private titulo: Title
+    private titulo: Title,
+    private modal: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -126,7 +157,9 @@ export class CobroPublicoComponent implements OnInit, OnDestroy {
         finalize(() => (this.cargando = false))
       )
       .subscribe({
-        next: (c) => {
+        next: (recibido) => {
+          // un servidor anterior a la fase 6 no manda estas listas
+          const c: CobroPublico = { ...recibido, metodosPago: recibido.metodosPago ?? [], objeciones: recibido.objeciones ?? [] };
           this.cobro = c;
           const sugerido = resumenSaldo(c.resumen, c.propietario.nombre).porPagar;
           if (this.form.controls.monto.value === '' && sugerido > 0) this.form.controls.monto.setValue(sugerido);
@@ -148,6 +181,83 @@ export class CobroPublicoComponent implements OnInit, OnDestroy {
 
   get montoInvalido(): boolean {
     return !esImporteValido(this.form.controls.monto.value);
+  }
+
+  /** Lo que escribió comparado con lo que debe: ¿pago completo, abono parcial o de más? */
+  get analisis(): AnalisisMonto {
+    return analisisMonto(this.form.controls.monto.value, this.saldo?.porPagar ?? 0);
+  }
+
+  /** Pone lo que debe en el campo «¿Cuánto pagaste?». */
+  pagarTodo(): void {
+    const todo = this.saldo?.porPagar ?? 0;
+    if (todo > 0) this.form.controls.monto.setValue(todo);
+  }
+
+  /** El aviso de pago que el propietario rechazó y la persona aún debe corregir. */
+  get rechazado(): ReportePublico | null {
+    return this.cobro ? reporteRechazadoReciente(this.cobro.reportes) : null;
+  }
+
+  // ── observaciones ──
+
+  /** ¿Ya hay una observación abierta sobre este rubro? (se muestra «Observación enviada» en vez del botón) */
+  observacionAbierta(item: ItemCobroPublico): ObjecionPublica | null {
+    if (!item.clave) return null;
+    return this.cobro?.objeciones.find((o) => o.estado === 'ABIERTA' && o.itemClave === item.clave) ?? null;
+  }
+
+  get observacionAbiertaDelTotal(): boolean {
+    return !!this.cobro?.objeciones.some((o) => o.estado === 'ABIERTA' && o.alcance === 'TOTAL');
+  }
+
+  abrirObservacion(item?: ItemCobroPublico): void {
+    this.errorObservacion = null;
+    this.intentoObservacion = false;
+    this.formObservacion.reset({ comentario: '', montoPropuesto: '' });
+    this.observando = item?.clave ? { alcance: 'ITEM', clave: item.clave, concepto: item.concepto, monto: item.impacto } : { alcance: 'TOTAL', concepto: null, monto: null };
+    this.modal.open(MODAL_OBJETAR_COBRO);
+  }
+
+  cerrarObservacion(): void {
+    this.modal.close();
+    this.observando = null;
+  }
+
+  get observacionInvalida(): boolean {
+    const m = this.formObservacion.controls.montoPropuesto.value;
+    return this.formObservacion.invalid || (m !== '' && m !== null && !(Number(m) >= 0));
+  }
+
+  enviarObservacion(): void {
+    this.intentoObservacion = true;
+    this.errorObservacion = null;
+    const blanco = this.observando;
+    if (!blanco || this.observacionInvalida || this.enviandoObservacion) {
+      this.formObservacion.markAllAsTouched();
+      return;
+    }
+    const v = this.formObservacion.getRawValue();
+    this.enviandoObservacion = true;
+    this.servicio
+      .objetar(this.token, {
+        alcance: blanco.alcance,
+        ...(blanco.clave ? { itemClave: blanco.clave } : {}),
+        comentario: v.comentario.trim(),
+        ...(v.montoPropuesto !== '' && v.montoPropuesto !== null ? { montoPropuesto: String(v.montoPropuesto) } : {}),
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.enviandoObservacion = false))
+      )
+      .subscribe({
+        next: (r) => {
+          this.observacionEnviada = r.mensaje;
+          this.cerrarObservacion();
+          this.cargar();
+        },
+        error: (err) => (this.errorObservacion = mensajePublico(err, 'No se pudo enviar tu observación. Inténtalo de nuevo.')),
+      });
   }
 
   async copiarInstrucciones(): Promise<void> {
@@ -221,6 +331,7 @@ export class CobroPublicoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (r) => {
           this.enviado = r.mensaje;
+          this.avisoParcial = r.parcial && r.saldoRestante !== null ? r.saldoRestante : null;
           this.comprobante = null;
           this.liberarVistaPrevia();
           this.intentado = false;

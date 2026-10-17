@@ -13,6 +13,7 @@ const ETIQUETAS: Record<TipoMovimientoDeuda, string> = {
   ABONO_RECURRENTE_PERSONA: 'Descuento recurrente',
   ABONO_SALDO_FAVOR_CARRO: 'Saldo a favor del carro',
   CARGO_COBRO_PUNTUAL: 'Gasto repartido',
+  AJUSTE_DESCUENTO: 'Descuento del propietario',
 };
 
 export function etiquetaMovimiento(tipo: string | null | undefined): string {
@@ -20,7 +21,7 @@ export function etiquetaMovimiento(tipo: string | null | undefined): string {
 }
 
 export function esAbono(tipo: string | null | undefined): boolean {
-  return (tipo ?? '').startsWith('ABONO_');
+  return (tipo ?? '').startsWith('ABONO_') || tipo === 'AJUSTE_DESCUENTO';
 }
 
 export interface TotalesEstadoCuenta {

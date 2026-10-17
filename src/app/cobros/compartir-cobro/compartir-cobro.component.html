@@ -44,9 +44,9 @@
         <textarea id="cc-mensaje" appInput rows="2" maxlength="600" formControlName="mensaje"></textarea>
       </div>
       <div class="erp-field">
-        <label class="erp-label" for="cc-instrucciones">¿Cómo te paga?</label>
+        <label class="erp-label" for="cc-instrucciones">Indicaciones para pagar (opcional)</label>
         <textarea id="cc-instrucciones" appInput rows="2" maxlength="600" formControlName="instruccionesPago" placeholder="Ej. Bre-B a @luish9910 o Bancolombia Ahorros *3698"></textarea>
-        <p class="erp-field-hint">Se guarda para la próxima vez.</p>
+        <p class="erp-field-hint">Se guarda para la próxima vez. Tus <a routerLink="/cobros" [queryParams]="{ tab: 'metodos' }" (click)="cerrar.emit()">medios de pago</a> activos (cuenta, Nequi, llave Bre-B…) aparecen solos en el enlace, con un botón para copiar el número.</p>
       </div>
       <div class="erp-field" *ngIf="!enlace || !enlace.vigente">
         <label class="erp-label" for="cc-vigencia">El enlace dura</label>

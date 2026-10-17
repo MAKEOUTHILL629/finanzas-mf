@@ -1,0 +1,48 @@
+<div class="erp-form" aria-labelledby="titulo-descuento">
+  <div>
+    <h2 class="erp-form-title" id="titulo-descuento">Descuento para {{ enlace.persona }}</h2>
+    <p class="erp-subtitle">Baja lo que debe en {{ nombrePeriodo(enlace.periodo) }} sin tocar las compras ni los préstamos de origen. Queda registrado y lo puedes deshacer.</p>
+  </div>
+
+  <div class="dto-saldo">
+    <span class="erp-overline">Debe hoy</span>
+    <strong class="erp-num" [class.erp-loss]="saldo > 0">{{ saldo | moneda }}</strong>
+  </div>
+
+  <ng-container *ngIf="saldo > 0; else sinDeuda">
+    <app-field label="¿Cuánto le descuentas?" for="dto-monto" [required]="true" [error]="intentado && previa.error ? previa.error : null">
+      <div class="dto-monto">
+        <input appInput id="dto-monto" type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="monto" name="monto" placeholder="0.00" />
+        <button type="button" appButton="ghost" size="sm" (click)="descontarTodo()">Todo</button>
+      </div>
+    </app-field>
+    <app-field label="Motivo" for="dto-motivo" [required]="true" [error]="intentado && motivoInvalido ? 'Escribe el motivo (mínimo 3 letras): la persona lo verá.' : null" hint="La persona lo ve en su enlace">
+      <input appInput id="dto-motivo" type="text" maxlength="500" [(ngModel)]="motivo" name="motivo" placeholder="Ej. Ya me había abonado" autocomplete="off" />
+    </app-field>
+
+    <div class="dto-previa" *ngIf="previa.saldoNuevo !== null && !previa.error" aria-live="polite">
+      <div><span class="erp-overline">Ahora debe</span><strong class="erp-num">{{ saldo | moneda }}</strong></div>
+      <i class="material-icons" aria-hidden="true">arrow_forward</i>
+      <div><span class="erp-overline">Pasaría a deber</span><strong class="erp-num erp-gain">{{ previa.saldoNuevo | moneda }}</strong></div>
+    </div>
+
+    <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+  </ng-container>
+  <ng-template #sinDeuda><p class="erp-muted">Esta persona no debe nada en este momento: no hay saldo al que aplicar un descuento.</p></ng-template>
+
+  <section class="dto-ajustes" aria-label="Descuentos vigentes" *ngIf="!cargandoAjustes && ajustes.length > 0">
+    <h3 class="erp-overline">Descuentos y ajustes vigentes</h3>
+    <ul class="erp-list">
+      <li *ngFor="let a of ajustes; trackBy: trackById">
+        <span class="dto-ajuste-texto">{{ a.concepto }}<span class="erp-muted"> · {{ a.fecha | date: 'dd/MM/yyyy' }}</span></span>
+        <strong class="erp-num erp-gain">−{{ a.monto | moneda }}</strong>
+        <button type="button" appButton="ghost" size="sm" (click)="deshacer(a)" [loading]="deshaciendo === a.movimientoId" [attr.aria-label]="'Deshacer: ' + a.concepto">Deshacer</button>
+      </li>
+    </ul>
+  </section>
+
+  <div class="erp-form-actions">
+    <button type="button" appButton="ghost" (click)="cerrar.emit()" [disabled]="trabajando">Cerrar</button>
+    <button type="button" appButton="primary" *ngIf="saldo > 0" (click)="aplicar()" [loading]="trabajando" [disabled]="intentado && !puedeAplicar"><i class="material-icons" aria-hidden="true">sell</i>Aplicar descuento</button>
+  </div>
+</div>

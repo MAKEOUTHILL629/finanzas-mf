@@ -8,6 +8,8 @@ import { ToastService } from '../shared/toast/toast.service';
 import { API, configurarTestBed, cuentaItem, errorHttp, esperar, http, persona, responder, responderCatalogos, verificarHttp } from '../testing/erp-testing';
 import { AprobarReporteComponent, construirAprobacion, modoSugerido } from './aprobar-reporte/aprobar-reporte.component';
 import { CobroPublicoComponent, mensajePublico, resumenSaldo } from './cobro-publico/cobro-publico.component';
+import { MetodosPagoPublicoComponent } from './metodos-pago-publico/metodos-pago-publico.component';
+import { ModalComponent } from '../shared/modal/modal.component';
 import { CobrosComponent, ordenarReportes } from './cobros.component';
 import {
   calcularReparto,
@@ -48,7 +50,8 @@ function reporte(extra: Partial<ReportePago> = {}): ReportePago {
   return {
     id: 5, enlaceId: 3, personaId: 2, persona: 'Andrés', periodo: '2026-10', montoReportado: 61500, fechaPago: '2026-10-20T00:00:00.000Z', medio: 'BREB', referencia: 'ABC1',
     comentario: 'Listo', tieneComprobante: true, comprobanteNombre: 'c.jpg', comprobanteTipo: 'image/jpeg', comprobanteTamano: 48000, estado: 'PENDIENTE', montoAprobado: null,
-    motivoRechazo: null, revisadoEn: null, creadoEn: '2026-10-20T15:00:00.000Z', transaccionId: null, movimientoId: null, correoCoincidente: null, ...extra,
+    motivoRechazo: null, revisadoEn: null, creadoEn: '2026-10-20T15:00:00.000Z', transaccionId: null, movimientoId: null, correoCoincidente: null,
+    saldoAlReportar: null, esParcial: false, pendienteTrasPago: null, ...extra,
   };
 }
 
@@ -56,7 +59,7 @@ function enlace(extra: Partial<EnlaceCobro> = {}): EnlaceCobro {
   return {
     id: 3, personaId: 2, persona: 'Andrés', periodo: '2026-10', token: 'T'.repeat(43), ruta: `/p/${'T'.repeat(43)}`, mensaje: 'Hola', instruccionesPago: 'Bre-B @felipe',
     expiraEn: '2099-01-01T00:00:00.000Z', revocado: false, vigente: true, vistas: 2, ultimaVistaEn: null, snapshotEn: '2026-10-20T12:00:00.000Z',
-    resumen: { totalCargos: 61500, totalAbonosYFavor: 0, saldoNetoFinal: 61500, estado: 'DEBE', saldoAnterior: 0, saldoTotalAcumulado: 61500 }, reportesPendientes: 1, ...extra,
+    resumen: { totalCargos: 61500, totalAbonosYFavor: 0, saldoNetoFinal: 61500, estado: 'DEBE', saldoAnterior: 0, saldoTotalAcumulado: 61500 }, reportesPendientes: 1, objecionesAbiertas: 0, ...extra,
   };
 }
 
@@ -334,6 +337,44 @@ describe('CobrosComponent', () => {
     expect(ordenarReportes([]).length).toBe(0);
   });
 
+  it('fase 6: cuenta las observaciones por responder de los enlaces, abre su pestaña y el descuento de un enlace', () => {
+    const c = iniciar({ enlaces: [enlace({ objecionesAbiertas: 2 }), enlace({ id: 4, personaId: 3, persona: 'Papá', objecionesAbiertas: 1 }), enlace({ id: 5, objecionesAbiertas: 0 })] });
+    expect(c.observacionesAbiertas).toBe(3);
+    expect(c.pestana).toBe('gastos');
+    c.verObservaciones();
+    expect(c.pestana).toBe('observaciones');
+
+    const abrir = spyOn(TestBed.inject(ModalService), 'open');
+    c.abrirDescuento(c.enlaces[0]);
+    expect(c.descontando).toBe(c.enlaces[0]);
+    expect(abrir).toHaveBeenCalledWith('cobro-descuento');
+    // al cerrar el modal se limpia
+    TestBed.inject(ModalService).close();
+    expect(c.descontando).toBeNull();
+  });
+
+  it('fase 6: un descuento aplicado vuelve a leer los enlaces (cambia el saldo) y avisa a las observaciones', () => {
+    const c = iniciar();
+    const antes = c.refrescoObservaciones;
+    c.onDescuentoCambio();
+    expect(c.refrescoObservaciones).toBe(antes + 1);
+    responderCatalogos({ personas: PERSONAS }, { esperadas: 0 });
+    http().expectOne((r) => r.url === `${API}/cobros-puntuales`).flush([]);
+    responder('cobros/reportes', []);
+    http().expectOne((r) => r.url === `${API}/cobros/ingresos-sugeridos`).flush([]);
+    http().expectOne((r) => r.url === `${API}/cobros/enlaces`).flush([]);
+  });
+
+  it('fase 6: la pestaña inicial puede ser observaciones o medios de pago (enlace desde la ventana de compartir)', () => {
+    expect(iniciar({}, { tab: 'observaciones' }).pestana).toBe('observaciones');
+  });
+
+  it('fase 6: un pago reportado por menos de lo que debía se marca como abono parcial', () => {
+    const c = iniciar({ reportes: [reporte({ esParcial: true, saldoAlReportar: 61500, pendienteTrasPago: 41500, montoReportado: 20000 })] });
+    expect(c.reportes[0].esParcial).toBeTrue();
+    expect(c.reportesVisibles[0].pendienteTrasPago).toBe(41500);
+  });
+
   it('cada lista se pide con el periodo y el total repartido suma lo que se cobra a los demás', () => {
     const c = iniciar({ cobros: [cobro(), cobro({ id: 11, montoACobrar: 50000 })] });
     expect(c.totalACobrar).toBe(173000);
@@ -503,12 +544,12 @@ describe('CobroPublicoComponent', () => {
       version: 1, periodo: '2026-10', generadoEn: '2026-10-20T12:00:00.000Z', propietario: { nombre: 'Felipe Hernández' }, persona: { nombre: 'Andrés Gómez', iniciales: 'AG', color: null },
       bloques: [{ clave: 'cobrosPuntuales', titulo: 'Servicios, mercado y eventos del mes', subtotal: 61500, items: [{ fecha: '2026-10-14', concepto: 'Recibo de la luz', monto: 61500, signo: 1, impacto: 61500, origen: 'COBRO_PUNTUAL', detalle: null }] }],
       obligaciones: [], resumen: { totalCargos: 61500, totalAbonosYFavor: 0, saldoNetoFinal: 61500, estado: 'DEBE', saldoAnterior: 10000, saldoTotalAcumulado: 71500 },
-      mensaje: 'Hola', instruccionesPago: 'Bre-B @felipe', venceEn: '2099-01-01T00:00:00.000Z', actualizadoEn: '2026-10-20T12:00:00.000Z', reportes: [], ...extra,
+      mensaje: 'Hola', instruccionesPago: 'Bre-B @felipe', venceEn: '2099-01-01T00:00:00.000Z', actualizadoEn: '2026-10-20T12:00:00.000Z', reportes: [], metodosPago: [], objeciones: [], ...extra,
     };
   }
 
   function crear() {
-    configurarTestBed([CobroPublicoComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token: TOKEN }) } } }]);
+    configurarTestBed([CobroPublicoComponent, MetodosPagoPublicoComponent, ModalComponent], [{ provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ token: TOKEN }) } } }]);
     const fixture = TestBed.createComponent(CobroPublicoComponent);
     fixture.detectChanges();
     return fixture;
@@ -539,7 +580,7 @@ describe('CobroPublicoComponent', () => {
     expect(texto).toContain('Hola, Andrés');
     expect(texto).toContain('Recibo de la luz');
     expect(texto).toContain('Le debes a Felipe');
-    expect(texto).toContain('Cómo pagar');
+    expect(texto).toContain('Bre-B @felipe'); // las indicaciones del propietario siguen visibles
   });
 
   it('un enlace inválido muestra el mensaje y no el formulario', () => {
@@ -558,7 +599,7 @@ describe('CobroPublicoComponent', () => {
     c.reportar();
     const req = http().expectOne(`${API}/publico/cobros/${TOKEN}/pagos`);
     expect(req.request.body).toEqual({ monto: '71500', fechaPago: '2026-10-21', medio: 'NEQUI', referencia: 'R1' });
-    req.flush({ id: 1, estado: 'PENDIENTE', creadoEn: null, mensaje: 'Recibimos tu reporte.' });
+    req.flush({ id: 1, estado: 'PENDIENTE', creadoEn: null, parcial: false, saldoRestante: null, mensaje: 'Recibimos tu reporte.' });
     expect(c.enviado).toBe('Recibimos tu reporte.');
     http().expectOne(`${API}/publico/cobros/${TOKEN}`).flush(publico({ reportes: [{ id: 1, monto: 71500, fechaPago: '2026-10-21', estado: 'PENDIENTE', motivoRechazo: null, montoAprobado: null, creadoEn: null, conComprobante: false }] }));
   });

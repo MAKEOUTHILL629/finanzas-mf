@@ -28,6 +28,20 @@
 
     <blockquote class="pub-mensaje" *ngIf="c.mensaje">{{ c.mensaje }}</blockquote>
 
+    <!-- Un pago rechazado: la persona ve el motivo y qué hacer -->
+    <div class="erp-alert erp-alert--danger pub-rechazo" role="alert" *ngIf="rechazado as rz">
+      <i class="material-icons" aria-hidden="true">report</i>
+      <div>
+        <strong>Tu aviso de pago de {{ rz.monto | moneda }} fue rechazado</strong>
+        <p class="pub-rechazo-motivo" *ngIf="rz.motivoRechazo">«{{ rz.motivoRechazo }}»</p>
+        <p class="pub-rechazo-ayuda">Corrígelo y vuelve a enviarlo en «Avisar que pagué», más abajo.</p>
+      </div>
+    </div>
+
+    <div class="erp-alert erp-alert--info" role="status" *ngIf="observacionEnviada">
+      <i class="material-icons" aria-hidden="true">check_circle</i><span>{{ observacionEnviada }}</span>
+    </div>
+
     <!-- Saldo -->
     <section class="pub-saldo pub-saldo--{{ s.clase }}" aria-labelledby="pub-saldo-titulo" *ngIf="saldo as s">
       <h2 id="pub-saldo-titulo">{{ s.titulo }}</h2>
@@ -37,16 +51,14 @@
         <div *ngIf="c.resumen.saldoAnterior !== 0"><dt>De meses anteriores</dt><dd class="erp-num">{{ c.resumen.saldoAnterior | moneda }}</dd></div>
       </dl>
       <p class="pub-pie">Actualizado el {{ c.actualizadoEn | date: 'dd/MM/yyyy HH:mm' }}</p>
+      <button type="button" class="pub-observar pub-observar--total" *ngIf="!observacionAbiertaDelTotal && (c.bloques.length > 0 || s.monto > 0)" (click)="abrirObservacion()">
+        <i class="material-icons" aria-hidden="true">flag</i>No reconozco este total
+      </button>
+      <span class="pub-observar-enviada" *ngIf="observacionAbiertaDelTotal"><i class="material-icons" aria-hidden="true">schedule</i>Observación enviada: esperando respuesta</span>
     </section>
 
-    <!-- Cómo pagar -->
-    <section class="pub-bloque" aria-labelledby="pub-pagar" *ngIf="c.instruccionesPago && saldo && saldo.porPagar > 0">
-      <h2 id="pub-pagar"><i class="material-icons" aria-hidden="true">account_balance_wallet</i>Cómo pagar</h2>
-      <div class="pub-instrucciones">
-        <p>{{ c.instruccionesPago }}</p>
-        <button type="button" appButton="ghost" size="sm" (click)="copiarInstrucciones()"><i class="material-icons" aria-hidden="true">{{ copiado ? 'check' : 'content_copy' }}</i>{{ copiado ? 'Copiado' : 'Copiar' }}</button>
-      </div>
-    </section>
+    <!-- ¿Dónde puedes pagar? -->
+    <app-metodos-pago-publico *ngIf="(c.metodosPago.length > 0 || c.instruccionesPago) && saldo && saldo.porPagar > 0" [metodos]="c.metodosPago" [token]="token" [instrucciones]="c.instruccionesPago"></app-metodos-pago-publico>
 
     <!-- Detalle -->
     <section class="pub-bloque" *ngFor="let b of c.bloques" [attr.aria-label]="b.titulo">
@@ -61,7 +73,13 @@
             <span class="pub-item-meta">{{ i.fecha | fechaCorta }}</span>
             <span class="pub-item-detalle" *ngIf="detalle(i.detalle) as d">{{ d }}</span>
           </div>
-          <span class="pub-item-monto erp-num" [class.erp-gain]="i.signo < 0">{{ i.impacto | moneda }}</span>
+          <span class="pub-item-lado">
+            <span class="pub-item-monto erp-num" [class.erp-gain]="i.signo < 0">{{ i.impacto | moneda }}</span>
+            <button type="button" class="pub-observar" *ngIf="i.clave && !observacionAbierta(i)" (click)="abrirObservacion(i)" [attr.aria-label]="'Tengo una observación sobre ' + i.concepto" title="Tengo una observación / No reconozco este cobro">
+              <i class="material-icons" aria-hidden="true">flag</i><span>Observar</span>
+            </button>
+            <span class="pub-observar-enviada" *ngIf="observacionAbierta(i)"><i class="material-icons" aria-hidden="true">schedule</i>Observación enviada</span>
+          </span>
         </li>
       </ul>
     </section>
@@ -86,7 +104,7 @@
       <h2 id="pub-reportar-titulo"><i class="material-icons" aria-hidden="true">payments</i>Avisar que pagué</h2>
 
       <div class="erp-alert erp-alert--info" role="status" *ngIf="enviado">
-        <i class="material-icons" aria-hidden="true">check_circle</i><span>{{ enviado }}</span>
+        <i class="material-icons" aria-hidden="true">check_circle</i><span>{{ enviado }}<ng-container *ngIf="avisoParcial !== null"> Quedan <strong class="erp-num">{{ avisoParcial | moneda }}</strong> por pagar.</ng-container></span>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="reportar()" novalidate>
@@ -95,6 +113,11 @@
             <label class="erp-label" for="pu-monto">¿Cuánto pagaste?<span class="erp-req" aria-hidden="true">*</span></label>
             <input id="pu-monto" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="monto" placeholder="0.00" [attr.aria-invalid]="intentado && montoInvalido" />
             <p class="erp-field-error" *ngIf="intentado && montoInvalido">Escribe un valor mayor a 0 (máximo 2 decimales).</p>
+            <div class="pub-monto-ayuda" aria-live="polite">
+              <p class="pub-parcial" *ngIf="analisis.tipo === 'parcial'"><i class="material-icons" aria-hidden="true">pie_chart</i>Abono parcial: te quedarían <strong class="erp-num">{{ analisis.restante | moneda }}</strong> por pagar.</p>
+              <p class="pub-exceso" *ngIf="analisis.tipo === 'exceso' && saldo && saldo.porPagar > 0"><i class="material-icons" aria-hidden="true">info</i>Es {{ analisis.exceso | moneda }} más de lo que debes. Quien te cobra lo aplicará como saldo a favor.</p>
+              <button type="button" class="pub-todo" *ngIf="saldo && saldo.porPagar > 0 && analisis.tipo !== 'total'" (click)="pagarTodo()">Pagar todo ({{ saldo.porPagar | moneda }})</button>
+            </div>
           </div>
           <div class="erp-field">
             <label class="erp-label" for="pu-fecha">¿Cuándo?<span class="erp-req" aria-hidden="true">*</span></label>
@@ -155,7 +178,32 @@
             <span class="pub-item-detalle" *ngIf="r.estado === 'RECHAZADO' && r.motivoRechazo">Motivo: {{ r.motivoRechazo }}</span>
             <span class="pub-item-detalle" *ngIf="r.estado === 'APROBADO' && r.montoAprobado !== null && r.montoAprobado !== r.monto">Se abonaron {{ r.montoAprobado | moneda }}</span>
           </div>
-          <app-badge [tone]="claseEstado(r.estado)">{{ estado(r.estado) }}</app-badge>
+          <span class="pub-item-lado">
+            <app-badge [tone]="claseEstado(r.estado)">{{ estado(r.estado) }}</app-badge>
+            <app-badge tone="info" *ngIf="r.parcial">Abono parcial</app-badge>
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Mis observaciones -->
+    <section class="pub-bloque" *ngIf="c.objeciones.length > 0" aria-labelledby="pub-obs">
+      <h2 id="pub-obs"><i class="material-icons" aria-hidden="true">forum</i>Mis observaciones</h2>
+      <ul class="pub-obs-lista">
+        <li class="pub-obs" *ngFor="let o of c.objeciones" [class.pub-obs--resuelta]="o.estado === 'RESUELTA'">
+          <header class="pub-obs-cab">
+            <span class="pub-obs-que">{{ o.alcance === 'TOTAL' ? 'El total' : o.concepto }}<span class="erp-num erp-muted" *ngIf="o.monto !== null"> · {{ o.monto | moneda }}</span></span>
+            <app-badge [tone]="tonoObjecion(o)">{{ o.estado === 'ABIERTA' ? 'Esperando respuesta' : resolucion(o.resolucion) }}</app-badge>
+          </header>
+          <p class="pub-obs-texto">«{{ o.comentario }}»<span class="erp-muted" *ngIf="o.montoPropuesto !== null"> · Crees que debes {{ o.montoPropuesto | moneda }}</span></p>
+          <div class="pub-obs-respuesta" *ngIf="o.estado === 'RESUELTA'">
+            <i class="material-icons" aria-hidden="true">reply</i>
+            <div>
+              <p *ngIf="o.respuesta">{{ o.respuesta }}</p>
+              <p class="erp-gain" *ngIf="o.montoAjuste !== null"><strong class="erp-num">{{ o.montoAjuste | moneda }}</strong> menos en lo que debes.</p>
+              <p class="erp-muted" *ngIf="!o.respuesta && o.montoAjuste === null">Tu observación fue revisada.</p>
+            </div>
+          </div>
         </li>
       </ul>
     </section>
@@ -166,3 +214,30 @@
     </footer>
   </div>
 </main>
+
+<app-modal [modalId]="MODAL_OBJETAR" titulo="Tengo una observación">
+  <form class="erp-form pub-obs-form" [formGroup]="formObservacion" (ngSubmit)="enviarObservacion()" novalidate *ngIf="observando as b">
+    <div>
+      <h2 class="erp-form-title" id="pub-obs-titulo">{{ b.alcance === 'TOTAL' ? 'No reconozco este total' : 'No reconozco este cobro' }}</h2>
+      <p class="erp-subtitle">Cuéntale a {{ nombrePropietario }} qué pasa y te responderá aquí mismo.</p>
+    </div>
+    <div class="pub-obs-blanco" *ngIf="b.concepto">
+      <span class="pub-obs-blanco-texto">{{ b.concepto }}</span>
+      <strong class="erp-num" *ngIf="b.monto !== null">{{ b.monto | moneda }}</strong>
+    </div>
+    <div class="erp-field">
+      <label class="erp-label" for="pu-obs-comentario">¿Qué pasa con este cobro?<span class="erp-req" aria-hidden="true">*</span></label>
+      <textarea id="pu-obs-comentario" appInput rows="4" maxlength="1000" formControlName="comentario" placeholder="Ej. Ya te había abonado $50.000 de esto · Este gasto no era mío" [attr.aria-invalid]="intentoObservacion && formObservacion.controls.comentario.invalid"></textarea>
+      <p class="erp-field-error" *ngIf="intentoObservacion && formObservacion.controls.comentario.invalid">Escribe un comentario (mínimo 3 letras): es obligatorio.</p>
+    </div>
+    <div class="erp-field">
+      <label class="erp-label" for="pu-obs-monto">¿Cuánto crees que debes por esto? (opcional)</label>
+      <input id="pu-obs-monto" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="montoPropuesto" placeholder="0.00" />
+    </div>
+    <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorObservacion"><i class="material-icons" aria-hidden="true">error</i><span>{{ errorObservacion }}</span></div>
+    <div class="erp-form-actions">
+      <button type="button" appButton="ghost" (click)="cerrarObservacion()" [disabled]="enviandoObservacion">Cancelar</button>
+      <button type="submit" appButton="primary" [loading]="enviandoObservacion"><i class="material-icons" aria-hidden="true">send</i>Enviar observación</button>
+    </div>
+  </form>
+</app-modal>
