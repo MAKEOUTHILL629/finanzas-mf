@@ -10,6 +10,7 @@ import {
   RegistrarPagoPeriodo,
   ResultadoProyeccion,
 } from '../modelos/erp';
+import { ResultadoRadar } from '../modelos/radar-suscripciones';
 import { ApiServicesService } from './api-services.service';
 import { limpiarParams } from './http-params.util';
 
@@ -62,5 +63,15 @@ export class RecurrentesService {
   /** Registra el pago real del periodo; opcionalmente crea el EGRESO en una cuenta. */
   pagarPeriodo(id: number, pago: RegistrarPagoPeriodo): Observable<PeriodoRecurrente> {
     return this.api.patch<PeriodoRecurrente>(`${this.periodosUrl}/${id}/pagar`, pago);
+  }
+
+  // ── radar de suscripciones (Fase 3) ──
+
+  getRadar(meses = 6): Observable<ResultadoRadar> {
+    return this.api.get<ResultadoRadar>('recurrentes/radar', limpiarParams({ meses }));
+  }
+
+  marcarParaCancelar(comercio: string, monto: number, frecuencia: string): Observable<{ comercio: string; estado: string }> {
+    return this.api.post('recurrentes/radar/marcar-cancelar', { comercio, monto, frecuencia });
   }
 }

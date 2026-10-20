@@ -1,0 +1,35 @@
+<app-card class="radar">
+  <h2 class="erp-card-title">Radar de suscripciones y recurrentes detectados</h2>
+  <p class="erp-muted">Lo que la app detectó sola cruzando tus compras y movimientos de los últimos 6 meses: suscripciones que quizá no sabías que pagas.</p>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+  <p class="erp-muted" *ngIf="cargando" role="status">Analizando tus cargos…</p>
+
+  <ng-container *ngIf="radar as r">
+    <div class="erp-grid erp-grid--stats">
+      <app-card class="erp-stat"><span class="erp-overline">Gasto mensual en suscripciones</span><span class="erp-stat-value erp-num">{{ r.kpis.gastoMensualDetectado | moneda }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Impacto anual proyectado</span><span class="erp-stat-value erp-num">{{ r.kpis.impactoAnualProyectado | moneda }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Ocultas / no registradas</span><span class="erp-stat-value erp-num">{{ r.kpis.suscripcionesOcultas }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Ahorro anual si cancelas lo marcado</span><span class="erp-stat-value erp-num erp-gain">{{ ahorroSimulado | moneda }}</span></app-card>
+    </div>
+
+    <table appTable *ngIf="r.candidatos.length > 0">
+      <thead><tr><th>Cancelar</th><th>Comercio</th><th>Frecuencia</th><th class="erp-num">Último cargo</th><th>Próximo estimado</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let c of r.candidatos">
+          <td><input type="checkbox" [checked]="paraCancelar.has(c.clave)" (change)="alternarCancelar(c, $any($event.target).checked)" [attr.aria-label]="'Quiero cancelar ' + c.comercio" /></td>
+          <td><strong>{{ c.comercio }}</strong><span class="erp-muted"> · {{ c.cargos }} cargos{{ c.incrementoTarifa ? ' · subió de precio' : '' }}{{ c.alertaProxima ? ' · ¡cobra en menos de 5 días!' : '' }}</span></td>
+          <td>{{ c.frecuencia }}<span class="erp-muted"> ({{ c.tipoMonto === 'MONTO_FIJO_COP' ? 'fijo' : 'variable' }})</span></td>
+          <td class="erp-num">{{ c.ultimoMonto | moneda }}</td>
+          <td>{{ c.proximaFechaEstimada | fechaCorta }}</td>
+          <td><app-badge [tone]="c.estadoDetectado === 'NUEVA_SUSCRIPCION_DETECTADA' ? 'warning' : c.estadoDetectado === 'PENDIENTE_CANCELACION' ? 'danger' : 'success'">{{ c.estadoDetectado === 'NUEVA_SUSCRIPCION_DETECTADA' ? 'Nueva detectada' : c.estadoDetectado === 'PENDIENTE_CANCELACION' ? 'Pendiente de cancelar' : 'Registrada' }}</app-badge></td>
+          <td>
+            <button type="button" appButton="ghost" size="sm" (click)="oficializar(c)" *ngIf="c.estadoDetectado === 'NUEVA_SUSCRIPCION_DETECTADA'">Oficializar como gasto recurrente</button>
+            <button type="button" appButton="ghost" size="sm" (click)="marcarCancelar(c)" *ngIf="c.estadoDetectado !== 'PENDIENTE_CANCELACION'">Marcar para cancelar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <app-empty-state *ngIf="r.candidatos.length === 0" icon="radar" titulo="Sin suscripciones detectadas" descripcion="No se encontraron cargos que se repitan con periodicidad clara en los últimos 6 meses."></app-empty-state>
+  </ng-container>
+</app-card>
