@@ -91,6 +91,8 @@ const MOTIVOS: Record<string, string> = {
   vinculada_a_compra_existente: 'Ya tenías esta compra registrada (misma tarjeta, fecha y monto): se enlazó, no se duplicó.',
   vinculada_a_transaccion_existente: 'Ya tenías este movimiento registrado (misma cuenta, monto y día): se enlazó, no se duplicó.',
   duplicado_de_correo: 'Es otro aviso del mismo hecho (misma tarjeta o cuenta, monto y minuto): se ignoró para no registrarlo dos veces.',
+  duplicado_por_huella: 'Es el mismo hecho ya sincronizado (misma huella de fecha, monto, tarjeta y comercio): se ignoró para no duplicarlo.',
+  vinculada_por_ventana_36h: 'Se enlazó con un registro tuyo de monto idéntico y comercio parecido dentro de las 36 horas siguientes/anteriores.',
   historico_sin_registro_previo: 'Es anterior a la fecha de corte y no hay un registro equivalente: no se registró solo. Concílialo a mano si lo quieres.',
   pago_tarjeta_registrado: 'Se registró el pago de la tarjeta.',
 };
@@ -110,6 +112,7 @@ export const ESTADOS_CORREO: ReadonlyArray<{ valor: '' | EstadoNotificacionCorre
   { valor: 'PENDIENTE', etiqueta: 'Por revisar' },
   { valor: 'CONCILIADO', etiqueta: 'Conciliados' },
   { valor: 'IGNORADO', etiqueta: 'Ignorados' },
+  { valor: 'DESCARTADO_RECHAZADO', etiqueta: 'Rechazados por el banco' },
   { valor: 'ERROR', etiqueta: 'Con error' },
   { valor: '', etiqueta: 'Todos' },
 ];
@@ -119,7 +122,7 @@ export function claseEstadoCorreo(estado: string | null | undefined): 'success' 
 }
 
 export function etiquetaEstadoCorreo(estado: string | null | undefined): string {
-  return { PENDIENTE: 'Por revisar', CONCILIADO: 'Conciliado', IGNORADO: 'Ignorado', ERROR: 'Con error' }[estado ?? ''] ?? (estado || '—');
+  return { PENDIENTE: 'Por revisar', CONCILIADO: 'Conciliado', IGNORADO: 'Ignorado', ERROR: 'Con error', DESCARTADO_RECHAZADO: 'Rechazada por el banco' }[estado ?? ''] ?? (estado || '—');
 }
 
 /** ¿El correo describe un egreso que se puede convertir en préstamo por cobrar? */

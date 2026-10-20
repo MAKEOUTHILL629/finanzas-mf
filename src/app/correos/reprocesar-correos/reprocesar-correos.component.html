@@ -29,6 +29,36 @@
         Ver qué pasaría
       </button>
     </div>
+
+    <!-- Auditoría retroactiva de falsos positivos (Fase 1) -->
+    <div class="auditoria">
+      <h3 class="erp-overline">Compras que no eran compras</h3>
+      <p class="erp-field-hint">Busca en tu historial compras creadas desde correos que en realidad eran <strong>pagos de tarjeta</strong> o <strong>compras rechazadas</strong> por el banco.</p>
+      <div class="erp-alert erp-alert--info" role="status" *ngIf="mensajeAuditoria"><i class="material-icons" aria-hidden="true">check_circle</i><span>{{ mensajeAuditoria }}</span></div>
+      <table appTable *ngIf="falsosPositivos && falsosPositivos.length > 0">
+        <thead><tr><th>Fecha</th><th>Comercio</th><th class="erp-num">Monto</th><th>Era en realidad</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let f of falsosPositivos">
+            <td>{{ f.fecha | fechaCorta }}</td>
+            <td>{{ f.comercio || '—' }}</td>
+            <td class="erp-num">{{ f.monto !== null ? (f.monto | moneda) : '—' }}</td>
+            <td>{{ f.tipoDetectado === 'PAGO_ABONO_TARJETA' ? 'Pago de tarjeta' : 'Compra rechazada' }}</td>
+            <td>{{ f.puedeRevertir ? (f.accionSugerida === 'CONVERTIR_EN_PAGO_TARJETA' ? 'Convertir en pago' : 'Eliminar compra') : (f.motivoBloqueo || 'No reversible') }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="erp-muted" *ngIf="falsosPositivos && falsosPositivos.length === 0 && !mensajeAuditoria">No se encontraron falsos positivos. Tu historial está limpio.</p>
+      <div class="erp-actions">
+        <button type="button" appButton="ghost" (click)="auditarFalsosPositivos()" [disabled]="auditando">
+          <i class="material-icons" aria-hidden="true">fact_check</i>
+          Auditar falsos positivos
+        </button>
+        <button type="button" appButton="primary" (click)="revertirFalsosPositivos()" [disabled]="revirtiendo || !falsosPositivos || falsosPositivos.length === 0">
+          <i class="material-icons" aria-hidden="true">cleaning_services</i>
+          Revertir falsos positivos y reclasificar pagos
+        </button>
+      </div>
+    </div>
   </ng-container>
 
   <!-- 2. Simulando -->

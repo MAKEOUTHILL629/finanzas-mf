@@ -100,6 +100,30 @@ export interface ReprocesarCorreos {
   motivos?: string[];
 }
 
+/** Falso positivo histórico (Fase 1): compra creada desde un correo que era pago de tarjeta o compra rechazada. */
+export interface FalsoPositivoCorreo {
+  notificacionId: number;
+  compraId: number | null;
+  fecha: string;
+  comercio: string | null;
+  monto: string | null;
+  tipoDetectado: 'TRANSACCION_RECHAZADA' | 'PAGO_ABONO_TARJETA';
+  accionSugerida: 'ELIMINAR_COMPRA' | 'CONVERTIR_EN_PAGO_TARJETA' | 'SOLO_MARCAR';
+  puedeRevertir: boolean;
+  motivoBloqueo: string | null;
+}
+
+export interface ResultadoAuditoriaCorreos {
+  total: number;
+  falsosPositivos: FalsoPositivoCorreo[];
+}
+
+export interface ResultadoReversionCorreos {
+  revertidos: number;
+  convertidos: number;
+  omitidos: Array<{ notificacionId: number; motivo: string }>;
+}
+
 export interface TrabajoReproceso {
   jobId: string;
   total: number;

@@ -14,6 +14,8 @@ import {
   ReprocesarCorreos,
   ResultadoAceptarSugerencias,
   ResultadoAsignacion,
+  ResultadoAuditoriaCorreos,
+  ResultadoReversionCorreos,
   ResumenReproceso,
   TrabajoReproceso,
 } from '../modelos/correos-inteligentes';
@@ -97,5 +99,17 @@ export class NotificacionesCorreoService {
 
   getEstadoReproceso(jobId: string): Observable<EstadoTrabajoReproceso> {
     return this.api.get<EstadoTrabajoReproceso>(`${this.url}/reprocesar/${jobId}`);
+  }
+
+  // ───────────────────────────── auditoría de falsos positivos (Fase 1) ─────────────────────────────
+
+  /** Preview sin escribir: compras históricas que en realidad eran pagos de tarjeta o compras rechazadas. */
+  auditarFalsosPositivos(): Observable<ResultadoAuditoriaCorreos> {
+    return this.api.post<ResultadoAuditoriaCorreos>(`${this.url}/auditar-falsos-positivos`, {});
+  }
+
+  /** Elimina las compras erróneas o las convierte en pagos de tarjeta. Sin `ids`, revierte todo lo reversible. */
+  revertirFalsosPositivos(ids?: number[]): Observable<ResultadoReversionCorreos> {
+    return this.api.post<ResultadoReversionCorreos>(`${this.url}/revertir-falsos-positivos`, ids?.length ? { ids } : {});
   }
 }

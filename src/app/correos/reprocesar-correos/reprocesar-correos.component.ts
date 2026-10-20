@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subject, interval, of } from 'rxjs';
 import { catchError, finalize, switchMap, takeUntil, takeWhile } from 'rxjs/operators';
-import { EstadoTrabajoReproceso, ResumenReproceso } from '../../modelos/correos-inteligentes';
+import { EstadoTrabajoReproceso, FalsoPositivoCorreo, ResumenReproceso } from '../../modelos/correos-inteligentes';
 import { ComprasCreditoService } from '../../services/compras-credito.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -35,6 +35,12 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
   resumen: ResumenReproceso | null = null;
   avance: EstadoTrabajoReproceso | null = null;
   error: string | null = null;
+
+  // Auditoría de falsos positivos (Fase 1)
+  falsosPositivos: FalsoPositivoCorreo[] | null = null;
+  auditando = false;
+  revirtiendo = false;
+  mensajeAuditoria: string | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -92,6 +98,32 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
   volver(): void {
     this.fase = 'config';
     this.resumen = null;
+  }
+
+  auditarFalsosPositivos(): void {
+    this.auditando = true;
+    this.mensajeAuditoria = null;
+    this.correos
+      .auditarFalsosPositivos()
+      .pipe(takeUntil(this.destroy$), finalize(() => (this.auditando = false)))
+      .subscribe({
+        next: (r) => (this.falsosPositivos = r.falsosPositivos),
+        error: (err) => (this.error = mensajeDeError(err, 'No se pudo auditar el historial.')),
+      });
+  }
+
+  revertirFalsosPositivos(): void {
+    this.revirtiendo = true;
+    this.correos
+      .revertirFalsosPositivos()
+      .pipe(takeUntil(this.destroy$), finalize(() => (this.revirtiendo = false)))
+      .subscribe({
+        next: (r) => {
+          this.mensajeAuditoria = `Listo: ${r.revertidos} compra(s) eliminada(s) y ${r.convertidos} convertida(s) en pago de tarjeta${r.omitidos.length ? `; ${r.omitidos.length} omitida(s)` : ''}.`;
+          this.falsosPositivos = [];
+        },
+        error: (err) => (this.error = mensajeDeError(err, 'No se pudieron revertir los falsos positivos.')),
+      });
   }
 
   aplicar(): void {
