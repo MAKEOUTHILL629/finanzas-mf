@@ -37,6 +37,9 @@ export interface Tarjeta{
   alias?: string | null;
   /** Producto «sin número»: recibe lo que el banco avisa sin los últimos 4 dígitos. */
   esGenerica?: boolean;
+  /** Tarjeta prestada/de tercero (Fase 5). */
+  esTitularExterno?: boolean;
+  titularPersonaId?: number | null;
   fechaCreacion?: Date;
   franquicia?: string;
   descripcion?: string;
@@ -74,6 +77,8 @@ export interface CrearTarjeta {
   plasticoAnteriorId?: number;
   motivo?: MotivoReemplazo;
   esGenerica?: boolean;
+  esTitularExterno?: boolean;
+  titularPersonaId?: number;
   diaCorte?: number;
   diaLimitePago?: number;
   cupoTotal?: number | string;

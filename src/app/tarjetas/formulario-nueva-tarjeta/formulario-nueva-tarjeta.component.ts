@@ -25,6 +25,8 @@ export interface ValoresNuevaTarjeta {
   diaLimitePago: number | string | null;
   cupoTotal: number | string | null;
   notas: string;
+  esTitularExterno: boolean;
+  titularPersonaId: number | string | null;
 }
 
 const vacio = (v: unknown) => v === null || v === undefined || v === '';
@@ -62,6 +64,10 @@ export function cuerpoNuevaTarjeta(v: ValoresNuevaTarjeta): CrearTarjeta {
       if (!vacio(v.diaCorte)) cuerpo.diaCorte = Number(v.diaCorte);
       if (!vacio(v.diaLimitePago)) cuerpo.diaLimitePago = Number(v.diaLimitePago);
       if (!vacio(v.cupoTotal)) cuerpo.cupoTotal = String(v.cupoTotal);
+      if (v.esTitularExterno) {
+        cuerpo.esTitularExterno = true;
+        if (!vacio(v.titularPersonaId)) cuerpo.titularPersonaId = Number(v.titularPersonaId);
+      }
     }
   }
   if (v.notas.trim()) cuerpo.notas = v.notas.trim();
@@ -121,6 +127,8 @@ export class FormularioNuevaTarjetaComponent implements OnInit, OnChanges, OnDes
     diaLimitePago: [null as number | string | null, [Validators.min(1), Validators.max(31), Validators.pattern(/^\d+$/)]],
     cupoTotal: [null as number | string | null, importeOpcional],
     notas: ['', Validators.maxLength(500)],
+    esTitularExterno: [false],
+    titularPersonaId: [null as number | string | null],
   });
 
   constructor(private tarjetasService: TarjetasService) {}
@@ -139,7 +147,7 @@ export class FormularioNuevaTarjetaComponent implements OnInit, OnChanges, OnDes
   }
 
   private reiniciar(): void {
-    this.form.reset({ tipo: this.tipoInicial, cuentaId: null, ultimos4: '', franquicia: '', alias: '', estado: 'ACTIVA', desde: hoyIso(), hasta: '', plasticoAnteriorId: null, motivo: '', diaCorte: null, diaLimitePago: null, cupoTotal: null, notas: '' });
+    this.form.reset({ tipo: this.tipoInicial, cuentaId: null, ultimos4: '', franquicia: '', alias: '', estado: 'ACTIVA', desde: hoyIso(), hasta: '', plasticoAnteriorId: null, motivo: '', diaCorte: null, diaLimitePago: null, cupoTotal: null, notas: '', esTitularExterno: false, titularPersonaId: null });
     this.errorServidor = null;
     this.intentado = false;
   }

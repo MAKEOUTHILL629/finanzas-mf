@@ -33,6 +33,7 @@
           <span class="tarjeta-meta">
             <app-badge [tone]="esDebito(t) ? 'info' : 'neutral'">{{ etiquetaTipo[tipoDe(t)] }}</app-badge>
             <app-badge tone="neutral" *ngIf="t.esGenerica">Sin número</app-badge>
+            <app-badge tone="warning" *ngIf="t.esTitularExterno">Tarjeta prestada / de tercero</app-badge>
             <app-badge tone="neutral" *ngIf="!estaActiva(t)">Histórica</app-badge>
           </span>
           <span class="erp-muted" *ngIf="t.cuentaId">{{ esDebito(t) ? 'De la cuenta' : 'Se paga desde' }} <strong>{{ nombreCuenta(t.cuentaId) }}</strong></span>

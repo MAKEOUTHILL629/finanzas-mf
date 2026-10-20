@@ -11,6 +11,7 @@ import { SharedModule } from '../shared/shared.module';
 import { TablaComprasCreditoComponent } from './tabla-compras-credito/tabla-compras-credito.component';
 import { FormularioComprasCreditoComponent } from './formulario-compras-credito/formulario-compras-credito.component';
 import { FormularioCsvComprasComponent } from './formulario-csv-compras/formulario-csv-compras.component';
+import { CuotasColaborativasComponent } from './cuotas-colaborativas/cuotas-colaborativas.component';
 import { DetalleComprasCreditoComponent } from './detalle-compras-credito/detalle-compras-credito.component';
 import { ResponsableCreditoComponent } from './responsable-credito/responsable-credito.component';
 import { PagosMesTarjetasComponent } from './pagos-mes-tarjetas/pagos-mes-tarjetas.component';
@@ -35,7 +36,7 @@ export const RUTAS_PAGOS_MES: Routes = [
 ];
 
 @NgModule({
-  declarations: [TablaComprasCreditoComponent, FormularioComprasCreditoComponent, FormularioCsvComprasComponent, DetalleComprasCreditoComponent, ResponsableCreditoComponent, PagosMesTarjetasComponent, PagosMesTarjetasDetalleComponent, BalanceMesComponent, UnificarDeudaComponent],
+  declarations: [TablaComprasCreditoComponent, FormularioComprasCreditoComponent, FormularioCsvComprasComponent, DetalleComprasCreditoComponent, ResponsableCreditoComponent, PagosMesTarjetasComponent, PagosMesTarjetasDetalleComponent, BalanceMesComponent, UnificarDeudaComponent, CuotasColaborativasComponent],
   imports: [SharedModule, DatosUiModule, MatAutocompleteModule, MatInputModule, MatProgressSpinnerModule, BaseChartDirective]
 })
 export class ComprasCreditoModule {}

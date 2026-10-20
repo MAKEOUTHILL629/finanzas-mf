@@ -200,6 +200,8 @@
       </div>
       <app-responsable-credito #responsableComponent [compra]="compra" (cambiosResponsables)="onCambiosResponsables($event)" (guardado)="alCambiarResponsables()"></app-responsable-credito>
     </section>
+
+    <app-cuotas-colaborativas *ngIf="compra.id" [compraId]="compra.id"></app-cuotas-colaborativas>
   </ng-container>
 </section>
 

@@ -52,6 +52,9 @@ export interface ItemTarjeta {
   diaLimitePago: number | null;
   cupoTotal: number | null;
   permiteDolares: boolean;
+  /** Tarjeta prestada/de tercero (Fase 5). */
+  esTitularExterno?: boolean;
+  titularPersonaId?: number | null;
 }
 
 export interface ItemCuenta {

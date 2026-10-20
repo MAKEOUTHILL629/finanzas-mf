@@ -1,0 +1,5 @@
+.colaborativas { display: block; margin-top: 16px; }
+.cuota { border-top: 1px solid var(--divider); padding: 12px 0; }
+.cuota header { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.aporte-form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-top: 8px; }

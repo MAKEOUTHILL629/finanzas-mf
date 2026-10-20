@@ -1,0 +1,44 @@
+<app-card class="colaborativas" *ngIf="detalle as d">
+  <h2 class="erp-card-title">
+    Cuotas mes a mes
+    <app-badge tone="warning" *ngIf="d.compra.esTarjetaTercero">Tarjeta prestada / de tercero{{ d.compra.tarjeta ? ' — ' + d.compra.tarjeta : '' }}</app-badge>
+  </h2>
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+
+  <article class="cuota" *ngFor="let c of d.cuotas">
+    <header>
+      <strong>Cuota {{ c.numeroCuota }}/{{ c.numeroCuotasTotal }}</strong>
+      <span class="erp-muted">{{ c.fechaPago | fechaCorta }}</span>
+      <app-badge [tone]="c.estadoPagoTitular === 'PAGADA' ? 'success' : c.estadoPagoTitular === 'PARCIAL' ? 'warning' : 'neutral'">Pago al titular: {{ c.estadoPagoTitular }}</app-badge>
+    </header>
+    <dl class="resumen">
+      <div><dt>Valor cuota del mes</dt><dd class="erp-num">{{ c.valorCuota | moneda }}</dd></div>
+      <div><dt>Aportes de familiares/terceros</dt><dd class="erp-num erp-gain">{{ c.totalAportesTerceros | moneda }}</dd></div>
+      <div><dt>Lo que te toca poner a ti</dt><dd class="erp-num"><strong>{{ c.miAporteBolsilloNeto | moneda }}</strong></dd></div>
+      <div><dt>Por entregar al titular</dt><dd class="erp-num">{{ c.montoPorEntregarATitular | moneda }}</dd></div>
+    </dl>
+    <ul *ngIf="c.aportes.length > 0">
+      <li *ngFor="let a of c.aportes">{{ a.aportanteNombre || ('Persona ' + a.aportantePersonaId) }} aportó <strong class="erp-num">{{ a.monto | moneda }}</strong> el {{ a.fecha | fechaCorta }} <span class="erp-muted">({{ a.modalidad === 'PAGADO_DIRECTO_AL_TITULAR' ? 'pagado directo al titular' : a.modalidad === 'PAGO_PROPIO_AL_TITULAR' ? 'tu pago al titular' : 'transferido a ti' }})</span></li>
+    </ul>
+    <div class="erp-form aporte-form">
+      <div class="erp-field">
+        <label class="erp-label" [for]="'ap-persona-' + c.cuotaDetalleId">¿Quién ayuda con esta cuota?</label>
+        <app-select [inputId]="'ap-persona-' + c.cuotaDetalleId" catalogo="personas" [(ngModel)]="nuevaPersona[c.cuotaDetalleId]" placeholder="Elige persona"></app-select>
+      </div>
+      <div class="erp-field">
+        <label class="erp-label" [for]="'ap-monto-' + c.cuotaDetalleId">Valor del aporte</label>
+        <input [id]="'ap-monto-' + c.cuotaDetalleId" appInput type="number" min="1" [(ngModel)]="nuevoMonto[c.cuotaDetalleId]" />
+      </div>
+      <div class="erp-field">
+        <label class="erp-label" [for]="'ap-modalidad-' + c.cuotaDetalleId">¿Cómo se entrega?</label>
+        <select [id]="'ap-modalidad-' + c.cuotaDetalleId" appInput [(ngModel)]="nuevaModalidad[c.cuotaDetalleId]">
+          <option value="TRANSFERIDO_A_MI">Me lo transfirió a mí</option>
+          <option value="PAGADO_DIRECTO_AL_TITULAR">Pagó directo al titular</option>
+          <option value="PAGO_PROPIO_AL_TITULAR">Es mi pago al titular</option>
+        </select>
+      </div>
+      <button type="button" appButton="primary" size="sm" (click)="registrarAporte(c)">+ Registrar ayuda/aporte variable a esta cuota</button>
+    </div>
+  </article>
+  <app-empty-state *ngIf="d.cuotas.length === 0" icon="receipt_long" titulo="Sin cuotas" descripcion="Esta compra aún no tiene cuotas generadas."></app-empty-state>
+</app-card>
