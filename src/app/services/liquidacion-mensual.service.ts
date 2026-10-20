@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CruceEntrePersonas, LiquidacionMensual, LiquidacionPersona, RegistrarPagoMes } from '../modelos/aportes';
+import { LiquidacionBilateral } from '../modelos/liquidacion-bilateral';
 import { CruceDeuda, Periodo, ResultadoAbonoPersona } from '../modelos/erp';
 import { ApiServicesService } from './api-services.service';
 import { limpiarParams } from './http-params.util';
@@ -28,5 +29,19 @@ export class LiquidacionMensualService {
 
   registrarPago(pago: RegistrarPagoMes): Observable<ResultadoAbonoPersona> {
     return this.api.post<ResultadoAbonoPersona>(`${this.base}/registrar-pago`, pago);
+  }
+
+  // ── cámara bilateral (Fase 4) ──
+
+  getBilateral(periodo: Periodo, personaId: number): Observable<LiquidacionBilateral> {
+    return this.api.get<LiquidacionBilateral>(`${this.base}/${periodo}/bilateral`, limpiarParams({ personaId }));
+  }
+
+  cerrarCruce(periodo: Periodo, personaId: number, modo: 'LIQUIDAR_Y_PAGAR_TOTAL' | 'CERRAR_Y_ARRASTRAR_SALDO', cuentaDestinoId?: number): Observable<unknown> {
+    return this.api.post(`${this.base}/${periodo}/cerrar-cruce`, { personaId, modo, cuentaDestinoId });
+  }
+
+  registrarMulta(periodo: Periodo, personaId: number, monto: number, concepto?: string): Observable<unknown> {
+    return this.api.post(`${this.base}/${periodo}/multa`, { personaId, monto, concepto });
   }
 }

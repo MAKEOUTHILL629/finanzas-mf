@@ -1,0 +1,44 @@
+<app-card class="eventos">
+  <h2 class="erp-card-title">Eventos / viajes grupales</h2>
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+
+  <div class="erp-form">
+    <div class="erp-field">
+      <label class="erp-label" for="ev-nombre">Nuevo evento</label>
+      <input id="ev-nombre" appInput type="text" [(ngModel)]="nuevoNombre" placeholder="Ej: Viaje Cartagena, Salida amigos" />
+    </div>
+    <div class="erp-field" *ngFor="let p of nuevoParticipantes; let i = index">
+      <label class="erp-label" [for]="'ev-p-' + i">Participante {{ i + 1 }}</label>
+      <app-select [inputId]="'ev-p-' + i" catalogo="personas" [(ngModel)]="p.personaId" placeholder="Elige persona"></app-select>
+      <input appInput type="text" [(ngModel)]="p.aliasBloque" placeholder="Alias de bloque, ej: Julian/Felipe" aria-label="Alias de bloque" />
+      <input appInput type="number" min="0.5" step="0.5" [(ngModel)]="p.peso" aria-label="Peso o cupos" title="Peso/cupos: una pareja puede contar como 1 o 2" />
+    </div>
+    <div class="erp-actions">
+      <button type="button" appButton="ghost" (click)="agregarParticipante()">+ Participante</button>
+      <button type="button" appButton="primary" (click)="crearEvento()" [disabled]="!nuevoNombre.trim()">Crear evento</button>
+    </div>
+  </div>
+
+  <ul *ngIf="eventos.length > 0">
+    <li *ngFor="let e of eventos">
+      <strong>{{ e.nombre }}</strong> <app-badge [tone]="e.estado === 'CERRADO' ? 'neutral' : 'success'">{{ e.estado }}</app-badge>
+      <button type="button" appButton="ghost" size="sm" (click)="verLiquidacion(e)">Ver liquidación («Cruzo Cuentas»)</button>
+    </li>
+  </ul>
+  <app-empty-state *ngIf="!cargando && eventos.length === 0" icon="groups" titulo="Sin eventos grupales" descripcion="Crea el primero para repartir los gastos de un viaje o una salida entre varias personas."></app-empty-state>
+
+  <ng-container *ngIf="liquidacion as l">
+    <h3 class="erp-overline">{{ l.evento.nombre }} — total {{ l.totalEvento | moneda }}</h3>
+    <table appTable>
+      <thead><tr><th>Participante</th><th class="erp-num">Total aportado</th><th class="erp-num">Nos toca</th><th class="erp-num">Balance</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let b of l.balances"><td>{{ b.alias || nombrePersona(b.personaId) }}</td><td class="erp-num">{{ b.totalAportado | moneda }}</td><td class="erp-num">{{ b.leToca | moneda }}</td><td class="erp-num" [class.erp-gain]="b.balance > 0" [class.erp-loss]="b.balance < 0">{{ b.balance | moneda }}</td></tr>
+      </tbody>
+    </table>
+    <h3 class="erp-overline">Cruzo cuentas (mínimo de transferencias)</h3>
+    <ul>
+      <li *ngFor="let t of l.transferencias">{{ nombrePersona(t.desdePersonaId) }} → {{ nombrePersona(t.haciaPersonaId) }}: <strong class="erp-num">{{ t.monto | moneda }}</strong></li>
+    </ul>
+    <p class="erp-muted" *ngIf="l.transferencias.length === 0">Todos quedaron a paz y salvo.</p>
+  </ng-container>
+</app-card>

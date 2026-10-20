@@ -25,8 +25,17 @@
     </label>
   </div>
 
+  <div class="erp-toolbar" role="group" aria-label="Modo de liquidación">
+    <button type="button" appButton="ghost" (click)="modoVista = 'mensual'" [attr.aria-pressed]="modoVista === 'mensual'">Liquidación mensual</button>
+    <button type="button" appButton="ghost" (click)="modoVista = 'bilateral'" [attr.aria-pressed]="modoVista === 'bilateral'">Vista bilateral A vs. B</button>
+    <button type="button" appButton="ghost" (click)="modoVista = 'eventos'" [attr.aria-pressed]="modoVista === 'eventos'">Eventos / viajes grupales</button>
+  </div>
+
+  <app-vista-bilateral *ngIf="modoVista === 'bilateral'" [periodo]="periodo" [personaId]="personaFiltro" (cerrado)="cargar()"></app-vista-bilateral>
+  <app-eventos-grupales *ngIf="modoVista === 'eventos'"></app-eventos-grupales>
+
   <!-- Totales -->
-  <div class="erp-grid erp-grid--stats" *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length > 0" aria-label="Totales del mes">
+  <div class="erp-grid erp-grid--stats" *ngIf="modoVista === 'mensual' && !cargando && !error && liquidacion && personasLiquidacion.length > 0" aria-label="Totales del mes">
     <app-card class="erp-stat">
       <span class="erp-overline">Total a cobrar</span>
       <span class="erp-stat-value erp-num">{{ liquidacion.totales.totalCargos | moneda }}</span>
@@ -59,10 +68,10 @@
   </div>
 
   <!-- Vacío -->
-  <app-empty-state *ngIf="!cargando && !error && liquidacion && personasLiquidacion.length === 0" icon="fact_check" titulo="Nadie debe nada en {{ nombrePeriodo(periodo) }}" descripcion="Aquí aparece lo que cada persona debe por cuotas de tarjeta, préstamos, recurrentes, cruces de cuentas o la cuota del carro. Prueba con otro mes."></app-empty-state>
+  <app-empty-state *ngIf="modoVista === 'mensual' && !cargando && !error && liquidacion && personasLiquidacion.length === 0" icon="fact_check" titulo="Nadie debe nada en {{ nombrePeriodo(periodo) }}" descripcion="Aquí aparece lo que cada persona debe por cuotas de tarjeta, préstamos, recurrentes, cruces de cuentas o la cuota del carro. Prueba con otro mes."></app-empty-state>
 
   <!-- Una tarjeta por persona -->
-  <div class="personas" *ngIf="!cargando && !error && personasLiquidacion.length > 0">
+  <div class="personas" *ngIf="modoVista === 'mensual' && !cargando && !error && personasLiquidacion.length > 0">
     <article class="erp-card persona" *ngFor="let l of personasLiquidacion; trackBy: trackPersona" [attr.aria-label]="'Liquidación de ' + l.persona.nombre">
       <h2 class="persona-titulo">
         <button type="button" class="persona-cabecera" (click)="alternar(l)" [attr.aria-expanded]="estaAbierta(l)" [attr.aria-controls]="'liq-' + l.persona.id">

@@ -1,0 +1,42 @@
+<app-card class="bilateral">
+  <h2 class="erp-card-title">Vista bilateral A vs. B</h2>
+  <p class="erp-muted" *ngIf="!personaId">Elige una persona arriba para ver la cámara de compensación lado a lado.</p>
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+  <div class="erp-alert erp-alert--info" role="status" *ngIf="mensajeCierre"><i class="material-icons" aria-hidden="true">check_circle</i><span>{{ mensajeCierre }}</span></div>
+  <p class="erp-muted" *ngIf="cargando" role="status">Armando la cámara…</p>
+
+  <ng-container *ngIf="camara as c">
+    <div class="columnas">
+      <section aria-label="Columna tuya">
+        <h3>{{ periodo }} — Tú</h3>
+        <table appTable>
+          <tbody>
+            <tr *ngFor="let i of c.columnaUsuario"><td>{{ i.concepto }}<span class="erp-muted"> · {{ etiquetaRegla(i) }}</span></td><td class="erp-num">{{ i.montoImputado | moneda }}</td></tr>
+          </tbody>
+          <tfoot><tr><th>Subtotal</th><th class="erp-num">{{ c.subtotalUsuario | moneda }}</th></tr></tfoot>
+        </table>
+      </section>
+      <section [attr.aria-label]="'Columna de ' + c.persona.nombre">
+        <h3>{{ periodo }} — {{ c.persona.nombre }}</h3>
+        <table appTable>
+          <tbody>
+            <tr *ngFor="let i of c.columnaContraparte"><td>{{ i.concepto }}<app-badge tone="info">{{ i.origen }}</app-badge><span class="erp-muted"> · {{ etiquetaRegla(i) }}<ng-container *ngIf="i.montoOriginalTotal !== null"> de {{ i.montoOriginalTotal | moneda }}</ng-container></span></td><td class="erp-num">{{ i.montoImputado | moneda }}</td></tr>
+          </tbody>
+          <tfoot><tr><th>Subtotal</th><th class="erp-num">{{ c.subtotalContraparte | moneda }}</th></tr></tfoot>
+        </table>
+      </section>
+    </div>
+
+    <div class="erp-card neto" role="status">
+      <span class="erp-overline">Total neto a enviar / cobrar</span>
+      <span class="resultado-valor erp-num">{{ c.netoAEnviar | moneda }}</span>
+      <span class="erp-muted">{{ c.direccionNeto === 'CONTRAPARTE_ENVIA_A_USUARIO' ? c.persona.nombre + ' te envía a ti' : c.direccionNeto === 'USUARIO_ENVIA_A_CONTRAPARTE' ? 'Tú le envías a ' + c.persona.nombre : 'Paz y salvo' }}</span>
+    </div>
+
+    <div class="erp-actions">
+      <button type="button" appButton="secondary" (click)="multa()"><i class="material-icons" aria-hidden="true">gavel</i> Multa por no anotar ($10.000)</button>
+      <button type="button" appButton="secondary" (click)="cerrar('CERRAR_Y_ARRASTRAR_SALDO')">Cerrar y arrastrar saldo</button>
+      <button type="button" appButton="primary" (click)="cerrar('LIQUIDAR_Y_PAGAR_TOTAL')">Liquidar y pagar total</button>
+    </div>
+  </ng-container>
+</app-card>

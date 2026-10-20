@@ -2,7 +2,9 @@ import { NgModule } from '@angular/core';
 import { Routes } from '@angular/router';
 import { authGuard } from '../core/guards/auth.guard';
 import { DatosUiModule } from '../shared/datos-ui.module';
+import { EventosGrupalesComponent } from './eventos-grupales/eventos-grupales.component';
 import { LiquidacionMensualComponent } from './liquidacion-mensual.component';
+import { VistaBilateralComponent } from './vista-bilateral/vista-bilateral.component';
 import { CompartirCobroModule } from '../cobros/compartir-cobro.module';
 import { AbonoModule } from '../deudas/abono.module';
 import { CruceModule } from '../deudas/cruce.module';
@@ -14,7 +16,7 @@ export const RUTAS_LIQUIDACION: Routes = [
 ];
 
 @NgModule({
-  declarations: [LiquidacionMensualComponent],
+  declarations: [LiquidacionMensualComponent, VistaBilateralComponent, EventosGrupalesComponent],
   imports: [DatosUiModule, CompartirCobroModule, AbonoModule, CruceModule, ExcedenteModule]
 })
 export class LiquidacionModule {}

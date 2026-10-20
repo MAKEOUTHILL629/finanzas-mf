@@ -1,0 +1,5 @@
+.bilateral { display: block; margin-bottom: 16px; }
+.columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.neto { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; }
+.resultado-valor { font-size: 28px; font-weight: 700; }
+@media (max-width: 720px) { .columnas { grid-template-columns: 1fr; } }

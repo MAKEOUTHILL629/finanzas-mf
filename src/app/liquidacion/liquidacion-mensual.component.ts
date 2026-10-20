@@ -71,6 +71,9 @@ export class LiquidacionMensualComponent implements OnInit, OnDestroy {
   readonly iniciales = iniciales;
   readonly nombrePeriodo = nombrePeriodo;
 
+  /** Modo de la cámara (Fase 4): mensual clásica, bilateral A vs B o eventos grupales. */
+  modoVista: 'mensual' | 'bilateral' | 'eventos' = 'mensual';
+
   periodo = periodoActual();
   personaFiltro: number | null = null;
   todas = false;
