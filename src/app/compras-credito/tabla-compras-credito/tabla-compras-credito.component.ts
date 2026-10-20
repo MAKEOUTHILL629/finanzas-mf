@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
 import { ComprasCredito, ComprasCreditoMultimoneda } from '../../modelos/compras-credito';
+import { AnaliticaService } from '../../services/analitica.service';
 import { ApiServicesService } from '../../services/api-services.service';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
@@ -62,13 +63,14 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   filtros: DefinicionFiltro[] = [];
 
   readonly ordenInicial: OrdenTabla = { columna: 'fechaCompra', direccion: 'desc' };
-  readonly columnas: ColumnaTabla<ComprasCredito>[] = [
+  readonly columnas: ColumnaTabla<ComprasCreditoMultimoneda>[] = [
     { id: 'concepto', titulo: 'Concepto', valor: (c) => c.concepto, prioridad: 1, truncar: true, anchoMin: 220 },
     { id: 'valorCompra', titulo: 'Valor compra', valor: (c) => c.valorCompra, formato: 'moneda', prioridad: 1, anchoMin: 130 },
     { id: 'fechaCompra', titulo: 'Fecha compra', valor: (c) => (c.fechaCompra ? new Date(c.fechaCompra) : null), formato: 'fechaCorta', prioridad: 2, anchoMin: 120 },
     { id: 'numeroCuotas', titulo: 'Cuotas', valor: (c) => c.numeroCuotas, formato: 'numero', prioridad: 2, anchoMin: 80 },
     { id: 'pagoMensual', titulo: 'Pago mensual', valor: (c) => c.pagoMensual, formato: 'moneda', prioridad: 2, anchoMin: 130 },
     { id: 'responsables', titulo: 'Responsables', valor: (c) => c.porcentajePago ?? 0, prioridad: 2, anchoMin: 150 },
+    { id: 'tags', titulo: 'Tags', valor: (c) => (c.tags ?? []).join(' '), prioridad: 2, anchoMin: 160 },
     { id: 'estado', titulo: 'Estado', valor: (c) => c.estado, prioridad: 1, anchoMin: 110 },
     { id: 'tarjeta', titulo: 'Tarjeta', valor: (c) => this.nombreTarjeta(c.tarjeta), prioridad: 2, truncar: true, anchoMin: 150 },
     { id: 'fechaUltimaCuota', titulo: 'Última cuota', valor: (c) => (c.fechaUltimaCuota ? new Date(c.fechaUltimaCuota) : null), formato: 'fechaCorta', prioridad: 3, anchoMin: 120 },
@@ -86,13 +88,19 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private cache = new Map<number, ResponsableVista[]>();
 
+  // Edición de tags (Fase 2)
+  editandoTagsId: number | null = null;
+  tagsTexto = '';
+  crearReglaTags = false;
+
   constructor(
     private apiService: ApiServicesService,
     private router: Router,
     private modalService: ModalService,
     private sharedListasService: SharedListasService,
     private catalogos: CatalogosService,
-    private ruta: ActivatedRoute
+    private ruta: ActivatedRoute,
+    private analitica: AnaliticaService
   ) {
     this.refrescarAcciones();
   }
@@ -295,6 +303,31 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
           void err;
         },
       });
+  }
+
+  // ───────── tags (Fase 2) ─────────
+
+  editarTags(compra: ComprasCreditoMultimoneda): void {
+    this.editandoTagsId = compra.id ?? null;
+    this.tagsTexto = (compra.tags ?? []).join(', ');
+    this.crearReglaTags = false;
+  }
+
+  guardarTags(compra: ComprasCreditoMultimoneda): void {
+    if (!compra.id) return;
+    const tags = this.tagsTexto.split(',').map((t) => t.trim()).filter(Boolean);
+    this.analitica.actualizarTags('COMPRA', compra.id, tags, this.crearReglaTags).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (r) => {
+        compra.tags = r.tags;
+        this.editandoTagsId = null;
+        if (r.reglaCreada) this.refreshCompras();
+      },
+      error: (err) => (this.error = mensajeDeError(err, 'No se pudieron guardar los tags.')),
+    });
+  }
+
+  cancelarTags(): void {
+    this.editandoTagsId = null;
   }
 
   // ───────── celdas ─────────

@@ -38,6 +38,9 @@ export interface ComprasCreditoMultimoneda extends ComprasCredito {
   /** `CAPITAL_FIJO` (compras normales) | `FRANCES` (cuota fija: los refinanciamientos creados por el asistente). */
   sistemaAmortizacion?: string;
   cuotaFijaPactada?: number | null;
+  /** Tags transversales (Fase 2): slugs con '#'. */
+  tags?: string[];
+  comercioCanonico?: string | null;
 }
 
 

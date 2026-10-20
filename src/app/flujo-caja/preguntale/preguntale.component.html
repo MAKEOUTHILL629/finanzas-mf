@@ -1,0 +1,51 @@
+<app-card class="preguntale">
+  <h2 class="erp-card-title">Pregúntale a tu App</h2>
+  <div class="erp-toolbar" role="search" aria-label="Pregunta sobre tus gastos">
+    <div class="erp-field" style="flex: 1">
+      <label class="erp-label" for="pq-pregunta">¿Cuánto he gastado en…?</label>
+      <input id="pq-pregunta" appInput type="text" [(ngModel)]="pregunta" (keyup.enter)="preguntar()" placeholder="Ej: ¿Cuánto he gastado en domicilios en Rappi y Didi? o ¿Cuánto en Bershka y Koaj?" />
+    </div>
+    <button type="button" appButton="primary" (click)="preguntar()" [disabled]="cargando || !pregunta.trim()">
+      <i class="material-icons" aria-hidden="true">search</i> Preguntar
+    </button>
+    <button type="button" appButton="ghost" (click)="retag()" [disabled]="cargando" title="Re-etiqueta todo el historial con las reglas de comercios">
+      <i class="material-icons" aria-hidden="true">sell</i> Re-etiquetar historial
+    </button>
+  </div>
+  <div class="chips" aria-label="Preguntas frecuentes">
+    <button type="button" appButton="ghost" size="sm" *ngFor="let s of sugerencias" (click)="preguntar(s)">{{ s }}</button>
+  </div>
+
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+  <p class="erp-muted" *ngIf="cargando" role="status">Consultando tus compras y movimientos…</p>
+
+  <ng-container *ngIf="resultado as r">
+    <div class="erp-grid erp-grid--stats">
+      <app-card class="erp-stat"><span class="erp-overline">Gran total</span><span class="erp-stat-value erp-num">{{ r.total | moneda }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Operaciones</span><span class="erp-stat-value erp-num">{{ r.operaciones }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Promedio por compra</span><span class="erp-stat-value erp-num">{{ r.promedio | moneda }}</span></app-card>
+      <app-card class="erp-stat"><span class="erp-overline">Periodo</span><span class="erp-stat-value">{{ r.desde || 'Todo' }} {{ r.hasta ? '→ ' + r.hasta : '' }}</span></app-card>
+    </div>
+
+    <div *ngIf="r.desglose.length > 0">
+      <h3 class="erp-overline">Desglose comparativo</h3>
+      <ul>
+        <li *ngFor="let d of r.desglose"><strong>{{ d.clave }}</strong>: {{ d.total | moneda }} ({{ d.operaciones }} ops)</li>
+      </ul>
+    </div>
+
+    <table appTable *ngIf="r.detalle.length > 0">
+      <thead><tr><th>Fecha</th><th>Descripción</th><th>Comercio</th><th>Tags</th><th class="erp-num">Monto</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let f of r.detalle">
+          <td>{{ f.fecha | fechaCorta }}</td>
+          <td>{{ f.descripcion }}</td>
+          <td>{{ f.comercioCanonico || '—' }}</td>
+          <td><app-badge *ngFor="let t of f.tags" tone="info">{{ t }}</app-badge></td>
+          <td class="erp-num">{{ f.monto | moneda }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <app-empty-state *ngIf="r.operaciones === 0" icon="search_off" titulo="Sin resultados" descripcion="Prueba re-etiquetar el historial o pregunta por otro tag, comercio o periodo."></app-empty-state>
+  </ng-container>
+</app-card>

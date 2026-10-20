@@ -5,6 +5,7 @@ import { authGuard } from '../core/guards/auth.guard';
 import { PROVEEDOR_GRAFICAS } from '../shared/charts';
 import { DatosUiModule } from '../shared/datos-ui.module';
 import { FlujoCajaComponent } from './flujo-caja.component';
+import { PreguntaleComponent } from './preguntale/preguntale.component';
 
 /** Rutas de `RUTAS_FLUJO_CAJA` (se cargan de forma diferida desde `app-routing.module.ts`). */
 export const RUTAS_FLUJO_CAJA: Routes = [
@@ -12,7 +13,7 @@ export const RUTAS_FLUJO_CAJA: Routes = [
 ];
 
 @NgModule({
-  declarations: [FlujoCajaComponent],
+  declarations: [FlujoCajaComponent, PreguntaleComponent],
   imports: [DatosUiModule, BaseChartDirective]
 })
 export class FlujoCajaModule {}

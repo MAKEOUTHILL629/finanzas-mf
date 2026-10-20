@@ -71,6 +71,22 @@
         </div>
       </ng-template>
 
+      <ng-template appCelda="tags" let-c>
+        <ng-container *ngIf="editandoTagsId !== c.id">
+          <app-badge *ngFor="let t of c.tags ?? []" tone="info">{{ t }}</app-badge>
+          <span class="erp-muted" *ngIf="!c.tags?.length">—</span>
+          <button type="button" appButton="ghost" size="sm" icon (click)="editarTags(c); $event.stopPropagation()" [attr.aria-label]="'Editar tags de ' + c.concepto" title="Editar tags">
+            <i class="material-icons" aria-hidden="true">sell</i>
+          </button>
+        </ng-container>
+        <ng-container *ngIf="editandoTagsId === c.id">
+          <input appInput type="text" [(ngModel)]="tagsTexto" placeholder="#domicilios, #rappi" (click)="$event.stopPropagation()" aria-label="Tags separados por coma" />
+          <label class="erp-check"><input type="checkbox" [(ngModel)]="crearReglaTags" (click)="$event.stopPropagation()" /> <span>Crear regla automática para futuras y pasadas compras de este comercio</span></label>
+          <button type="button" appButton="primary" size="sm" (click)="guardarTags(c); $event.stopPropagation()">Guardar</button>
+          <button type="button" appButton="ghost" size="sm" (click)="cancelarTags(); $event.stopPropagation()">Cancelar</button>
+        </ng-container>
+      </ng-template>
+
       <ng-template appCelda="estado" let-c>
         <app-badge [tone]="tonoEstado(c.estado)">{{ c.estado || '—' }}</app-badge>
       </ng-template>
