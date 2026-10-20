@@ -8,6 +8,7 @@ import {
   ResolverAprobacion,
 } from '../modelos/cobros';
 import { AprobacionPrestamo } from '../modelos/prestamos';
+import { AbonoPasivo, ResultadoAbonoPasivo } from '../modelos/prestamos-pasivos';
 import { ApiServicesService } from './api-services.service';
 import { limpiarParams } from './http-params.util';
 
@@ -43,5 +44,15 @@ export class PrestamosService {
   /** Puede resolverla el dueño del libro, un admin o la persona enlazada a la aprobación. */
   resolverAprobacion(prestamoId: number, aprobacionId: number, resolucion: ResolverAprobacion): Observable<AprobacionPrestamo> {
     return this.api.patch<AprobacionPrestamo>(`${this.url}/${prestamoId}/aprobaciones/${aprobacionId}`, resolucion);
+  }
+
+  // ── préstamos que yo debo (Fase 6) ──
+
+  registrarAbonoConComprobante(prestamoId: number, dto: { monto: number; cuentaDestinoDetalle?: string; cuentaOrigenId?: number; comprobante?: { nombre: string; tipo: string; datos: string }; observaciones?: string }): Observable<ResultadoAbonoPasivo> {
+    return this.api.post<ResultadoAbonoPasivo>(`${this.url}/${prestamoId}/abonos-con-comprobante`, dto);
+  }
+
+  getAbonos(prestamoId: number): Observable<AbonoPasivo[]> {
+    return this.api.get<AbonoPasivo[]>(`${this.url}/${prestamoId}/abonos`);
   }
 }

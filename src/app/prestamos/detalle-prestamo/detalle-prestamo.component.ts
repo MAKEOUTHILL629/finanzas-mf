@@ -9,8 +9,11 @@ import { CortesCobroService } from '../../services/cortes-cobro.service';
 import { ModalService } from '../../services/modal.service';
 import { CatalogosService } from '../../services/catalogos.service';
 import { PrestamosService } from '../../services/prestamos.service';
+import { AbonoPasivo, ResultadoAbonoPasivo } from '../../modelos/prestamos-pasivos';
+import { copiarAlPortapapeles } from '../../shared/portapapeles.helper';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { ToastService } from '../../shared/toast/toast.service';
+import { generarLinkWhatsAppPagoPrestamo } from '../../shared/whatsapp.helper';
 import { claseEstadoAprobacion, claseEstadoPrestamo, estaPendiente, resumirAprobaciones, saldoDe } from '../prestamos.constants';
 
 export const MODAL_EDITAR_PRESTAMO = 'prestamo-editar';
@@ -43,6 +46,15 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
   /** Comentario que se va escribiendo por aprobación pendiente (id → texto). */
   comentarios: Record<number, string> = {};
   resolviendo: number | null = null;
+
+  // Abonos POR_PAGAR (Fase 6)
+  abonosPasivos: AbonoPasivo[] = [];
+  ultimoAbono: ResultadoAbonoPasivo | null = null;
+  abonoMonto: number | null = null;
+  abonoCuentaDestino = '';
+  abonoCuentaOrigenId: number | null = null;
+  abonoComprobante: { nombre: string; tipo: string; datos: string } | null = null;
+  registrandoAbono = false;
 
   private destroy$ = new Subject<void>();
 
@@ -91,6 +103,8 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
         next: ({ prestamo, cortes }) => {
           this.prestamo = prestamo;
           this.cortes = cortes;
+          this.abonoCuentaDestino = prestamo.cuentaDestinoTercero ?? '';
+          if (prestamo.direccionPrestamo === 'POR_PAGAR') this.cargarAbonos();
         },
         error: (err) => {
           this.prestamo = null;
@@ -174,6 +188,80 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
         },
         error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo resolver la aprobación.'))
       });
+  }
+
+  // ── abonos POR_PAGAR (Fase 6) ──
+
+  get esPorPagar(): boolean {
+    return this.prestamo?.direccionPrestamo === 'POR_PAGAR';
+  }
+
+  cargarAbonos(): void {
+    this.prestamosService.getAbonos(this.prestamoId).pipe(takeUntil(this.destroy$), catchError(() => of([] as AbonoPasivo[]))).subscribe((a) => (this.abonosPasivos = a));
+  }
+
+  alElegirComprobante(evento: Event): void {
+    const archivo = (evento.target as HTMLInputElement).files?.[0];
+    if (!archivo) return;
+    const lector = new FileReader();
+    lector.onload = () => {
+      const resultado = String(lector.result ?? '');
+      this.abonoComprobante = { nombre: archivo.name, tipo: archivo.type, datos: resultado.includes(',') ? resultado.split(',')[1] : resultado };
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  registrarAbono(): void {
+    if (!this.prestamo || !this.abonoMonto) return;
+    this.registrandoAbono = true;
+    this.prestamosService
+      .registrarAbonoConComprobante(this.prestamo.id, {
+        monto: this.abonoMonto,
+        cuentaDestinoDetalle: this.abonoCuentaDestino || undefined,
+        cuentaOrigenId: this.abonoCuentaOrigenId ?? undefined,
+        comprobante: this.abonoComprobante ?? undefined,
+      })
+      .pipe(takeUntil(this.destroy$), finalize(() => (this.registrandoAbono = false)))
+      .subscribe({
+        next: (r) => {
+          this.ultimoAbono = r;
+          this.toast.exito('Abono registrado. Ya puedes enviar el comprobante por WhatsApp.');
+          this.cargar();
+        },
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo registrar el abono.')),
+      });
+  }
+
+  urlPublicaPrestamo(token?: string | null): string {
+    return token ? `${window.location.origin}/p/prestamo/${token}` : '';
+  }
+
+  linkWhatsAppAbono(r?: ResultadoAbonoPasivo): string {
+    const datos = r ?? this.ultimoAbono;
+    if (!datos || !this.prestamo) return '';
+    const acreedor = this.personas.find((p) => p.id === this.prestamo?.responsable);
+    return generarLinkWhatsAppPagoPrestamo({
+      nombrePersona: datos.acreedor ?? acreedor?.nombre ?? 'gracias',
+      telefono: acreedor?.celular,
+      montoPagado: datos.montoPagado,
+      cuentaDestinoDetalle: datos.cuentaDestinoDetalle,
+      fechaPago: new Date(datos.fechaHoraPago).toLocaleDateString('es-CO'),
+      montoInicial: datos.valorInicial,
+      totalAbonado: datos.totalAbonado,
+      saldoPendiente: datos.saldoPendiente,
+      fechaCompromisoPago: this.prestamo.fechaCompromisoPago ? new Date(this.prestamo.fechaCompromisoPago).toLocaleDateString('es-CO') : null,
+      urlPublicaComprobante: this.urlPublicaPrestamo(datos.tokenConsultaPublica ?? this.prestamo.tokenConsultaPublica),
+    });
+  }
+
+  abrirWhatsAppAbono(r?: ResultadoAbonoPasivo): void {
+    const url = this.linkWhatsAppAbono(r);
+    if (url) window.open(url, '_blank');
+  }
+
+  copiarEnlacePublico(): void {
+    const url = this.urlPublicaPrestamo(this.prestamo?.tokenConsultaPublica);
+    if (url) void copiarAlPortapapeles(url).then(() => this.toast.exito('Enlace público copiado.'));
   }
 
   // ── presentación ──

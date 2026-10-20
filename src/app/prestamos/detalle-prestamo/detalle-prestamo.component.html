@@ -93,6 +93,46 @@
       </dl>
     </app-card>
 
+    <app-card *ngIf="esPorPagar">
+      <h2 class="erp-card-title">Pagarle a {{ nombrePersona(p.responsable) }}</h2>
+      <p class="erp-muted" *ngIf="p.cuentaDestinoTercero">Cuenta destino: <strong>{{ p.cuentaDestinoTercero }}</strong></p>
+      <div class="erp-form">
+        <div class="erp-field">
+          <label class="erp-label" for="ab-monto">Valor del abono</label>
+          <input id="ab-monto" appInput type="number" min="1" [(ngModel)]="abonoMonto" />
+        </div>
+        <div class="erp-field">
+          <label class="erp-label" for="ab-destino">Enviado a la cuenta</label>
+          <input id="ab-destino" appInput type="text" [(ngModel)]="abonoCuentaDestino" placeholder="Ej: Nequi 300XXXXXXX - Cuñada" />
+        </div>
+        <div class="erp-field">
+          <label class="erp-label" for="ab-origen">Salió de mi cuenta</label>
+          <app-select inputId="ab-origen" catalogo="cuentas" [(ngModel)]="abonoCuentaOrigenId" placeholder="Elige tu cuenta (opcional)"></app-select>
+        </div>
+        <div class="erp-field">
+          <label class="erp-label" for="ab-comprobante">Comprobante de la transferencia</label>
+          <input id="ab-comprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" (change)="alElegirComprobante($event)" />
+        </div>
+        <div class="erp-actions">
+          <button type="button" appButton="primary" (click)="registrarAbono()" [disabled]="registrandoAbono || !abonoMonto">Registrar abono</button>
+          <button type="button" appButton="ghost" (click)="copiarEnlacePublico()" *ngIf="p.tokenConsultaPublica"><i class="material-icons" aria-hidden="true">content_copy</i> Copiar enlace público</button>
+        </div>
+      </div>
+
+      <div class="erp-alert erp-alert--info" role="status" *ngIf="ultimoAbono as u">
+        <span>Abono de {{ u.montoPagado | moneda }} registrado. Saldo pendiente: {{ u.saldoPendiente | moneda }}.</span>
+        <button type="button" appButton="primary" size="sm" (click)="abrirWhatsAppAbono(u)" style="background: #25d366; border-color: #25d366">Enviar Comprobante por WhatsApp</button>
+      </div>
+
+      <h3 class="erp-overline">Historial de abonos</h3>
+      <ul>
+        <li *ngFor="let a of abonosPasivos">{{ a.fechaHoraPago | fechaCorta }} — <strong class="erp-num">{{ a.monto | moneda }}</strong> a {{ a.cuentaDestinoDetalle || '—' }}<span class="erp-muted" *ngIf="a.conComprobante"> · con comprobante ({{ a.comprobanteNombre }})</span></li>
+      </ul>
+      <div class="erp-actions" *ngIf="ultimoAbono">
+        <button type="button" appButton="secondary" size="sm" (click)="abrirWhatsAppAbono()">Enviar Comprobante por WhatsApp</button>
+      </div>
+    </app-card>
+
     <app-card>
       <h2 class="erp-card-title">Aprobaciones</h2>
 

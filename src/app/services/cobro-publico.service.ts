@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { CobroPublico, ObjetarCobro, ReportarPago, ResultadoObjecion, ResultadoReporte } from '../modelos/cobros-personas';
+import { PortalAcreedor } from '../modelos/prestamos-pasivos';
 
 /** Página pública del enlace de cobro (`/api/publico/cobros/:token`): no requiere sesión. */
 @Injectable({ providedIn: 'root' })
@@ -29,5 +30,14 @@ export class CobroPublicoService {
   /** Dirección de la imagen del QR de un medio de pago (se usa en un `<img>`). */
   urlQr(token: string, metodoId: number): string {
     return `${this.url(token)}/metodos/${metodoId}/qr`;
+  }
+
+  /** Portal del acreedor (Fase 6): estado de un préstamo POR_PAGAR por token, sin sesión. */
+  getPortalAcreedor(token: string): Observable<PortalAcreedor> {
+    return this.http.get<PortalAcreedor>(`${environment.apiUrl}/publico/comprobante-prestamo/${encodeURIComponent(token)}`);
+  }
+
+  urlComprobantePrestamo(token: string, rutaRelativa: string): string {
+    return `${environment.apiUrl}${rutaRelativa.replace(/^\/api/, '')}`;
   }
 }

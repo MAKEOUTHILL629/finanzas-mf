@@ -1,0 +1,35 @@
+<section class="erp-page portal" aria-labelledby="titulo-portal">
+  <p class="erp-muted" *ngIf="cargando" role="status">Cargando el estado de tu préstamo…</p>
+  <div class="erp-alert erp-alert--danger" role="alert" *ngIf="error"><i class="material-icons" aria-hidden="true">error</i><span>{{ error }}</span></div>
+
+  <ng-container *ngIf="portal as p">
+    <app-card class="recibo">
+      <span class="erp-overline" id="titulo-portal">Comprobante y estado de préstamo</span>
+      <h1>{{ p.concepto || 'Préstamo' }}</h1>
+      <app-badge [tone]="p.estadoPrestamo === 'PAGADO TOTALMENTE' ? 'success' : 'warning'">{{ p.estadoPrestamo === 'PAGADO TOTALMENTE' ? '✓ Pagado totalmente' : 'Abono parcial realizado' }}</app-badge>
+
+      <dl class="resumen" *ngIf="p.ultimoPago as u">
+        <div><dt>Valor pagado</dt><dd class="erp-num"><strong>{{ u.monto | moneda }}</strong></dd></div>
+        <div><dt>Enviado a la cuenta</dt><dd>{{ u.cuentaDestinoDetalle || p.cuentaDestinoTercero || '—' }}</dd></div>
+        <div><dt>Fecha y hora</dt><dd>{{ u.fechaHoraPago | fechaCorta }}</dd></div>
+        <div *ngIf="u.comprobanteUrl"><dt>Comprobante</dt><dd><a [href]="urlDescarga(u.comprobanteUrl)" download>Descargar Comprobante</a></dd></div>
+      </dl>
+
+      <dl class="resumen">
+        <div><dt>Valor inicial del préstamo</dt><dd class="erp-num">{{ p.valorInicial | moneda }}</dd></div>
+        <div><dt>Total abonado</dt><dd class="erp-num erp-gain">{{ p.totalAbonado | moneda }}</dd></div>
+        <div><dt>Saldo pendiente</dt><dd class="erp-num"><strong>{{ p.saldoPendiente | moneda }}</strong></dd></div>
+        <div *ngIf="p.fechaCompromisoPago"><dt>Próximo pago estimado</dt><dd>{{ p.fechaCompromisoPago | fechaCorta }}</dd></div>
+      </dl>
+
+      <h2 class="erp-overline">Historial de abonos</h2>
+      <ul>
+        <li *ngFor="let a of p.historialAbonos">
+          {{ a.fechaHoraPago | fechaCorta }} — <strong class="erp-num">{{ a.monto | moneda }}</strong> a {{ a.cuentaDestinoDetalle || '—' }}
+          <a *ngIf="a.comprobanteUrl" [href]="urlDescarga(a.comprobanteUrl)" download>Descargar Comprobante</a>
+        </li>
+      </ul>
+      <p class="erp-muted" *ngIf="p.historialAbonos.length === 0">Aún no se han registrado abonos.</p>
+    </app-card>
+  </ng-container>
+</section>

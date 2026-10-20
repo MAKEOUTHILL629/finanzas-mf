@@ -33,6 +33,10 @@ export interface PrestamoDetalle {
   creadoPorPersonaId: number | null;
   origenCruceAporteId: number | null;
   aprobaciones: AprobacionPrestamo[];
+  /** Fase 6 (POR_PAGAR). */
+  fechaCompromisoPago?: number | null;
+  cuentaDestinoTercero?: string | null;
+  tokenConsultaPublica?: string | null;
 }
 
 export interface FiltroPrestamos {
@@ -56,6 +60,8 @@ export interface CrearPrestamo {
   corteId?: number;
   esRecurrenteMensual?: boolean;
   cuotaMensualAcordada?: number | string;
+  fechaCompromisoPago?: string;
+  cuentaDestinoTercero?: string;
 }
 
 /** Al pasar a 'Pagado' el Trigger 4 abona el saldo en el sub-ledger y después el saldo queda en 0. */
@@ -66,6 +72,8 @@ export interface ActualizarPrestamo {
   metodo?: MetodoPrestamo;
   corteId?: number;
   fechaCobro?: string;
+  fechaCompromisoPago?: string;
+  cuentaDestinoTercero?: string;
 }
 
 export interface ResolverAprobacion {
