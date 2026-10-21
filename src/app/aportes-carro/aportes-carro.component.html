@@ -89,6 +89,18 @@
         <span class="erp-stat-value erp-num">{{ k.aportadoPorCruces | moneda }}</span>
         <span class="erp-stat-hint">Aportado en {{ nombrePeriodo(k.periodo) }} por terceros: se les cobra a ellos</span>
       </app-card>
+
+      <app-card class="erp-stat kpi-efectivo" role="button" tabindex="0" (click)="cambiarFiltro('metodo', 'EFECTIVO')" title="Ver solo los aportes en efectivo">
+        <span class="erp-overline">💵 Total Aportes en Efectivo</span>
+        <span class="erp-stat-value erp-num">{{ k.totalAportesEfectivo ?? 0 | moneda }}</span>
+        <span class="erp-stat-hint">{{ porcentajeEfectivo(k) }} % del recaudo del mes está en efectivo físico</span>
+      </app-card>
+
+      <app-card class="erp-stat kpi-transferencia">
+        <span class="erp-overline">🏦 Total Aportes por Transferencia</span>
+        <span class="erp-stat-value erp-num">{{ k.totalAportesTransferencia ?? 0 | moneda }}</span>
+        <span class="erp-stat-hint">{{ k.transferenciasConciliadas ?? 0 }} transferencia(s) conciliada(s) en cuentas</span>
+      </app-card>
     </div>
 
     <!-- Filtros -->
@@ -198,7 +210,7 @@
                   <caption class="erp-sr-only">Desglose del aporte del {{ a.fecha | fechaCorta }}</caption>
                   <thead>
                     <tr>
-                      <th scope="col">Método</th>
+                      <th scope="col">Medio / Soporte</th>
                       <th scope="col">Persona</th>
                       <th scope="col" class="num">Valor</th>
                       <th scope="col" class="wrap">Cuenta / comentario</th>
@@ -206,7 +218,9 @@
                   </thead>
                   <tbody>
                     <tr *ngFor="let d of a.detalles; trackBy: trackDetalle">
-                      <td data-label="Método"><i class="material-icons metodo-icono" aria-hidden="true">{{ iconoMetodo(d.metodoCanonico) }}</i>{{ etiquetaMetodo(d.metodo) }}</td>
+                      <td data-label="Medio / Soporte"><i class="material-icons metodo-icono" aria-hidden="true">{{ iconoMetodo(d.metodoCanonico) }}</i>{{ etiquetaMetodo(d.metodo) }}
+                        <app-badge [tone]="d.medioPago === 'TRANSFERENCIA' ? 'info' : 'success'" *ngIf="d.medioPago">{{ d.medioPago === 'TRANSFERENCIA' ? '🏦 Transferencia vinculada' : '💵 Efectivo' }}</app-badge>
+                      </td>
                       <td data-label="Persona">{{ nombreDetalle(d) }}<span class="sub" *ngIf="d.esCruce">Le cargas esta deuda</span></td>
                       <td data-label="Valor" class="num">{{ d.valor | moneda }}</td>
                       <td data-label="Cuenta / comentario" class="wrap">

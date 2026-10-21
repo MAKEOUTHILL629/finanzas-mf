@@ -9,6 +9,7 @@ import {
   ResultadoAporteDiario,
   ResultadoGuardarPeriodo,
   ResumenCarro,
+  TransferenciaSugeridaAporte,
 } from '../modelos/aportes';
 import { Periodo } from '../modelos/erp';
 import { ResumenWhatsAppCarro } from '../modelos/resumen-whatsapp-carro';
@@ -33,6 +34,11 @@ export class AportesCarroService {
   /** Último aporte + consolidado del mes para enviar a Papá por WhatsApp (Fase 7). */
   getResumenWhatsApp(periodo?: Periodo | null): Observable<ResumenWhatsAppCarro> {
     return this.api.get<ResumenWhatsAppCarro>(`${this.base}/carro/resumen-whatsapp`, limpiarParams({ periodo }));
+  }
+
+  /** Fase 6: transferencias entrantes sin vincular, ordenadas por cercanía al monto/fecha del aporte. */
+  getTransferenciasSugeridas(monto?: number | string, fecha?: string): Observable<TransferenciaSugeridaAporte[]> {
+    return this.api.get<TransferenciaSugeridaAporte[]>('aportes-carro/transferencias-sugeridas', limpiarParams({ monto, fecha }));
   }
 
   /** Crea el periodo del mes o actualiza su cuota objetivo. */

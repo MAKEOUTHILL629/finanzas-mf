@@ -54,7 +54,14 @@
           </div>
 
           <div class="erp-field">
-            <label class="erp-label" [for]="'fa-metodo-' + i">Método</label>
+            <span class="erp-label">Medio de pago</span>
+            <div class="erp-segmented" role="radiogroup" aria-label="Medio de pago" [style.--seg-count]="2" [style.--seg-index]="fila.controls.medioPago.value === 'TRANSFERENCIA' ? 1 : 0">
+              <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="fila.controls.medioPago.value !== 'TRANSFERENCIA'" (click)="elegirMedioPago(fila, 'EFECTIVO')">💵 Efectivo</button>
+              <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="fila.controls.medioPago.value === 'TRANSFERENCIA'" (click)="elegirMedioPago(fila, 'TRANSFERENCIA')">🏦 Transferencia a Cuenta</button>
+            </div>
+          </div>
+
+          <div class="erp-field">            <label class="erp-label" [for]="'fa-metodo-' + i">Método</label>
             <select [id]="'fa-metodo-' + i" appInput formControlName="metodo">
               <option *ngFor="let m of metodos" [value]="m.valor">{{ m.etiqueta }}</option>
               <option *ngIf="metodoHeredado(fila) as h" [value]="h">{{ etiquetaMetodo(h) }} (anterior)</option>
@@ -88,6 +95,18 @@
           </div>
         </div>
 
+        <div class="erp-field" *ngIf="esMetodo(fila, 'TRANSFERENCIA')">
+          <span class="erp-label">Transferencia bancaria asociada</span>
+          <button type="button" appButton="secondary" size="sm" (click)="cargarSugeridas(fila)" [loading]="cargandoSugeridas">Buscar transferencias entrantes sugeridas</button>
+          <ul class="sugeridas" *ngIf="sugeridas.length > 0">
+            <li *ngFor="let s of sugeridas">
+              <button type="button" appButton="ghost" size="sm" (click)="elegirSugerida(fila, s)" [attr.aria-pressed]="fila.controls.transaccionId.value === s.id">
+                {{ s.fecha }} · {{ s.concepto }} · {{ s.monto | moneda }}<span *ngIf="s.cuentaNombre"> · {{ s.cuentaNombre }}</span>
+              </button>
+            </li>
+          </ul>
+          <p class="erp-muted" *ngIf="fila.controls.transaccionId.value">Transferencia #{{ fila.controls.transaccionId.value }} asociada: no se creará otro movimiento. Si no eliges ninguna, se creará el ingreso en la cuenta destino.</p>
+        </div>
         <p class="linea-aviso" *ngIf="avisoCambio(fila) as aviso" role="status">
           <i class="material-icons" aria-hidden="true">swap_horiz</i>{{ aviso }}
         </p>

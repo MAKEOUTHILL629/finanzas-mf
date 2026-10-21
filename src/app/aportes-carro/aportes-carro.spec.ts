@@ -160,6 +160,20 @@ describe('Aportes del carro — lógica', () => {
     });
   });
 
+  it('arma el cuerpo Fase 6: medioPago siempre viaja y la transferencia asociada solo con TRANSFERENCIA', () => {
+    const cuerpo = construirAporteDiario({
+      fecha: '2026-09-07',
+      periodo: '2026-09',
+      notas: null,
+      lineas: [
+        { valor: 200000, metodo: 'EFECTIVO', medioPago: 'EFECTIVO', personaId: 4, cuentaFinancieraId: 9, comentarios: null, transaccionId: 77 },
+        { valor: 350000, metodo: 'TRANSFERENCIA', medioPago: 'TRANSFERENCIA', personaId: 4, cuentaFinancieraId: 3, comentarios: null, transaccionId: 88 },
+      ],
+    });
+    expect(cuerpo.detalles[0]).toEqual({ valor: '200000', metodo: 'EFECTIVO', personaId: 4, cuentaFinancieraId: 9, medioPago: 'EFECTIVO' });
+    expect(cuerpo.detalles[1]).toEqual({ valor: '350000', metodo: 'TRANSFERENCIA', personaId: 4, cuentaFinancieraId: 3, medioPago: 'TRANSFERENCIA', transaccionId: 88, cuentaDestinoId: 3 });
+  });
+
   it('opciones de periodo: los existentes más anterior, actual y siguiente, del más reciente al más antiguo', () => {
     const hoy = '2026-10';
     const o = opcionesDePeriodo([{ periodo: '2026-09' }, { periodo: '2025-08' }], hoy);
@@ -498,7 +512,7 @@ describe('FormularioAporteDiarioComponent', () => {
       periodo: '2026-09',
       notas: 'Entrega',
       detalles: [
-        { valor: '600000', metodo: 'EFECTIVO', personaId: 4, cuentaFinancieraId: 9 },
+        { valor: '600000', metodo: 'EFECTIVO', personaId: 4, cuentaFinancieraId: 9, medioPago: 'EFECTIVO' },
         { valor: '100000.5', metodo: 'CRUCE_CUENTAS', personaId: 2, comentarios: 'arreglo' },
       ],
     });

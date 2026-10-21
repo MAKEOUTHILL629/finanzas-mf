@@ -32,6 +32,9 @@ export interface DetalleAporteDiario {
   comentarios: string | null;
   cuentaFinancieraId: number | null;
   cuentaNombre: string | null;
+  /** Fase 6 (sql/019): clasificación binaria del aporte. */
+  medioPago?: 'EFECTIVO' | 'TRANSFERENCIA';
+  cuentaDestinoId?: number | null;
   transaccionId: number | null;
   /** Préstamo POR_COBRAR que el Trigger 3 creó cuando la persona es un tercero (el «cruce»). */
   prestamoCruceGeneradoId: number | null;
@@ -68,8 +71,25 @@ export interface PeriodoCarro {
   progresoPorcentaje: number;
   aportadoPorCruces: number;
   aportadoDirecto: number;
+  /** Fase 6: recaudo en efectivo físico vs. por transferencia, y por aportante. */
+  totalAportesEfectivo?: number;
+  totalAportesTransferencia?: number;
+  transferenciasConciliadas?: number;
+  resumenPorPersona?: Array<{ personaId: number | null; nombre: string | null; aportadoEfectivo: number; aportadoTransferencia: number; total: number }>;
   cantidadAportes: number;
   aportes: AporteDiario[];
+}
+
+/** Fase 6: transferencia entrante sugerida para asociar a un aporte por transferencia. */
+export interface TransferenciaSugeridaAporte {
+  id: number;
+  fecha: string;
+  concepto: string;
+  monto: number;
+  cuentaDestinoId: number | null;
+  cuentaNombre: string | null;
+  diferenciaMonto: number | null;
+  diferenciaDias: number | null;
 }
 
 export interface ResumenCarro {
@@ -91,6 +111,10 @@ export interface DetalleAporteDiarioEnvio {
   metodo: string;
   personaId: number;
   cuentaFinancieraId?: number;
+  /** Fase 6: clasificación binaria y soporte bancario del aporte. */
+  medioPago?: 'EFECTIVO' | 'TRANSFERENCIA';
+  cuentaDestinoId?: number;
+  transaccionId?: number;
   comentarios?: string;
   origenObligacionMesId?: number;
 }

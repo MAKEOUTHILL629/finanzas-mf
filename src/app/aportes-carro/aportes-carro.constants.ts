@@ -184,6 +184,8 @@ export function avisoCruce(nombre: string | null | undefined, esResponsable = fa
   return `Este valor se abonará a la cuota del carro y se cargará automáticamente a la cuenta por cobrar de ${nombre || 'la persona'} a fin de mes.`;
 }
 
+export type MedioPagoAporte = 'EFECTIVO' | 'TRANSFERENCIA';
+
 export interface LineaFormulario {
   id?: number | null;
   valor: number | string | null;
@@ -191,6 +193,8 @@ export interface LineaFormulario {
   metodo: string | null;
   personaId: number | null;
   cuentaFinancieraId: number | null;
+  medioPago?: MedioPagoAporte | null;
+  transaccionId?: number | null;
   comentarios: string | null;
   origenObligacionMesId?: number | null;
 }
@@ -207,6 +211,8 @@ export function construirAporteDiario(v: { fecha: string; periodo: string; notas
       metodo: l.metodo as string,
       personaId: Number(l.personaId),
       ...(pideCuenta(l.metodo) && l.cuentaFinancieraId ? { cuentaFinancieraId: Number(l.cuentaFinancieraId) } : {}),
+      ...(pideCuenta(l.metodo) && l.medioPago ? { medioPago: l.medioPago } : {}),
+      ...(clasificarMetodo(l.metodo) === 'TRANSFERENCIA' && l.transaccionId ? { transaccionId: Number(l.transaccionId), cuentaDestinoId: l.cuentaFinancieraId ? Number(l.cuentaFinancieraId) : undefined } : {}),
       ...(clasificarMetodo(l.metodo) === 'SALDO_A_FAVOR' && l.origenObligacionMesId ? { origenObligacionMesId: Number(l.origenObligacionMesId) } : {}),
       ...(l.comentarios?.trim() ? { comentarios: l.comentarios.trim() } : {}),
     })),

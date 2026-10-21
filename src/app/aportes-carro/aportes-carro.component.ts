@@ -367,6 +367,12 @@ export class AportesCarroComponent implements OnInit, OnDestroy {
     return a.id;
   }
 
+  /** Fase 6: qué porcentaje del recaudo del mes está en efectivo físico. */
+  porcentajeEfectivo(k: PeriodoCarro): number {
+    const total = (k.totalAportesEfectivo ?? 0) + (k.totalAportesTransferencia ?? 0);
+    return total > 0 ? Math.round(((k.totalAportesEfectivo ?? 0) / total) * 1000) / 10 : 0;
+  }
+
   trackDetalle(_: number, d: DetalleAporteDiario): number {
     return d.id;
   }

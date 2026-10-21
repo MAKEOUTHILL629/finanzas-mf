@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } fro
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject, combineLatest } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { AporteDiario, PeriodoCarro, PersonaResumen, ResultadoAporteDiario } from '../../modelos/aportes';
+import { AporteDiario, PeriodoCarro, PersonaResumen, ResultadoAporteDiario, TransferenciaSugeridaAporte } from '../../modelos/aportes';
 import { ItemCuenta, ItemPersona } from '../../modelos/catalogos';
 import { AportesCarroService } from '../../services/aportes-carro.service';
 import { CatalogosService } from '../../services/catalogos.service';
@@ -40,6 +40,8 @@ export type FilaLinea = FormGroup<{
   cuentaFinancieraId: FormControl<number | null>;
   comentarios: FormControl<string | null>;
   origenObligacionMesId: FormControl<number | null>;
+  medioPago: FormControl<'EFECTIVO' | 'TRANSFERENCIA' | null>;
+  transaccionId: FormControl<number | null>;
 }>;
 
 @Component({
@@ -156,6 +158,8 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
           cuentaFinancieraId: d.cuentaFinancieraId,
           comentarios: d.comentarios ?? '',
           origenObligacionMesId: d.origenObligacionMesId,
+          medioPago: d.medioPago ?? null,
+          transaccionId: d.transaccionId,
         });
       }
     } else {
@@ -174,6 +178,8 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
       cuentaFinancieraId: new FormControl<number | null>(inicial.cuentaFinancieraId ?? null),
       comentarios: new FormControl<string | null>(inicial.comentarios ?? ''),
       origenObligacionMesId: new FormControl<number | null>(inicial.origenObligacionMesId ?? null),
+      medioPago: new FormControl<'EFECTIVO' | 'TRANSFERENCIA' | null>(inicial.medioPago ?? (metodo === 'TRANSFERENCIA' ? 'TRANSFERENCIA' : 'EFECTIVO')),
+      transaccionId: new FormControl<number | null>(inicial.transaccionId ?? null),
     });
     // Al cambiar el método se ajustan la persona y la cuenta sugeridas (y el origen del saldo a favor).
     fila.controls.metodo.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((m) => this.alCambiarMetodo(fila, m));
@@ -237,6 +243,35 @@ export class FormularioAporteDiarioComponent implements OnInit, OnDestroy {
 
   private origenSugerido(): number | null {
     return this.periodosOrigen[0]?.id ?? null;
+  }
+
+  // ── medio de pago Fase 6 ──
+
+  sugeridas: TransferenciaSugeridaAporte[] = [];
+  cargandoSugeridas = false;
+
+  /** Selector segmentado [💵 Efectivo] | [🏦 Transferencia a Cuenta]: sincroniza el método de la línea. */
+  elegirMedioPago(fila: FilaLinea, medio: 'EFECTIVO' | 'TRANSFERENCIA'): void {
+    fila.controls.medioPago.setValue(medio);
+    fila.controls.metodo.setValue(medio);
+    if (medio === 'EFECTIVO') fila.controls.transaccionId.setValue(null);
+  }
+
+  /** Carga bajo demanda las transferencias entrantes sugeridas para la línea (no se pide en ngOnInit). */
+  cargarSugeridas(fila: FilaLinea): void {
+    this.cargandoSugeridas = true;
+    this.aportesService
+      .getTransferenciasSugeridas(fila.controls.valor.value ?? undefined, this.form.controls.fecha.value ?? undefined)
+      .pipe(takeUntil(this.destroy$), finalize(() => (this.cargandoSugeridas = false)))
+      .subscribe({
+        next: (lista) => (this.sugeridas = lista),
+        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudieron cargar las transferencias sugeridas.')),
+      });
+  }
+
+  elegirSugerida(fila: FilaLinea, sugerida: TransferenciaSugeridaAporte): void {
+    fila.controls.transaccionId.setValue(sugerida.id);
+    if (sugerida.cuentaDestinoId) fila.controls.cuentaFinancieraId.setValue(sugerida.cuentaDestinoId);
   }
 
   esMetodo(fila: FilaLinea, ...clases: Array<'EFECTIVO' | 'TRANSFERENCIA' | 'CRUCE_CUENTAS' | 'SALDO_A_FAVOR' | 'OTRO'>): boolean {
