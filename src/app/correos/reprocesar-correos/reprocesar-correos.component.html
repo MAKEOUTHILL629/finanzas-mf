@@ -30,6 +30,86 @@
       </button>
     </div>
 
+    <!-- Auditoría de Rechazados Históricos y Asociados (Iteración 2 — Fase 1) -->
+    <div class="auditoria">
+      <h3 class="erp-overline">Auditoría de Rechazados Históricos y Asociados</h3>
+      <p class="erp-field-hint">
+        Escanea todos los correos de compras o transferencias <strong>rechazadas / declinadas / sin fondos</strong> y limpia en cascada cualquier compra TC, cuota, responsable, asiento de deuda o transacción que se haya generado por error.
+      </p>
+      <div class="erp-alert erp-alert--info" role="status" *ngIf="mensajePurgaRechazados">
+        <i class="material-icons" aria-hidden="true">check_circle</i><span>{{ mensajePurgaRechazados }}</span>
+      </div>
+
+      <div class="erp-alert erp-alert--warning" role="alertdialog" aria-labelledby="purga-rechazados-titulo" *ngIf="confirmandoPurgaRechazados && reporteRechazados">
+        <i class="material-icons" aria-hidden="true">warning</i>
+        <div>
+          <strong id="purga-rechazados-titulo">¿Purgar {{ reporteRechazados.correosRechazadosDetectados }} correo(s) rechazado(s) y sus registros en cascada?</strong>
+          <p class="aviso-texto">
+            Se eliminarán {{ reporteRechazados.comprasCreditoEliminadas }} compra(s) TC ({{ reporteRechazados.cuotasEliminadas }} cuota(s), {{ reporteRechazados.responsablesEliminados }} responsable(s),
+            {{ reporteRechazados.movimientosDeudaEliminados }} asiento(s) de deuda) y {{ reporteRechazados.transaccionesEliminadas }} transacción(es), restaurando automáticamente los saldos de tus cuentas.
+          </p>
+          <div class="erp-actions">
+            <button type="button" appButton="danger" size="sm" (click)="confirmarPurgaRechazados()" [disabled]="purgandoRechazados">
+              {{ purgandoRechazados ? 'Purgando…' : 'Sí, purgar en cascada' }}
+            </button>
+            <button type="button" appButton="ghost" size="sm" (click)="cancelarPurgaRechazados()" [disabled]="purgandoRechazados">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <ng-container *ngIf="reporteRechazados && reporteRechazados.items.length > 0">
+        <div class="correo-marcas" style="margin-bottom: 8px">
+          <app-badge tone="danger">Correos rechazados: {{ reporteRechazados.correosRechazadosDetectados }}</app-badge>
+          <app-badge tone="warning" *ngIf="reporteRechazados.comprasCreditoEliminadas > 0">Compras TC a borrar: {{ reporteRechazados.comprasCreditoEliminadas }} ({{ reporteRechazados.cuotasEliminadas }} cuotas)</app-badge>
+          <app-badge tone="info" *ngIf="reporteRechazados.transaccionesEliminadas > 0">Transacciones a borrar: {{ reporteRechazados.transaccionesEliminadas }}</app-badge>
+        </div>
+        <table appTable>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Comercio / Asunto</th>
+              <th class="erp-num">Monto</th>
+              <th>Causal detectada</th>
+              <th>Registros asociados</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reporteRechazados.items">
+              <td>{{ item.fecha | fechaCorta }}</td>
+              <td>{{ item.comercio || item.asunto || '—' }}</td>
+              <td class="erp-num">{{ item.monto !== null ? (item.monto | moneda) : '—' }}</td>
+              <td><code>{{ item.patronDetectado }}</code></td>
+              <td>
+                <span *ngIf="item.compraId">Compra #{{ item.compraId }} ({{ item.cuotasAsociadas }} cuotas, {{ item.responsablesAsociados }} resp.)</span>
+                <span *ngIf="item.transaccionId">Tx #{{ item.transaccionId }}<ng-container *ngIf="item.nombreCuenta"> · {{ item.nombreCuenta }}</ng-container></span>
+                <span *ngIf="!item.compraId && !item.transaccionId">Solo reclasificar a Rechazado</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </ng-container>
+
+      <p class="erp-muted" *ngIf="reporteRechazados && reporteRechazados.items.length === 0 && !mensajePurgaRechazados">
+        No se encontraron transacciones ni compras asociadas a correos rechazados.
+      </p>
+
+      <div class="erp-actions">
+        <button type="button" appButton="ghost" (click)="auditarRechazadosHistoricos()" [disabled]="auditandoRechazados">
+          <i class="material-icons" aria-hidden="true">policy</i>
+          {{ auditandoRechazados ? 'Auditando…' : 'Auditar rechazados históricos' }}
+        </button>
+        <button
+          type="button"
+          appButton="danger"
+          (click)="pedirConfirmacionPurga()"
+          [disabled]="purgandoRechazados || !reporteRechazados || reporteRechazados.correosRechazadosDetectados === 0"
+        >
+          <i class="material-icons" aria-hidden="true">delete_sweep</i>
+          Purgar Rechazados y Limpiar Asociados
+        </button>
+      </div>
+    </div>
+
     <!-- Auditoría retroactiva de falsos positivos (Fase 1) -->
     <div class="auditoria">
       <h3 class="erp-overline">Compras que no eran compras</h3>

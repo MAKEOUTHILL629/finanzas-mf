@@ -61,6 +61,9 @@
         <span class="erp-badge" *ngIf="vista(n).ultimos4"><i class="material-icons" aria-hidden="true">{{ vista(n).instrumento === 'TC' ? 'credit_card' : 'account_balance' }}</i><span class="erp-mono">••{{ vista(n).ultimos4 }}</span></span>
       </div>
 
+      <div class="correo-marcas" *ngIf="vista(n).motivoRechazo as mr">
+        <app-badge tone="danger"><i class="material-icons" aria-hidden="true">block</i>Causal de rechazo: {{ mr }}</app-badge>
+      </div>
       <div class="correo-marcas" *ngIf="vinculo(n.vinculo, vista(n).motivo) as v">
         <app-badge [tone]="v.clase"><i class="material-icons" aria-hidden="true">{{ v.icono }}</i>{{ v.texto }}</app-badge>
         <app-badge *ngIf="nombrePersona(n.persona_id) as quien"><i class="material-icons" aria-hidden="true">person</i>{{ quien }}</app-badge>

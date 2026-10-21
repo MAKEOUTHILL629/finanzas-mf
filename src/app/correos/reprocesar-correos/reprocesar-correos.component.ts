@@ -1,7 +1,12 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { Subject, interval, of } from 'rxjs';
 import { catchError, finalize, switchMap, takeUntil, takeWhile } from 'rxjs/operators';
-import { EstadoTrabajoReproceso, FalsoPositivoCorreo, ResumenReproceso } from '../../modelos/correos-inteligentes';
+import {
+  EstadoTrabajoReproceso,
+  FalsoPositivoCorreo,
+  ReporteAuditoriaRechazados,
+  ResumenReproceso,
+} from '../../modelos/correos-inteligentes';
 import { ComprasCreditoService } from '../../services/compras-credito.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
@@ -41,6 +46,13 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
   auditando = false;
   revirtiendo = false;
   mensajeAuditoria: string | null = null;
+
+  // Auditoría y purga en cascada de rechazados históricos (Iteración 2 — Fase 1)
+  reporteRechazados: ReporteAuditoriaRechazados | null = null;
+  auditandoRechazados = false;
+  purgandoRechazados = false;
+  confirmandoPurgaRechazados = false;
+  mensajePurgaRechazados: string | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -123,6 +135,51 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
           this.falsosPositivos = [];
         },
         error: (err) => (this.error = mensajeDeError(err, 'No se pudieron revertir los falsos positivos.')),
+      });
+  }
+
+  auditarRechazadosHistoricos(): void {
+    this.auditandoRechazados = true;
+    this.mensajePurgaRechazados = null;
+    this.confirmandoPurgaRechazados = false;
+    this.correos
+      .auditarRechazadosHistoricos()
+      .pipe(takeUntil(this.destroy$), finalize(() => (this.auditandoRechazados = false)))
+      .subscribe({
+        next: (r) => (this.reporteRechazados = r),
+        error: (err) => (this.error = mensajeDeError(err, 'No se pudo auditar los rechazados históricos.')),
+      });
+  }
+
+  pedirConfirmacionPurga(): void {
+    if (!this.reporteRechazados || this.reporteRechazados.correosRechazadosDetectados === 0) return;
+    this.confirmandoPurgaRechazados = true;
+  }
+
+  cancelarPurgaRechazados(): void {
+    this.confirmandoPurgaRechazados = false;
+  }
+
+  confirmarPurgaRechazados(): void {
+    this.purgandoRechazados = true;
+    this.correos
+      .purgarRechazadosHistoricos()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.purgandoRechazados = false;
+          this.confirmandoPurgaRechazados = false;
+        }),
+      )
+      .subscribe({
+        next: (r) => {
+          this.mensajePurgaRechazados =
+            `Purga completada: ${r.correosActualizadosADescartado} correo(s) marcado(s) como rechazados, ` +
+            `${r.comprasCreditoEliminadas} compra(s) TC eliminada(s) (${r.cuotasEliminadas} cuota(s), ${r.responsablesEliminados} responsable(s), ` +
+            `${r.movimientosDeudaEliminados} asiento(s) de deuda) y ${r.transaccionesEliminadas} transacción(es) eliminada(s).`;
+          this.reporteRechazados = { ...r, items: [], correosRechazadosDetectados: 0 };
+        },
+        error: (err) => (this.error = mensajeDeError(err, 'No se pudieron purgar los registros rechazados.')),
       });
   }
 

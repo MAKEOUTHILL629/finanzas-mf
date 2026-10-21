@@ -13,6 +13,7 @@ export interface VistaCorreo {
   instrumento: 'TC' | 'CUENTA' | null;
   ruta: string | null;
   motivo: string | null;
+  motivoRechazo: string | null;
   linkCorreo: string | null;
   /** Día que dice el correo (`yyyy-MM-dd`), si lo trae. */
   fecha: string | null;
@@ -36,6 +37,7 @@ export function interpretarCorreo(n: Pick<NotificacionCorreo, 'datos_parseados'>
     instrumento,
     ruta: texto(d['ruta']),
     motivo: texto(d['motivo']),
+    motivoRechazo: texto(d['motivo_rechazo']),
     linkCorreo: texto(d['linkCorreo']),
     fecha: /^\d{4}-\d{2}-\d{2}/.test(texto(d['fecha']) ?? '') ? (texto(d['fecha']) as string).slice(0, 10) : null,
     tasa: Number.isFinite(Number(d['tasa_cambio'])) && Number(d['tasa_cambio']) > 0 ? Number(d['tasa_cambio']) : null,
@@ -112,17 +114,29 @@ export const ESTADOS_CORREO: ReadonlyArray<{ valor: '' | EstadoNotificacionCorre
   { valor: 'PENDIENTE', etiqueta: 'Por revisar' },
   { valor: 'CONCILIADO', etiqueta: 'Conciliados' },
   { valor: 'IGNORADO', etiqueta: 'Ignorados' },
-  { valor: 'DESCARTADO_RECHAZADO', etiqueta: 'Rechazados por el banco' },
+  { valor: 'DESCARTADO_RECHAZADO', etiqueta: 'Descartados / Rechazados' },
   { valor: 'ERROR', etiqueta: 'Con error' },
   { valor: '', etiqueta: 'Todos' },
 ];
 
 export function claseEstadoCorreo(estado: string | null | undefined): 'success' | 'warning' | 'danger' | 'neutral' {
-  return estado === 'CONCILIADO' ? 'success' : estado === 'PENDIENTE' ? 'warning' : estado === 'ERROR' ? 'danger' : 'neutral';
+  return estado === 'CONCILIADO'
+    ? 'success'
+    : estado === 'PENDIENTE'
+      ? 'warning'
+      : estado === 'ERROR' || estado === 'DESCARTADO_RECHAZADO'
+        ? 'danger'
+        : 'neutral';
 }
 
 export function etiquetaEstadoCorreo(estado: string | null | undefined): string {
-  return { PENDIENTE: 'Por revisar', CONCILIADO: 'Conciliado', IGNORADO: 'Ignorado', ERROR: 'Con error', DESCARTADO_RECHAZADO: 'Rechazada por el banco' }[estado ?? ''] ?? (estado || '—');
+  return {
+    PENDIENTE: 'Por revisar',
+    CONCILIADO: 'Conciliado',
+    IGNORADO: 'Ignorado',
+    ERROR: 'Con error',
+    DESCARTADO_RECHAZADO: 'Rechazada por el banco',
+  }[estado ?? ''] ?? (estado || '—');
 }
 
 /** ¿El correo describe un egreso que se puede convertir en préstamo por cobrar? */

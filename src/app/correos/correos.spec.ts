@@ -657,6 +657,77 @@ describe('ReprocesarCorreosComponent', () => {
   }));
 });
 
+describe('ReprocesarCorreosComponent — auditoría y purga de rechazados (Iteración 2 Fase 1)', () => {
+  afterEach(() => verificarHttp());
+
+  function iniciar() {
+    configurarTestBed([ReprocesarCorreosComponent]);
+    const fixture = TestBed.createComponent(ReprocesarCorreosComponent);
+    fixture.detectChanges();
+    responder('compras-credito', []);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('audita correos rechazados históricos y pide confirmación antes de purgar en cascada', () => {
+    const f = iniciar();
+    const c = f.componentInstance;
+    c.auditarRechazadosHistoricos();
+    const reqAudit = esperar('GET', 'notificaciones-correo/auditoria-rechazados');
+    reqAudit.flush({
+      ejecutado: false,
+      correosRechazadosDetectados: 2,
+      correosActualizadosADescartado: 2,
+      comprasCreditoEliminadas: 1,
+      cuotasEliminadas: 3,
+      responsablesEliminados: 1,
+      movimientosDeudaEliminados: 3,
+      transaccionesEliminadas: 1,
+      saldosCuentasRestaurados: [{ cuentaId: 1, nombreCuenta: 'Ahorros', diferenciaRestaurada: '42000.00' }],
+      items: [
+        {
+          notificacionId: 101,
+          fecha: '2026-10-12T15:00:00Z',
+          asunto: 'Compra rechazada',
+          comercio: 'RAPPI',
+          monto: '42000',
+          patronDetectado: 'no fue exitosa',
+          estadoActual: 'CONCILIADO',
+          compraId: 501,
+          cuotasAsociadas: 3,
+          responsablesAsociados: 1,
+          movimientosDeudaAsociados: 3,
+          transaccionId: null,
+          cuentaAfectadaId: null,
+          nombreCuenta: null,
+          impactoSaldoCop: null,
+        },
+      ],
+    });
+    expect(c.reporteRechazados?.correosRechazadosDetectados).toBe(2);
+
+    c.pedirConfirmacionPurga();
+    expect(c.confirmandoPurgaRechazados).toBeTrue();
+    c.confirmarPurgaRechazados();
+    const reqPurge = esperar('POST', 'notificaciones-correo/purgar-rechazados-historicos');
+    reqPurge.flush({
+      ejecutado: true,
+      correosRechazadosDetectados: 2,
+      correosActualizadosADescartado: 2,
+      comprasCreditoEliminadas: 1,
+      cuotasEliminadas: 3,
+      responsablesEliminados: 1,
+      movimientosDeudaEliminados: 3,
+      transaccionesEliminadas: 1,
+      saldosCuentasRestaurados: [{ cuentaId: 1, nombreCuenta: 'Ahorros', diferenciaRestaurada: '42000.00' }],
+      items: [],
+    });
+    expect(c.confirmandoPurgaRechazados).toBeFalse();
+    expect(c.mensajePurgaRechazados).toContain('Purga completada');
+  });
+
+});
+
 describe('ListaCorreosComponent — vínculos y deshacer', () => {
   afterEach(() => verificarHttp());
 

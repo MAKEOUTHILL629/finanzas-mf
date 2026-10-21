@@ -11,6 +11,7 @@ import {
   AsignarProducto,
   EstadoTrabajoReproceso,
   ProductoDetectado,
+  ReporteAuditoriaRechazados,
   ReprocesarCorreos,
   ResultadoAceptarSugerencias,
   ResultadoAsignacion,
@@ -101,7 +102,7 @@ export class NotificacionesCorreoService {
     return this.api.get<EstadoTrabajoReproceso>(`${this.url}/reprocesar/${jobId}`);
   }
 
-  // ───────────────────────────── auditoría de falsos positivos (Fase 1) ─────────────────────────────
+  // ───────────────────────────── auditoría de falsos positivos y rechazados (Fase 1) ─────────────────────────────
 
   /** Preview sin escribir: compras históricas que en realidad eran pagos de tarjeta o compras rechazadas. */
   auditarFalsosPositivos(): Observable<ResultadoAuditoriaCorreos> {
@@ -111,5 +112,15 @@ export class NotificacionesCorreoService {
   /** Elimina las compras erróneas o las convierte en pagos de tarjeta. Sin `ids`, revierte todo lo reversible. */
   revertirFalsosPositivos(ids?: number[]): Observable<ResultadoReversionCorreos> {
     return this.api.post<ResultadoReversionCorreos>(`${this.url}/revertir-falsos-positivos`, ids?.length ? { ids } : {});
+  }
+
+  /** Escanea correos rechazados históricos y todos sus registros asociados en cascada (dry-run). */
+  auditarRechazadosHistoricos(): Observable<ReporteAuditoriaRechazados> {
+    return this.api.get<ReporteAuditoriaRechazados>(`${this.url}/auditoria-rechazados`);
+  }
+
+  /** Purga en cascada los registros asociados a correos rechazados históricos y restaura saldos de cuentas. */
+  purgarRechazadosHistoricos(ids?: number[]): Observable<ReporteAuditoriaRechazados> {
+    return this.api.post<ReporteAuditoriaRechazados>(`${this.url}/purgar-rechazados-historicos`, ids?.length ? { ids } : {});
   }
 }

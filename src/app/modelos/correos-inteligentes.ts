@@ -124,6 +124,37 @@ export interface ResultadoReversionCorreos {
   omitidos: Array<{ notificacionId: number; motivo: string }>;
 }
 
+export interface RechazadoHistoricoDetectado {
+  notificacionId: number;
+  fecha: string;
+  asunto: string | null;
+  comercio: string | null;
+  monto: string | null;
+  patronDetectado: string;
+  estadoActual: string;
+  compraId: number | null;
+  cuotasAsociadas: number;
+  responsablesAsociados: number;
+  movimientosDeudaAsociados: number;
+  transaccionId: number | null;
+  cuentaAfectadaId: number | null;
+  nombreCuenta: string | null;
+  impactoSaldoCop: string | null;
+}
+
+export interface ReporteAuditoriaRechazados {
+  ejecutado: boolean;
+  correosRechazadosDetectados: number;
+  correosActualizadosADescartado: number;
+  comprasCreditoEliminadas: number;
+  cuotasEliminadas: number;
+  responsablesEliminados: number;
+  movimientosDeudaEliminados: number;
+  transaccionesEliminadas: number;
+  saldosCuentasRestaurados: Array<{ cuentaId: number; nombreCuenta: string; diferenciaRestaurada: string }>;
+  items: RechazadoHistoricoDetectado[];
+}
+
 export interface TrabajoReproceso {
   jobId: string;
   total: number;
