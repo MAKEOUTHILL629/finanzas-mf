@@ -52,10 +52,10 @@
         <div class="insp-tags-inline">
           <app-selector-tags
             [tags]="compra.tags || []"
-            [compacto]="true"
-            [soloLectura]="unificada"
+            [modoCompacto]="true"
+            [deshabilitado]="unificada"
             placeholder="+ Etiqueta (#viaje, #hogar...)"
-            (cambio)="guardarTags($event)"
+            (tagsChange)="guardarTags($event)"
           ></app-selector-tags>
         </div>
       </div>
@@ -402,7 +402,7 @@
       </label>
       <div class="erp-field insp-form-360-full">
         <span class="erp-label">Etiquetas transversales</span>
-        <app-selector-tags [tags]="tagsEdicionCompleta" (cambio)="tagsEdicionCompleta = $event"></app-selector-tags>
+        <app-selector-tags [tags]="tagsEdicionCompleta" (tagsChange)="tagsEdicionCompleta = $event"></app-selector-tags>
       </div>
     </div>
     <div class="erp-form-actions">

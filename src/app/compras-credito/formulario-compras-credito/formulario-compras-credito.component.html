@@ -142,7 +142,7 @@
     <!-- Estado y Tarjeta -->
     <div class="form-group">
       <label>Etiquetas (Opcional)</label>
-      <app-selector-tags [tags]="tagsCompra" (cambio)="tagsCompra = $event"></app-selector-tags>
+      <app-selector-tags [tags]="tagsCompra" (tagsChange)="tagsCompra = $event"></app-selector-tags>
     </div>
     <div class="form-row">
       <div class="form-group">
