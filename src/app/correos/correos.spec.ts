@@ -726,6 +726,42 @@ describe('ReprocesarCorreosComponent — auditoría y purga de rechazados (Itera
     expect(c.mensajePurgaRechazados).toContain('Purga completada');
   });
 
+  it('ejecuta reproceso bulk en una sola llamada HTTP y emite el resumen con métricas de velocidad', () => {
+    const f = iniciar();
+    const c = f.componentInstance;
+    const terminado = jasmine.createSpy('terminado');
+    c.terminado.subscribe(terminado);
+    c.incluirConError = true;
+    c.reprocesarEnLoteBulk();
+    const req = esperar('POST', 'notificaciones-correo/reprocesar-lote');
+    expect(req.request.body).toEqual(jasmine.objectContaining({ incluirConError: true, simular: false }));
+    req.flush({
+      totalEvaluados: 15,
+      conciliados: 10,
+      descartadosRechazados: 3,
+      ignorados: 1,
+      duplicados: 1,
+      pendientesRestantes: 0,
+      errores: 0,
+      omitidos: 0,
+      comprasCreadas: 4,
+      comprasEnlazadas: 2,
+      transaccionesCreadas: 4,
+      transaccionesEnlazadas: 0,
+      tiempoTotalMs: 120,
+      velocidadCorreosPorSegundo: 125,
+      acciones: { compras_creadas: 4, compras_enlazadas: 2, transacciones_creadas: 4, ignorados: 4, duplicados: 1 },
+      motivos: {},
+      muestras: [],
+      aprendizajes: [],
+      detalleErrores: [],
+    });
+    expect(c.fase).toBe('listo');
+    expect(c.resultadoBulk?.conciliados).toBe(10);
+    expect(c.resultadoBulk?.descartadosRechazados).toBe(3);
+    expect(terminado).toHaveBeenCalledWith(jasmine.objectContaining({ evaluados: 15, simulado: false }));
+  });
+
 });
 
 describe('ListaCorreosComponent — vínculos y deshacer', () => {

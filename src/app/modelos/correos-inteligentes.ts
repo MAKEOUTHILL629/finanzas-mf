@@ -98,6 +98,30 @@ export interface ReprocesarCorreos {
   simular?: boolean;
   ids?: number[];
   motivos?: string[];
+  incluirConError?: boolean;
+  chunkSize?: number;
+}
+
+export interface ResultadoReprocesoBulk {
+  totalEvaluados: number;
+  conciliados: number;
+  descartadosRechazados: number;
+  ignorados: number;
+  duplicados: number;
+  pendientesRestantes: number;
+  errores: number;
+  omitidos: number;
+  comprasCreadas: number;
+  comprasEnlazadas: number;
+  transaccionesCreadas: number;
+  transaccionesEnlazadas: number;
+  tiempoTotalMs: number;
+  velocidadCorreosPorSegundo: number;
+  acciones: Record<string, number>;
+  motivos: Record<string, number>;
+  muestras: MuestraReproceso[];
+  aprendizajes: AprendizajeTarjeta[];
+  detalleErrores: Array<{ notificacionId: number; error: string }>;
 }
 
 /** Falso positivo histórico (Fase 1): compra creada desde un correo que era pago de tarjeta o compra rechazada. */

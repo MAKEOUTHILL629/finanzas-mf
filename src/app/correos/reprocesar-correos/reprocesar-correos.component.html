@@ -22,8 +22,16 @@
       <input type="checkbox" [(ngModel)]="sinCorte" name="sinCorte" />
       <span>Sin fecha de corte (registrar todo lo que falte, incluso lo muy antiguo)</span>
     </label>
+    <label class="erp-check">
+      <input type="checkbox" [(ngModel)]="incluirConError" name="incluirConError" />
+      <span>Incluir también correos con error previo para reintentarlos con el motor multicapa</span>
+    </label>
     <div class="erp-actions">
       <button type="button" appButton="ghost" (click)="cancelar.emit()">Cancelar</button>
+      <button type="button" appButton="secondary" (click)="reprocesarEnLoteBulk()" [disabled]="ejecutandoBulk || (!sinCorte && !desde)">
+        <i class="material-icons" aria-hidden="true">bolt</i>
+        Reprocesar Pendientes en Lote
+      </button>
       <button type="button" appButton="primary" (click)="simular()" [disabled]="!sinCorte && !desde">
         <i class="material-icons" aria-hidden="true">preview</i>
         Ver qué pasaría
@@ -155,7 +163,16 @@
       <i class="material-icons" aria-hidden="true">{{ fase === 'listo' ? 'check_circle' : 'info' }}</i>
       <span *ngIf="fase === 'resumen'">Esto es una <strong>simulación</strong>: aún no se ha cambiado nada. Se evaluaron {{ resumen.evaluados }} correos {{ corteTexto }}.</span>
       <span *ngIf="fase === 'ejecutando'">Aplicando los cambios en segundo plano… puedes seguir usando la app.</span>
-      <span *ngIf="fase === 'listo'">Listo: se procesaron {{ resumen.evaluados }} correos.</span>
+      <span *ngIf="fase === 'listo'">
+        Listo: se procesaron {{ resumen.evaluados }} correos<ng-container *ngIf="resultadoBulk"> en {{ resultadoBulk.tiempoTotalMs }} ms ({{ resultadoBulk.velocidadCorreosPorSegundo }} correos/s)</ng-container>.
+      </span>
+    </div>
+
+    <div class="correo-marcas" *ngIf="resultadoBulk" style="margin-bottom: 8px">
+      <app-badge tone="success">Conciliados: {{ resultadoBulk.conciliados }}</app-badge>
+      <app-badge tone="danger" *ngIf="resultadoBulk.descartadosRechazados > 0">Rechazados descartados: {{ resultadoBulk.descartadosRechazados }}</app-badge>
+      <app-badge tone="neutral" *ngIf="resultadoBulk.duplicados > 0">Duplicados: {{ resultadoBulk.duplicados }}</app-badge>
+      <app-badge tone="warning" *ngIf="resultadoBulk.pendientesRestantes > 0">Siguen pendientes: {{ resultadoBulk.pendientesRestantes }}</app-badge>
     </div>
 
     <ul class="acciones" aria-label="Qué pasa con los correos">
@@ -211,6 +228,10 @@
 
     <div class="erp-actions" *ngIf="fase === 'resumen'">
       <button type="button" appButton="ghost" (click)="volver()">Cambiar la fecha</button>
+      <button type="button" appButton="secondary" (click)="reprocesarEnLoteBulk()" [disabled]="!registraAlgo || ejecutandoBulk">
+        <i class="material-icons" aria-hidden="true">bolt</i>
+        Ejecutar en lote rápido
+      </button>
       <button type="button" appButton="primary" (click)="aplicar()" [disabled]="!registraAlgo">
         <i class="material-icons" aria-hidden="true">done_all</i>
         Aplicar estos cambios

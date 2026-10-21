@@ -5,6 +5,7 @@ import {
   EstadoTrabajoReproceso,
   FalsoPositivoCorreo,
   ReporteAuditoriaRechazados,
+  ResultadoReprocesoBulk,
   ResumenReproceso,
 } from '../../modelos/correos-inteligentes';
 import { ComprasCreditoService } from '../../services/compras-credito.service';
@@ -37,7 +38,10 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
   fase: FaseReproceso = 'config';
   desde = '';
   sinCorte = false;
+  incluirConError = false;
   resumen: ResumenReproceso | null = null;
+  resultadoBulk: ResultadoReprocesoBulk | null = null;
+  ejecutandoBulk = false;
   avance: EstadoTrabajoReproceso | null = null;
   error: string | null = null;
 
@@ -87,6 +91,7 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
   simular(): void {
     this.fase = 'simulando';
     this.error = null;
+    this.resultadoBulk = null;
     this.correos
       .simularReproceso(this.opciones())
       .pipe(takeUntil(this.destroy$))
@@ -102,6 +107,49 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Fase 2 (Iteración 2): Ejecuta el motor Bulk en el backend (`POST /notificaciones-correo/reprocesar-lote`)
+   * procesando los correos pendientes en sub-lotes transaccionales con el contexto precargado en memoria.
+   */
+  reprocesarEnLoteBulk(): void {
+    this.ejecutandoBulk = true;
+    this.fase = 'ejecutando';
+    this.error = null;
+    this.correos
+      .reprocesarPendientesBulk({
+        ...this.opciones(),
+        ...(this.incluirConError ? { incluirConError: true } : {}),
+        simular: false,
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.ejecutandoBulk = false)),
+      )
+      .subscribe({
+        next: (b) => {
+          this.resultadoBulk = b;
+          const resumenCompat: ResumenReproceso = {
+            simulado: false,
+            desde: this.sinCorte || !this.desde ? null : this.desde,
+            evaluados: b.totalEvaluados,
+            acciones: b.acciones,
+            motivos: b.motivos,
+            omitidos: b.omitidos,
+            errores: b.detalleErrores,
+            muestras: b.muestras,
+            aprendizajes: b.aprendizajes,
+          };
+          this.resumen = resumenCompat;
+          this.fase = 'listo';
+          this.terminado.emit(resumenCompat);
+        },
+        error: (err) => {
+          this.error = mensajeDeError(err, 'No se pudo ejecutar el reproceso en lote.');
+          this.fase = 'config';
+        },
+      });
+  }
+
   get registraAlgo(): boolean {
     const a = this.resumen?.acciones ?? {};
     return (a['compras_enlazadas'] ?? 0) + (a['compras_creadas'] ?? 0) + (a['compras_creadas_con_plantilla'] ?? 0) + (a['transacciones_creadas'] ?? 0) + (a['transacciones_enlazadas'] ?? 0) + (a['duplicados'] ?? 0) + (a['ignorados'] ?? 0) > 0;
@@ -110,6 +158,7 @@ export class ReprocesarCorreosComponent implements OnInit, OnDestroy {
   volver(): void {
     this.fase = 'config';
     this.resumen = null;
+    this.resultadoBulk = null;
   }
 
   auditarFalsosPositivos(): void {

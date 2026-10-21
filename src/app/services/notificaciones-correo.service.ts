@@ -16,6 +16,7 @@ import {
   ResultadoAceptarSugerencias,
   ResultadoAsignacion,
   ResultadoAuditoriaCorreos,
+  ResultadoReprocesoBulk,
   ResultadoReversionCorreos,
   ResumenReproceso,
   TrabajoReproceso,
@@ -100,6 +101,11 @@ export class NotificacionesCorreoService {
 
   getEstadoReproceso(jobId: string): Observable<EstadoTrabajoReproceso> {
     return this.api.get<EstadoTrabajoReproceso>(`${this.url}/reprocesar/${jobId}`);
+  }
+
+  /** Motor Backend Bulk (Iteración 2 — Fase 2): procesa todos los pendientes en sub-lotes transaccionales de una sola llamada. */
+  reprocesarPendientesBulk(opciones: ReprocesarCorreos = {}): Observable<ResultadoReprocesoBulk> {
+    return this.api.post<ResultadoReprocesoBulk>(`${this.url}/reprocesar-lote`, { ...opciones, simular: opciones.simular ?? false });
   }
 
   // ───────────────────────────── auditoría de falsos positivos y rechazados (Fase 1) ─────────────────────────────
