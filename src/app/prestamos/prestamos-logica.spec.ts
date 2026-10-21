@@ -1,6 +1,6 @@
 import { CorteCobro, PrestamoDetalle } from '../modelos/cobros';
 import { calcularCambios, valoresDe } from './formulario-editar-prestamo/formulario-editar-prestamo.component';
-import { corteParaHoy } from './formulario-prestamos/formulario-prestamos.component';
+import { corteParaHoy, ordenarTransferenciasCandidatas } from './formulario-prestamos/formulario-prestamos.component';
 import { estadisticasPorCorte } from './lista-cortes/lista-cortes.component';
 import { FILTROS_VACIOS, filtrarPrestamos, ordenarPrestamos } from './tabla-prestamos/tabla-prestamos.component';
 import { claseEstadoAprobacion, claseEstadoCorte, claseEstadoPrestamo, estaPendiente, resumirAprobaciones, saldoDe } from './prestamos.constants';
@@ -144,5 +144,15 @@ describe('cortes: corteParaHoy y estadisticasPorCorte', () => {
     ]);
     expect(e.get(5)).toEqual({ prestamos: 4, pendientes: 3, saldoPorCobrar: 300.3 });
     expect(e.size).toBe(1);
+  });
+
+  it('Iteración 2 Fase 5: ordenarTransferenciasCandidatas filtra últimos 15 días y prioriza coincidencia de monto', () => {
+    const txs = [
+      { id: 10, tipo_transaccion: 'EGRESO', estado: 'CONFIRMADO', monto_cop: 500000, fecha_transaccion: '2026-10-18T10:00:00Z', concepto: 'Transferencia Nequi' },
+      { id: 11, tipo_transaccion: 'EGRESO', estado: 'CONFIRMADO', monto_cop: 150000, fecha_transaccion: '2026-10-19T10:00:00Z', concepto: 'Préstamo amigo' },
+      { id: 12, tipo_transaccion: 'EGRESO', estado: 'ANULADO', monto_cop: 150000, fecha_transaccion: '2026-10-19T12:00:00Z', concepto: 'Anulada' },
+    ] as any[];
+    const res = ordenarTransferenciasCandidatas(txs, 150000, '2026-10-20');
+    expect(res.map((r) => r.id)).toEqual([11, 10]);
   });
 });

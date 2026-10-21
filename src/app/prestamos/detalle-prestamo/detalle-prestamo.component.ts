@@ -1,13 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { CorteCobro, PrestamoDetalle } from '../../modelos/cobros';
+import { NotificacionCorreo } from '../../modelos/erp';
 import { AprobacionPrestamo } from '../../modelos/prestamos';
 import { ItemPersona } from '../../modelos/catalogos';
 import { CortesCobroService } from '../../services/cortes-cobro.service';
 import { ModalService } from '../../services/modal.service';
 import { CatalogosService } from '../../services/catalogos.service';
+import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
 import { PrestamosService } from '../../services/prestamos.service';
 import { AbonoPasivo, ResultadoAbonoPasivo } from '../../modelos/prestamos-pasivos';
 import { copiarAlPortapapeles } from '../../shared/portapapeles.helper';
@@ -284,5 +286,30 @@ export class DetallePrestamoComponent implements OnInit, OnDestroy {
 
   trackByAprobacion(_: number, a: AprobacionPrestamo): number {
     return a.id;
+  }
+
+  // ── Iteración 2 — Fase 5: Trazabilidad de transferencia y correo bancario ──
+
+  correoOriginal: NotificacionCorreo | null = null;
+  cargandoCorreoOriginal = false;
+  private correosService = inject(NotificacionesCorreoService, { optional: true });
+
+  verCorreoOriginal(notificacionId: number): void {
+    if (!this.correosService || this.cargandoCorreoOriginal) return;
+    if (this.correoOriginal?.id === notificacionId) {
+      this.correoOriginal = null;
+      return;
+    }
+    this.cargandoCorreoOriginal = true;
+    this.correosService
+      .getNotificacion(notificacionId)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.cargandoCorreoOriginal = false)),
+      )
+      .subscribe({
+        next: (c) => (this.correoOriginal = c),
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo cargar el correo bancario original.')),
+      });
   }
 }

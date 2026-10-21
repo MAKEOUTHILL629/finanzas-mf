@@ -13,6 +13,18 @@ export type DireccionPrestamo = 'POR_COBRAR' | 'POR_PAGAR';
 export type MetodoPrestamo = 'Nequi' | 'Fisico' | 'Pago Fernando' | 'Prestamo Fernando' | 'Domicilio' | 'Otros';
 export type EstadoCorte = 'PASADO' | 'ACTIVO' | 'FUTURO';
 
+export interface TrazabilidadDesembolsoPrestamo {
+  transaccionId: number | null;
+  fechaHora: string | null;
+  montoCop: number;
+  concepto: string | null;
+  cuentaOrigenId: number | null;
+  cuentaOrigenNombre: string | null;
+  cuentaOrigenBanco: string | null;
+  cuentaOrigenUltimos4: string | null;
+  notificacionCorreoId: number | null;
+}
+
 export interface PrestamoDetalle {
   id: number;
   fechaCreacion: number | null;
@@ -37,6 +49,11 @@ export interface PrestamoDetalle {
   fechaCompromisoPago?: number | null;
   cuentaDestinoTercero?: string | null;
   tokenConsultaPublica?: string | null;
+  /** Iteración 2 — Fase 5: Asociación de préstamo con transferencia bancaria y correo. */
+  transaccionDesembolsoId?: number | null;
+  notificacionCorreoId?: number | null;
+  cuentaOrigenDesembolsoId?: number | null;
+  trazabilidadDesembolso?: TrazabilidadDesembolsoPrestamo | null;
 }
 
 export interface FiltroPrestamos {
@@ -62,6 +79,11 @@ export interface CrearPrestamo {
   cuotaMensualAcordada?: number | string;
   fechaCompromisoPago?: string;
   cuentaDestinoTercero?: string;
+  /** Iteración 2 — Fase 5 */
+  transaccionDesembolsoId?: number;
+  notificacionCorreoId?: number;
+  cuentaOrigenDesembolsoId?: number;
+  crearTransaccionTransferencia?: boolean;
 }
 
 /** Al pasar a 'Pagado' el Trigger 4 abona el saldo en el sub-ledger y después el saldo queda en 0. */
@@ -74,6 +96,10 @@ export interface ActualizarPrestamo {
   fechaCobro?: string;
   fechaCompromisoPago?: string;
   cuentaDestinoTercero?: string;
+  transaccionDesembolsoId?: number | null;
+  notificacionCorreoId?: number | null;
+  cuentaOrigenDesembolsoId?: number | null;
+  crearTransaccionTransferencia?: boolean;
 }
 
 export interface ResolverAprobacion {

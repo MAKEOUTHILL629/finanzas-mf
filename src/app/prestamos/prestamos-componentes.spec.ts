@@ -108,6 +108,55 @@ describe('FormularioPrestamosComponent', () => {
     expect(c.construirCuerpo().esRecurrenteMensual).toBeUndefined();
   });
 
+  it('Iteración 2 Fase 5: modo DESCONTAR_CUENTA envía cuentaOrigenDesembolsoId y crearTransaccionTransferencia = true', () => {
+    iniciar();
+    llenar();
+    c.seleccionarModoOrigen('DESCONTAR_CUENTA');
+    c.form.controls.cuentaOrigenDesembolsoId.setValue(4);
+    expect(c.construirCuerpo()).toEqual(
+      jasmine.objectContaining({
+        cuentaOrigenDesembolsoId: 4,
+        crearTransaccionTransferencia: true,
+      }),
+    );
+  });
+
+  it('Iteración 2 Fase 5: modo VINCULAR_EXISTENTE carga transferencias recientes y envía transaccionDesembolsoId', () => {
+    iniciar();
+    llenar({ valorPrestado: 180000, fechaPrestamo: '2026-10-20' });
+    c.seleccionarModoOrigen('VINCULAR_EXISTENTE');
+    const req = esperar('GET', 'transacciones');
+    req.flush({
+      items: [
+        {
+          id: 77,
+          owner_user_id: 1,
+          tipo_transaccion: 'EGRESO',
+          cuenta_origen_id: 3,
+          cuenta_destino_id: null,
+          tarjeta_pagada_id: null,
+          categoria_id: null,
+          fecha_transaccion: '2026-10-19T15:00:00Z',
+          concepto: 'Transferencia Nequi',
+          moneda_original: 'COP',
+          monto_original: 180000,
+          tasa_cambio: 1,
+          monto_cop: 180000,
+          origen_registro: 'EMAIL_AUTO',
+          estado: 'CONFIRMADO',
+          notas: null,
+          created_at: null,
+        },
+      ],
+      total: 1,
+      limit: 50,
+      offset: 0,
+    });
+    expect(c.opcionesTransferencias.length).toBe(1);
+    c.form.controls.transaccionDesembolsoId.setValue(77);
+    expect(c.construirCuerpo()).toEqual(jasmine.objectContaining({ transaccionDesembolsoId: 77 }));
+  });
+
   it('muestra el error del servidor y no emite creado', () => {
     iniciar();
     llenar();

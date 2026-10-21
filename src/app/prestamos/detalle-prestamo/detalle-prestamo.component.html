@@ -93,6 +93,49 @@
       </dl>
     </app-card>
 
+    <!-- Iteración 2 — Fase 5: Tarjeta de trazabilidad de la transferencia / correo asociado -->
+    <app-card *ngIf="p.trazabilidadDesembolso || p.transaccionDesembolsoId || p.cuentaOrigenDesembolsoId || p.notificacionCorreoId">
+      <h2 class="erp-card-title">Trazabilidad de la transferencia</h2>
+      <dl class="info">
+        <div>
+          <dt class="erp-overline">Cuenta de donde salió</dt>
+          <dd>
+            <ng-container *ngIf="p.trazabilidadDesembolso?.cuentaOrigenNombre as nombreCuenta; else cuentaIdRef">
+              {{ nombreCuenta }}<ng-container *ngIf="p.trazabilidadDesembolso?.cuentaOrigenBanco"> · {{ p.trazabilidadDesembolso?.cuentaOrigenBanco }}</ng-container>
+              <span class="erp-mono" *ngIf="p.trazabilidadDesembolso?.cuentaOrigenUltimos4"> ··{{ p.trazabilidadDesembolso?.cuentaOrigenUltimos4 }}</span>
+            </ng-container>
+            <ng-template #cuentaIdRef>{{ p.cuentaOrigenDesembolsoId ? 'Cuenta #' + p.cuentaOrigenDesembolsoId : '—' }}</ng-template>
+          </dd>
+        </div>
+        <div>
+          <dt class="erp-overline">Fecha y hora exacta</dt>
+          <dd>{{ p.trazabilidadDesembolso?.fechaHora ? (p.trazabilidadDesembolso?.fechaHora | date: 'dd/MM/yyyy HH:mm') : (p.fechaPrestamo | formatoFecha) }}</dd>
+        </div>
+        <div>
+          <dt class="erp-overline">Transacción vinculada</dt>
+          <dd class="erp-mono">{{ (p.trazabilidadDesembolso?.transaccionId ?? p.transaccionDesembolsoId) ? '#' + (p.trazabilidadDesembolso?.transaccionId ?? p.transaccionDesembolsoId) : '—' }}</dd>
+        </div>
+        <div *ngIf="p.trazabilidadDesembolso?.notificacionCorreoId || p.notificacionCorreoId">
+          <dt class="erp-overline">Correo bancario original</dt>
+          <dd>
+            <button type="button" appButton="secondary" size="sm" (click)="verCorreoOriginal(p.trazabilidadDesembolso?.notificacionCorreoId ?? p.notificacionCorreoId!)" [disabled]="cargandoCorreoOriginal">
+              <i class="material-icons" aria-hidden="true">mail_outline</i>
+              {{ correoOriginal ? 'Ocultar correo original' : 'Abrir correo bancario original' }}
+            </button>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="erp-alert erp-alert--info" *ngIf="correoOriginal as co" style="margin-top: 12px">
+        <i class="material-icons" aria-hidden="true">mark_email_read</i>
+        <div>
+          <strong>{{ co.asunto || 'Notificación bancaria' }}</strong>
+          <p class="erp-muted" style="margin: 4px 0">{{ co.remitente }} · {{ co.fecha_correo | date: 'dd/MM/yyyy HH:mm' }}</p>
+          <p style="margin: 0; white-space: pre-wrap">{{ co.cuerpo_extraido }}</p>
+        </div>
+      </div>
+    </app-card>
+
     <app-card *ngIf="esPorPagar">
       <h2 class="erp-card-title">Pagarle a {{ nombrePersona(p.responsable) }}</h2>
       <p class="erp-muted" *ngIf="p.cuentaDestinoTercero">Cuenta destino: <strong>{{ p.cuentaDestinoTercero }}</strong></p>

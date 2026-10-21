@@ -69,6 +69,36 @@
       </select>
     </div>
 
+    <!-- Iteración 2 — Fase 5: Origen de los Fondos / Transferencia Asociada -->
+    <div class="erp-field erp-span-2">
+      <span class="erp-label">Origen de los Fondos / Transferencia Asociada</span>
+      <div class="erp-actions" role="radiogroup" aria-label="Origen de los fondos">
+        <button type="button" [appButton]="form.controls.modoOrigenFondos.value === 'NINGUNO' ? 'primary' : 'ghost'" size="sm" (click)="seleccionarModoOrigen('NINGUNO')">
+          Sin movimiento en cuentas
+        </button>
+        <button type="button" [appButton]="form.controls.modoOrigenFondos.value === 'DESCONTAR_CUENTA' ? 'primary' : 'ghost'" size="sm" (click)="seleccionarModoOrigen('DESCONTAR_CUENTA')">
+          Descontar de una Cuenta
+        </button>
+        <button type="button" [appButton]="form.controls.modoOrigenFondos.value === 'VINCULAR_EXISTENTE' ? 'primary' : 'ghost'" size="sm" (click)="seleccionarModoOrigen('VINCULAR_EXISTENTE')">
+          Vincular Transferencia / Correo existente
+        </button>
+      </div>
+    </div>
+
+    <div class="erp-field erp-span-2" *ngIf="form.controls.modoOrigenFondos.value === 'DESCONTAR_CUENTA'">
+      <label class="erp-label" for="pf-cuenta-desembolso">Cuenta de donde salió el dinero</label>
+      <app-select inputId="pf-cuenta-desembolso" catalogo="cuentas" formControlName="cuentaOrigenDesembolsoId" placeholder="Selecciona una cuenta"></app-select>
+      <p class="erp-field-hint">Se creará automáticamente la salida por transferencia en esta cuenta con categoría «Préstamos / Desembolsos».</p>
+    </div>
+
+    <div class="erp-field erp-span-2" *ngIf="form.controls.modoOrigenFondos.value === 'VINCULAR_EXISTENTE'">
+      <label class="erp-label" for="pf-tx-desembolso">Transferencia o correo bancario de los últimos 15 días</label>
+      <app-searchable-select inputId="pf-tx-desembolso" [opciones]="opcionesTransferencias" formControlName="transaccionDesembolsoId"
+                             [cargando]="cargandoTransferencias" placeholder="Busca por comercio, monto o fecha…"
+                             textoSinResultados="No hay transferencias recientes en los últimos 15 días."></app-searchable-select>
+      <p class="erp-field-hint">Se ordenan primero las transferencias con monto y fecha más cercanos.</p>
+    </div>
+
     <label class="erp-check erp-span-2">
       <input type="checkbox" formControlName="esRecurrenteMensual" />
       <span>Es un préstamo recurrente mensual</span>
