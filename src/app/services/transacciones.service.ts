@@ -4,7 +4,9 @@ import {
   ActualizarTransaccion,
   CrearTransaccion,
   CrearTransferenciaInterna,
+  AnaliticaTransferencias,
   FiltroTransacciones,
+  ResultadoAnalisisPatrones,
   ResultadoTransferenciaPropia,
   Transaccion,
   TransaccionesPagina,
@@ -42,6 +44,21 @@ export class TransaccionesService {
 
   actualizarTransaccion(id: number, cambios: ActualizarTransaccion): Observable<Transaccion> {
     return this.api.patch<Transaccion>(`${this.url}/${id}`, cambios);
+  }
+
+  /** Fase 5: extrae llaves/cuentas/nombres de las transferencias y aprende alias por persona. */
+  analizarPatronesTransferencias(): Observable<ResultadoAnalisisPatrones> {
+    return this.api.post<ResultadoAnalisisPatrones>(`${this.url}/analizar-patrones-transferencias`, {});
+  }
+
+  /** Fase 5: analítica agrupada por destinatario, llave, cuenta y entidad; `q` filtra por patrón. */
+  analiticaTransferencias(q?: string): Observable<AnaliticaTransferencias> {
+    return this.api.get<AnaliticaTransferencias>(`${this.url}/analitica-transferencias`, limpiarParams({ q }));
+  }
+
+  /** Fase 5: vincula manualmente una llave/cuenta/celular a una persona. */
+  vincularIdentificadorPersona(datos: { personaId: number; tipoIdentificador: string; valorIdentificador: string; entidadBancaria?: string }): Observable<{ aliasId: number; personaId: number; transaccionesActualizadas: number }> {
+    return this.api.post<{ aliasId: number; personaId: number; transaccionesActualizadas: number }>(`${this.url}/vincular-identificador-persona`, datos);
   }
 
   /** No borra: pasa la transacción a ANULADO y el Trigger 2 revierte el saldo. */

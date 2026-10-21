@@ -3,8 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
-import { FiltroTransacciones, Transaccion } from '../../modelos/erp';
-import { ItemCategoria, ItemCuenta } from '../../modelos/catalogos';
+import { AnaliticaTransferencias, FiltroTransacciones, GrupoTransferencia, Transaccion } from '../../modelos/erp';
+import { ItemCategoria, ItemCuenta, ItemPersona } from '../../modelos/catalogos';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
 import { RecurrentesService } from '../../services/recurrentes.service';
@@ -342,6 +342,76 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
           this.cargar();
         },
         error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo marcar como recurrente.')),
+      });
+  }
+
+  // ───────── inteligencia de transferencias (Iteración 3 · Fase 5) ─────────
+
+  inteligenciaAbierta = false;
+  analitica: AnaliticaTransferencias | null = null;
+  busquedaInteligencia = '';
+  cargandoInteligencia = false;
+  errorInteligencia: string | null = null;
+  personas: ItemPersona[] = [];
+  identificadorParaVincular: { tipo: string; valor: string } | null = null;
+  personaParaVincular: number | null = null;
+
+  alternarInteligencia(): void {
+    this.inteligenciaAbierta = !this.inteligenciaAbierta;
+    if (this.inteligenciaAbierta && !this.analitica) {
+      this.catalogos.estado$('personas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.personas = e.datos));
+      this.catalogos.asegurar(['personas']);
+      this.cargarInteligencia(true);
+    }
+  }
+
+  cargarInteligencia(analizarPrimero = false): void {
+    this.cargandoInteligencia = true;
+    this.errorInteligencia = null;
+    const cargar$ = this.transaccionesService.analiticaTransferencias(this.busquedaInteligencia.trim() || undefined);
+    const flujo$ = analizarPrimero ? this.transaccionesService.analizarPatronesTransferencias().pipe(takeUntil(this.destroy$)) : null;
+    const alTerminar = () => {
+      cargar$.pipe(takeUntil(this.destroy$), finalize(() => (this.cargandoInteligencia = false))).subscribe({
+        next: (a) => (this.analitica = a),
+        error: (err) => (this.errorInteligencia = mensajeDeError(err, 'No se pudo cargar la inteligencia de transferencias.')),
+      });
+    };
+    if (flujo$) flujo$.subscribe({ next: () => alTerminar(), error: () => alTerminar() });
+    else alTerminar();
+  }
+
+  get maxDestinatario(): number {
+    return Math.max(1, ...(this.analitica?.porDestinatario ?? []).map((g) => g.totalEnviado + g.totalRecibido));
+  }
+
+  anchoBarra(g: GrupoTransferencia): number {
+    return Math.round(((g.totalEnviado + g.totalRecibido) / this.maxDestinatario) * 100);
+  }
+
+  filtrarPorGrupo(g: GrupoTransferencia): void {
+    this.busquedaInteligencia = g.nombre ?? g.clave.replace(/^(persona|nombre|llave|cuenta):/, '');
+    this.cargarInteligencia();
+  }
+
+  prepararVinculo(tipo: string, valor: string): void {
+    this.identificadorParaVincular = { tipo, valor };
+    this.personaParaVincular = null;
+  }
+
+  confirmarVinculo(): void {
+    if (!this.identificadorParaVincular || !this.personaParaVincular) return;
+    const { tipo, valor } = this.identificadorParaVincular;
+    this.transaccionesService
+      .vincularIdentificadorPersona({ personaId: this.personaParaVincular, tipoIdentificador: tipo, valorIdentificador: valor })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (r) => {
+          this.toast.exito(`Identificador vinculado: ${r.transaccionesActualizadas} transferencia${r.transaccionesActualizadas === 1 ? '' : 's'} actualizada${r.transaccionesActualizadas === 1 ? '' : 's'}.`);
+          this.identificadorParaVincular = null;
+          this.cargarInteligencia(true);
+          this.cargar();
+        },
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo vincular el identificador.')),
       });
   }
 

@@ -35,6 +35,79 @@
   </div>
 
   <!-- Filtros -->
+  <!-- Inteligencia de Transferencias (Fase 5) -->
+  <div class="intel">
+    <button type="button" appButton="secondary" (click)="alternarInteligencia()" [attr.aria-expanded]="inteligenciaAbierta">
+      <i class="material-icons" aria-hidden="true">query_stats</i> 📊 Inteligencia de Transferencias (Personas, Llaves y Cuentas)
+      <i class="material-icons" aria-hidden="true">{{ inteligenciaAbierta ? 'expand_less' : 'expand_more' }}</i>
+    </button>
+
+    <app-card *ngIf="inteligenciaAbierta" class="intel-panel">
+      <div class="intel-buscar">
+        <input appInput type="search" placeholder="Buscar por nombre, llave, celular o últimos dígitos de cuenta…" aria-label="Buscar en inteligencia de transferencias" [(ngModel)]="busquedaInteligencia" (keyup.enter)="cargarInteligencia()" />
+        <button type="button" appButton="primary" size="sm" (click)="cargarInteligencia()" [loading]="cargandoInteligencia">Buscar</button>
+        <button type="button" appButton="ghost" size="sm" (click)="busquedaInteligencia = ''; cargarInteligencia(true)">Reanalizar patrones</button>
+      </div>
+
+      <div class="erp-alert erp-alert--danger" role="alert" *ngIf="errorInteligencia"><i class="material-icons" aria-hidden="true">error</i><div>{{ errorInteligencia }}</div></div>
+      <p class="erp-muted" *ngIf="cargandoInteligencia">Analizando transferencias…</p>
+
+      <ng-container *ngIf="analitica as a">
+        <div class="erp-grid erp-grid--stats intel-kpis">
+          <app-card class="erp-stat"><span class="erp-overline">Total transferido (enviado)</span><span class="erp-stat-value erp-num">{{ a.resumen.totalEnviado | moneda }}</span></app-card>
+          <app-card class="erp-stat"><span class="erp-overline">Total recibido</span><span class="erp-stat-value erp-num">{{ a.resumen.totalRecibido | moneda }}</span></app-card>
+          <app-card class="erp-stat"><span class="erp-overline">Operaciones</span><span class="erp-stat-value erp-num">{{ a.resumen.cantidadOperaciones }}</span><span class="erp-stat-hint">{{ a.resumen.destinatarios }} destinatario(s)</span></app-card>
+        </div>
+
+        <h3 class="intel-titulo">Top destinatarios y llaves</h3>
+        <ul class="intel-barras">
+          <li *ngFor="let g of a.porDestinatario">
+            <button type="button" class="intel-barra-fila" (click)="filtrarPorGrupo(g)" [appTooltip]="'Filtrar todo por ' + (g.nombre || g.clave)">
+              <span class="intel-barra-nombre">{{ g.nombre || g.clave }}</span>
+              <span class="intel-barra"><span class="intel-barra-relleno" [style.width.%]="anchoBarra(g)"></span></span>
+              <span class="erp-num">{{ (g.totalEnviado + g.totalRecibido) | moneda }}</span>
+            </button>
+          </li>
+        </ul>
+        <p class="erp-muted" *ngIf="a.porDestinatario.length === 0">Aún no se detectan transferencias a terceros.</p>
+
+        <h3 class="intel-titulo">Evolución mensual</h3>
+        <ul class="intel-serie">
+          <li *ngFor="let s of a.serieMensual"><span>{{ s.periodo }}</span><span class="erp-num erp-loss">Enviado {{ s.enviado | moneda }}</span><span class="erp-num erp-gain">Recibido {{ s.recibido | moneda }}</span><span class="erp-muted">{{ s.cantidad }} op.</span></li>
+        </ul>
+
+        <h3 class="intel-titulo">Por entidad / canal</h3>
+        <ul class="intel-serie">
+          <li *ngFor="let g of a.porEntidad"><span>{{ g.clave }}</span><span class="erp-num">{{ (g.totalEnviado + g.totalRecibido) | moneda }}</span><span class="erp-muted">{{ g.cantidadOperaciones }} op.</span></li>
+        </ul>
+
+        <h3 class="intel-titulo">Llaves, celulares y cuentas</h3>
+        <div class="erp-table-wrap">
+          <table appTable compact stack>
+            <thead><tr><th scope="col">Identificador</th><th scope="col" class="text-right">Enviado</th><th scope="col">Operaciones</th><th scope="col">Acción</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let g of a.porLlave">
+                <td data-label="Llave">{{ g.clave }}</td><td data-label="Enviado" class="text-right erp-num">{{ g.totalEnviado | moneda }}</td><td data-label="Operaciones">{{ g.cantidadOperaciones }}</td>
+                <td><button type="button" appButton="ghost" size="sm" (click)="prepararVinculo('LLAVE', g.clave)">Vincular esta llave/cuenta a una Persona</button></td>
+              </tr>
+              <tr *ngFor="let g of a.porCuenta">
+                <td data-label="Cuenta">Cuenta {{ g.clave }}</td><td data-label="Enviado" class="text-right erp-num">{{ g.totalEnviado | moneda }}</td><td data-label="Operaciones">{{ g.cantidadOperaciones }}</td>
+                <td><button type="button" appButton="ghost" size="sm" (click)="prepararVinculo('CUENTA', g.clave)">Vincular esta llave/cuenta a una Persona</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="intel-vinculo" *ngIf="identificadorParaVincular as v">
+          <span>Vincular <strong>{{ v.valor }}</strong> ({{ v.tipo }}) a:</span>
+          <app-select catalogo="personas" ariaLabel="Persona del identificador" placeholder="Elige la persona" [permitirVacio]="false" [ngModel]="personaParaVincular" (ngModelChange)="personaParaVincular = $event"></app-select>
+          <button type="button" appButton="primary" size="sm" (click)="confirmarVinculo()" [disabled]="!personaParaVincular">Confirmar vínculo</button>
+          <button type="button" appButton="ghost" size="sm" (click)="identificadorParaVincular = null">Cancelar</button>
+        </div>
+      </ng-container>
+    </app-card>
+  </div>
+
   <app-filter-bar placeholder="Buscar por concepto, categoría, cuenta o monto…" [segmentos]="segmentos" [filtros]="definicionFiltros" [estado]="estadoFiltros" (estadoChange)="alFiltrar($event)"></app-filter-bar>
 
   <!-- Confirmación de anulación -->

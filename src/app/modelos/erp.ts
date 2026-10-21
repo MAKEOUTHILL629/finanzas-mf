@@ -126,6 +126,41 @@ export interface Transaccion {
   transaccion_espejo_id?: number | null;
   tags?: string[];
   comercio_canonico?: string | null;
+  es_transferencia?: boolean;
+  destinatario_nombre_normalizado?: string | null;
+  llave_o_identificador?: string | null;
+  cuenta_bancaria_destino?: string | null;
+  entidad_destino?: string | null;
+  persona_asociada_id?: number | null;
+}
+
+/** Inteligencia de transferencias (Iteración 3 · Fase 5). */
+export interface GrupoTransferencia {
+  clave: string;
+  nombre?: string;
+  personaId?: number | null;
+  totalEnviado: number;
+  totalRecibido: number;
+  cantidadOperaciones: number;
+  promedioTransferencia?: number;
+  ultimaFecha: string | null;
+  identificadoresAsociados?: string[];
+}
+
+export interface AnaliticaTransferencias {
+  resumen: { cantidadOperaciones: number; totalEnviado: number; totalRecibido: number; destinatarios: number };
+  porDestinatario: GrupoTransferencia[];
+  porLlave: GrupoTransferencia[];
+  porCuenta: GrupoTransferencia[];
+  porEntidad: GrupoTransferencia[];
+  serieMensual: Array<{ periodo: string; enviado: number; recibido: number; cantidad: number }>;
+}
+
+export interface ResultadoAnalisisPatrones {
+  analizadas: number;
+  actualizadas: number;
+  conPersona: number;
+  aliasCreados: number;
 }
 
 export interface TransaccionesPagina {

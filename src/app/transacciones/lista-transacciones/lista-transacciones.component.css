@@ -16,3 +16,17 @@
 }
 
 .acc-confirmar { color: var(--green-success); }
+
+/* Inteligencia de Transferencias (Fase 5) */
+.intel { margin: var(--space-2) 0; }
+.intel-panel { margin-top: var(--space-2); }
+.intel-buscar { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+.intel-buscar input { flex: 1 1 260px; }
+.intel-kpis { margin: var(--space-2) 0; }
+.intel-titulo { margin: var(--space-3) 0 var(--space-1); font-size: var(--text-body); }
+.intel-barras, .intel-serie { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.intel-barra-fila { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr auto; gap: var(--space-1); align-items: center; width: 100%; background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; }
+.intel-barra { height: 10px; border-radius: 999px; background: color-mix(in srgb, currentColor 12%, transparent); overflow: hidden; }
+.intel-barra-relleno { display: block; height: 100%; border-radius: inherit; background: var(--brand-blue); transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+.intel-serie li { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.intel-vinculo { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; margin-top: var(--space-2); }

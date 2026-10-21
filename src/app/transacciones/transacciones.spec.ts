@@ -444,6 +444,43 @@ describe('ListaTransaccionesComponent', () => {
   });
 });
 
+describe('ListaTransaccionesComponent · inteligencia (Fase 5)', () => {
+  afterEach(() => verificarHttp());
+
+  it('abrir el panel analiza patrones y carga la analítica; vincular aplica el alias', () => {
+    configurarTestBed([ListaTransaccionesComponent]);
+    const fixture = TestBed.createComponent(ListaTransaccionesComponent);
+    const c = fixture.componentInstance;
+    fixture.detectChanges();
+    responderCatalogos({ cuentas: [cuenta(3, 'Bancolombia')], categorias: [categoria(5, 'Alimentación')] });
+    http().expectOne((r) => r.url === `${API}/transacciones`).flush({ total: 1, limit: LIMITE_CONSULTA, offset: 0, items: [tx({ id: 1 })] });
+
+    c.alternarInteligencia();
+    responderCatalogos({ personas: [{ id: 3, nombre: 'Paola Ruiz', iniciales: 'PR', color: '' } as never] }, { esperadas: 1 });
+    esperar('POST', 'transacciones/analizar-patrones-transferencias').flush({ analizadas: 10, actualizadas: 4, conPersona: 3, aliasCreados: 1 });
+    esperar('GET', 'transacciones/analitica-transferencias').flush({
+      resumen: { cantidadOperaciones: 2, totalEnviado: 150000, totalRecibido: 0, destinatarios: 1 },
+      porDestinatario: [{ clave: 'persona:3', nombre: 'Paola Ruiz', personaId: 3, totalEnviado: 150000, totalRecibido: 0, cantidadOperaciones: 2, ultimaFecha: '2026-09-07', identificadoresAsociados: ['3118895702'] }],
+      porLlave: [{ clave: '3118895702', totalEnviado: 100000, totalRecibido: 0, cantidadOperaciones: 1, ultimaFecha: '2026-09-07' }],
+      porCuenta: [{ clave: '*4521', totalEnviado: 50000, totalRecibido: 0, cantidadOperaciones: 1, ultimaFecha: '2026-09-07' }],
+      porEntidad: [{ clave: 'Nequi', totalEnviado: 150000, totalRecibido: 0, cantidadOperaciones: 2, ultimaFecha: '2026-09-07' }],
+      serieMensual: [{ periodo: '2026-09', enviado: 150000, recibido: 0, cantidad: 2 }],
+    });
+    expect(c.analitica?.resumen.totalEnviado).toBe(150000);
+    expect(c.anchoBarra(c.analitica!.porDestinatario[0])).toBe(100);
+
+    c.prepararVinculo('CUENTA', '*4521');
+    c.personaParaVincular = 3;
+    c.confirmarVinculo();
+    const vinculo = esperar('POST', 'transacciones/vincular-identificador-persona');
+    expect(vinculo.request.body).toEqual({ personaId: 3, tipoIdentificador: 'CUENTA', valorIdentificador: '*4521' });
+    vinculo.flush({ aliasId: 8, personaId: 3, transaccionesActualizadas: 1 });
+    esperar('POST', 'transacciones/analizar-patrones-transferencias').flush({ analizadas: 10, actualizadas: 1, conPersona: 4, aliasCreados: 0 });
+    esperar('GET', 'transacciones/analitica-transferencias').flush(c.analitica);
+    http().expectOne((r) => r.url === `${API}/transacciones`).flush({ total: 0, limit: LIMITE_CONSULTA, offset: 0, items: [] });
+  });
+});
+
 describe('filtros de Transacciones', () => {
   const ctx = {
     nombreCuenta: (id: number | null) => (id === 3 ? 'Bancolombia' : id === 4 ? 'Nequi' : ''),
