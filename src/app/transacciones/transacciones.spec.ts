@@ -278,6 +278,31 @@ describe('FormularioTransaccionComponent', () => {
     expect(c.errorServidor).toBe('cuentaOrigenId: no existe');
   });
 
+  it('enviarTransferenciaPropia envía POST a transacciones/transferencia-propia con comisión opcional', () => {
+    const c = crear();
+    let guardadas = 0;
+    c.guardada.subscribe(() => guardadas++);
+    c.form.patchValue({
+      tipoTransaccion: 'TRANSFERENCIA',
+      cuentaOrigenId: 3,
+      cuentaDestinoId: 7,
+      montoOriginal: 250000,
+      comisionGMF: 1000,
+    });
+    c.enviarTransferenciaPropia();
+    const req = esperar('POST', 'transacciones/transferencia-propia');
+    expect(req.request.body).toEqual(
+      jasmine.objectContaining({
+        cuentaOrigenId: 3,
+        cuentaDestinoId: 7,
+        monto: '250000',
+        comisionGMF: '1000',
+      }),
+    );
+    req.flush({ egreso: tx(), ingreso: tx({ id: 2, tipo_transaccion: 'INGRESO' }), comision: tx({ id: 3 }) });
+    expect(guardadas).toBe(1);
+  });
+
   it('al editar, tipo y moneda quedan bloqueados y solo se envía el PATCH con lo cambiado', () => {
     const c = crear(tx({ id: 11, categoria_id: null }));
     expect(c.form.controls.tipoTransaccion.disabled).toBeTrue();

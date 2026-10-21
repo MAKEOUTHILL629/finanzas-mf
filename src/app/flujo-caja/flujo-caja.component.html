@@ -59,6 +59,11 @@
           <span class="erp-stat-hint">Parte de terceros</span>
         </app-card>
         <app-card class="erp-stat"><span class="erp-overline">Gasto neto tuyo</span><span class="erp-stat-value erp-num">{{ f.gasto_neto_real_tuyo | moneda }}</span></app-card>
+        <app-card class="erp-stat" *ngIf="(f.total_transferencias_internas ?? 0) > 0">
+          <span class="erp-overline">Movimientos entre mis cuentas</span>
+          <span class="erp-stat-value erp-num erp-muted">{{ f.total_transferencias_internas | moneda }}</span>
+          <span class="erp-stat-hint">Neutros en tu flujo neto</span>
+        </app-card>
       </div>
 
       <div class="graficos">

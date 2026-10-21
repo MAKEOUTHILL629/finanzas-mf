@@ -56,6 +56,9 @@ export interface CuentaFinanciera {
   /** Recibe los avisos del banco que no traen número de cuenta (p. ej. la nómina). Solo una por usuario. */
   es_principal?: boolean;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
 }
 
 export interface CrearCuentaFinanciera {
@@ -80,6 +83,9 @@ export interface Categoria {
   icono: string | null;
   color: string | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
 }
 
 export interface CrearCategoria {
@@ -111,6 +117,9 @@ export interface Transaccion {
   estado: EstadoTransaccion | null;
   notas: string | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
 }
 
 export interface TransaccionesPagina {
@@ -152,6 +161,27 @@ export interface CrearTransaccion {
   origenRegistro?: OrigenRegistro;
   estado?: EstadoTransaccion;
   notas?: string;
+  esTransferenciaInterna?: boolean;
+  cuentaContraparteId?: number;
+}
+
+export interface CrearTransferenciaInterna {
+  cuentaOrigenId: number;
+  cuentaDestinoId: number;
+  monto: number | string;
+  monedaOriginal?: string;
+  tasaCambio?: number | string;
+  fechaTransaccion?: string;
+  concepto?: string;
+  notas?: string;
+  comisionGMF?: number | string;
+  categoriaComisionId?: number;
+}
+
+export interface ResultadoTransferenciaPropia {
+  salida: Transaccion;
+  entrada: Transaccion;
+  comision: Transaccion | null;
 }
 
 export type ActualizarTransaccion = Partial<
@@ -203,6 +233,9 @@ export interface NotificacionCorreo {
   transaccion_generada_id: number | null;
   compra_credito_generada_id: number | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
   // Columnas que rellena el sync inteligente (pueden faltar en respuestas antiguas)
   ultimos_4?: string | null;
   comercio_normalizado?: string | null;
@@ -286,6 +319,9 @@ export interface PlantillaRecurrente {
   prestamo_asociado_id: number | null;
   is_active: boolean | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
   responsables?: ResponsableRecurrente[];
 }
 
@@ -331,6 +367,9 @@ export interface PeriodoRecurrente {
   transaccion_pago_id: number | null;
   compra_credito_pago_id: number | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
   plantilla?: { id: number; nombre: string; es_monto_variable: boolean | null };
 }
 
@@ -366,6 +405,9 @@ export interface ObligacionMes {
   fecha_final: string | null;
   estado: 'ABIERTO' | 'COMPLETADO' | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
 }
 
 export interface CrearObligacionMes {
@@ -437,6 +479,9 @@ export interface AporteDetalle {
   /** Lo completa la BD cuando aporta alguien que no es el responsable ni el titular: nace un préstamo POR_COBRAR. */
   prestamo_cruce_generado_id: number | null;
   created_at: string | null;
+  es_transferencia_interna?: boolean;
+  cuenta_contraparte_id?: number | null;
+  transaccion_espejo_id?: number | null;
   persona?: { id: number; nombre: string | null; iniciales_nombre?: string | null; color_representativo?: string | null };
   prestamo_cruce?: { id: number; estado: string | null; valor_prestado: number; corte_id: number | null } | null;
 }
@@ -595,4 +640,5 @@ export interface FlujoCaja {
   desembolso_bruto_mes: number;
   gasto_neto_real_tuyo: number;
   flujo_caja_libre_estimado: number;
+  total_transferencias_internas?: number;
 }

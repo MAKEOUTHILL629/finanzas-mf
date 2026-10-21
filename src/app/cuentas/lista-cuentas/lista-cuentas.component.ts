@@ -29,6 +29,7 @@ export function saldosPorMoneda(cuentas: CuentaFinanciera[]): Array<{ moneda: st
 export class ListaCuentasComponent implements OnInit, OnDestroy {
   readonly principal: AccionUI = { id: 'nueva', etiqueta: 'Nueva cuenta', icono: 'add', tooltip: 'Registrar una cuenta bancaria, billetera o efectivo' };
   readonly secundarias: AccionUI[] = [
+    { id: 'transferir', etiqueta: 'Transferir entre cuentas', icono: 'swap_horiz', enlace: '/transacciones', variante: 'secondary', tooltip: 'Mover dinero entre tus propias cuentas bancarias o billeteras' },
     { id: 'linea-tiempo', etiqueta: 'Línea de tiempo', icono: 'timeline', enlace: '/linea-tiempo', variante: 'ghost', tooltip: 'Ver cuándo usaste cada cuenta y tarjeta' },
     { id: 'categorias', etiqueta: 'Categorías', icono: 'category', enlace: '/categorias', variante: 'ghost', tooltip: 'Administrar las categorías de tus transacciones' },
   ];

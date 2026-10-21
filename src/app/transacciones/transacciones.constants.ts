@@ -16,7 +16,7 @@ export interface ReglasTipo {
 export const TIPOS_TRANSACCION: readonly ReglasTipo[] = [
   { valor: 'EGRESO', etiqueta: 'Egreso', icono: 'trending_down', signo: -1, requiereOrigen: true, requiereDestino: false, requiereTarjeta: false },
   { valor: 'INGRESO', etiqueta: 'Ingreso', icono: 'trending_up', signo: 1, requiereOrigen: false, requiereDestino: true, requiereTarjeta: false },
-  { valor: 'TRANSFERENCIA', etiqueta: 'Transferencia', icono: 'sync_alt', signo: 0, requiereOrigen: true, requiereDestino: true, requiereTarjeta: false },
+  { valor: 'TRANSFERENCIA', etiqueta: '⇄ Transferencia entre mis cuentas', icono: 'sync_alt', signo: 0, requiereOrigen: true, requiereDestino: true, requiereTarjeta: false },
   { valor: 'PAGO_TARJETA', etiqueta: 'Pago de tarjeta', icono: 'credit_score', signo: -1, requiereOrigen: true, requiereDestino: false, requiereTarjeta: true },
   { valor: 'PAGO_PRESTAMO', etiqueta: 'Pago de préstamo', icono: 'payments', signo: -1, requiereOrigen: true, requiereDestino: false, requiereTarjeta: false },
   { valor: 'REEMBOLSO_TERCERO', etiqueta: 'Reembolso de tercero', icono: 'undo', signo: 1, requiereOrigen: false, requiereDestino: true, requiereTarjeta: false },
@@ -40,8 +40,9 @@ export function claseEstadoTransaccion(estado: string | null | undefined): 'succ
   return estado === 'CONFIRMADO' ? 'success' : estado === 'PENDIENTE_REVISION' ? 'warning' : estado === 'ANULADO' ? 'danger' : 'neutral';
 }
 
-/** Efecto firmado de la transacción sobre el patrimonio: ingresos (+), egresos (−) y transferencias (0). */
-export function efectoDe(t: Pick<Transaccion, 'tipo_transaccion' | 'monto_cop'>): number {
+/** Efecto firmado de la transacción sobre el patrimonio: ingresos (+), egresos (−) y transferencias o espejos internos (0). */
+export function efectoDe(t: Pick<Transaccion, 'tipo_transaccion' | 'monto_cop' | 'es_transferencia_interna'>): number {
+  if (t.es_transferencia_interna) return 0;
   return reglasDeTipo(t.tipo_transaccion).signo * Number(t.monto_cop);
 }
 
@@ -50,11 +51,12 @@ export interface TotalesTransacciones {
   egresos: number;
   neto: number;
   pendientesRevision: number;
+  transferenciasInternas?: number;
 }
 
-/** Solo cuentan las CONFIRMADAS (como el Trigger 2 de la BD); las transferencias no son ingreso ni egreso. */
+/** Solo cuentan las CONFIRMADAS (como el Trigger 2 de la BD); las transferencias y los movimientos internos entre cuentas propias no son ingreso ni egreso. */
 export function totalesDe(items: Transaccion[]): TotalesTransacciones {
-  const confirmadas = items.filter((t) => t.estado === 'CONFIRMADO');
+  const confirmadas = items.filter((t) => t.estado === 'CONFIRMADO' && !t.es_transferencia_interna);
   const ingresos = sumarMonedas(confirmadas.filter((t) => reglasDeTipo(t.tipo_transaccion).signo === 1).map((t) => t.monto_cop));
   const egresos = sumarMonedas(confirmadas.filter((t) => reglasDeTipo(t.tipo_transaccion).signo === -1).map((t) => t.monto_cop));
   return {

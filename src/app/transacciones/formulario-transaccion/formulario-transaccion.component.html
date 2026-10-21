@@ -74,6 +74,12 @@
       <p class="erp-field-error" *ngIf="mostrarErrorRegla('tasa')">Indica la tasa (mayor a 0, máximo 4 decimales).</p>
     </div>
 
+    <div class="erp-field" *ngIf="!esEdicion && form.controls.tipoTransaccion.value === 'TRANSFERENCIA'">
+      <label class="erp-label" for="tx-gmf">Comisión / 4x1000 (opcional)</label>
+      <input id="tx-gmf" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="comisionGMF" placeholder="0.00" />
+      <p class="erp-field-hint">Si usas el registro par entre cuentas propias, se crea como gasto bancario separado.</p>
+    </div>
+
     <div class="erp-field">
       <label class="erp-label" for="tx-fecha">Fecha y hora<span class="erp-req" aria-hidden="true">*</span></label>
       <input id="tx-fecha" appInput type="datetime-local" formControlName="fechaTransaccion" />
@@ -103,6 +109,10 @@
 
   <div class="erp-form-actions">
     <button type="button" appButton="ghost" (click)="cancelar.emit()" [disabled]="enviando">Cancelar</button>
+    <button *ngIf="!esEdicion && form.controls.tipoTransaccion.value === 'TRANSFERENCIA'" type="button" appButton="secondary" (click)="enviarTransferenciaPropia()" [disabled]="enviando">
+      <i class="material-icons" aria-hidden="true">swap_horiz</i>
+      {{ enviando ? 'Guardando…' : 'Registrar par entre mis cuentas' }}
+    </button>
     <button type="submit" appButton="primary" [disabled]="enviando">{{ enviando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Registrar' }}</button>
   </div>
 </form>

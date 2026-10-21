@@ -37,6 +37,7 @@ export interface ValoresTransaccion {
   tasaCambio: number | string | null;
   estado: EstadoTransaccion;
   notas: string;
+  comisionGMF?: number | string | null;
 }
 
 function valoresIniciales(): ValoresTransaccion {
@@ -53,6 +54,7 @@ function valoresIniciales(): ValoresTransaccion {
     tasaCambio: null,
     estado: 'CONFIRMADO',
     notas: '',
+    comisionGMF: null,
   };
 }
 
@@ -92,6 +94,7 @@ export function valoresDeTransaccion(t: Transaccion): ValoresTransaccion {
     tasaCambio: t.moneda_original === 'COP' ? null : t.tasa_cambio,
     estado: (t.estado ?? 'CONFIRMADO') as EstadoTransaccion,
     notas: t.notas ?? '',
+    comisionGMF: null,
   };
 }
 
@@ -155,6 +158,7 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
       tasaCambio: [null as number | string | null],
       estado: ['CONFIRMADO' as EstadoTransaccion, Validators.required],
       notas: [''],
+      comisionGMF: [null as number | string | null],
     },
     { validators: (g): ValidationErrors | null => this.validarReglas(g.getRawValue() as ValoresTransaccion) }
   );
@@ -337,5 +341,43 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
 
   mostrarErrorRegla(clave: 'origen' | 'destino' | 'tarjeta' | 'mismaCuenta' | 'tasa'): boolean {
     return !!this.form.errors?.[clave] && (this.form.touched || this.form.dirty);
+  }
+
+  /** Iteración 2 — Fase 4: envía transferencia entre cuentas propias creando el par espejo enlazado y opcionalmente el 4x1000. */
+  enviarTransferenciaPropia(): void {
+    this.errorServidor = null;
+    this.form.patchValue({ tipoTransaccion: 'TRANSFERENCIA' });
+    if (!this.form.controls.concepto.value?.trim()) {
+      this.form.controls.concepto.setValue('Transferencia entre mis cuentas');
+    }
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    const v = this.form.getRawValue();
+    this.enviando = true;
+    this.transaccionesService
+      .crearTransferenciaPropia({
+        cuentaOrigenId: Number(v.cuentaOrigenId),
+        cuentaDestinoId: Number(v.cuentaDestinoId),
+        monto: String(v.montoOriginal),
+        monedaOriginal: (v.monedaOriginal || 'COP').toUpperCase(),
+        ...(this.esMonedaExtranjera && v.tasaCambio ? { tasaCambio: String(v.tasaCambio) } : {}),
+        fechaTransaccion: desdeDatetimeLocalBogota(v.fechaTransaccion ?? aDatetimeLocal(new Date())).toISOString(),
+        concepto: v.concepto?.trim() || 'Transferencia entre mis cuentas',
+        ...(v.notas?.trim() ? { notas: v.notas.trim() } : {}),
+        ...(v.comisionGMF && esImporteValido(v.comisionGMF) ? { comisionGMF: String(v.comisionGMF) } : {}),
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.enviando = false)),
+      )
+      .subscribe({
+        next: () => {
+          this.reiniciar();
+          this.guardada.emit();
+        },
+        error: (err) => (this.errorServidor = mensajeDeError(err, 'No se pudo registrar la transferencia entre cuentas propias.')),
+      });
   }
 }
