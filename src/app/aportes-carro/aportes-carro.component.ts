@@ -5,8 +5,10 @@ import { AporteDiario, DetalleAporteDiario, EliminadoAporteDiario, MetodoCanonic
 import { OpcionSelect } from '../modelos/catalogos';
 import { AportesCarroService } from '../services/aportes-carro.service';
 import { ModalService } from '../services/modal.service';
+import { copiarAlPortapapeles } from '../shared/portapapeles.helper';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { moneda } from '../shared/moneda.util';
+import { generarLinkWhatsAppAporteCarro, generarMensajeWhatsAppAporteCarro } from '../shared/whatsapp.helper';
 import { nombrePeriodo, periodoActual } from '../shared/periodo.helper';
 import { ToastService } from '../shared/toast/toast.service';
 import {
@@ -40,7 +42,11 @@ export class AportesCarroComponent implements OnInit, OnDestroy {
   readonly secundarias: AccionUI[] = [
     { id: 'liquidacion', etiqueta: 'Liquidación', icono: 'fact_check', enlace: '/liquidacion', variante: 'ghost', tooltip: 'Ver la liquidación de fin de mes' },
     { id: 'periodo', etiqueta: 'Configurar cuota mensual', icono: 'tune', tooltip: 'Definir la cuota que se debe cubrir cada mes' },
+    { id: 'whatsapp', etiqueta: 'Enviar Resumen del Mes por WhatsApp', icono: 'chat', tooltip: 'Enviar a Papá el resumen del mes por WhatsApp' },
   ];
+
+  /** Tras guardar un aporte: confirmación con botón de WhatsApp (Fase 7). */
+  recienGuardado = false;
   private readonly accPrincipal = new ListaAcciones();
   /** Se bloquea mientras carga o si falló la carga. */
   get principal(): AccionUI {
@@ -52,6 +58,31 @@ export class AportesCarroComponent implements OnInit, OnDestroy {
   alAccionar(id: string): void {
     if (id === 'periodo') this.abrirPeriodo();
     else if (id === 'aporte') this.abrirAporte();
+    else if (id === 'whatsapp') this.enviarResumenWhatsApp();
+  }
+
+  /** Arma el mensaje con datos frescos del backend y abre WhatsApp (o lo copia si falla). */
+  enviarResumenWhatsApp(): void {
+    const periodo = this.periodoKpi?.periodo ?? this.hoy;
+    this.aportesService
+      .getResumenWhatsApp(periodo)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (r) => {
+          if (!r.resumenPeriodo) {
+            this.toast.info('Aún no hay aportes para resumir este mes.');
+            return;
+          }
+          const params = {
+            ultimoAporte: r.ultimoAporte ? { fecha: r.ultimoAporte.fecha, aportante: r.ultimoAporte.aportante, monto: r.ultimoAporte.monto, concepto: r.ultimoAporte.concepto } : undefined,
+            resumenPeriodo: r.resumenPeriodo,
+            telefono: r.responsable?.telefono ?? null,
+          };
+          const abierto = window.open(generarLinkWhatsAppAporteCarro(params), '_blank');
+          if (!abierto) void copiarAlPortapapeles(generarMensajeWhatsAppAporteCarro(params)).then(() => this.toast.exito('Resumen copiado: pégalo en WhatsApp.'));
+        },
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo armar el resumen del mes.')),
+      });
   }
 
   readonly modalAporte = MODAL_APORTE_CARRO;
@@ -243,6 +274,7 @@ export class AportesCarroComponent implements OnInit, OnDestroy {
     if (r.crucesGenerados > 0) extras.push(`${r.crucesGenerados} cruce${r.crucesGenerados === 1 ? '' : 's'} cargado${r.crucesGenerados === 1 ? '' : 's'} a su cuenta por cobrar`);
     if (r.transaccionesCreadas > 0) extras.push(`${r.transaccionesCreadas} ingreso${r.transaccionesCreadas === 1 ? '' : 's'} a tus cuentas`);
     this.toast.exito(`Aporte ${edito ? 'actualizado' : 'registrado'}: ${moneda(r.aporteDiario.valorTotal)} en ${nombrePeriodo(r.periodo.periodo)}${extras.length ? ' · ' + extras.join(' · ') : ''}.`);
+    this.recienGuardado = true;
     this.periodoKpiId = r.periodo.id;
     this.abiertos.add(r.periodo.id);
     this.cargar();

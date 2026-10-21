@@ -25,8 +25,8 @@ export interface ValoresNuevaTarjeta {
   diaLimitePago: number | string | null;
   cupoTotal: number | string | null;
   notas: string;
-  esTitularExterno: boolean;
-  titularPersonaId: number | string | null;
+  esTitularExterno?: boolean;
+  titularPersonaId?: number | string | null;
 }
 
 const vacio = (v: unknown) => v === null || v === undefined || v === '';

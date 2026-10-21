@@ -213,6 +213,8 @@ describe('AportesCarroService (contrato con el backend)', () => {
     expect(esperar('GET', 'obligaciones-aportes/carro/resumen').request.params.keys()).toEqual([]);
     s.getResumen('2026-10').subscribe();
     expect(esperar('GET', 'obligaciones-aportes/carro/resumen').request.params.get('periodo')).toBe('2026-10');
+    s.getResumenWhatsApp('2026-10').subscribe();
+    expect(esperar('GET', 'obligaciones-aportes/carro/resumen-whatsapp').request.params.get('periodo')).toBe('2026-10');
   });
 
   it('periodos, aportes diarios y excedente usan los verbos y rutas del backend', () => {

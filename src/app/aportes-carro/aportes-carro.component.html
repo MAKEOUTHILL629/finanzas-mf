@@ -22,6 +22,13 @@
     <button type="button" appButton="primary" (click)="abrirPeriodo()">Configurar cuota mensual</button>
   </app-empty-state>
 
+  <div class="erp-alert erp-alert--info" role="status" *ngIf="recienGuardado">
+    <i class="material-icons" aria-hidden="true">check_circle</i>
+    <span>Aporte registrado. ¿Le avisas a Papá cómo va el mes?</span>
+    <button type="button" appButton="primary" size="sm" (click)="enviarResumenWhatsApp()" style="background: #25d366; border-color: #25d366; margin-left: 12px">📲 Enviar resumen a Papá por WhatsApp</button>
+    <button type="button" appButton="ghost" size="sm" (click)="recienGuardado = false">Ahora no</button>
+  </div>
+
   <ng-container *ngIf="!cargando && !error && resumen && periodos.length > 0">
     <!-- Indicadores del mes elegido -->
     <div class="erp-toolbar kpi-selector" role="group" aria-label="Mes de los indicadores">
