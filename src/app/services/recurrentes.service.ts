@@ -3,10 +3,12 @@ import { Observable } from 'rxjs';
 import {
   ActualizarPlantillaRecurrente,
   CrearPlantillaRecurrente,
+  DesdeMovimientoRecurrente,
   EstadoPeriodoRecurrente,
   Periodo,
   PeriodoRecurrente,
   PlantillaRecurrente,
+  ResultadoDesdeMovimiento,
   RegistrarPagoPeriodo,
   ResultadoProyeccion,
 } from '../modelos/erp';
@@ -34,6 +36,11 @@ export class RecurrentesService {
 
   getPlantilla(id: number): Observable<PlantillaRecurrente> {
     return this.api.get<PlantillaRecurrente>(`${this.plantillasUrl}/${id}`);
+  }
+
+  /** Fase 4: marca compras/transacciones como pago recurrente (crea o reutiliza la plantilla y vincula históricos). */
+  crearDesdeMovimiento(pedido: DesdeMovimientoRecurrente): Observable<ResultadoDesdeMovimiento> {
+    return this.api.post<ResultadoDesdeMovimiento>('gastos-recurrentes/desde-movimiento', pedido);
   }
 
   crearPlantilla(plantilla: CrearPlantillaRecurrente): Observable<PlantillaRecurrente> {

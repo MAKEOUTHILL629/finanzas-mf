@@ -102,6 +102,18 @@
         >
           <i class="material-icons" aria-hidden="true">edit</i> Editar compra completa
         </button>
+        <button
+          type="button"
+          appButton="ghost"
+          size="sm"
+          class="insp-btn-recurrente"
+          *ngIf="!unificada && !esPagoRecurrente"
+          [loading]="marcandoRecurrente"
+          (click)="marcarComoRecurrente()"
+        >
+          <i class="material-icons" aria-hidden="true">repeat</i> 🔁 Marcar como Recurrente
+        </button>
+        <app-badge tone="success" icon="repeat" *ngIf="esPagoRecurrente">🔁 Recurrente</app-badge>
         <app-acciones [secundarias]="acciones" (accion)="alAccionar($event)"></app-acciones>
       </div>
     </header>

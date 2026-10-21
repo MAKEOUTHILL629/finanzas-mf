@@ -354,6 +354,26 @@ export interface CrearPlantillaRecurrente {
   responsables?: ResponsableRecurrenteRequest[];
 }
 
+/** Fase 4 (Iteración 3): convertir un movimiento existente en pago recurrente. */
+export interface DesdeMovimientoRecurrente {
+  origenTipo: 'COMPRA_CREDITO' | 'TRANSACCION';
+  origenIds: number[];
+  frecuencia?: FrecuenciaRecurrente;
+  diaCobroEstimado?: number;
+  esMontoVariable?: boolean;
+  vincularHistoricoSimilar?: boolean;
+}
+
+export interface ResultadoDesdeMovimiento {
+  plantillaId: number;
+  nombre: string;
+  plantillaCreada: boolean;
+  frecuencia: string | null;
+  vinculadosOrigen: number;
+  historicosVinculados: { compras: number; transacciones: number };
+  totalVinculados: number;
+}
+
 export type ActualizarPlantillaRecurrente = Partial<
   Omit<CrearPlantillaRecurrente, 'moneda' | 'categoriaId' | 'cuentaDebitoDefaultId' | 'tarjetaCreditoDefaultId' | 'prestamoAsociadoId'>
 > & {

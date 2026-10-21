@@ -92,7 +92,7 @@
         </span>
       </ng-template>
 
-      <ng-template appCelda="tipo" let-t><app-badge><i class="material-icons" aria-hidden="true">{{ reglas(t.tipo_transaccion).icono }}</i>{{ reglas(t.tipo_transaccion).etiqueta }}</app-badge></ng-template>
+      <ng-template appCelda="tipo" let-t><app-badge><i class="material-icons" aria-hidden="true">{{ reglas(t.tipo_transaccion).icono }}</i>{{ reglas(t.tipo_transaccion).etiqueta }}</app-badge> <app-badge tone="success" icon="repeat" *ngIf="esRecurrente(t)">🔁 Recurrente</app-badge></ng-template>
 
       <ng-template appCelda="estado" let-t><app-badge [tone]="claseEstado(t.estado)">{{ etiquetaEstado(t.estado) }}</app-badge></ng-template>
 
@@ -104,6 +104,7 @@
         <button type="button" appButton="ghost" size="sm" icon *ngIf="t.estado === 'PENDIENTE_REVISION'" (click)="confirmar(t)" [disabled]="trabajando" [attr.aria-label]="'Confirmar ' + t.concepto" [appTooltip]="'Confirmar «' + t.concepto + '»: el saldo de la cuenta se actualiza'">
           <i class="material-icons acc-confirmar" aria-hidden="true">check_circle</i>
         </button>
+        <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t) && !esRecurrente(t)" (click)="marcarRecurrente(t)" [attr.aria-label]="'Marcar como recurrente ' + t.concepto" [appTooltip]="'🔁 Marcar como Pago Recurrente'"><i class="material-icons" aria-hidden="true">repeat</i></button>
         <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t)" (click)="editar(t)" [attr.aria-label]="'Editar ' + t.concepto" [appTooltip]="'Editar ' + t.concepto"><i class="material-icons" aria-hidden="true">edit</i></button>
         <button type="button" appButton="ghost" size="sm" icon *ngIf="puedeEditar(t)" (click)="pedirAnular(t)" [attr.aria-label]="'Anular ' + t.concepto" [appTooltip]="'Anular ' + t.concepto"><i class="material-icons" aria-hidden="true">block</i></button>
       </ng-template>

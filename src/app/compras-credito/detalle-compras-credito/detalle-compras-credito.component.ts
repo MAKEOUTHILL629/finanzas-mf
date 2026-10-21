@@ -20,6 +20,7 @@ import { ApiServicesService } from '../../services/api-services.service';
 import { CambiosCompraCredito, ComprasCreditoService } from '../../services/compras-credito.service';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
+import { RecurrentesService } from '../../services/recurrentes.service';
 import { RefinanciamientosService } from '../../services/refinanciamientos.service';
 import { TarjetasService } from '../../services/tarjetas.service';
 import { formatDateOnly, partesFechaCalendario } from '../../shared/date-only.helper';
@@ -231,7 +232,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     private tarjetasService: TarjetasService,
     private catalogos: CatalogosService,
     private modal: ModalService,
-    private toast: ToastService
+    private toast: ToastService,
+    private recurrentes: RecurrentesService
   ) {
     this.formEdicionCompleta = this.fb.group({
       concepto: ['', [Validators.required, Validators.maxLength(255)]],
@@ -809,6 +811,35 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         this.recalcularDerivados();
       },
     });
+  }
+
+  // ───────── recurrentes (Iteración 3 · Fase 4) ─────────
+
+  get esPagoRecurrente(): boolean {
+    return (this.compraCredito?.tags ?? []).includes('#recurrente') || !!this.detalleCompleto?.recurrencia;
+  }
+
+  marcandoRecurrente = false;
+
+  /** Botón directo en plantilla (no va en `acciones`): convierte esta compra en pago recurrente. */
+  marcarComoRecurrente(): void {
+    const id = this.compraCredito?.id;
+    if (!id || this.esPagoRecurrente || this.marcandoRecurrente) return;
+    this.marcandoRecurrente = true;
+    this.recurrentes
+      .crearDesdeMovimiento({ origenTipo: 'COMPRA_CREDITO', origenIds: [id], vincularHistoricoSimilar: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (r) => {
+          this.marcandoRecurrente = false;
+          if (this.compraCredito) this.compraCredito = { ...this.compraCredito, tags: [...(this.compraCredito.tags ?? []), '#recurrente'] };
+          this.toast.exito(`«${r.nombre}» ahora es un pago recurrente (${r.totalVinculados} vinculado${r.totalVinculados === 1 ? '' : 's'}).`);
+        },
+        error: (err) => {
+          this.marcandoRecurrente = false;
+          this.toast.error(mensajeDeError(err, 'No se pudo marcar como recurrente.'));
+        },
+      });
   }
 
   // ───────── acciones ─────────

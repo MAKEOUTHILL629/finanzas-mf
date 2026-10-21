@@ -7,8 +7,10 @@ import { AnaliticaService } from '../../services/analitica.service';
 import { ApiServicesService } from '../../services/api-services.service';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
+import { RecurrentesService } from '../../services/recurrentes.service';
 import { SharedListasService } from '../../services/shared-listas.service';
 import { sumarMonedas } from '../../shared/dinero.helper';
+import { ToastService } from '../../shared/toast/toast.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { AccionUI } from '../../shared/ui/acciones/acciones.component';
 import { ColumnaTabla, OrdenTabla } from '../../shared/ui/apple-table/apple-table.types';
@@ -100,7 +102,9 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
     private sharedListasService: SharedListasService,
     private catalogos: CatalogosService,
     private ruta: ActivatedRoute,
-    private analitica: AnaliticaService
+    private analitica: AnaliticaService,
+    private recurrentes: RecurrentesService,
+    private toast: ToastService
   ) {
     this.refrescarAcciones();
   }
@@ -328,6 +332,27 @@ export class TablaComprasCreditoComponent implements OnInit, OnDestroy {
 
   cancelarTags(): void {
     this.editandoTagsId = null;
+  }
+
+  // ───────── recurrentes (Iteración 3 · Fase 4) ─────────
+
+  esRecurrente(compra: ComprasCreditoMultimoneda): boolean {
+    return (compra.tags ?? []).includes('#recurrente');
+  }
+
+  /** Marca la compra como pago recurrente y vincula sus históricos del mismo comercio. */
+  marcarRecurrente(compra: ComprasCreditoMultimoneda): void {
+    if (!compra.id || this.esRecurrente(compra)) return;
+    this.recurrentes
+      .crearDesdeMovimiento({ origenTipo: 'COMPRA_CREDITO', origenIds: [compra.id], vincularHistoricoSimilar: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (r) => {
+          this.toast.exito(`«${r.nombre}» ahora es un pago recurrente (${r.totalVinculados} movimiento${r.totalVinculados === 1 ? '' : 's'} vinculado${r.totalVinculados === 1 ? '' : 's'}).`);
+          this.refreshCompras();
+        },
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo marcar como recurrente.')),
+      });
   }
 
   // ───────── celdas ─────────

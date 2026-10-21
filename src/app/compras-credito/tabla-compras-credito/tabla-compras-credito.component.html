@@ -60,6 +60,7 @@
         <span class="concepto" [title]="c.concepto">{{ c.concepto }}</span>
         <span class="erp-muted concepto-detalle" *ngIf="c.descripcion">{{ c.descripcion }}</span>
         <app-badge class="concepto-marca" tone="info" icon="merge_type" *ngIf="c.esRefinanciamiento">Unificación de deuda</app-badge>
+        <app-badge class="concepto-marca" tone="success" icon="repeat" *ngIf="esRecurrente(c)">🔁 Recurrente</app-badge>
       </ng-template>
 
       <ng-template appCelda="responsables" let-c>
@@ -94,6 +95,9 @@
       <ng-template appCelda="tarjeta" let-c>{{ nombreTarjeta(c.tarjeta) || '—' }}</ng-template>
 
       <ng-template appAccionesFila let-c>
+        <button type="button" appButton="ghost" size="sm" icon *ngIf="!esRecurrente(c)" (click)="marcarRecurrente(c); $event.stopPropagation()" [attr.aria-label]="'Marcar como recurrente ' + c.concepto" [appTooltip]="'🔁 Marcar como Pago Recurrente'">
+          <i class="material-icons" aria-hidden="true">repeat</i>
+        </button>
         <button type="button" appButton="ghost" size="sm" icon (click)="irDetalleCompra(c)" [attr.aria-label]="'Ver el detalle de ' + c.concepto" [appTooltip]="'Ver el detalle de ' + c.concepto">
           <i class="material-icons" aria-hidden="true">chevron_right</i>
         </button>

@@ -7,6 +7,7 @@ import { FiltroTransacciones, Transaccion } from '../../modelos/erp';
 import { ItemCategoria, ItemCuenta } from '../../modelos/catalogos';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
+import { RecurrentesService } from '../../services/recurrentes.service';
 import { TransaccionesService } from '../../services/transacciones.service';
 import { mensajeDeError } from '../../shared/http-error.helper';
 import { AccionUI } from '../../shared/ui/acciones/acciones.component';
@@ -112,7 +113,8 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
     private transaccionesService: TransaccionesService,
     private catalogos: CatalogosService,
     private modalService: ModalService,
-    private toast: ToastService
+    private toast: ToastService,
+    private recurrentes: RecurrentesService
   ) {}
 
   ngOnInit(): void {
@@ -320,6 +322,27 @@ export class ListaTransaccionesComponent implements OnInit, OnDestroy {
     const o = this.nombreCuenta(t.cuenta_origen_id);
     const d = this.nombreCuenta(t.cuenta_destino_id);
     return o && d ? `${o} → ${d}` : o || d || '—';
+  }
+
+  // ───────── recurrentes (Iteración 3 · Fase 4) ─────────
+
+  esRecurrente(t: Transaccion): boolean {
+    return (t.tags ?? []).includes('#recurrente');
+  }
+
+  marcarRecurrente(t: Transaccion): void {
+    if (!t.id || this.esRecurrente(t) || this.trabajando) return;
+    this.trabajando = true;
+    this.recurrentes
+      .crearDesdeMovimiento({ origenTipo: 'TRANSACCION', origenIds: [t.id], vincularHistoricoSimilar: true })
+      .pipe(takeUntil(this.destroy$), finalize(() => (this.trabajando = false)))
+      .subscribe({
+        next: (r) => {
+          this.toast.exito(`«${r.nombre}» ahora es un pago recurrente (${r.totalVinculados} vinculado${r.totalVinculados === 1 ? '' : 's'}).`);
+          this.cargar();
+        },
+        error: (err) => this.toast.error(mensajeDeError(err, 'No se pudo marcar como recurrente.')),
+      });
   }
 
   puedeEditar(t: Transaccion): boolean {

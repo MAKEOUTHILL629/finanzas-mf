@@ -163,6 +163,21 @@ describe('TablaComprasCreditoComponent', () => {
       expect(ir).toHaveBeenCalledWith(['/compra-credito-detalle', 2], { state: { compra: COMPRAS[1] } });
     });
 
+    it('«Marcar como Recurrente» (Fase 4) convierte la compra y recarga; una ya recurrente muestra la insignia y no se remarca', () => {
+      const recurrente = { ...COMPRAS[0], tags: ['#recurrente'] };
+      expect(c.esRecurrente(recurrente as never)).toBe(true);
+      expect(c.esRecurrente(COMPRAS[0] as never)).toBe(false);
+
+      c.marcarRecurrente(COMPRAS[0] as never);
+      const req = esperar('POST', 'gastos-recurrentes/desde-movimiento');
+      expect(req.request.body).toEqual({ origenTipo: 'COMPRA_CREDITO', origenIds: [COMPRAS[0].id], vincularHistoricoSimilar: true });
+      req.flush({ plantillaId: 9, nombre: 'Netflix', plantillaCreada: true, frecuencia: 'MENSUAL', vinculadosOrigen: 1, historicosVinculados: { compras: 2, transacciones: 0 }, totalVinculados: 3 });
+      responder('compras-credito', COMPRAS); // el refresco tras marcar
+      expect(c.isRefreshing).toBeFalse();
+
+      c.marcarRecurrente(recurrente as never); // ya recurrente: no dispara otro POST (verificarHttp lo atraparía)
+    });
+
     it('la insignia de porcentaje distingue completo, parcial y vacío', () => {
       expect(c.clasePorcentaje(100)).toBe('completo');
       expect(c.clasePorcentaje(60)).toBe('parcial');
