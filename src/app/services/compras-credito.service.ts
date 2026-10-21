@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { DetalleCuotasColaborativas } from '../modelos/aportes-cuota';
-import { ComprasCredito, ComprasCreditoMultimoneda, CuotaDetalle } from '../modelos/compras-credito';
+import { ComprasCredito, ComprasCreditoMultimoneda, CuotaDetalle, DetalleCompletoCompraCredito } from '../modelos/compras-credito';
 import { ApiServicesService } from './api-services.service';
 
 /** Lo que se puede cambiar en línea de una compra (solo se envía lo que cambió). */
@@ -18,6 +18,8 @@ export interface CambiosCompraCredito {
   /** Interés mensual en %. */
   interes?: number;
   tarjeta?: number;
+  tags?: string[];
+  comercioCanonico?: string | null;
 }
 
 @Injectable({
@@ -34,6 +36,10 @@ export class ComprasCreditoService {
     return this.api.get<ComprasCreditoMultimoneda>(`compras-credito/detalle/${id}`);
   }
 
+  getDetalleCompleto(id: number): Observable<DetalleCompletoCompraCredito> {
+    return this.api.get<DetalleCompletoCompraCredito>(`v2/compras-credito/${id}/detalle-completo`);
+  }
+
   getCuotas(id: number): Observable<CuotaDetalle[]> {
     return this.api.get<CuotaDetalle[]>(`compras-credito/${id}`);
   }
@@ -41,6 +47,11 @@ export class ComprasCreditoService {
   /** Edición en línea (`PATCH /api/compras-credito/:id`): devuelve la compra ya actualizada. */
   actualizarParcial(id: number, cambios: CambiosCompraCredito): Observable<ComprasCreditoMultimoneda> {
     return this.api.patch<ComprasCreditoMultimoneda>(`compras-credito/${id}`, cambios);
+  }
+
+  /** Edición completa 360° (`PUT /api/compras-credito/:id`). */
+  actualizarCompraCompleta(id: number, dto: ComprasCredito): Observable<{ message: string }> {
+    return this.api.put<{ message: string }>(`compras-credito/${id}`, dto);
   }
 
   // ── cuotas colaborativas (Fase 5) ──

@@ -140,6 +140,7 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
   enviando = false;
   errorServidor: string | null = null;
   sinCambios = false;
+  tagsTransaccion: string[] = [];
 
   private fb = inject(FormBuilder);
   private destroy$ = new Subject<void>();
@@ -195,6 +196,7 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
     // Una sola petición trae todo lo que el formulario pueda necesitar según el tipo que se elija (cuentas, tarjetas, categorías).
     this.catalogos.asegurar(['cuentas', 'categorias', 'tarjetas']);
     if (this.transaccion) {
+      this.tagsTransaccion = [...(this.transaccion.tags ?? [])];
       this.form.reset(valoresDeTransaccion(this.transaccion) as never);
       // tipo y moneda no se cambian al editar: afectan a las reglas y al saldo de otra forma
       this.form.controls.tipoTransaccion.disable();
@@ -305,13 +307,18 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
     let peticion;
     if (this.transaccion) {
       const cambios = calcularCambiosTransaccion(this.transaccion, valores);
+      const tagsOrig = (this.transaccion.tags ?? []).join(',');
+      const tagsNuevos = this.tagsTransaccion.join(',');
+      if (tagsOrig !== tagsNuevos) cambios.tags = [...this.tagsTransaccion];
       if (Object.keys(cambios).length === 0) {
         this.sinCambios = true;
         return;
       }
       peticion = this.transaccionesService.actualizarTransaccion(this.transaccion.id, cambios);
     } else {
-      peticion = this.transaccionesService.crearTransaccion(construirAlta(valores));
+      const alta = construirAlta(valores);
+      if (this.tagsTransaccion.length > 0) alta.tags = [...this.tagsTransaccion];
+      peticion = this.transaccionesService.crearTransaccion(alta);
     }
     this.enviando = true;
     peticion
@@ -330,6 +337,7 @@ export class FormularioTransaccionComponent implements OnInit, OnDestroy {
 
   private reiniciar(): void {
     this.form.reset(valoresIniciales() as never);
+    this.tagsTransaccion = [];
     this.sugerencias.invalidar(); // lo recién registrado ya cuenta para lo habitual
     this.aplicarDefaults();
   }

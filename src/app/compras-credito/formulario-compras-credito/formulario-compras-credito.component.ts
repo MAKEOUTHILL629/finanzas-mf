@@ -58,6 +58,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
   showResponsablesSection = false;
   porcentajeRestante = 100;
   interestAutoFilled = false;  // true cuando la tasa se importó automáticamente de la tarjeta
+  tagsCompra: string[] = [];
 
   private destroy$ = new Subject<void>();
 
@@ -572,6 +573,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
       tarjeta: parseInt(formValue.cardId, 10),
       fechaUltimaCuota: formValue.purchaseDate,
       pagoMensual: 0,
+      ...(this.tagsCompra.length > 0 ? { tags: [...this.tagsCompra] } : {}),
       // Solo si el usuario puede elegir (compra retroactiva): si no, el servidor guarda el plástico vigente en esa fecha.
       ...(this.mostrarSelectorPlastico && formValue.plasticoId ? { plasticoId: parseInt(formValue.plasticoId, 10) } : {})
     };
@@ -635,6 +637,7 @@ export class FormularioComprasCreditoComponent implements OnInit, OnDestroy {
     });
     this.responsableForm.reset();
     this.responsables = [];
+    this.tagsCompra = [];
     this.porcentajeRestante = 100;
     this.isNewConcept = false;
     this.interestAutoFilled = false;

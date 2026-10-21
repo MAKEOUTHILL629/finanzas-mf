@@ -81,6 +81,13 @@ export interface ItemCategoria {
   delSistema: boolean;
 }
 
+export interface ItemTagCatalogo {
+  slug: string;
+  nombre: string;
+  frecuencia: number;
+  color: string;
+}
+
 export interface Catalogos {
   personas: ItemPersona[];
   tarjetas: ItemTarjeta[];
@@ -98,23 +105,24 @@ export interface ItemDe {
 /** Estado de un catálogo en memoria: se muestra lo que haya (aunque esté viejo) mientras se actualiza. */
 export interface EstadoCatalogo<T> {
   datos: T[];
-  /** Hay una petición en curso (los `datos` anteriores, si existen, siguen visibles). */
   cargando: boolean;
-  /** Mensaje del último fallo; `null` si la última carga salió bien. */
   error: string | null;
-  /** Ya se cargó al menos una vez. */
+  /** `true` después de la primera respuesta buena (así `datos: []` se distingue de «aún no cargó»). */
   cargado: boolean;
   actualizadoEn: number | null;
 }
 
-export interface OpcionSelect {
-  valor: number | string;
+/** Opción ya lista para pintar en `<app-select>`. */
+export interface OpcionSelect<V = string | number> {
+  valor: V;
   etiqueta: string;
-  /** Texto secundario (saldo, vigencia…) que algunos selectores muestran junto a la etiqueta. */
-  detalle?: string;
+  /** Texto secundario que se muestra a la derecha o debajo (ej. últimos 4 dígitos, banco, correo). */
+  detalle?: string | null;
+  /** Color de acento (punto o avatar). */
+  color?: string | null;
+  /** Texto extra por el que también se filtra al buscar. */
+  busqueda?: string | null;
   deshabilitada?: boolean;
-  /** Encabezado del grupo (`<optgroup>`) al que pertenece, en los selectores que agrupan sus opciones. */
-  grupo?: string;
-  /** Texto extra en el que también se busca (últimos 4 dígitos, alias, tipo…); no se muestra. */
-  busqueda?: string;
+  /** Encabezado bajo el que se agrupa en la lista (p. ej. «Activas» / «Históricas / Reemplazadas»). Sin valor = sin grupo. */
+  grupo?: string | null;
 }

@@ -1,0 +1,51 @@
+<div class="st" [class.st--compacto]="modoCompacto" [class.st--deshabilitado]="deshabilitado">
+  <div class="st-pildoras">
+    <span class="st-tag" *ngFor="let tag of tags">
+      <span class="st-punto" [style.background-color]="colorDeTag(tag)" aria-hidden="true"></span>
+      <span class="st-slug">{{ tag }}</span>
+      <button
+        *ngIf="!deshabilitado"
+        type="button"
+        class="st-quitar"
+        (click)="eliminarTag(tag)"
+        [attr.aria-label]="'Quitar tag ' + tag"
+      >
+        <i class="material-icons" aria-hidden="true">close</i>
+      </button>
+    </span>
+
+    <button
+      *ngIf="modoCompacto && !editandoInline && !deshabilitado"
+      type="button"
+      class="st-btn-agregar"
+      (click)="activarInputInline()"
+    >
+      <i class="material-icons" aria-hidden="true">add</i>
+      <span>Agregar Tag</span>
+    </button>
+
+    <div class="st-input-wrap" *ngIf="(!modoCompacto || editandoInline) && !deshabilitado">
+      <input
+        type="text"
+        class="st-input"
+        [(ngModel)]="textoEntrada"
+        [placeholder]="placeholder"
+        (focus)="alEnfocar()"
+        (blur)="alDesenfocar()"
+        (keydown)="alPresionarTecla($event)"
+        autocomplete="off"
+        aria-label="Agregar tag"
+      />
+      <ul class="st-sugerencias" *ngIf="abierto && opcionesFiltradas.length > 0" role="listbox" aria-label="Sugerencias de tags">
+        <li *ngFor="let op of opcionesFiltradas" role="option">
+          <button type="button" class="st-sugerencia" (mousedown)="seleccionarSugerencia(op)">
+            <span class="st-punto" [style.background-color]="op.color" aria-hidden="true"></span>
+            <span class="st-sugerencia-slug">{{ op.slug }}</span>
+            <span class="st-sugerencia-nombre">{{ op.nombre }}</span>
+            <span class="st-sugerencia-frec" *ngIf="op.frecuencia > 0">{{ op.frecuencia }}</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

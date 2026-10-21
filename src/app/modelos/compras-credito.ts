@@ -3,18 +3,20 @@ export interface ComprasCredito {
   fechaCreacion?: Date;
   concepto?: string;
   valorCompra?: number;
-  fechaCompra?: Date;
+  fechaCompra?: Date | string | number;
   numeroCuotas?: number;
-  fechaUltimaCuota?: Date;
+  fechaUltimaCuota?: Date | string | number;
   pagoMensual?: number;
   interes?: number;
   descripcion?: string;
   estado?: string;
-  tarjeta?: number
+  tarjeta?: number;
   responsables?: string;
   porcentajePago?: number;
   /** Plástico con el que se pagó (solo se envía al registrar una compra retroactiva; el servidor lo deduce si no llega). */
   plasticoId?: number | null;
+  tags?: string[];
+  comercioCanonico?: string | null;
 }
 
 /**
@@ -43,15 +45,117 @@ export interface ComprasCreditoMultimoneda extends ComprasCredito {
   comercioCanonico?: string | null;
 }
 
+export type EstadoRealCuota = 'PAGADA' | 'EN_EXTRACTO_ACTUAL' | 'FUTURA' | 'ABSORBIDA_REFINANCIAMIENTO';
 
-export  type SortableFields = 'id' | 'concepto' | 'valorCompra' | 'fechaCompra' | 'numeroCuotas' |
-'fechaUltimaCuota' | 'pagoMensual' | 'interes' | 'descripcion' | 'estado' | 'tarjeta' | 'responsables';
-
-export interface ColumnasCompraCredito{
-  columna:SortableFields;
-  titulo:string;
+export interface DetalleCompletoCompraCredito {
+  compra: ComprasCreditoMultimoneda;
+  tarjeta: {
+    id: number;
+    nombre: string;
+    franquicia: string | null;
+    descripcion: string | null;
+    etiqueta: string;
+    ultimos4Activo: string | null;
+    diaCorte: number | null;
+    diaLimitePago: number | null;
+    tasaInteresCompra: number | null;
+    cupoTotal: number | null;
+  } | null;
+  plastico: {
+    id: number;
+    ultimos4: string;
+    esActivo: boolean;
+    vigenteDesde: string | null;
+    vigenteHasta: string | null;
+    tipo: string;
+  } | null;
+  cuotas: Array<{
+    id: number;
+    numeroCuota: number;
+    fechaPago: number | null;
+    fechaPagoIso: string | null;
+    saldoRestante: number;
+    interesPagado: number;
+    aporteCapital: number;
+    pagoTotal: number;
+    estado: string | null;
+    estadoReal: EstadoRealCuota;
+    periodoFacturacion: string | null;
+  }>;
+  responsables: Array<{
+    id: number;
+    personaId: number | null;
+    nombre: string;
+    iniciales: string | null;
+    color: string | null;
+    esPropia: boolean;
+    porcentajePago: number;
+    cantidadPago: number;
+    cantidadCuotas: number;
+    estadoCobroLiquidacion: 'COBRADO' | 'EN_LIQUIDACION' | 'PENDIENTE' | 'PROPIO';
+    montoCobrado: number;
+  }>;
+  notificacionCorreo: {
+    id: number;
+    externalMessageId: string;
+    remitente: string | null;
+    asunto: string | null;
+    fechaCorreo: string;
+    cuerpoExtraido: string | null;
+    datosParseados: Record<string, unknown> | null;
+    estadoProcesamiento: string | null;
+    ultimos4: string | null;
+    comercioNormalizado: string | null;
+    montoOriginal: number | null;
+    moneda: string | null;
+    vinculo: string | null;
+  } | null;
+  refinanciamiento: {
+    id: number;
+    concepto: string | null;
+    esMaestra: boolean;
+    maestraId: number;
+    fechaCompra: string | null;
+    saldoUnificado: number;
+    numeroCuotas: number;
+    tasaMensual: number;
+    cuotaMensual: number;
+    sistemaAmortizacion: string;
+    absorbidasCount: number;
+  } | null;
+  recurrencia: {
+    id: number;
+    plantillaId: number;
+    nombre: string;
+    frecuencia: string | null;
+    montoBaseEstimado: number;
+    ultimoPeriodo: string | null;
+    activa: boolean;
+  } | null;
+  estadisticasComercio: {
+    comercioCanonico: string;
+    totalHistoricoAnio: number;
+    cantidadComprasAnio: number;
+    gastoMesTarjeta: number;
+    porcentajeSobreGastoMesTarjeta: number;
+  };
+  resumenPagoUnico: {
+    esUnaCuota: boolean;
+    fechaTransaccion: string | null;
+    fechaEstimadaPagoExtracto: string | null;
+    costoFinanciero: number;
+    gastoMesTarjeta: number;
+    porcentajeSobreGastoMesTarjeta: number;
+  };
 }
 
+export type SortableFields = 'id' | 'concepto' | 'valorCompra' | 'fechaCompra' | 'numeroCuotas' |
+'fechaUltimaCuota' | 'pagoMensual' | 'interes' | 'descripcion' | 'estado' | 'tarjeta' | 'responsables';
+
+export interface ColumnasCompraCredito {
+  columna: SortableFields;
+  titulo: string;
+}
 
 export interface CuotaDetalle {
   id?: number;
@@ -63,13 +167,12 @@ export interface CuotaDetalle {
   pagoTotal?: number;
   compra?: number;
   estado?: string | null;
+  estadoReal?: EstadoRealCuota;
   /** Mes de facturación (`YYYY-MM`) calculado por la BD según el día de corte de la tarjeta. */
   periodoFacturacion?: string | null;
 }
 
-
-export interface ResponsableCompraCredito{
-
+export interface ResponsableCompraCredito {
   id?: number;
   fechaCreacion?: Date;
   persona?: number;
@@ -79,7 +182,7 @@ export interface ResponsableCompraCredito{
   comprasCredito?: number;
 }
 
-export interface MesPagoTarjeta{
+export interface MesPagoTarjeta {
   valorPago: number;
   tarjeta: number;
   fechaPago: Date;

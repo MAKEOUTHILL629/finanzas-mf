@@ -1,5 +1,14 @@
 import { ComprasCreditoMultimoneda, CuotaDetalle } from '../../modelos/compras-credito';
-import { datosFaltantesDeCompra, estadoVisualDeCompra, progresoDeCuotas, textoDatosFaltantes } from './compra-resumen.helper';
+import {
+  calcularBarraAmortizacionSegmentada,
+  calcularResumenPagoUnico,
+  datosFaltantesDeCompra,
+  estadoRealDeCuota,
+  estadoVisualDeCompra,
+  obtenerInicialesComercio,
+  progresoDeCuotas,
+  textoDatosFaltantes,
+} from './compra-resumen.helper';
 
 const completa = (extra: Partial<ComprasCreditoMultimoneda> = {}): ComprasCreditoMultimoneda => ({
   id: 1,
@@ -96,5 +105,44 @@ describe('progresoDeCuotas', () => {
   it('sin cuotas cargadas usa el total declarado', () => {
     expect(progresoDeCuotas([], 12)).toEqual(jasmine.objectContaining({ total: 12, pagadas: 0, actual: 1, porcentaje: 0 }));
     expect(progresoDeCuotas([], null).total).toBe(0);
+  });
+});
+
+describe('Fase 1 (Iteración 3) — Helpers de Inspector 360°', () => {
+  it('calcularBarraAmortizacionSegmentada desglosa capital amortizado, intereses pagados y capital pendiente', () => {
+    const lista: CuotaDetalle[] = [
+      { numeroCuota: 1, estado: 'Pagado', aporteCapital: 200_000, interesPagado: 20_000, pagoTotal: 220_000 },
+      { numeroCuota: 2, estado: 'Pendiente', aporteCapital: 200_000, interesPagado: 15_000, pagoTotal: 215_000 },
+    ];
+    const b = calcularBarraAmortizacionSegmentada(lista, 400_000, 2);
+    expect(b.capitalAmortizado).toBe(200_000);
+    expect(b.interesesPagados).toBe(20_000);
+    expect(b.capitalPendiente).toBe(200_000);
+    expect(b.cuotasPagadas).toBe(1);
+    expect(b.totalCuotas).toBe(2);
+    expect(b.proximaCuotaMonto).toBe(215_000);
+    expect(b.porcentajeCapitalAmortizado + b.porcentajeInteresesPagados + b.porcentajeCapitalPendiente).toBeCloseTo(100, 0);
+  });
+
+  it('calcularResumenPagoUnico identifica compras a 1 cuota sin intereses', () => {
+    const r = calcularResumenPagoUnico(completa({ numeroCuotas: 1, valorCompra: 85_000 }), [
+      { numeroCuota: 1, estado: 'Pendiente', aporteCapital: 85_000, interesPagado: 0, pagoTotal: 85_000 },
+    ], 12.5);
+    expect(r.esUnaCuota).toBeTrue();
+    expect(r.costoFinanciero).toBe(0);
+    expect(r.textoCostoFinanciero).toContain('Sin intereses a 1 cuota');
+    expect(r.porcentajeSobreGastoMesTarjeta).toBe(12.5);
+  });
+
+  it('estadoRealDeCuota clasifica Pagada, En extracto actual y Futura', () => {
+    const lista = [cuota(1, 'Pagado'), cuota(2, 'Pendiente'), cuota(3, 'Pendiente')];
+    expect(estadoRealDeCuota(lista[0], 0, lista).codigo).toBe('PAGADA');
+    expect(estadoRealDeCuota(lista[1], 1, lista).codigo).toBe('EN_EXTRACTO_ACTUAL');
+    expect(estadoRealDeCuota(lista[2], 2, lista).codigo).toBe('FUTURA');
+  });
+
+  it('obtenerInicialesComercio extrae iniciales del comercio canónico o concepto', () => {
+    expect(obtenerInicialesComercio('COMPRA EN DLO*DIDI FOOD', 'Didi Food')).toBe('DF');
+    expect(obtenerInicialesComercio('Netflix')).toBe('NE');
   });
 });

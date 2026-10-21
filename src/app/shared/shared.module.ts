@@ -20,6 +20,7 @@ import { PageHeaderComponent } from './ui/page-header/page-header.component';
 import { SearchableSelectComponent } from './ui/searchable-select/searchable-select.component';
 import { SelectComponent } from './ui/select/select.component';
 import { SelectProductoComponent } from './ui/select-producto/select-producto.component';
+import { SelectorTagsComponent } from './ui/selector-tags/selector-tags.component';
 import { SkeletonComponent } from './ui/skeleton/skeleton.component';
 import { TableDirective } from './ui/table/table.directive';
 import { ThemeToggleComponent } from './ui/theme-toggle/theme-toggle.component';
@@ -41,6 +42,7 @@ const UI = [
   SearchableSelectComponent,
   SelectComponent,
   SelectProductoComponent,
+  SelectorTagsComponent,
   SkeletonComponent,
   TableDirective,
   ThemeToggleComponent,

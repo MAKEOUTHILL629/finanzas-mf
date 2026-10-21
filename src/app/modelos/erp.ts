@@ -59,6 +59,8 @@ export interface CuentaFinanciera {
   es_transferencia_interna?: boolean;
   cuenta_contraparte_id?: number | null;
   transaccion_espejo_id?: number | null;
+  tags?: string[];
+  comercio_canonico?: string | null;
 }
 
 export interface CrearCuentaFinanciera {
@@ -86,6 +88,8 @@ export interface Categoria {
   es_transferencia_interna?: boolean;
   cuenta_contraparte_id?: number | null;
   transaccion_espejo_id?: number | null;
+  tags?: string[];
+  comercio_canonico?: string | null;
 }
 
 export interface CrearCategoria {
@@ -120,6 +124,8 @@ export interface Transaccion {
   es_transferencia_interna?: boolean;
   cuenta_contraparte_id?: number | null;
   transaccion_espejo_id?: number | null;
+  tags?: string[];
+  comercio_canonico?: string | null;
 }
 
 export interface TransaccionesPagina {
@@ -163,6 +169,8 @@ export interface CrearTransaccion {
   notas?: string;
   esTransferenciaInterna?: boolean;
   cuentaContraparteId?: number;
+  tags?: string[];
+  comercioCanonico?: string | null;
 }
 
 export interface CrearTransferenciaInterna {
@@ -408,6 +416,8 @@ export interface ObligacionMes {
   es_transferencia_interna?: boolean;
   cuenta_contraparte_id?: number | null;
   transaccion_espejo_id?: number | null;
+  tags?: string[];
+  comercio_canonico?: string | null;
 }
 
 export interface CrearObligacionMes {

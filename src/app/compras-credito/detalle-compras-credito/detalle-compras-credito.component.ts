@@ -1,8 +1,15 @@
 import { token } from '../../shared/design-tokens';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ComprasCredito, ComprasCreditoMultimoneda, CuotaDetalle, months } from '../../modelos/compras-credito';
+import {
+  ComprasCredito,
+  ComprasCreditoMultimoneda,
+  CuotaDetalle,
+  DetalleCompletoCompraCredito,
+  months,
+} from '../../modelos/compras-credito';
 import { ItemTarjeta, OpcionSelect } from '../../modelos/catalogos';
 import { DetalleRefinanciamiento } from '../../modelos/refinanciamiento';
 import { PlasticoTarjeta } from '../../modelos/tarjeta';
@@ -21,16 +28,45 @@ import { AccionUI } from '../../shared/ui/acciones/acciones.component';
 import { ValorCampoEditable } from '../../shared/ui/campo-editable/campo-editable.component';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import { CampoFaltante, DatoFaltante, EstadoVisual, ProgresoCuotas, datosFaltantesDeCompra, estadoVisualDeCompra, progresoDeCuotas, textoDatosFaltantes } from './compra-resumen.helper';
+import {
+  BarraAmortizacionSegmentada,
+  CampoFaltante,
+  DatoFaltante,
+  EstadoVisual,
+  ProgresoCuotas,
+  ResumenPagoUnico,
+  calcularBarraAmortizacionSegmentada,
+  calcularResumenPagoUnico,
+  datosFaltantesDeCompra,
+  estadoRealDeCuota,
+  estadoVisualDeCompra,
+  obtenerInicialesComercio,
+  progresoDeCuotas,
+  textoDatosFaltantes,
+} from './compra-resumen.helper';
 
 /** Campos de la compra que se editan en el sitio. */
-export type CampoCompra = 'concepto' | 'descripcion' | 'estado' | 'tarjeta' | 'plastico' | 'valorCompra' | 'fechaCompra' | 'numeroCuotas' | 'interes' | 'trm';
+export type CampoCompra =
+  | 'concepto'
+  | 'comercioCanonico'
+  | 'descripcion'
+  | 'estado'
+  | 'tarjeta'
+  | 'plastico'
+  | 'valorCompra'
+  | 'fechaCompra'
+  | 'numeroCuotas'
+  | 'interes'
+  | 'trm'
+  | 'tags';
 
 /** Los que cambian el valor, las cuotas, el interés, la fecha o la tarjeta: el servidor recalcula la tabla de cuotas. */
 const CAMPOS_FINANCIEROS: ReadonlyArray<CampoCompra> = ['valorCompra', 'fechaCompra', 'numeroCuotas', 'interes', 'tarjeta', 'trm'];
 
 export const MODAL_ELIMINAR_COMPRA = 'detalle-eliminar-compra';
 export const MODAL_DESHACER_UNIFICACION = 'detalle-deshacer-unificacion';
+export const MODAL_EDITAR_COMPRA_COMPLETA = 'detalle-editar-compra-completa';
+export const MODAL_CORREO_ORIGINAL = 'detalle-correo-original';
 
 export const OPCIONES_ESTADO: OpcionSelect[] = [
   { valor: 'Pendiente', etiqueta: 'Pendiente' },
@@ -39,9 +75,11 @@ export const OPCIONES_ESTADO: OpcionSelect[] = [
 ];
 
 /**
- * Detalle de una compra a crédito como un «inspector» (plan V2, fase 5): resumen arriba (valor, estado, fecha, tarjeta), aviso de lo que
- * falta por completar, tarjetas con los datos que se editan al tocarlos (cada cambio se guarda al instante con un PATCH, sin recargar ni
- * perder el lugar), avance de las cuotas y, si la compra se unificó (o es la unificación), el vínculo con su refinanciamiento.
+ * Detalle de una compra a crédito como un «inspector» 360° (Iteración 3, Fase 1):
+ * - Header con avatar de comercio, tags inline, badges de correo bancario y recurrencia.
+ * - Si `numeroCuotas === 1`, oculta gráfica y tabla de amortización y muestra «Resumen de Pago Único al Corte».
+ * - Si `numeroCuotas > 1`, muestra barra segmentada estilo Apple Storage y resalta la próxima cuota a vencer.
+ * - Permite edición inline instantánea (PATCH) y edición completa 360° en modal (PUT).
  */
 @Component({
   selector: 'app-detalle-compras-credito',
@@ -55,7 +93,9 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
 
   compraCredito: ComprasCreditoMultimoneda | undefined;
   cuotaDetalles: CuotaDetalle[] = [];
+  detalleCompleto: DetalleCompletoCompraCredito | null = null;
   cargando = true;
+  cargandoContexto360 = false;
   errorCarga: string | null = null;
 
   tarjetas: ItemTarjeta[] = [];
@@ -68,6 +108,9 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   textoFaltantes = '';
   faltantesTexto = '';
   progreso: ProgresoCuotas = progresoDeCuotas([], 0);
+  barraSegmentada: BarraAmortizacionSegmentada = calcularBarraAmortizacionSegmentada([], 0, 0);
+  resumenPagoUnico: ResumenPagoUnico = calcularResumenPagoUnico(undefined, []);
+  inicialesComercio = 'CC';
   totalPagado = 0;
   totalIntereses = 0;
   acciones: AccionUI[] = [];
@@ -78,17 +121,24 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   resaltando = false;
   readonly opcionesEstado = OPCIONES_ESTADO;
 
+  // ── edición 360° en modal
+  formEdicionCompleta: FormGroup;
+  tagsEdicionCompleta: string[] = [];
+  guardandoEdicionCompleta = false;
+
   // ── responsables
   hayCambiosResponsables = false;
   responsablesModificados: any[] = [];
   guardandoResponsables = false;
 
-  // ── confirmaciones
+  // ── confirmaciones y modales
   eliminando = false;
   deshaciendo = false;
   recalculando = false;
   readonly MODAL_ELIMINAR = MODAL_ELIMINAR_COMPRA;
   readonly MODAL_DESHACER = MODAL_DESHACER_UNIFICACION;
+  readonly MODAL_EDITAR_COMPLETA = MODAL_EDITAR_COMPRA_COMPLETA;
+  readonly MODAL_CORREO = MODAL_CORREO_ORIGINAL;
 
   public lineChartData: ChartConfiguration['data'] = {
     datasets: [
@@ -139,7 +189,6 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
       },
     },
     scales: {
-      // We use this empty structure as a placeholder for dynamic theming.
       y: {
         position: 'left',
       },
@@ -153,7 +202,6 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         },
       },
     },
-
     plugins: {
       legend: { display: true },
     },
@@ -167,6 +215,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private fb: FormBuilder,
     private apiService: ApiServicesService,
     private compras: ComprasCreditoService,
     private refinanciamientos: RefinanciamientosService,
@@ -174,7 +223,20 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     private catalogos: CatalogosService,
     private modal: ModalService,
     private toast: ToastService
-  ) {}
+  ) {
+    this.formEdicionCompleta = this.fb.group({
+      concepto: ['', [Validators.required, Validators.maxLength(255)]],
+      comercioCanonico: ['', [Validators.maxLength(120)]],
+      descripcion: ['', [Validators.maxLength(1000)]],
+      valorCompra: [0, [Validators.required, Validators.min(1)]],
+      fechaCompra: ['', [Validators.required]],
+      numeroCuotas: [1, [Validators.required, Validators.min(1), Validators.max(120)]],
+      interes: [0, [Validators.required, Validators.min(0), Validators.max(20)]],
+      tarjeta: [null, [Validators.required]],
+      plasticoId: [null],
+      estado: ['Pendiente', [Validators.required]],
+    });
+  }
 
   ngOnInit(): void {
     this.catalogos.estado$('tarjetas').pipe(takeUntil(this.destroy$)).subscribe((e) => (this.tarjetas = e.datos));
@@ -210,7 +272,9 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   private resetearEstado(): void {
     this.compraCredito = undefined;
     this.cuotaDetalles = [];
+    this.detalleCompleto = null;
     this.cargando = true;
+    this.cargandoContexto360 = false;
     this.errorCarga = null;
     this.refinanciamiento = null;
     this.plasticos = [];
@@ -237,6 +301,29 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         this.errorCarga = mensajeDeError(err, 'No se pudo cargar la compra.');
       },
     });
+  }
+
+  cargarContexto360(): void {
+    const id = this.compraCredito?.id;
+    if (!id || this.cargandoContexto360) return;
+    this.cargandoContexto360 = true;
+    this.compras
+      .getDetalleCompleto(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (detalle) => {
+          this.cargandoContexto360 = false;
+          this.detalleCompleto = detalle;
+          if (detalle?.compra && this.compraCredito) {
+            this.compraCredito = { ...this.compraCredito, ...detalle.compra };
+          }
+          this.recalcularDerivados();
+        },
+        error: (err) => {
+          this.cargandoContexto360 = false;
+          this.toast.error(mensajeDeError(err, 'No se pudo cargar el contexto 360° de la compra.'));
+        },
+      });
   }
 
   reintentar(): void {
@@ -278,7 +365,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
         this.refinanciamiento = d;
         this.recalcularDerivados();
       },
-      error: () => undefined, // el vínculo se ve igual con lo que trae la compra; el detalle solo lo enriquece
+      error: () => undefined,
     });
   }
 
@@ -303,6 +390,14 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     this.textoFaltantes = textoDatosFaltantes(this.faltantes.length);
     this.faltantesTexto = this.faltantes.map((f) => f.etiqueta).join(' · ');
     this.progreso = progresoDeCuotas(this.cuotaDetalles, c?.numeroCuotas);
+    this.barraSegmentada = calcularBarraAmortizacionSegmentada(
+      this.cuotaDetalles,
+      c?.valorCompra ?? 0,
+      c?.numeroCuotas ?? 0,
+    );
+    const pctMes = this.detalleCompleto?.estadisticasComercio?.porcentajeSobreGastoMesTarjeta ?? 100;
+    this.resumenPagoUnico = calcularResumenPagoUnico(c, this.cuotaDetalles, pctMes);
+    this.inicialesComercio = obtenerInicialesComercio(c?.concepto, c?.comercioCanonico);
     this.totalPagado = sumarMonedas(this.cuotaDetalles.map((q) => q.pagoTotal));
     this.totalIntereses = sumarMonedas(this.cuotaDetalles.map((q) => q.interesPagado));
     this.acciones = this.armarAcciones();
@@ -320,6 +415,26 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     if (id === 'recalcular') this.recalcularCuotas();
     else if (id === 'eliminar') this.modal.open(MODAL_ELIMINAR_COMPRA);
     else if (id === 'deshacer') this.modal.open(MODAL_DESHACER_UNIFICACION);
+  }
+
+  /** Compra diferida a 1 sola cuota (no unificada ni maestra): muestra Resumen de Pago Único al Corte en vez de gráfica/tabla de amortización. */
+  get esUnaCuota(): boolean {
+    const n = this.compraCredito?.numeroCuotas ?? 0;
+    return n === 1 && !this.unificada && !this.esMaestra;
+  }
+
+  get estadoPrimeraCuota(): { texto: string; tono: 'success' | 'warning' | 'info' | 'neutral' } {
+    if (this.cuotaDetalles.length > 0) {
+      const r = estadoRealDeCuota(this.cuotaDetalles[0], 0, this.cuotaDetalles);
+      return { texto: r.texto, tono: r.tono };
+    }
+    const t = this.estadoVisual.tono;
+    const tonoSeguro = t === 'danger' ? 'warning' : t === 'premium' ? 'info' : t;
+    return { texto: this.estadoVisual.etiqueta, tono: tonoSeguro };
+  }
+
+  esProximaCuota(q: CuotaDetalle): boolean {
+    return !this.unificada && !!this.progreso.proxima && this.progreso.proxima.numeroCuota === q.numeroCuota;
   }
 
   /** La compra fue absorbida por un refinanciamiento: ya no se modifica su plan de pagos. */
@@ -411,7 +526,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     this.lineChartData.datasets[0].data = [];
     this.lineChartData.datasets[1].data = [];
     this.lineChartData.datasets[2].data = [];
-    this.lineChartData.labels = []; // Reset labels para evitar acumulación
+    this.lineChartData.labels = [];
 
     this.cuotaDetalles.forEach((cuota) => {
       this.lineChartData.datasets[0].data.push(cuota.interesPagado || 0);
@@ -425,6 +540,27 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   }
 
   // ───────── edición en línea ─────────
+
+  guardarTags(tags: string[]): void {
+    const compra = this.compraCredito;
+    if (!compra?.id || this.guardando.has('tags')) return;
+    this.guardando = new Set(this.guardando).add('tags');
+    const id = compra.id;
+    this.compras
+      .actualizarParcial(id, { tags })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (respuesta) => {
+          this.terminarGuardado('tags');
+          if (this.compraCredito?.id !== id) return;
+          this.aplicarCompra(respuesta, false);
+        },
+        error: (err) => {
+          this.terminarGuardado('tags');
+          this.toast.error(mensajeDeError(err, 'No se pudieron guardar las etiquetas.'));
+        },
+      });
+  }
 
   /** Guarda al instante el campo que se acaba de editar (PATCH con solo ese cambio). */
   guardarCampo(campo: CampoCompra, valor: ValorCampoEditable): void {
@@ -443,7 +579,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     peticion.pipe(takeUntil(this.destroy$)).subscribe({
       next: (respuesta) => {
         this.terminarGuardado(campo);
-        if (this.compraCredito?.id !== id) return; // cambió de compra mientras guardaba
+        if (this.compraCredito?.id !== id) return;
         if (campo === 'trm') {
           this.cargarCompra(id);
           return;
@@ -471,6 +607,8 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     switch (campo) {
       case 'concepto':
         return { concepto: String(valor ?? '') };
+      case 'comercioCanonico':
+        return { comercioCanonico: valor === null || valor === '' ? null : String(valor) };
       case 'descripcion':
         return { descripcion: valor === null ? '' : String(valor) };
       case 'estado':
@@ -492,15 +630,77 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Pone en pantalla lo que devolvió el servidor. Si cambió algo que recalcula las cuotas se entrega un objeto nuevo (el componente de
-   * responsables vuelve a leer sus montos); si no, se actualiza en el sitio para no tocar lo que la persona esté haciendo allá.
-   */
   private aplicarCompra(nueva: ComprasCreditoMultimoneda, objetoNuevo: boolean): void {
     if (!this.compraCredito) return;
     if (objetoNuevo) this.compraCredito = { ...this.compraCredito, ...nueva };
     else Object.assign(this.compraCredito, nueva);
     this.recalcularDerivados();
+  }
+
+  // ───────── edición completa 360° (modal) ─────────
+
+  abrirModalEditarCompleta(): void {
+    const c = this.compraCredito;
+    if (!c) return;
+    this.tagsEdicionCompleta = [...(c.tags ?? [])];
+    this.formEdicionCompleta.reset({
+      concepto: c.concepto ?? '',
+      comercioCanonico: c.comercioCanonico ?? '',
+      descripcion: c.descripcion ?? '',
+      valorCompra: c.valorCompra ?? 0,
+      fechaCompra: this.fechaCompraIso,
+      numeroCuotas: c.numeroCuotas ?? 1,
+      interes: c.interes ?? 0,
+      tarjeta: c.tarjeta ?? null,
+      plasticoId: c.plasticoId ?? null,
+      estado: c.estado ?? 'Pendiente',
+    });
+    this.modal.open(MODAL_EDITAR_COMPRA_COMPLETA);
+  }
+
+  guardarEdicionCompleta(): void {
+    const c = this.compraCredito;
+    if (!c?.id || this.formEdicionCompleta.invalid || this.guardandoEdicionCompleta) {
+      this.formEdicionCompleta.markAllAsTouched();
+      return;
+    }
+    this.guardandoEdicionCompleta = true;
+    const raw = this.formEdicionCompleta.getRawValue();
+    const dto: ComprasCredito = {
+      id: c.id,
+      concepto: String(raw.concepto ?? '').trim(),
+      comercioCanonico: raw.comercioCanonico ? String(raw.comercioCanonico).trim() : null,
+      descripcion: String(raw.descripcion ?? '').trim(),
+      valorCompra: Number(raw.valorCompra),
+      fechaCompra: String(raw.fechaCompra),
+      numeroCuotas: Number(raw.numeroCuotas),
+      interes: Number(raw.interes),
+      tarjeta: Number(raw.tarjeta),
+      plasticoId: raw.plasticoId ? Number(raw.plasticoId) : null,
+      estado: String(raw.estado ?? 'Pendiente'),
+      tags: [...this.tagsEdicionCompleta],
+    };
+
+    this.compras
+      .actualizarCompraCompleta(c.id, dto)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.guardandoEdicionCompleta = false;
+          this.modal.close();
+          this.toast.exito('Compra actualizada por completo y cuotas recalculadas.');
+          this.cargarCompra(c.id!);
+        },
+        error: (err) => {
+          this.guardandoEdicionCompleta = false;
+          this.toast.error(mensajeDeError(err, 'No se pudo actualizar la compra completa.'));
+        },
+      });
+  }
+
+  abrirCorreoOriginal(): void {
+    if (!this.detalleCompleto?.notificacionCorreo) return;
+    this.modal.open(MODAL_CORREO_ORIGINAL);
   }
 
   // ───────── aviso «Faltan X datos» ─────────
@@ -551,7 +751,6 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
     this.compras.getDetalle(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         if (this.compraCredito?.id !== id) return;
-        // en el sitio: el componente de responsables no debe recargarse otra vez
         Object.assign(this.compraCredito, data);
         this.recalcularDerivados();
       },

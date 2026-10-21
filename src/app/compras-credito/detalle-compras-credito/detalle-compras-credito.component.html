@@ -13,7 +13,7 @@
   </div>
 
   <ng-container *ngIf="compraCredito as compra">
-    <!-- ───────── Resumen ───────── -->
+    <!-- ───────── Resumen (Hero Inspector 360°) ───────── -->
     <header class="insp-resumen erp-card">
       <div class="insp-resumen-principal">
         <div class="insp-chips">
@@ -22,14 +22,44 @@
           <a class="insp-enlace-refi" *ngIf="unificada" [routerLink]="['/compra-credito-detalle', compra.refinanciamientoId]" [appTooltip]="'Ver el refinanciamiento que unificó esta compra'">
             <app-badge tone="info" icon="link">Unificada en Refinanciamiento #{{ compra.refinanciamientoId }}</app-badge>
           </a>
+          <button
+            type="button"
+            class="insp-chip-btn"
+            *ngIf="detalleCompleto?.notificacionCorreo as notif"
+            (click)="abrirCorreoOriginal()"
+            title="Ver correo bancario original"
+          >
+            <app-badge tone="info" icon="mark_email_read">Capturada por Correo · {{ notif.remitente || 'Banco' }}</app-badge>
+          </button>
+          <app-badge tone="warning" icon="autorenew" *ngIf="detalleCompleto?.recurrencia as rec">
+            Suscripción Recurrente ({{ rec.frecuencia || 'MENSUAL' }})
+          </app-badge>
         </div>
-        <h1 class="insp-titulo" id="titulo-compra">{{ compra.concepto || 'Compra a crédito' }}</h1>
-        <p class="insp-sub">
-          <span><i class="material-icons" aria-hidden="true">event</i>{{ compra.fechaCompra | formatoFecha }}</span>
-          <span *ngIf="nombreTarjeta"><i class="material-icons" aria-hidden="true">credit_card</i>{{ nombreTarjeta }}</span>
-          <app-badge *ngIf="compra.plasticoUltimos4" icon="contactless">Plástico ··{{ compra.plasticoUltimos4 }}</app-badge>
-        </p>
+
+        <div class="insp-cabecera-marca">
+          <span class="insp-avatar" aria-hidden="true">{{ inicialesComercio }}</span>
+          <div class="insp-cabecera-textos">
+            <h1 class="insp-titulo" id="titulo-compra">{{ compra.concepto || 'Compra a crédito' }}</h1>
+            <p class="insp-sub">
+              <span><i class="material-icons" aria-hidden="true">event</i>{{ compra.fechaCompra | formatoFecha }}</span>
+              <span *ngIf="nombreTarjeta"><i class="material-icons" aria-hidden="true">credit_card</i>{{ nombreTarjeta }}</span>
+              <span *ngIf="compra.comercioCanonico" class="insp-comercio-pill"><i class="material-icons" aria-hidden="true">storefront</i>{{ compra.comercioCanonico }}</span>
+              <app-badge *ngIf="compra.plasticoUltimos4" icon="contactless">Plástico ··{{ compra.plasticoUltimos4 }}</app-badge>
+            </p>
+          </div>
+        </div>
+
+        <div class="insp-tags-inline">
+          <app-selector-tags
+            [tags]="compra.tags || []"
+            [compacto]="true"
+            [soloLectura]="unificada"
+            placeholder="+ Etiqueta (#viaje, #hogar...)"
+            (cambio)="guardarTags($event)"
+          ></app-selector-tags>
+        </div>
       </div>
+
       <div class="insp-resumen-valor">
         <span class="erp-overline">Valor de la compra</span>
         <strong class="insp-valor erp-num">{{ compra.valorCompra | moneda }}</strong>
@@ -38,7 +68,31 @@
           <ng-container *ngIf="noEsCop && compra.valorMonedaOriginal"> · {{ compra.monedaOriginal }} {{ compra.valorMonedaOriginal | number: '1.2-2' }}</ng-container>
         </span>
       </div>
-      <div class="insp-acciones"><app-acciones [secundarias]="acciones" (accion)="alAccionar($event)"></app-acciones></div>
+
+      <div class="insp-acciones">
+        <button
+          type="button"
+          appButton="ghost"
+          size="sm"
+          class="insp-btn-contexto-360"
+          *ngIf="!detalleCompleto"
+          [loading]="cargandoContexto360"
+          (click)="cargarContexto360()"
+        >
+          <i class="material-icons" aria-hidden="true">insights</i> Contexto 360°
+        </button>
+        <button
+          type="button"
+          appButton="secondary"
+          size="sm"
+          class="insp-btn-editar-360"
+          *ngIf="!unificada && !esMaestra"
+          (click)="abrirModalEditarCompleta()"
+        >
+          <i class="material-icons" aria-hidden="true">edit</i> Editar compra completa
+        </button>
+        <app-acciones [secundarias]="acciones" (accion)="alAccionar($event)"></app-acciones>
+      </div>
     </header>
 
     <!-- Aviso de datos por completar -->
@@ -61,6 +115,7 @@
     <div class="insp-bento">
       <app-card class="insp-tarjeta insp-datos" titulo="Datos">
         <app-campo-editable idCampo="campo-concepto" etiqueta="Concepto" tipo="texto" [valor]="compra.concepto" [requerido]="true" [maxlength]="255" [guardando]="guardando.has('concepto')" [error]="errores['concepto']" (guardar)="guardarCampo('concepto', $event)"></app-campo-editable>
+        <app-campo-editable idCampo="campo-comercioCanonico" etiqueta="Comercio / Marca" tipo="texto" [valor]="compra.comercioCanonico" [maxlength]="120" placeholder="Ej. Netflix, Éxito, Rappi" [guardando]="guardando.has('comercioCanonico')" [error]="errores['comercioCanonico']" (guardar)="guardarCampo('comercioCanonico', $event)"></app-campo-editable>
         <app-campo-editable idCampo="campo-descripcion" etiqueta="Descripción" tipo="textarea" [valor]="compra.descripcion" [maxlength]="1000" placeholder="Agregar una descripción" [faltante]="esFaltante('descripcion')" [resaltar]="resaltando && esFaltante('descripcion')" [guardando]="guardando.has('descripcion')" [error]="errores['descripcion']" ayuda="Ctrl + Enter para guardar" (guardar)="guardarCampo('descripcion', $event)"></app-campo-editable>
         <app-campo-editable idCampo="campo-estado" etiqueta="Estado" tipo="seleccion" [valor]="compra.estado" [texto]="estadoBloqueado ? estadoVisual.etiqueta : null" [opciones]="opcionesEstado" [requerido]="true" [soloLectura]="estadoBloqueado" [guardando]="guardando.has('estado')" [error]="errores['estado']" (guardar)="guardarCampo('estado', $event)"></app-campo-editable>
         <app-campo-editable idCampo="campo-tarjeta" etiqueta="Tarjeta" tipo="seleccion" catalogo="tarjetas" [valor]="compra.tarjeta" [texto]="nombreTarjeta" [requerido]="true" [soloLectura]="finanzasBloqueadas" [resaltar]="resaltando && esFaltante('tarjeta')" [faltante]="esFaltante('tarjeta')" [guardando]="guardando.has('tarjeta')" [error]="errores['tarjeta']" (guardar)="guardarCampo('tarjeta', $event)"></app-campo-editable>
@@ -77,8 +132,39 @@
         <div class="insp-dato"><span class="insp-dato-etiqueta">Última cuota</span><span class="insp-dato-valor">{{ compra.fechaUltimaCuota | formatoFecha }}</span></div>
       </app-card>
 
-      <!-- Avance de las cuotas -->
-      <app-card class="insp-tarjeta insp-progreso" titulo="Avance de las cuotas" *ngIf="progreso.total > 0">
+      <!-- Resumen de Pago Único al Corte (solo cuando numeroCuotas === 1) -->
+      <app-card class="insp-tarjeta insp-pago-unico" titulo="Resumen de Pago Único al Corte" *ngIf="esUnaCuota">
+        <div class="insp-pago-unico-banner">
+          <i class="material-icons" aria-hidden="true">bolt</i>
+          <div>
+            <strong>Compra diferida a 1 sola cuota</strong>
+            <p class="erp-muted">Sin intereses corrientes si se paga el total del extracto antes de la fecha límite de pago.</p>
+          </div>
+          <app-badge [tone]="estadoPrimeraCuota.tono">{{ estadoPrimeraCuota.texto }}</app-badge>
+        </div>
+        <dl class="insp-kpis">
+          <div class="insp-kpi">
+            <dt>Fecha de transacción</dt>
+            <dd>{{ resumenPagoUnico.fechaTransaccion | formatoFecha }}</dd>
+          </div>
+          <div class="insp-kpi">
+            <dt>Fecha estimada de cobro en extracto</dt>
+            <dd>{{ resumenPagoUnico.fechaEstimadaPagoExtracto | formatoFecha }}</dd>
+          </div>
+          <div class="insp-kpi">
+            <dt>Impacto en próximo corte</dt>
+            <dd class="erp-num">{{ compra.valorCompra | moneda }}</dd>
+            <span class="erp-muted">100 % en un solo corte</span>
+          </div>
+          <div class="insp-kpi">
+            <dt>Costo financiero</dt>
+            <dd class="erp-num insp-costo-cero">{{ resumenPagoUnico.textoCostoFinanciero }}</dd>
+          </div>
+        </dl>
+      </app-card>
+
+      <!-- Avance de las cuotas (múltiples cuotas o unificadas) -->
+      <app-card class="insp-tarjeta insp-progreso" titulo="Avance de las cuotas" *ngIf="progreso.total > 0 && !esUnaCuota">
         <div class="insp-progreso-cab">
           <strong class="insp-progreso-texto">
             <ng-container *ngIf="!unificada && !progreso.completa">Cuota {{ progreso.actual }} de {{ progreso.total }}</ng-container>
@@ -87,9 +173,19 @@
           </strong>
           <span class="erp-muted erp-num">{{ progreso.porcentaje | number: '1.0-1' }} %</span>
         </div>
-        <div class="erp-progress" role="progressbar" [attr.aria-valuenow]="progreso.porcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Cuotas pagadas: ' + progreso.pagadas + ' de ' + progreso.total">
-          <div class="erp-progress-bar" [style.width.%]="progreso.porcentaje"></div>
+
+        <div class="erp-progress insp-barra-apple" role="progressbar" [attr.aria-valuenow]="progreso.porcentaje" aria-valuemin="0" aria-valuemax="100" [attr.aria-label]="'Cuotas pagadas: ' + progreso.pagadas + ' de ' + progreso.total">
+          <div class="erp-progress-bar insp-seg--capital" [style.width.%]="barraSegmentada.porcentajeCapitalAmortizado" title="Capital amortizado"></div>
+          <div class="insp-seg--interes" [style.width.%]="barraSegmentada.porcentajeInteresesPagados" title="Intereses pagados"></div>
+          <div class="insp-seg--pendiente" [style.width.%]="barraSegmentada.porcentajeCapitalPendiente" title="Saldo pendiente"></div>
         </div>
+
+        <div class="insp-leyenda-apple">
+          <span><i class="insp-dot insp-dot--capital"></i> Capital pagado: <strong class="erp-num">{{ barraSegmentada.capitalAmortizado | moneda }}</strong></span>
+          <span><i class="insp-dot insp-dot--interes"></i> Intereses pagados: <strong class="erp-num">{{ barraSegmentada.interesesPagados | moneda }}</strong></span>
+          <span><i class="insp-dot insp-dot--pendiente"></i> Capital pendiente: <strong class="erp-num">{{ barraSegmentada.capitalPendiente | moneda }}</strong></span>
+        </div>
+
         <dl class="insp-kpis">
           <div class="insp-kpi">
             <dt>Saldo de capital pendiente</dt>
@@ -110,6 +206,31 @@
             <dd class="erp-num">{{ totalPagado | moneda }}</dd>
           </div>
         </dl>
+      </app-card>
+
+      <!-- Contexto 360° e Inteligencia del Comercio -->
+      <app-card class="insp-tarjeta insp-contexto360" titulo="Contexto 360° e Inteligencia del Comercio" *ngIf="detalleCompleto as ctx">
+        <div class="insp-contexto-grid">
+          <div class="insp-kpi">
+            <dt>Comercio canónico</dt>
+            <dd>{{ ctx.estadisticasComercio.comercioCanonico }}</dd>
+            <span class="erp-muted">{{ ctx.estadisticasComercio.cantidadComprasAnio }} compras registradas este año</span>
+          </div>
+          <div class="insp-kpi">
+            <dt>Total histórico del año</dt>
+            <dd class="erp-num">{{ ctx.estadisticasComercio.totalHistoricoAnio | moneda }}</dd>
+          </div>
+          <div class="insp-kpi">
+            <dt>Peso en el gasto mensual de la tarjeta</dt>
+            <dd class="erp-num">{{ ctx.estadisticasComercio.porcentajeSobreGastoMesTarjeta | number: '1.0-1' }} %</dd>
+            <span class="erp-muted">De {{ ctx.estadisticasComercio.gastoMesTarjeta | moneda }} este mes</span>
+          </div>
+          <div class="insp-kpi" *ngIf="ctx.plastico as pl">
+            <dt>Trazabilidad de plástico</dt>
+            <dd>··{{ pl.ultimos4 }} ({{ pl.tipo }})</dd>
+            <span class="erp-muted">{{ pl.esActivo ? 'Plástico activo' : 'Plástico histórico' }}</span>
+          </div>
+        </div>
       </app-card>
 
       <!-- Refinanciamiento -->
@@ -147,8 +268,8 @@
       </app-card>
     </div>
 
-    <!-- ───────── Cuotas ───────── -->
-    <section class="insp-cuotas" *ngIf="cuotaDetalles.length > 0" aria-labelledby="titulo-cuotas">
+    <!-- ───────── Cuotas (solo cuando !esUnaCuota) ───────── -->
+    <section class="insp-cuotas" *ngIf="cuotaDetalles.length > 0 && !esUnaCuota" aria-labelledby="titulo-cuotas">
       <div class="insp-seccion-cab">
         <h2 id="titulo-cuotas" class="insp-seccion-titulo">Detalle de cuotas</h2>
         <span class="erp-muted" *ngIf="cuotasRefinanciadas > 0">{{ cuotasRefinanciadas }} {{ cuotasRefinanciadas === 1 ? 'cuota absorbida' : 'cuotas absorbidas' }} por la unificación</span>
@@ -168,10 +289,17 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let q of cuotaDetalles; trackBy: porNumero" [class.insp-fila-tenue]="estadoCuota(q).tono === 'info'">
+              <tr
+                *ngFor="let q of cuotaDetalles; trackBy: porNumero"
+                [class.insp-fila-tenue]="estadoCuota(q).tono === 'info'"
+                [class.insp-fila-proxima]="esProximaCuota(q)"
+              >
                 <td data-label="Cuota"><span class="insp-num-cuota">{{ q.numeroCuota }}</span></td>
                 <td data-label="Fecha de pago">{{ q.fechaPago | formatoFecha }}</td>
-                <td data-label="Estado"><app-badge [tone]="estadoCuota(q).tono">{{ estadoCuota(q).texto }}</app-badge></td>
+                <td data-label="Estado">
+                  <app-badge [tone]="estadoCuota(q).tono">{{ estadoCuota(q).texto }}</app-badge>
+                  <app-badge tone="info" *ngIf="esProximaCuota(q)">Próximo cobro</app-badge>
+                </td>
                 <td data-label="Saldo restante" class="text-right erp-num">{{ q.saldoRestante | moneda }}</td>
                 <td data-label="Interés" class="text-right erp-num">{{ q.interesPagado | moneda }}</td>
                 <td data-label="Capital" class="text-right erp-num">{{ q.aporteCapital | moneda }}</td>
@@ -204,6 +332,80 @@
     <app-cuotas-colaborativas *ngIf="compra.id" [compraId]="compra.id"></app-cuotas-colaborativas>
   </ng-container>
 </section>
+
+<!-- Editar Compra Completa 360° -->
+<app-modal [modalId]="MODAL_EDITAR_COMPLETA" titulo="Editar compra completa 360°">
+  <form class="insp-form-360" [formGroup]="formEdicionCompleta" (ngSubmit)="guardarEdicionCompleta()">
+    <div class="insp-form-360-grid">
+      <label class="erp-field">
+        <span class="erp-label">Concepto *</span>
+        <input class="erp-input" type="text" formControlName="concepto" />
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Comercio / Marca canónica</span>
+        <input class="erp-input" type="text" formControlName="comercioCanonico" placeholder="Ej. Netflix, Éxito, Rappi" />
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Valor de la compra (COP) *</span>
+        <input class="erp-input" type="number" formControlName="valorCompra" min="1" step="1" />
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Fecha de compra *</span>
+        <input class="erp-input" type="date" formControlName="fechaCompra" />
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Número de cuotas *</span>
+        <input class="erp-input" type="number" formControlName="numeroCuotas" min="1" max="120" />
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Interés mensual (%) *</span>
+        <input class="erp-input" type="number" formControlName="interes" min="0" max="20" step="0.01" />
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Tarjeta *</span>
+        <select class="erp-input" formControlName="tarjeta">
+          <option *ngFor="let t of tarjetas" [ngValue]="t.id">{{ t.etiqueta || t.nombre }}</option>
+        </select>
+      </label>
+      <label class="erp-field">
+        <span class="erp-label">Estado *</span>
+        <select class="erp-input" formControlName="estado">
+          <option *ngFor="let o of opcionesEstado" [value]="o.valor">{{ o.etiqueta }}</option>
+        </select>
+      </label>
+      <label class="erp-field insp-form-360-full">
+        <span class="erp-label">Descripción</span>
+        <textarea class="erp-input" rows="2" formControlName="descripcion"></textarea>
+      </label>
+      <div class="erp-field insp-form-360-full">
+        <span class="erp-label">Etiquetas transversales</span>
+        <app-selector-tags [tags]="tagsEdicionCompleta" (cambio)="tagsEdicionCompleta = $event"></app-selector-tags>
+      </div>
+    </div>
+    <div class="erp-form-actions">
+      <button type="button" appButton="ghost" (click)="cerrarModal()" [disabled]="guardandoEdicionCompleta">Cancelar</button>
+      <button type="submit" appButton="primary" [loading]="guardandoEdicionCompleta">
+        <i class="material-icons" aria-hidden="true">save</i> Guardar y recalcular
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- Correo bancario original -->
+<app-modal [modalId]="MODAL_CORREO" titulo="Notificación bancaria original">
+  <div class="insp-correo-modal" *ngIf="detalleCompleto?.notificacionCorreo as notif">
+    <dl class="insp-resumen-borrado">
+      <div><dt>Remitente</dt><dd>{{ notif.remitente || '—' }}</dd></div>
+      <div><dt>Asunto</dt><dd>{{ notif.asunto || '—' }}</dd></div>
+      <div><dt>Fecha del correo</dt><dd>{{ notif.fechaCorreo | formatoFecha }}</dd></div>
+      <div *ngIf="notif.ultimos4"><dt>Plástico detectado</dt><dd>··{{ notif.ultimos4 }}</dd></div>
+    </dl>
+    <pre class="insp-correo-cuerpo" *ngIf="notif.cuerpoExtraido">{{ notif.cuerpoExtraido }}</pre>
+    <div class="erp-form-actions">
+      <button type="button" appButton="secondary" (click)="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+</app-modal>
 
 <!-- Eliminar -->
 <app-modal [modalId]="MODAL_ELIMINAR" titulo="Eliminar compra a crédito">

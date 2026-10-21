@@ -3,21 +3,29 @@
 .insp { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .insp-esqueleto { display: flex; flex-direction: column; gap: var(--space-2); }
 
-/* ───────── Resumen ───────── */
+/* ───────── Resumen (Hero Inspector 360°) ───────── */
 .insp-resumen { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'principal valor' 'acciones acciones'; align-items: start; gap: var(--space-2) var(--space-4); padding: var(--space-4); }
-.insp-resumen-principal { grid-area: principal; display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.insp-resumen-principal { grid-area: principal; display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
 .insp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.insp-chip-btn { background: none; border: none; padding: 0; cursor: pointer; font: inherit; }
 .insp-enlace-refi { text-decoration: none; border-radius: var(--radius-pill); }
 .insp-enlace-refi:hover app-badge { filter: brightness(0.96); }
 .insp-enlace-refi:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+.insp-cabecera-marca { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.insp-avatar { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: var(--radius-md); background: var(--brand-blue-light); color: var(--brand-blue); font-size: var(--text-h3); font-weight: var(--weight-bold); letter-spacing: -0.02em; }
+.insp-cabecera-textos { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .insp-titulo { margin: 0; font-size: var(--text-h1); line-height: 1.12; font-weight: var(--weight-bold); letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .insp-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--space-2); margin: 0; color: var(--text-secondary); font-size: var(--text-body-sm); }
 .insp-sub > span { display: inline-flex; align-items: center; gap: 6px; }
 .insp-sub .material-icons { font-size: 18px; color: var(--text-tertiary); }
+.insp-comercio-pill { color: var(--text-primary); font-weight: var(--weight-medium); }
+.insp-tags-inline { margin-top: 2px; }
+
 .insp-resumen-valor { grid-area: valor; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
 .insp-valor { font-size: var(--text-hero); line-height: 1; font-weight: var(--weight-bold); letter-spacing: -0.03em; }
 .insp-valor-sub { font-size: var(--text-caption); }
-.insp-acciones { grid-area: acciones; display: flex; justify-content: flex-end; min-width: 0; }
+.insp-acciones { grid-area: acciones; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-1); min-width: 0; }
 .insp-acciones:empty { display: none; }
 
 /* ───────── Aviso de lo que falta ───────── */
@@ -34,7 +42,7 @@
 .insp-bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-2); align-items: stretch; }
 .insp-tarjeta { display: flex; flex-direction: column; gap: 0; min-width: 0; }
 .insp-datos, .insp-finanzas { grid-column: span 6; }
-.insp-progreso, .insp-refi { grid-column: span 12; }
+.insp-progreso, .insp-pago-unico, .insp-contexto360, .insp-refi { grid-column: span 12; }
 @media (max-width: 900px) { .insp-datos, .insp-finanzas { grid-column: span 12; } }
 .insp-tarjeta .erp-card-title { margin-bottom: var(--space-1); }
 
@@ -45,11 +53,28 @@
 .insp-dato-valor { text-align: right; overflow-wrap: anywhere; }
 @media (max-width: 480px) { .insp-dato { grid-template-columns: minmax(0, 1fr) auto; } }
 
-/* ───────── Avance ───────── */
+/* ───────── Pago Único (1 cuota) ───────── */
+.insp-pago-unico-banner { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-md); background: var(--brand-blue-light); margin-bottom: var(--space-2); }
+.insp-pago-unico-banner > .material-icons { color: var(--brand-blue); font-size: 26px; }
+.insp-pago-unico-banner > div { flex: 1 1 auto; min-width: 0; }
+.insp-pago-unico-banner p { margin: 2px 0 0; font-size: var(--text-caption); }
+.insp-costo-cero { color: var(--green-success, #34C759); }
+
+/* ───────── Avance (Barra Apple Storage) ───────── */
 .insp-progreso-cab { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin-bottom: 8px; }
 .insp-progreso-texto { font-size: var(--text-h3); letter-spacing: -0.01em; }
-.insp-progreso .erp-progress { height: 10px; }
-.insp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: var(--space-2); margin: var(--space-2) 0 0; }
+.insp-progreso .erp-progress { height: 12px; display: flex; overflow: hidden; border-radius: var(--radius-pill); background: var(--bg-input); }
+.insp-seg--capital { background: var(--green-success, #34C759); height: 100%; }
+.insp-seg--interes { background: var(--amber-warning, #FF9500); height: 100%; }
+.insp-seg--pendiente { background: transparent; height: 100%; }
+.insp-leyenda-apple { display: flex; flex-wrap: wrap; gap: 8px var(--space-3); margin-top: 8px; font-size: var(--text-caption); color: var(--text-secondary); }
+.insp-leyenda-apple > span { display: inline-flex; align-items: center; gap: 6px; }
+.insp-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.insp-dot--capital { background: var(--green-success, #34C759); }
+.insp-dot--interes { background: var(--amber-warning, #FF9500); }
+.insp-dot--pendiente { background: var(--border-default, #C7C7CC); }
+
+.insp-kpis, .insp-contexto-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: var(--space-2); margin: var(--space-2) 0 0; }
 .insp-kpi { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--space-2); border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-default); }
 .insp-kpi dt { color: var(--text-secondary); font-size: var(--text-caption); }
 .insp-kpi dd { margin: 0; font-size: var(--text-h3); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
@@ -82,6 +107,7 @@
 .insp-num-cuota { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; padding: 0 6px; border-radius: var(--radius-pill); background: var(--bg-input); border: 1px solid var(--border-default); font-size: var(--text-caption); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
 .insp-total-cuota { font-weight: var(--weight-semibold); }
 .insp-fila-tenue td { opacity: 0.62; }
+.insp-fila-proxima { border-left: 3px solid var(--brand-blue); background: var(--brand-blue-light); }
 .insp-grafica-lienzo { position: relative; height: 300px; min-width: 0; }
 
 /* ───────── Responsables ───────── */
@@ -91,6 +117,14 @@
 .insp-guardar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1); padding: 10px var(--space-2); border-radius: var(--radius-lg); background: var(--brand-blue-light); font-size: var(--text-body-sm); }
 .insp-guardar > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
 .insp-guardar-botones { display: inline-flex; gap: var(--space-1); }
+
+/* ───────── Formulario 360° y correo ───────── */
+.insp-form-360 { display: flex; flex-direction: column; gap: var(--space-3); }
+.insp-form-360-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.insp-form-360-full { grid-column: span 2; }
+@media (max-width: 640px) { .insp-form-360-grid { grid-template-columns: minmax(0, 1fr); } .insp-form-360-full { grid-column: span 1; } }
+.insp-correo-modal { display: flex; flex-direction: column; gap: var(--space-2); }
+.insp-correo-cuerpo { margin: 0; padding: var(--space-2); max-height: 240px; overflow: auto; border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-default); font-size: var(--text-caption); white-space: pre-wrap; }
 
 /* ───────── Confirmaciones ───────── */
 .insp-confirmar { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); text-align: center; }

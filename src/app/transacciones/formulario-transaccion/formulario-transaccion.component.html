@@ -96,6 +96,11 @@
       <label class="erp-label" for="tx-notas">Notas</label>
       <textarea id="tx-notas" appInput formControlName="notas" rows="2" placeholder="Opcional"></textarea>
     </div>
+
+    <div class="erp-field erp-span-2">
+      <label class="erp-label">Etiquetas transversales</label>
+      <app-selector-tags [tags]="tagsTransaccion" (cambio)="tagsTransaccion = $event"></app-selector-tags>
+    </div>
   </div>
 
   <div class="erp-alert erp-alert--info" *ngIf="form.controls.estado.value === 'CONFIRMADO'">

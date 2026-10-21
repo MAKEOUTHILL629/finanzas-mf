@@ -401,4 +401,111 @@ describe('DetalleComprasCreditoComponent', () => {
       expect(q('.insp-pastilla')).toBeNull();
     });
   });
+
+  describe('Fase 1 (Iteración 3) — Pago único a 1 cuota, tags, comercio canónico y edición 360°', () => {
+    it('una compra a 1 cuota oculta la gráfica y tabla de amortización y muestra el Resumen de Pago Único al Corte', () => {
+      abrir(compra({ numeroCuotas: 1, valorCompra: 95_000, pagoMensual: 95_000, interes: 0 }), cuotas(0, 1));
+      expect(c.esUnaCuota).toBeTrue();
+      expect(q('.insp-pago-unico')).not.toBeNull();
+      expect(q('.insp-pago-unico')!.textContent).toContain('Compra diferida a 1 sola cuota');
+      expect(q('.insp-pago-unico')!.textContent).toContain('Sin intereses a 1 cuota');
+      expect(q('.insp-cuotas')).toBeNull();
+      expect(q('.insp-grafica')).toBeNull();
+      expect(q('.insp-progreso')).toBeNull();
+    });
+
+    it('una compra a múltiples cuotas muestra la barra segmentada Apple Storage y resalta la próxima cuota a cobrar', () => {
+      abrir(compra({ numeroCuotas: 12 }), cuotas(2, 12));
+      expect(c.esUnaCuota).toBeFalse();
+      expect(q('.insp-barra-apple')).not.toBeNull();
+      expect(q('.insp-leyenda-apple')!.textContent).toContain('Capital pagado');
+      expect(qa('tbody tr.insp-fila-proxima').length).toBe(1);
+      expect(q('tbody tr.insp-fila-proxima')!.textContent).toContain('Próximo cobro');
+    });
+
+    it('permite editar comercioCanonico y guardar tags inline mediante PATCH', () => {
+      abrir(compra({ tags: ['#hogar'], comercioCanonico: 'Samsung' }));
+      expect(c.inicialesComercio).toBe('SA');
+
+      c.guardarTags(['#hogar', '#electrodomesticos']);
+      const reqTags = esperar('PATCH', 'compras-credito/5');
+      expect(reqTags.request.body).toEqual({ tags: ['#hogar', '#electrodomesticos'] });
+      reqTags.flush(compra({ tags: ['#hogar', '#electrodomesticos'] }));
+      f.detectChanges();
+      expect(c.compraCredito?.tags).toEqual(['#hogar', '#electrodomesticos']);
+
+      c.guardarCampo('comercioCanonico', 'Samsung Oficial');
+      const reqCom = esperar('PATCH', 'compras-credito/5');
+      expect(reqCom.request.body).toEqual({ comercioCanonico: 'Samsung Oficial' });
+      reqCom.flush(compra({ comercioCanonico: 'Samsung Oficial' }));
+      f.detectChanges();
+      expect(c.compraCredito?.comercioCanonico).toBe('Samsung Oficial');
+    });
+
+    it('permite cargar el Contexto 360° y editar la compra completa (PUT)', () => {
+      abrir();
+      c.cargarContexto360();
+      esperar('GET', 'v2/compras-credito/5/detalle-completo').flush({
+        compra: compra({ comercioCanonico: 'Samsung' }),
+        tarjeta: null,
+        plastico: { id: 11, ultimos4: '1927', esActivo: true, vigenteDesde: null, vigenteHasta: null, tipo: 'FISICO' },
+        cuotas: [],
+        responsables: [],
+        notificacionCorreo: {
+          id: 90,
+          externalMessageId: 'msg-1',
+          remitente: 'alertas@bancolombia.com',
+          asunto: 'Compra aprobada',
+          fechaCorreo: '2026-08-02T14:00:00Z',
+          cuerpoExtraido: 'Compraste en Samsung por $2.400.000',
+          datosParseados: null,
+          estadoProcesamiento: 'PROCESADO',
+          ultimos4: '1927',
+          comercioNormalizado: 'Samsung',
+          montoOriginal: 2_400_000,
+          moneda: 'COP',
+          vinculo: 'AUTOMATICO',
+        },
+        refinanciamiento: null,
+        recurrencia: null,
+        estadisticasComercio: {
+          comercioCanonico: 'Samsung',
+          totalHistoricoAnio: 4_800_000,
+          cantidadComprasAnio: 2,
+          gastoMesTarjeta: 3_000_000,
+          porcentajeSobreGastoMesTarjeta: 80,
+        },
+        resumenPagoUnico: {
+          esUnaCuota: false,
+          fechaTransaccion: '2026-08-02',
+          fechaEstimadaPagoExtracto: '2026-09-28',
+          costoFinanciero: 168_000,
+          gastoMesTarjeta: 3_000_000,
+          porcentajeSobreGastoMesTarjeta: 80,
+        },
+      });
+      f.detectChanges();
+      expect(q('.insp-contexto360')!.textContent).toContain('Samsung');
+      expect(q('.insp-chips')!.textContent).toContain('Capturada por Correo');
+
+      c.abrirModalEditarCompleta();
+      c.formEdicionCompleta.patchValue({ concepto: 'Nevera Samsung No Frost', numeroCuotas: 6 });
+      c.tagsEdicionCompleta = ['#hogar'];
+      c.guardarEdicionCompleta();
+      const reqPut = esperar('PUT', 'compras-credito/5');
+      expect(reqPut.request.body).toEqual(
+        jasmine.objectContaining({
+          concepto: 'Nevera Samsung No Frost',
+          numeroCuotas: 6,
+          tags: ['#hogar'],
+        }),
+      );
+      reqPut.flush({ message: 'Actualizada' });
+      responder('compras-credito/detalle/5', compra({ concepto: 'Nevera Samsung No Frost', numeroCuotas: 6, tags: ['#hogar'] }));
+      responder('compras-credito/5', cuotas(0, 6));
+      responder('tarjetas/2/plasticos', PLASTICOS);
+      f.detectChanges();
+      expect(c.compraCredito?.concepto).toBe('Nevera Samsung No Frost');
+    });
+  });
 });

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { Catalogos, EstadoCatalogo, ItemDe, TIPOS_CATALOGO, TipoCatalogo } from '../modelos/catalogos';
+import { Catalogos, EstadoCatalogo, ItemDe, ItemTagCatalogo, TIPOS_CATALOGO, TipoCatalogo } from '../modelos/catalogos';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { ApiServicesService } from './api-services.service';
 import { limpiarParams } from './http-params.util';
@@ -38,6 +38,11 @@ export class CatalogosService {
   private generacion = 0;
 
   constructor(private api: ApiServicesService) {}
+
+  /** Catálogo de tags con frecuencia y color (`GET /api/lookup/tags`). */
+  obtenerTags(): Observable<ItemTagCatalogo[]> {
+    return this.api.get<ItemTagCatalogo[]>('lookup/tags');
+  }
 
   /** Estado del catálogo (se emite al suscribirse y en cada cambio). */
   estado$<T extends TipoCatalogo>(tipo: T): Observable<EstadoCatalogo<ItemDe[T]>> {
