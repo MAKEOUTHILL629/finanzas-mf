@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { DetalleCuotasColaborativas } from '../modelos/aportes-cuota';
-import { ComprasCredito, ComprasCreditoMultimoneda, CuotaDetalle, DetalleCompletoCompraCredito } from '../modelos/compras-credito';
+import {
+  ComprasCredito,
+  ComprasCreditoMultimoneda,
+  CuotaDetalle,
+  DetalleCompletoCompraCredito,
+  PropagarEdicionSimilaresPayload,
+  ResultadoBusquedaSimilares,
+  ResultadoPropagacionSimilares,
+} from '../modelos/compras-credito';
 import { ApiServicesService } from './api-services.service';
 
 /** Lo que se puede cambiar en línea de una compra (solo se envía lo que cambió). */
@@ -52,6 +60,16 @@ export class ComprasCreditoService {
   /** Edición completa 360° (`PUT /api/compras-credito/:id`). */
   actualizarCompraCompleta(id: number, dto: ComprasCredito): Observable<{ message: string }> {
     return this.api.put<{ message: string }>(`compras-credito/${id}`, dto);
+  }
+
+  // ── Propagación a compras similares (Fase 2 - Iteración 3) ──
+
+  buscarSimilares(id: number): Observable<ResultadoBusquedaSimilares> {
+    return this.api.post<ResultadoBusquedaSimilares>(`v2/compras-credito/${id}/buscar-similares`, {});
+  }
+
+  propagarEdicionSimilares(dto: PropagarEdicionSimilaresPayload): Observable<ResultadoPropagacionSimilares> {
+    return this.api.patch<ResultadoPropagacionSimilares>(`v2/compras-credito/propagar-edicion-similares`, dto);
   }
 
   // ── cuotas colaborativas (Fase 5) ──

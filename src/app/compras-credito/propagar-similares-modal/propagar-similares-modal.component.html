@@ -1,0 +1,141 @@
+<div class="prop-modal" *ngIf="resultado as res">
+  <div class="prop-intro">
+    <i class="material-icons prop-intro-icon" aria-hidden="true">auto_fix_high</i>
+    <div>
+      <p class="prop-intro-titulo">
+        Encontramos <strong>{{ res.candidatas.length }}</strong>
+        {{ res.candidatas.length === 1 ? 'compra similar' : 'compras similares' }} de
+        <strong>{{ res.compraOrigen.comercioCanonico || res.compraOrigen.concepto }}</strong>
+      </p>
+      <p class="erp-muted">
+        Elige qué atributos quieres propagar y desmarca cualquier compra que prefieras excluir.
+      </p>
+    </div>
+  </div>
+
+  <!-- Chips de atributos a propagar -->
+  <div class="prop-atributos" role="group" aria-label="Atributos a propagar">
+    <label class="prop-chip-check" [class.prop-chip-check--activo]="aplicarCuotas">
+      <input type="checkbox" [(ngModel)]="aplicarCuotas" />
+      <i class="material-icons" aria-hidden="true">calendar_view_month</i>
+      <span>Cuotas: <strong>{{ res.compraOrigen.numeroCuotas }}</strong></span>
+    </label>
+
+    <label
+      class="prop-chip-check"
+      *ngIf="res.compraOrigen.responsables.length > 0"
+      [class.prop-chip-check--activo]="aplicarResponsables"
+    >
+      <input type="checkbox" [(ngModel)]="aplicarResponsables" />
+      <i class="material-icons" aria-hidden="true">group</i>
+      <span>Responsables: <strong>{{ resumenResponsablesOrigen }}</strong></span>
+    </label>
+
+    <label
+      class="prop-chip-check"
+      *ngIf="res.compraOrigen.tags.length > 0"
+      [class.prop-chip-check--activo]="aplicarTags"
+    >
+      <input type="checkbox" [(ngModel)]="aplicarTags" />
+      <i class="material-icons" aria-hidden="true">sell</i>
+      <span>Tags: <strong>{{ res.compraOrigen.tags.join(', ') }}</strong></span>
+    </label>
+
+    <label
+      class="prop-chip-check"
+      *ngIf="res.compraOrigen.comercioCanonico"
+      [class.prop-chip-check--activo]="aplicarComercioCanonico"
+    >
+      <input type="checkbox" [(ngModel)]="aplicarComercioCanonico" />
+      <i class="material-icons" aria-hidden="true">storefront</i>
+      <span>Comercio: <strong>{{ res.compraOrigen.comercioCanonico }}</strong></span>
+    </label>
+  </div>
+
+  <!-- Buscador y selector maestro -->
+  <div class="prop-barra">
+    <label class="prop-master-check">
+      <input
+        type="checkbox"
+        class="prop-check-todas"
+        [checked]="todasSeleccionadas"
+        (change)="alternarTodas()"
+      />
+      <span>
+        {{ todasSeleccionadas ? 'Desmarcar todas' : 'Seleccionar todas' }}
+        ({{ totalSeleccionadas }} de {{ res.candidatas.length }})
+      </span>
+    </label>
+    <input
+      type="search"
+      class="erp-input prop-buscador"
+      [(ngModel)]="filtroBusqueda"
+      placeholder="Filtrar por fecha, monto o concepto..."
+      aria-label="Filtrar compras similares"
+    />
+  </div>
+
+  <!-- Tabla de compras candidatas -->
+  <div class="prop-tabla-wrap">
+    <table class="prop-tabla">
+      <thead>
+        <tr>
+          <th scope="col" class="prop-col-check"></th>
+          <th scope="col">Compra / Fecha</th>
+          <th scope="col">Tarjeta</th>
+          <th scope="col" class="text-right">Monto</th>
+          <th scope="col">Actual</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let item of candidatasFiltradas"
+          class="prop-fila"
+          [class.prop-fila--excluida]="!estaSeleccionada(item.id)"
+          (click)="alternarSeleccion(item.id)"
+        >
+          <td class="prop-col-check" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              class="prop-check-item"
+              [attr.data-compra-id]="item.id"
+              [checked]="estaSeleccionada(item.id)"
+              (change)="alternarSeleccion(item.id)"
+            />
+          </td>
+          <td>
+            <div class="prop-item-concepto">{{ item.concepto }}</div>
+            <div class="erp-muted prop-item-sub">{{ item.fechaCompra | formatoFecha }}</div>
+          </td>
+          <td>{{ item.tarjetaNombre }}</td>
+          <td class="text-right erp-num"><strong>{{ item.valorTotal | moneda }}</strong></td>
+          <td>
+            <span class="prop-estado-actual">
+              {{ item.numeroCuotasActual }} {{ item.numeroCuotasActual === 1 ? 'cuota' : 'cuotas' }}
+              <ng-container *ngIf="item.responsablesActuales.length > 0">
+                · {{ item.responsablesActuales[0].nombre }}
+              </ng-container>
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="erp-form-actions">
+    <button type="button" appButton="ghost" class="prop-btn-omitir" (click)="omitir.emit()" [disabled]="guardando">
+      Solo guardar esta compra
+    </button>
+    <button
+      type="button"
+      appButton="primary"
+      class="prop-btn-aplicar"
+      [disabled]="!puedeConfirmar"
+      [loading]="guardando"
+      (click)="emitirConfirmacion()"
+    >
+      <i class="material-icons" aria-hidden="true">done_all</i>
+      Aplicar a las {{ totalSeleccionadas }} compras seleccionadas
+    </button>
+  </div>
+</div>

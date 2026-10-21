@@ -8,6 +8,8 @@ import {
   ComprasCreditoMultimoneda,
   CuotaDetalle,
   DetalleCompletoCompraCredito,
+  PropagarEdicionSimilaresPayload,
+  ResultadoBusquedaSimilares,
   months,
 } from '../../modelos/compras-credito';
 import { ItemTarjeta, OpcionSelect } from '../../modelos/catalogos';
@@ -67,6 +69,7 @@ export const MODAL_ELIMINAR_COMPRA = 'detalle-eliminar-compra';
 export const MODAL_DESHACER_UNIFICACION = 'detalle-deshacer-unificacion';
 export const MODAL_EDITAR_COMPRA_COMPLETA = 'detalle-editar-compra-completa';
 export const MODAL_CORREO_ORIGINAL = 'detalle-correo-original';
+export const MODAL_PROPAGAR_SIMILARES = 'detalle-propagar-similares';
 
 export const OPCIONES_ESTADO: OpcionSelect[] = [
   { valor: 'Pendiente', etiqueta: 'Pendiente' },
@@ -126,6 +129,11 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   tagsEdicionCompleta: string[] = [];
   guardandoEdicionCompleta = false;
 
+  // ── propagación a compras similares (Fase 2)
+  resultadoSimilares: ResultadoBusquedaSimilares | null = null;
+  buscandoSimilares = false;
+  propagandoSimilares = false;
+
   // ── responsables
   hayCambiosResponsables = false;
   responsablesModificados: any[] = [];
@@ -139,6 +147,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   readonly MODAL_DESHACER = MODAL_DESHACER_UNIFICACION;
   readonly MODAL_EDITAR_COMPLETA = MODAL_EDITAR_COMPRA_COMPLETA;
   readonly MODAL_CORREO = MODAL_CORREO_ORIGINAL;
+  readonly MODAL_PROPAGAR = MODAL_PROPAGAR_SIMILARES;
 
   public lineChartData: ChartConfiguration['data'] = {
     datasets: [
@@ -701,6 +710,51 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
   abrirCorreoOriginal(): void {
     if (!this.detalleCompleto?.notificacionCorreo) return;
     this.modal.open(MODAL_CORREO_ORIGINAL);
+  }
+
+  // ───────── propagación a compras similares (Fase 2) ─────────
+
+  abrirPropagacionSimilares(): void {
+    const id = this.compraCredito?.id;
+    if (!id || this.buscandoSimilares) return;
+    this.buscandoSimilares = true;
+    this.compras
+      .buscarSimilares(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.buscandoSimilares = false;
+          this.resultadoSimilares = res;
+          if (!res.candidatas || res.candidatas.length === 0) {
+            this.toast.exito('No hay compras similares pendientes de alinear con esta compra.');
+            return;
+          }
+          this.modal.open(MODAL_PROPAGAR_SIMILARES);
+        },
+        error: (err) => {
+          this.buscandoSimilares = false;
+          this.toast.error(mensajeDeError(err, 'No se pudieron buscar compras similares.'));
+        },
+      });
+  }
+
+  ejecutarPropagacionSimilares(dto: PropagarEdicionSimilaresPayload): void {
+    if (this.propagandoSimilares) return;
+    this.propagandoSimilares = true;
+    this.compras
+      .propagarEdicionSimilares(dto)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (r) => {
+          this.propagandoSimilares = false;
+          this.modal.close();
+          this.toast.exito(`Cambios aplicados a ${r.actualizadas} compra${r.actualizadas === 1 ? '' : 's'} similar${r.actualizadas === 1 ? '' : 'es'}.`);
+        },
+        error: (err) => {
+          this.propagandoSimilares = false;
+          this.toast.error(mensajeDeError(err, 'No se pudo propagar la edición a las compras similares.'));
+        },
+      });
   }
 
   // ───────── aviso «Faltan X datos» ─────────

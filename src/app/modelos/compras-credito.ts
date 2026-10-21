@@ -198,3 +198,48 @@ export const months = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
+
+// ───────── Fase 2 (Iteración 3): Propagación Inteligente a Compras Similares ─────────
+
+export interface CompraSimilarCandidata {
+  id: number;
+  concepto: string;
+  descripcion: string;
+  fechaCompra: string | null;
+  valorTotal: number;
+  numeroCuotasActual: number;
+  responsablesActuales: Array<{ personaId: number | null; nombre: string; porcentajePago: number }>;
+  tagsActuales: string[];
+  comercioCanonicoActual: string | null;
+  tarjetaNombre: string;
+  diferenciasDetectadas: string[];
+}
+
+export interface ResultadoBusquedaSimilares {
+  compraOrigen: {
+    id: number;
+    concepto: string;
+    comercioCanonico: string | null;
+    numeroCuotas: number;
+    tags: string[];
+    responsables: Array<{ personaId: number | null; nombre: string; porcentajePago: number }>;
+  };
+  candidatas: CompraSimilarCandidata[];
+}
+
+export interface PropagarEdicionSimilaresPayload {
+  compraOrigenId: number;
+  compraDestinoIds: number[];
+  aplicarCuotas?: boolean;
+  aplicarResponsables?: boolean;
+  aplicarTags?: boolean;
+  aplicarComercioCanonico?: boolean;
+  modoTags?: 'MERGE' | 'REEMPLAZAR';
+}
+
+export interface ResultadoPropagacionSimilares {
+  actualizadas: number;
+  idsActualizados: number[];
+  cuotasRecalculadas: number;
+  responsablesReplicados: number;
+}

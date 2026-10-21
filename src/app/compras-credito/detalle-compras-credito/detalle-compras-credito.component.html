@@ -83,6 +83,17 @@
         </button>
         <button
           type="button"
+          appButton="ghost"
+          size="sm"
+          class="insp-btn-propagar"
+          *ngIf="!unificada && !esMaestra"
+          [loading]="buscandoSimilares"
+          (click)="abrirPropagacionSimilares()"
+        >
+          <i class="material-icons" aria-hidden="true">auto_fix_high</i> Propagar a similares
+        </button>
+        <button
+          type="button"
           appButton="secondary"
           size="sm"
           class="insp-btn-editar-360"
@@ -439,4 +450,14 @@
       <button type="button" appButton="primary" (click)="deshacerUnificacion()" [loading]="deshaciendo"><i class="material-icons" aria-hidden="true">undo</i> Deshacer unificación</button>
     </div>
   </div>
+</app-modal>
+
+<!-- Propagación Inteligente a Compras Similares (Fase 2) -->
+<app-modal [modalId]="MODAL_PROPAGAR" titulo="Propagar cambios a compras similares">
+  <app-propagar-similares-modal
+    [resultado]="resultadoSimilares"
+    [guardando]="propagandoSimilares"
+    (omitir)="cerrarModal()"
+    (confirmar)="ejecutarPropagacionSimilares($event)"
+  ></app-propagar-similares-modal>
 </app-modal>

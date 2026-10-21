@@ -1,0 +1,29 @@
+:host { display: block; }
+
+.prop-modal { display: flex; flex-direction: column; gap: var(--space-2); }
+.prop-intro { display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-md); background: var(--brand-blue-light); }
+.prop-intro-icon { color: var(--brand-blue); font-size: 26px; }
+.prop-intro-titulo { margin: 0 0 2px; font-size: var(--text-body); }
+.prop-intro p.erp-muted { margin: 0; font-size: var(--text-caption); }
+
+.prop-atributos { display: flex; flex-wrap: wrap; gap: 8px; }
+.prop-chip-check { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-default); background: var(--bg-input); font-size: var(--text-caption); cursor: pointer; user-select: none; }
+.prop-chip-check--activo { border-color: var(--brand-blue); background: var(--brand-blue-light); color: var(--text-primary); }
+.prop-chip-check .material-icons { font-size: 16px; color: var(--brand-blue); }
+
+.prop-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.prop-master-check { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-body-sm); font-weight: var(--weight-medium); cursor: pointer; }
+.prop-buscador { max-width: 260px; }
+
+.prop-tabla-wrap { max-height: 300px; overflow: auto; border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+.prop-tabla { width: 100%; border-collapse: collapse; font-size: var(--text-body-sm); }
+.prop-tabla th, .prop-tabla td { padding: 8px 10px; border-bottom: 1px solid var(--divider); text-align: left; }
+.prop-tabla th { background: var(--bg-input); font-size: var(--text-caption); color: var(--text-secondary); position: sticky; top: 0; }
+.prop-col-check { width: 36px; text-align: center; }
+.prop-fila { cursor: pointer; transition: background 0.15s ease; }
+.prop-fila:hover { background: var(--bg-surface-hover); }
+.prop-fila--excluida { opacity: 0.52; }
+.prop-item-concepto { font-weight: var(--weight-medium); }
+.prop-item-sub { font-size: var(--text-caption); }
+.prop-estado-actual { font-size: var(--text-caption); color: var(--text-secondary); }
+.text-right { text-align: right; }

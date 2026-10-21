@@ -507,5 +507,71 @@ describe('DetalleComprasCreditoComponent', () => {
       f.detectChanges();
       expect(c.compraCredito?.concepto).toBe('Nevera Samsung No Frost');
     });
+
+    it('Fase 2: permite buscar compras similares, excluir filas en el modal y propagar cambios masivamente', () => {
+      abrir(compra({ concepto: 'DL*DIDI RIDES CO', numeroCuotas: 1, tags: ['#transporte', '#didi-rides'], comercioCanonico: 'DiDi Rides' }), cuotas(0, 1));
+      const exito = spyOn(TestBed.inject(ToastService), 'exito');
+
+      c.abrirPropagacionSimilares();
+      esperar('POST', 'v2/compras-credito/5/buscar-similares').flush({
+        compraOrigen: {
+          id: 5,
+          concepto: 'DL*DIDI RIDES CO',
+          comercioCanonico: 'DiDi Rides',
+          numeroCuotas: 1,
+          tags: ['#transporte', '#didi-rides'],
+          responsables: [{ personaId: 2, nombre: 'Alicia', porcentajePago: 100 }],
+        },
+        candidatas: [
+          {
+            id: 12,
+            concepto: 'DLO*DIDI MOBILITY CO',
+            descripcion: '',
+            fechaCompra: '2026-08-10',
+            valorTotal: 18500,
+            numeroCuotasActual: 12,
+            responsablesActuales: [],
+            tagsActuales: [],
+            comercioCanonicoActual: null,
+            tarjetaNombre: 'Amex ··1927',
+            diferenciasDetectadas: ['CUOTAS', 'RESPONSABLES', 'TAGS'],
+          },
+          {
+            id: 18,
+            concepto: 'DL*DIDI RIDES',
+            descripcion: '',
+            fechaCompra: '2026-08-14',
+            valorTotal: 24000,
+            numeroCuotasActual: 12,
+            responsablesActuales: [],
+            tagsActuales: [],
+            comercioCanonicoActual: null,
+            tarjetaNombre: 'Amex ··1927',
+            diferenciasDetectadas: ['CUOTAS', 'RESPONSABLES', 'TAGS'],
+          },
+        ],
+      });
+      f.detectChanges();
+
+      const modalHijo = f.debugElement.query((d) => d.name === 'app-propagar-similares-modal').componentInstance;
+      expect(modalHijo.totalSeleccionadas).toBe(2);
+      // Excluir la compra #18
+      modalHijo.alternarSeleccion(18);
+      expect(modalHijo.totalSeleccionadas).toBe(1);
+
+      modalHijo.emitirConfirmacion();
+      const reqProp = esperar('PATCH', 'v2/compras-credito/propagar-edicion-similares');
+      expect(reqProp.request.body).toEqual({
+        compraOrigenId: 5,
+        compraDestinoIds: [12],
+        aplicarCuotas: true,
+        aplicarResponsables: true,
+        aplicarTags: true,
+        aplicarComercioCanonico: true,
+        modoTags: 'MERGE',
+      });
+      reqProp.flush({ actualizadas: 1, idsActualizados: [12], cuotasRecalculadas: 1, responsablesReplicados: 1 });
+      expect(exito).toHaveBeenCalledWith(jasmine.stringContaining('1 compra similar'));
+    });
   });
 });
