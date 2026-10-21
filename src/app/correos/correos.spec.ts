@@ -762,6 +762,53 @@ describe('ReprocesarCorreosComponent — auditoría y purga de rechazados (Itera
     expect(terminado).toHaveBeenCalledWith(jasmine.objectContaining({ evaluados: 15, simulado: false }));
   });
 
+  it('Smart Pre-fill (Iteración 2 — Fase 3): autocompleta FormularioConciliarComponent por similitud histórica', async () => {
+    TestBed.resetTestingModule();
+    configurarTestBed([FormularioConciliarComponent]);
+    const fixture = TestBed.createComponent(FormularioConciliarComponent);
+    fixture.componentRef.setInput(
+      'notificacion',
+      correo({ compra_credito_generada_id: 5, datos_parseados: { monto: '42500', instrumento: 'TC', comercio: 'DL*DIDI FOOD CO' } }),
+    );
+    fixture.detectChanges();
+    responderCatalogos({ cuentas: [], categorias: [categoriaItem(4, 'Mercado')], tarjetas: [], personas: [persona(2, 'Andrés')] });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const c = fixture.componentInstance;
+    c.cargarPrefillSugerido();
+    const req = esperar('GET', 'notificaciones-correo/9/prefill-sugerido');
+    req.flush({
+      notificacionId: 9,
+      tipoDestino: 'COMPRA_CREDITO',
+      conceptoSugerido: 'Didi Food',
+      descripcionLimpia: 'Didi Food',
+      montoSugerido: '42500',
+      moneda: 'COP',
+      fechaSugerida: '2026-10-13',
+      ultimos4: '1927',
+      esTarjetaCredito: true,
+      tarjetaId: 11,
+      cuentaId: null,
+      categoriaId: 4,
+      numeroCuotas: 3,
+      responsablesSugeridos: [{ personaId: 2, porcentajePago: '50.00', cantidadCuotas: 3 }],
+      personaSugeridaId: 2,
+      registroExistenteId: null,
+      registroExistenteTipo: null,
+      confianza: 95,
+      muestrasHistoricas: 8,
+      etiquetaOrigen: 'Pre-cargado según 8 registros previos en Didi Food (95% coincidencia)',
+    });
+
+    expect(c.sugeridoPorHistorial).toBeTrue();
+    expect(c.etiquetaPrefillHistorial).toContain('95% coincidencia');
+    expect(c.form.controls.concepto.value).toBe('Didi Food');
+    expect(c.form.controls.numeroCuotas.value).toBe(3);
+    expect(c.responsables.length).toBe(1);
+    expect(c.responsables.at(0).value).toEqual({ personaId: 2, porcentajePago: '50.00' });
+  });
+
 });
 
 describe('ListaCorreosComponent — vínculos y deshacer', () => {

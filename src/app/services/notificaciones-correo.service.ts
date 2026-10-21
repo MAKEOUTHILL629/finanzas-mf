@@ -10,6 +10,7 @@ import {
   AprendizajeTarjeta,
   AsignarProducto,
   EstadoTrabajoReproceso,
+  PrefillConciliacionSugerido,
   ProductoDetectado,
   ReporteAuditoriaRechazados,
   ReprocesarCorreos,
@@ -47,6 +48,11 @@ export class NotificacionesCorreoService {
 
   getNotificacion(id: number): Observable<NotificacionCorreo> {
     return this.api.get<NotificacionCorreo>(`${this.url}/${id}`);
+  }
+
+  /** Smart Pre-fill (Iteración 2 — Fase 3): predice producto, categoría, cuotas, responsables y concepto limpio por similitud histórica. */
+  getPrefillSugerido(id: number): Observable<PrefillConciliacionSugerido> {
+    return this.api.get<PrefillConciliacionSugerido>(`${this.url}/${id}/prefill-sugerido`);
   }
 
   /**

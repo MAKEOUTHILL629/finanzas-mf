@@ -1,8 +1,9 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { ConciliarNotificacion, NotificacionCorreo, ResultadoConciliacion } from '../../modelos/erp';
+import { PrefillConciliacionSugerido } from '../../modelos/correos-inteligentes';
 import { ItemTarjeta } from '../../modelos/catalogos';
 import { CatalogosService } from '../../services/catalogos.service';
 import { NotificacionesCorreoService } from '../../services/notificaciones-correo.service';
@@ -15,7 +16,7 @@ import { esTarjetaDeCredito, parsearProducto } from '../../shared/ui/select-prod
 import { importeOpcional } from '../../shared/validadores';
 import { METODOS_PRESTAMO } from '../../prestamos/prestamos.constants';
 import { ETIQUETAS_CAMPOS_CORREO, VistaCorreo, admiteConvertirEnPrestamo, esMotivoDeProducto, explicarMotivo, fechaDelCorreo, interpretarCorreo } from '../correos.constants';
-import { descripcionDelCuerpo } from '../visor-correo/visor-correo.helpers';
+import { descripcionDelCuerpo, segmentarCuerpo } from '../visor-correo/visor-correo.helpers';
 
 /** Qué hay que decidir según lo que el backend ya generó al recibir el correo. */
 export type ModoConciliacion = 'compra' | 'transaccion' | 'nuevo';
@@ -125,6 +126,9 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
   @Input({ required: true }) notificacion!: NotificacionCorreo;
   /** Dibuja el título y el asunto (el visor dividido los pone en su propia cabecera). */
   @Input() conCabecera = true;
+  /** Smart Pre-fill (Iteración 2 — Fase 3): sugerencia precalculada o bandera para consultarla al backend. */
+  @Input() prefillSugerido: PrefillConciliacionSugerido | null = null;
+  @Input() consultarPrefillRemoto = false;
   @Output() conciliada = new EventEmitter<ResultadoConciliacion>();
   @Output() cancelar = new EventEmitter<void>();
 
@@ -141,6 +145,12 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
   avisoUso: string | null = null;
   /** De dónde salió la tarjeta o cuenta elegida sola. */
   avisoProducto: string | null = null;
+
+  /** Estado de Smart Pre-fill (Iteración 2 — Fase 3). */
+  sugeridoPorHistorial = false;
+  etiquetaPrefillHistorial: string | null = null;
+  cargandoPrefill = false;
+  registroExistenteSugeridoId: number | null = null;
 
   enviando = false;
   errorServidor: string | null = null;
@@ -179,6 +189,8 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
     this.motivo = explicarMotivo(this.vista.motivo);
     this.descripcion = descripcionDelCuerpo(this.notificacion.cuerpo_extraido);
 
+    this.aplicarPrefillLocalDesdeCorreo();
+
     this.form.patchValue({
       concepto: this.vista.comercio ?? this.notificacion.asunto ?? '',
       monto: this.vista.monto,
@@ -186,6 +198,15 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
       prestamoFechaCobro: hoyIso(),
     });
     this.atajos = this.armarAtajos();
+
+    if (this.prefillSugerido) {
+      this.aplicarPrefillSugerido(this.prefillSugerido);
+    } else {
+      this.aplicarPlantillaEmbebidaEnDatosParseados();
+      if (this.consultarPrefillRemoto) {
+        this.cargarPrefillSugerido();
+      }
+    }
 
     // Cuentas, categorías, tarjetas y personas: catálogos compartidos (cada selector muestra su esqueleto, vacío o error con «Reintentar»).
     this.catalogos.asegurar(['cuentas', 'categorias', 'tarjetas', 'personas']);
@@ -204,6 +225,117 @@ export class FormularioConciliarComponent implements OnInit, OnDestroy {
       r.setValidators(c ? Validators.required : null);
       r.updateValueAndValidity();
     });
+  }
+
+  /**
+   * Si `datos_parseados` vino incompleto (sin monto o sin últimos 4 dígitos), extrae los tokens directamente de `cuerpo_extraido`
+   * para que el formulario aparezca pre-llenado sin requerir clics manuales.
+   */
+  private aplicarPrefillLocalDesdeCorreo(): void {
+    if (!this.notificacion.cuerpo_extraido) return;
+    const tokens = segmentarCuerpo(this.notificacion.cuerpo_extraido, this.vista.comercio)
+      .map((s) => s.token)
+      .filter((t): t is NonNullable<typeof t> => t !== null);
+    if (this.vista.monto === null) {
+      const tMonto = tokens.find((t) => t.tipo === 'monto');
+      if (tMonto && typeof tMonto.valor === 'number') this.vista = { ...this.vista, monto: tMonto.valor };
+    }
+    if (!this.vista.ultimos4) {
+      const tU4 = tokens.find((t) => t.tipo === 'ultimos4');
+      if (tU4 && typeof tU4.valor === 'string') this.vista = { ...this.vista, ultimos4: tU4.valor };
+    }
+  }
+
+  private aplicarPlantillaEmbebidaEnDatosParseados(): void {
+    const dp = (this.notificacion.datos_parseados ?? {}) as Record<string, unknown>;
+    const prefillRaw = dp['prefill_sugerido'] as PrefillConciliacionSugerido | undefined;
+    if (prefillRaw && typeof prefillRaw === 'object') {
+      this.aplicarPrefillSugerido(prefillRaw);
+      return;
+    }
+    const plantilla = dp['plantilla'] as { muestras?: number; confianza?: number; numeroCuotas?: number; categoriaId?: number; responsables?: Array<{ personaId: number; porcentajePago: string }> } | undefined;
+    if (plantilla && typeof plantilla === 'object') {
+      if (plantilla.numeroCuotas && plantilla.numeroCuotas >= 1) {
+        this.form.controls.numeroCuotas.setValue(plantilla.numeroCuotas);
+      }
+      if (plantilla.categoriaId) {
+        this.form.controls.categoriaId.setValue(plantilla.categoriaId);
+      }
+      if (Array.isArray(plantilla.responsables) && this.responsables.length === 0) {
+        for (const r of plantilla.responsables) {
+          this.responsables.push(
+            this.fb.group({
+              personaId: new FormControl<number | null>(Number(r.personaId), Validators.required),
+              porcentajePago: new FormControl<number | string | null>(r.porcentajePago, [Validators.required]),
+            }),
+          );
+        }
+      }
+      const pct = plantilla.confianza ? Math.round(plantilla.confianza * (plantilla.confianza <= 1 ? 100 : 1)) : 90;
+      this.sugeridoPorHistorial = true;
+      this.etiquetaPrefillHistorial = `Sugerido por historial (${pct}% coincidencia)`;
+    }
+  }
+
+  /** Consulta al backend (`GET /api/notificaciones-correo/:id/prefill-sugerido`) y autocompleta el formulario. */
+  cargarPrefillSugerido(): void {
+    if (this.cargandoPrefill) return;
+    this.cargandoPrefill = true;
+    this.notificacionesService
+      .getPrefillSugerido(this.notificacion.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.cargandoPrefill = false)),
+      )
+      .subscribe({
+        next: (prefill) => this.aplicarPrefillSugerido(prefill),
+        error: () => {
+          // Si falla la consulta de sugerencias históricas, el formulario sigue operativo con los datos del correo.
+        },
+      });
+  }
+
+  /** Aplica el objeto `PrefillConciliacionSugerido` sobre los controles del formulario reactivo. */
+  aplicarPrefillSugerido(prefill: PrefillConciliacionSugerido): void {
+    this.prefillSugerido = prefill;
+    if (prefill.descripcionLimpia) {
+      this.form.controls.concepto.setValue(prefill.descripcionLimpia);
+    }
+    if (this.form.controls.monto.value === null && prefill.montoSugerido && esImporteValido(prefill.montoSugerido)) {
+      this.form.controls.monto.setValue(Number(prefill.montoSugerido));
+    }
+    if (prefill.categoriaId !== null && this.form.controls.categoriaId.value === null) {
+      this.form.controls.categoriaId.setValue(prefill.categoriaId);
+    }
+    if (prefill.numeroCuotas !== null && prefill.numeroCuotas >= 1) {
+      this.form.controls.numeroCuotas.setValue(prefill.numeroCuotas);
+    }
+    if (this.modo === 'nuevo' && this.form.controls.producto.value === null) {
+      if (prefill.esTarjetaCredito && prefill.tarjetaId !== null) {
+        this.form.controls.producto.setValue(`t:${prefill.tarjetaId}`);
+      } else if (!prefill.esTarjetaCredito && prefill.cuentaId !== null) {
+        this.form.controls.producto.setValue(`c:${prefill.cuentaId}`);
+      }
+    }
+    if (this.modo === 'compra' && this.responsables.length === 0 && Array.isArray(prefill.responsablesSugeridos)) {
+      for (const r of prefill.responsablesSugeridos) {
+        this.responsables.push(
+          this.fb.group({
+            personaId: new FormControl<number | null>(r.personaId, Validators.required),
+            porcentajePago: new FormControl<number | string | null>(r.porcentajePago, [Validators.required]),
+          }),
+        );
+      }
+    }
+    if (prefill.personaSugeridaId !== null && this.form.controls.prestamoResponsableId.value === null) {
+      this.form.controls.prestamoResponsableId.setValue(prefill.personaSugeridaId);
+    }
+    this.registroExistenteSugeridoId = prefill.registroExistenteId;
+    if (prefill.confianza > 0 || prefill.muestrasHistoricas > 0) {
+      this.sugeridoPorHistorial = true;
+      this.etiquetaPrefillHistorial =
+        prefill.etiquetaOrigen ?? `Sugerido por historial (${prefill.confianza}% coincidencia)`;
+    }
   }
 
   /** El selector eligió solo el producto de los dígitos del correo: se avisa de dónde salió la elección. */

@@ -194,3 +194,32 @@ export interface EstadoTrabajoReproceso {
   resumen: ResumenReproceso | null;
   error: string | null;
 }
+
+export interface ResponsableSugeridoPrefill {
+  personaId: number;
+  porcentajePago: string;
+  cantidadCuotas: number | null;
+}
+
+export interface PrefillConciliacionSugerido {
+  notificacionId: number;
+  tipoDestino: 'COMPRA_CREDITO' | 'TRANSACCION_CUENTA' | 'TRANSFERENCIA_INTERNA' | 'PRESTAMO';
+  conceptoSugerido: string | null;
+  descripcionLimpia: string | null;
+  montoSugerido: string | null;
+  moneda: string;
+  fechaSugerida: string | null;
+  ultimos4: string | null;
+  esTarjetaCredito: boolean;
+  tarjetaId: number | null;
+  cuentaId: number | null;
+  categoriaId: number | null;
+  numeroCuotas: number | null;
+  responsablesSugeridos: ResponsableSugeridoPrefill[];
+  personaSugeridaId: number | null;
+  registroExistenteId: number | null;
+  registroExistenteTipo: 'COMPRA_CREDITO' | 'TRANSACCION' | null;
+  confianza: number;
+  muestrasHistoricas: number;
+  etiquetaOrigen: string | null;
+}

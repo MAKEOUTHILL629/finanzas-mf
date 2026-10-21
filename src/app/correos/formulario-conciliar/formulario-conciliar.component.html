@@ -4,6 +4,15 @@
     <p class="erp-subtitle">{{ notificacion.asunto }}</p>
   </div>
 
+  <!-- Smart Pre-fill badge (Iteración 2 — Fase 3) -->
+  <div class="erp-alert erp-alert--info" *ngIf="sugeridoPorHistorial && etiquetaPrefillHistorial" role="status" aria-live="polite">
+    <i class="material-icons" aria-hidden="true">auto_awesome</i>
+    <span>
+      <span class="erp-badge erp-badge--info">Sugerido por historial</span>
+      {{ etiquetaPrefillHistorial }}
+    </span>
+  </div>
+
   <!-- Lo que dice el correo -->
   <dl class="resumen-correo">
     <div><dt class="erp-overline">Monto</dt><dd class="erp-num">{{ vista.monto !== null ? (vista.monto | moneda) : '—' }} <span class="erp-muted" *ngIf="vista.moneda !== 'COP'">{{ vista.moneda }}</span></dd></div>
@@ -21,7 +30,12 @@
   <section class="atajos" *ngIf="atajos.length > 0" aria-label="Usar lo que dice el correo">
     <div class="atajos-cabecera">
       <span class="erp-overline">Usar lo que dice el correo</span>
-      <button type="button" appButton="ghost" size="sm" (click)="rellenarTodo()"><i class="material-icons" aria-hidden="true">auto_fix_high</i>Rellenar todo</button>
+      <div>
+        <button type="button" appButton="ghost" size="sm" (click)="cargarPrefillSugerido()" [disabled]="cargandoPrefill">
+          <i class="material-icons" aria-hidden="true">auto_awesome</i>{{ cargandoPrefill ? 'Buscando historial…' : 'Sugerir por historial' }}
+        </button>
+        <button type="button" appButton="ghost" size="sm" (click)="rellenarTodo()"><i class="material-icons" aria-hidden="true">auto_fix_high</i>Rellenar todo</button>
+      </div>
     </div>
     <div class="atajos-lista">
       <button type="button" class="atajo" *ngFor="let a of atajos" (click)="aplicar(a)" [appTooltip]="'Usar ' + a.etiqueta.toLowerCase() + ' en el formulario'">
@@ -40,7 +54,10 @@
 
   <div class="erp-form-grid">
     <div class="erp-field erp-span-2">
-      <label class="erp-label" for="co-concepto">Concepto</label>
+      <label class="erp-label" for="co-concepto">
+        Concepto
+        <span class="erp-badge erp-badge--info" *ngIf="sugeridoPorHistorial">Sugerido por historial</span>
+      </label>
       <input id="co-concepto" appInput type="text" formControlName="concepto" maxlength="255" autocomplete="off" />
     </div>
 
