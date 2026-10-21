@@ -13,12 +13,28 @@
     </li>
   </ol>
 
+  <div class="erp-segmented uni-modo" role="radiogroup" aria-label="Modo de unificación" [style.--seg-count]="2" [style.--seg-index]="modoUnificacion === 'BARRIDO_FECHA_CORTE' ? 0 : 1">
+    <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="modoUnificacion === 'BARRIDO_FECHA_CORTE'" (click)="elegirModo('BARRIDO_FECHA_CORTE')">📅 Unificar todo hasta fecha de corte</button>
+    <button type="button" class="erp-segmented__item" role="radio" [attr.aria-checked]="modoUnificacion === 'SELECCION_MANUAL'" (click)="elegirModo('SELECCION_MANUAL')">☑️ Selección manual de compras</button>
+  </div>
+
   <!-- ───────── Paso 1: tarjeta y compras ───────── -->
   <div class="uni-cuerpo" *ngIf="paso === 1">
     <app-field label="Tarjeta de crédito" for="uni-tarjeta" [required]="true">
       <app-select inputId="uni-tarjeta" catalogo="tarjetas" ariaLabel="Tarjeta cuya deuda se unifica" placeholder="Elige la tarjeta" [permitirVacio]="false" [ngModel]="tarjetaId" (ngModelChange)="elegirTarjeta($event)"></app-select>
     </app-field>
 
+    <ng-container *ngIf="modoUnificacion === 'BARRIDO_FECHA_CORTE'">
+      <app-field label="Fecha del refinanciamiento (corte)" for="uni-fecha-corte" [required]="true" hint="El banco absorbió todo lo vigente hasta esta fecha (ej. 2026-09-07)">
+        <input appInput id="uni-fecha-corte" type="date" [formControl]="form.controls.fechaCorte" />
+      </app-field>
+      <app-field label="Valor total unificado por el banco ($X)" for="uni-monto-banco" [required]="true" hint="El saldo exacto que fijó el banco, sin detallar compras">
+        <input appInput id="uni-monto-banco" type="number" inputmode="decimal" min="0" step="0.01" [formControl]="form.controls.montoUnificadoBanco" placeholder="Ej: 12500000" />
+      </app-field>
+      <p class="uni-vacio">No necesitas saber qué compras incluyó el banco: se absorberán automáticamente las vigentes a esa fecha.</p>
+    </ng-container>
+
+    <ng-container *ngIf="modoUnificacion === 'SELECCION_MANUAL'">
     <div class="uni-esqueleto" *ngIf="cargandoCandidatas" role="status" aria-label="Cargando las compras de la tarjeta">
       <app-skeleton *ngFor="let n of [1, 2, 3]" alto="64px"></app-skeleton>
     </div>
@@ -68,6 +84,7 @@
       <div><span class="erp-overline">Saldo a unificar</span><strong class="erp-num">{{ totales.saldo | moneda }}</strong></div>
       <div><span class="erp-overline">Pagas hoy al mes</span><strong class="erp-num">{{ totales.cuotaActual | moneda }}</strong></div>
     </div>
+    </ng-container>
   </div>
 
   <!-- ───────── Paso 2: simulación ───────── -->
@@ -75,8 +92,19 @@
     <form class="uni-form erp-form" [formGroup]="form" (ngSubmit)="siguiente()" novalidate>
       <div class="uni-resumen-saldo">
         <span class="erp-overline">Saldo a refinanciar</span>
-        <strong class="erp-num">{{ totales.saldo | moneda }}</strong>
-        <span class="erp-muted">{{ totales.cantidad }} {{ totales.cantidad === 1 ? 'compra' : 'compras' }} · hoy pagas {{ totales.cuotaActual | moneda }} al mes</span>
+        <strong class="erp-num">{{ saldoARefinanciar | moneda }}</strong>
+        <span class="erp-muted" *ngIf="modoUnificacion === 'SELECCION_MANUAL'">{{ totales.cantidad }} {{ totales.cantidad === 1 ? 'compra' : 'compras' }} · hoy pagas {{ totales.cuotaActual | moneda }} al mes</span>
+        <span class="erp-muted" *ngIf="modoUnificacion === 'BARRIDO_FECHA_CORTE'">Valor del banco al {{ form.controls.fechaCorte.value | formatoFecha }}</span>
+      </div>
+
+      <div class="erp-alert erp-alert--info uni-barrido-preview" role="note" *ngIf="modoUnificacion === 'BARRIDO_FECHA_CORTE' && simulacionBarrido as b">
+        <i class="material-icons" aria-hidden="true">event_available</i>
+        <div>
+          Se absorberán automáticamente <strong>{{ b.cantidadCompras }} {{ b.cantidadCompras === 1 ? 'compra vigente' : 'compras vigentes' }}</strong> al {{ b.fechaCorte | formatoFecha }}
+          (Saldo en app: <strong class="erp-num">{{ b.capitalTeoricoDetectado | moneda }}</strong> | Valor banco: <strong class="erp-num">{{ b.montoUnificadoBanco | moneda }}</strong> |
+          Diferencia/Ajuste bancario: <strong class="erp-num">{{ b.ajusteDiferencia | moneda }}</strong>)
+          → Nueva cuota mensual estimada: <strong class="erp-num">{{ b.resultado.cuotaUsada | moneda }}</strong>
+        </div>
       </div>
 
       <app-field label="Número de cuotas" for="uni-cuotas" [required]="true" [error]="erroresCampo['numeroCuotas'] || null" hint="Los meses que te da el banco para pagar">

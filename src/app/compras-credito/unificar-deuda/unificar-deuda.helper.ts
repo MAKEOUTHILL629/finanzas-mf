@@ -1,4 +1,4 @@
-import { CandidataRefinanciamiento, PedidoRefinanciamiento } from '../../modelos/refinanciamiento';
+import { CandidataRefinanciamiento, PedidoBarridoFecha, PedidoRefinanciamiento } from '../../modelos/refinanciamiento';
 import { cuotaFrancesa, tasaMensualDeEntrada } from '../../shared/amortizacion-francesa.helper';
 import { sumarMonedas } from '../../shared/dinero.helper';
 
@@ -64,6 +64,40 @@ export function pedidoDeSimulacion(e: EntradaSimulacion): PedidoRefinanciamiento
   }
   if (dioCuota) pedido.cuotaMensual = e.cuotaMensual as number;
   if (e.fecha) pedido.fecha = e.fecha;
+  return pedido;
+}
+
+/** Lo que la persona escribió para el barrido por fecha de corte. */
+export interface EntradaBarrido {
+  tarjetaIds: ReadonlyArray<number>;
+  fechaCorte: string | null;
+  /** Valor total unificado por el banco ($X). */
+  montoUnificadoBanco: number | null;
+  numeroCuotas: number | null;
+  tipoTasa: TipoTasa;
+  tasa: number | null;
+  cuotaMensual: number | null;
+  cuotaPactada: boolean;
+}
+
+/** El cuerpo de `POST /refinanciamientos/simular-barrido-fecha`; `null` mientras falte lo mínimo. */
+export function pedidoDeBarrido(e: EntradaBarrido): PedidoBarridoFecha | null {
+  if (e.tarjetaIds.length === 0 || !e.fechaCorte || !enteroValido(e.numeroCuotas)) return null;
+  if (e.montoUnificadoBanco === null || !(e.montoUnificadoBanco > 0)) return null;
+  const dioTasa = e.tasa !== null && tasaMensualDeEntrada(e.tipoTasa, e.tasa) !== null;
+  const dioCuota = e.cuotaPactada && e.cuotaMensual !== null && e.cuotaMensual > 0;
+  if (!dioTasa && !dioCuota) return null;
+  const pedido: PedidoBarridoFecha = {
+    tarjetaIds: [...e.tarjetaIds],
+    fechaCorte: e.fechaCorte,
+    montoUnificadoBanco: e.montoUnificadoBanco,
+    numeroCuotas: e.numeroCuotas,
+  };
+  if (dioTasa) {
+    if (e.tipoTasa === 'anual') pedido.tasaEfectivaAnual = e.tasa as number;
+    else pedido.tasaMensual = e.tasa as number;
+  }
+  if (dioCuota) pedido.cuotaMensual = e.cuotaMensual as number;
   return pedido;
 }
 

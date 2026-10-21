@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { CandidataRefinanciamiento, ResultadoEjecucion, SimulacionRefinanciamiento } from '../../modelos/refinanciamiento';
+import { CandidataRefinanciamiento, ResultadoEjecucion, SimulacionBarridoFecha, SimulacionRefinanciamiento } from '../../modelos/refinanciamiento';
 import { ModalService } from '../../services/modal.service';
 import { cuotaFrancesa } from '../../shared/amortizacion-francesa.helper';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -70,13 +70,17 @@ describe('UnificarDeudaComponent', () => {
   afterEach(() => verificarHttp());
 
   /** Crea el componente y abre el asistente: pide los catálogos y las compras de la tarjeta sugerida. */
-  function abrir(): void {
+  function abrir(modo: 'manual' | 'barrido' = 'manual'): void {
     f = TestBed.createComponent(UnificarDeudaComponent);
     c = f.componentInstance;
     f.detectChanges();
     TestBed.inject(ModalService).open(MODAL_UNIFICAR_DEUDA);
     f.detectChanges();
     responderCatalogos({ tarjetas: [tarjetaItem(1, 'Visa'), tarjetaItem(2, 'Amex', { etiqueta: 'Amex ··1927' })], personas: [persona(1, 'Felipe'), persona(2, 'Andrés')] }, { esperadas: 1 });
+    if (modo === 'manual') {
+      c.elegirModo('SELECCION_MANUAL');
+      f.detectChanges();
+    }
   }
 
   function responderCandidatas(datos = CANDIDATAS, tarjeta = '2'): void {
@@ -306,6 +310,59 @@ describe('UnificarDeudaComponent', () => {
       expect(error).toHaveBeenCalled();
       flush();
     }));
+
+  describe('barrido por fecha de corte (Fase 3)', () => {
+    const barridoDe = (): SimulacionBarridoFecha => ({
+      tarjetaIds: [2],
+      fechaCorte: '2026-09-07',
+      comprasDetectadas: CANDIDATAS.slice(0, 2),
+      cantidadCompras: 2,
+      capitalTeoricoDetectado: 3_000_000,
+      montoUnificadoBanco: 3_300_000,
+      ajusteDiferencia: 300_000,
+      cuotaActualCombinada: 420_000,
+      resultado: simulacionDe(120_000).resultado,
+      responsables: [{ personaId: 1, porcentaje: 60.61, monto: 2_000_100 }],
+    });
+
+    it('por defecto ofrece el barrido: simula con fecha/monto y muestra la previsualización, y ejecuta por el endpoint de barrido', fakeAsync(() => {
+      abrir('barrido');
+      responderCandidatas();
+      expect(c.modoUnificacion).toBe('BARRIDO_FECHA_CORTE');
+      expect(el().textContent).toContain('Unificar todo hasta fecha de corte');
+
+      c.form.controls.fechaCorte.setValue('2026-09-07');
+      c.form.controls.montoUnificadoBanco.setValue(3_300_000);
+      expect(c.puedeAvanzar).toBe(true);
+      c.siguiente();
+      c.form.patchValue({ numeroCuotas: 36, tasa: 1.9 });
+      tick(350);
+      const req = esperar('POST', 'refinanciamientos/simular-barrido-fecha');
+      expect(req.request.body).toEqual(jasmine.objectContaining({ tarjetaIds: [2], fechaCorte: '2026-09-07', montoUnificadoBanco: 3_300_000, numeroCuotas: 36, tasaMensual: 1.9 }));
+      req.flush(barridoDe());
+      f.detectChanges();
+      expect(el().textContent).toContain('Se absorberán automáticamente');
+      expect(el().textContent).toContain('Diferencia/Ajuste bancario');
+
+      c.siguiente();
+      f.detectChanges();
+      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      siguiente().click();
+      const ejec = esperar('POST', 'refinanciamientos/ejecutar-barrido-fecha');
+      expect(ejec.request.body).toEqual(jasmine.objectContaining({ tarjetaIds: [2], fechaCorte: '2026-09-07', montoUnificadoBanco: 3_300_000 }));
+      ejec.flush({ id: 701, numeroCuotas: 36, absorbidas: [{ id: 1 }, { id: 2 }], simulacion: barridoDe() } as unknown as ResultadoEjecucion);
+      flush();
+    }));
+
+    it('sin tarjeta, fecha o monto del banco no puede avanzar en modo barrido', () => {
+      abrir('barrido');
+      responderCandidatas();
+      expect(c.puedeAvanzar).toBe(false);
+      c.form.controls.montoUnificadoBanco.setValue(1_000_000);
+      f.detectChanges();
+      expect(c.puedeAvanzar).toBe(true); // ya hay tarjeta sugerida y fecha (hoy) por defecto
+    });
+  });
 
     it('«Atrás» vuelve al paso anterior conservando lo escrito, y reabrir el asistente empieza de cero', fakeAsync(() => {
       enPaso3();

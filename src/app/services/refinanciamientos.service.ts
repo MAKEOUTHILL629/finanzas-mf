@@ -3,9 +3,13 @@ import { Observable } from 'rxjs';
 import {
   CandidataRefinanciamiento,
   DetalleRefinanciamiento,
+  EjecutarBarridoPedido,
   EjecutarRefinanciamientoPedido,
+  PedidoBarridoFecha,
   PedidoRefinanciamiento,
   ResultadoEjecucion,
+  ResultadoEjecucionBarrido,
+  SimulacionBarridoFecha,
   SimulacionRefinanciamiento,
 } from '../modelos/refinanciamiento';
 import { ApiServicesService } from './api-services.service';
@@ -25,6 +29,16 @@ export class RefinanciamientosService {
   /** Simula sin escribir nada. */
   simular(pedido: PedidoRefinanciamiento): Observable<SimulacionRefinanciamiento> {
     return this.api.post<SimulacionRefinanciamiento>(`${this.url}/simular`, pedido);
+  }
+
+  /** Simula el barrido por fecha de corte sin escribir nada. */
+  simularBarrido(pedido: PedidoBarridoFecha): Observable<SimulacionBarridoFecha> {
+    return this.api.post<SimulacionBarridoFecha>(`${this.url}/simular-barrido-fecha`, pedido);
+  }
+
+  /** Ejecuta el barrido por fecha de corte en una sola transacción. */
+  ejecutarBarrido(pedido: EjecutarBarridoPedido): Observable<ResultadoEjecucionBarrido> {
+    return this.api.post<ResultadoEjecucionBarrido>(`${this.url}/ejecutar-barrido-fecha`, pedido);
   }
 
   /** Ejecuta la unificación en una sola transacción. */

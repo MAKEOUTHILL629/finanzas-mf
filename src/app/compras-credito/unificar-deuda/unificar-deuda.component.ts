@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, catchError, debounceTime, map, merge, of, switchMap, takeUntil } from 'rxjs';
+import { Observable, Subject, catchError, debounceTime, map, merge, of, switchMap, takeUntil } from 'rxjs';
 import { ItemPersona, ItemTarjeta } from '../../modelos/catalogos';
-import { CandidataRefinanciamiento, SimulacionRefinanciamiento } from '../../modelos/refinanciamiento';
+import { CandidataRefinanciamiento, DetalleRefinanciamiento, ModoUnificacion, SimulacionBarridoFecha, SimulacionRefinanciamiento } from '../../modelos/refinanciamiento';
 import { CatalogosService } from '../../services/catalogos.service';
 import { ModalService } from '../../services/modal.service';
 import { RefinanciamientosService } from '../../services/refinanciamientos.service';
@@ -15,6 +15,7 @@ import { hoyIso } from '../../shared/periodo.helper';
 import { ToastService } from '../../shared/toast/toast.service';
 import { normalizeSearchText } from '../../shared/utils';
 import {
+  EntradaBarrido,
   EntradaSimulacion,
   LecturaDiferencia,
   TipoTasa,
@@ -22,6 +23,7 @@ import {
   cuotaEstimada,
   lecturaDiferenciaMensual,
   lecturaDiferenciaTotal,
+  pedidoDeBarrido,
   pedidoDeSimulacion,
   totalesDeSeleccion,
 } from './unificar-deuda.helper';
@@ -53,6 +55,10 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
 
   paso: PasoUnificar = 1;
 
+  /** Modo por defecto: el banco barrió todo hasta una fecha de corte (caso 7 de septiembre). */
+  modoUnificacion: ModoUnificacion = 'BARRIDO_FECHA_CORTE';
+  simulacionBarrido: SimulacionBarridoFecha | null = null;
+
   // ── paso 1
   tarjetaId: number | null = null;
   candidatas: CandidataRefinanciamiento[] = [];
@@ -70,6 +76,8 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
     tasa: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(100)]),
     cuotaMensual: this.fb.control<number | null>(null, [Validators.min(0)]),
     fecha: this.fb.control<string>(hoyIso()),
+    fechaCorte: this.fb.control<string>(hoyIso()),
+    montoUnificadoBanco: this.fb.control<number | null>(null, [Validators.min(0)]),
   });
   /** La persona escribió la cuota a mano (con seguros o ajustes): manda sobre la calculada. */
   cuotaAMano = false;
@@ -131,14 +139,43 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
       this.disparar$.next();
     });
     fecha.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.disparar$.next());
+    merge(this.form.controls.fechaCorte.valueChanges, this.form.controls.montoUnificadoBanco.valueChanges)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.actualizarCuotaEstimada();
+        this.disparar$.next();
+      });
 
     this.disparar$
       .pipe(
         debounceTime(350),
         switchMap(() => {
-          const pedido = this.pedido();
           this.erroresCampo = {};
           this.errorSimulacion = null;
+          if (this.modoUnificacion === 'BARRIDO_FECHA_CORTE') {
+            const pedidoBarrido = pedidoDeBarrido(this.entradaBarrido());
+            if (!pedidoBarrido) {
+              this.simulando = false;
+              this.simulacionBarrido = null;
+              return of({ simulacion: null as SimulacionRefinanciamiento | null, error: null as unknown });
+            }
+            this.simulando = true;
+            return this.api.simularBarrido(pedidoBarrido).pipe(
+              map((barrido) => {
+                this.simulacionBarrido = barrido;
+                const simulacion: SimulacionRefinanciamiento = {
+                  tarjetaId: pedidoBarrido.tarjetaIds[0],
+                  compraIds: barrido.comprasDetectadas.map((c) => c.id),
+                  cuotaActualCombinada: barrido.cuotaActualCombinada,
+                  resultado: barrido.resultado,
+                  responsables: barrido.responsables,
+                };
+                return { simulacion, error: null as unknown };
+              }),
+              catchError((error) => of({ simulacion: null as SimulacionRefinanciamiento | null, error }))
+            );
+          }
+          const pedido = this.pedido();
           if (!pedido) {
             this.simulando = false;
             return of({ simulacion: null as SimulacionRefinanciamiento | null, error: null as unknown });
@@ -168,8 +205,26 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
   // ───────── estado general ─────────
 
   /** Vuelve al paso 1 sin nada elegido (cada vez que se abre el asistente). */
+  elegirModo(modo: ModoUnificacion): void {
+    if (this.modoUnificacion === modo) return;
+    this.modoUnificacion = modo;
+    this.simulacion = null;
+    this.simulacionBarrido = null;
+    this.errorSimulacion = null;
+    this.actualizarCuotaEstimada();
+    this.disparar$.next();
+  }
+
+  /** Saldo que se refinancia: en barrido es el valor $X del banco; en manual, el capital elegido. */
+  get saldoARefinanciar(): number {
+    if (this.modoUnificacion === 'BARRIDO_FECHA_CORTE') return Number(this.form.controls.montoUnificadoBanco.value ?? 0) || 0;
+    return this.totales.saldo;
+  }
+
   reiniciar(): void {
     this.paso = 1;
+    this.modoUnificacion = 'BARRIDO_FECHA_CORTE';
+    this.simulacionBarrido = null;
     this.tarjetaId = null;
     this.candidatas = [];
     this.cargandoCandidatas = false;
@@ -177,7 +232,7 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
     this.seleccion = new Set();
     this.totales = totalesDeSeleccion([], this.seleccion);
     this.cuotaAMano = false;
-    this.form.reset({ numeroCuotas: null, tipoTasa: 'mensual', tasa: null, cuotaMensual: null, fecha: hoyIso() }, { emitEvent: false });
+    this.form.reset({ numeroCuotas: null, tipoTasa: 'mensual', tasa: null, cuotaMensual: null, fecha: hoyIso(), fechaCorte: hoyIso(), montoUnificadoBanco: null }, { emitEvent: false });
     this.simulacion = null;
     this.simulando = false;
     this.errorSimulacion = null;
@@ -195,7 +250,12 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
   }
 
   get puedeAvanzar(): boolean {
-    if (this.paso === 1) return this.totales.cantidad > 0 && !this.cargandoCandidatas;
+    if (this.paso === 1) {
+      if (this.modoUnificacion === 'BARRIDO_FECHA_CORTE') {
+        return this.tarjetaId !== null && !!this.form.controls.fechaCorte.value && Number(this.form.controls.montoUnificadoBanco.value ?? 0) > 0;
+      }
+      return this.totales.cantidad > 0 && !this.cargandoCandidatas;
+    }
     if (this.paso === 2) return !!this.simulacion && !this.simulando && !this.errorSimulacion;
     return !this.ejecutando;
   }
@@ -302,7 +362,7 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
   /** Cuota que sale de la fórmula con lo escrito (sirve de valor inicial editable del campo «cuota»). */
   get cuotaCalculada(): number | null {
     const v = this.form.getRawValue();
-    return cuotaEstimada(this.totales.saldo, v.numeroCuotas, v.tipoTasa, v.tasa);
+    return cuotaEstimada(this.saldoARefinanciar, v.numeroCuotas, v.tipoTasa, v.tasa);
   }
 
   /** La tasa efectiva anual equivalente a lo escrito, para que se entienda en las dos unidades. */
@@ -342,6 +402,20 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
 
   private pedido() {
     return pedidoDeSimulacion(this.entrada());
+  }
+
+  private entradaBarrido(): EntradaBarrido {
+    const v = this.form.getRawValue();
+    return {
+      tarjetaIds: this.tarjetaId === null ? [] : [this.tarjetaId],
+      fechaCorte: v.fechaCorte || null,
+      montoUnificadoBanco: v.montoUnificadoBanco === null || v.montoUnificadoBanco === undefined || (v.montoUnificadoBanco as unknown) === '' ? null : Number(v.montoUnificadoBanco),
+      numeroCuotas: v.numeroCuotas === null ? null : Number(v.numeroCuotas),
+      tipoTasa: v.tipoTasa,
+      tasa: v.tasa === null || v.tasa === undefined || (v.tasa as unknown) === '' ? null : Number(v.tasa),
+      cuotaMensual: v.cuotaMensual === null || v.cuotaMensual === undefined || (v.cuotaMensual as unknown) === '' ? null : Number(v.cuotaMensual),
+      cuotaPactada: this.cuotaAMano,
+    };
   }
 
   private registrarErrorSimulacion(error: unknown): void {
@@ -403,18 +477,23 @@ export class UnificarDeudaComponent implements OnInit, OnDestroy {
   }
 
   get comprasElegidas(): CandidataRefinanciamiento[] {
+    if (this.modoUnificacion === 'BARRIDO_FECHA_CORTE') return this.simulacionBarrido?.comprasDetectadas ?? [];
     return this.candidatas.filter((c) => this.seleccion.has(c.id));
   }
 
   confirmar(): void {
-    const pedido = this.pedido();
-    if (!pedido || this.ejecutando || !this.simulacion) return;
+    if (this.ejecutando || !this.simulacion) return;
+    const esBarrido = this.modoUnificacion === 'BARRIDO_FECHA_CORTE';
+    const pedido = esBarrido ? pedidoDeBarrido(this.entradaBarrido()) : this.pedido();
+    if (!pedido) return;
     this.ejecutando = true;
     this.errorEjecucion = null;
     const concepto = this.concepto.trim();
     const descripcion = this.descripcion.trim();
-    this.api
-      .ejecutar({ ...pedido, ...(concepto ? { concepto } : {}), ...(descripcion ? { descripcion } : {}) })
+    const ejecucion$: Observable<DetalleRefinanciamiento> = esBarrido
+      ? this.api.ejecutarBarrido({ ...(pedido as NonNullable<ReturnType<typeof pedidoDeBarrido>>), ...(concepto ? { concepto } : {}), ...(descripcion ? { descripcion } : {}) })
+      : this.api.ejecutar({ ...(pedido as NonNullable<ReturnType<typeof pedidoDeSimulacion>>), ...(concepto ? { concepto } : {}), ...(descripcion ? { descripcion } : {}) });
+    ejecucion$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {

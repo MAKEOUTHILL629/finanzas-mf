@@ -101,6 +101,11 @@ export interface DetalleRefinanciamiento {
   cuotaPactada: number | null;
   /** `CAPITAL_FIJO` (histórico, registrado a mano) | `FRANCES` (creado por el asistente). */
   sistemaAmortizacion: string;
+  /** `SELECCION_MANUAL` | `BARRIDO_FECHA_CORTE` (sql/017). */
+  modoUnificacion?: string;
+  fechaCorteUnificacion?: string | null;
+  capitalTeoricoAbsorbido?: number | null;
+  ajusteBancoCapitalizado?: number | null;
   tarjetaId: number | null;
   absorbidas: CompraAbsorbida[];
 }
@@ -127,4 +132,44 @@ export interface EjecutarRefinanciamientoPedido extends PedidoRefinanciamiento {
 
 export interface ResultadoEjecucion extends DetalleRefinanciamiento {
   simulacion: SimulacionRefinanciamiento;
+}
+
+/** Modo de unificación del asistente (sql/017). */
+export type ModoUnificacion = 'SELECCION_MANUAL' | 'BARRIDO_FECHA_CORTE';
+
+/** Lo que se envía a simular / ejecutar el barrido por fecha de corte. */
+export interface PedidoBarridoFecha {
+  tarjetaIds: number[];
+  /** `yyyy-MM-dd` del refinanciamiento del banco (ej. `2026-09-07`). */
+  fechaCorte: string;
+  /** Valor total unificado por el banco ($X). */
+  montoUnificadoBanco: number;
+  numeroCuotas: number;
+  tasaMensual?: number;
+  tasaEfectivaAnual?: number;
+  cuotaMensual?: number;
+}
+
+export interface EjecutarBarridoPedido extends PedidoBarridoFecha {
+  concepto?: string;
+  descripcion?: string;
+}
+
+export interface SimulacionBarridoFecha {
+  tarjetaIds: number[];
+  fechaCorte: string;
+  comprasDetectadas: CandidataRefinanciamiento[];
+  cantidadCompras: number;
+  /** Suma de saldos de capital en la app de las compras detectadas. */
+  capitalTeoricoDetectado: number;
+  montoUnificadoBanco: number;
+  /** Banco $X − capital teórico. */
+  ajusteDiferencia: number;
+  cuotaActualCombinada: number;
+  resultado: ResultadoSimulacion;
+  responsables: ResponsableDeMaestra[];
+}
+
+export interface ResultadoEjecucionBarrido extends DetalleRefinanciamiento {
+  simulacion: SimulacionBarridoFecha;
 }
