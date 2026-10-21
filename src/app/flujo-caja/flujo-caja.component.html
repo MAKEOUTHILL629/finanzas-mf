@@ -76,7 +76,63 @@
           <h2 class="erp-card-title">Entra y sale</h2>
           <div class="grafico"><canvas baseChart [data]="barrasData" [options]="barrasOpciones" type="bar" role="img" aria-label="Comparación de ingresos, desembolso, lo que te devuelven y gasto neto"></canvas></div>
         </app-card>
+        <app-card>
+          <h2 class="erp-card-title">Cascada de distribución mensual (Waterfall)</h2>
+          <div class="grafico"><canvas baseChart [data]="cascadaData" [options]="cascadaOpciones" type="bar" role="img" aria-label="Cascada desde ingresos hasta flujo libre real"></canvas></div>
+        </app-card>
       </div>
+
+      <!-- Iteración 2 — Fase 6: Suite Analítica Multi-Dimensión -->
+      <app-card style="margin-top: 16px">
+        <div class="erp-actions" style="justify-content: space-between; flex-wrap: wrap; gap: 12px">
+          <div>
+            <h2 class="erp-card-title" style="margin: 0">Suite Analítica Multi-Dimensión</h2>
+            <p class="erp-muted" style="margin: 4px 0 0">Curva histórica, desglose jerárquico Categorías → Comercios y horizonte 12M de tarjetas.</p>
+          </div>
+          <div class="erp-actions" style="flex-wrap: wrap">
+            <button type="button" [appButton]="presetActivo === 'ESTE_MES' && analiticaAvanzada ? 'primary' : 'secondary'" size="sm" (click)="cargarAnaliticaAvanzada('ESTE_MES')">Este Mes</button>
+            <button type="button" [appButton]="presetActivo === '3M' && analiticaAvanzada ? 'primary' : 'secondary'" size="sm" (click)="cargarAnaliticaAvanzada('3M')">3M</button>
+            <button type="button" [appButton]="presetActivo === '6M' && analiticaAvanzada ? 'primary' : 'secondary'" size="sm" (click)="cargarAnaliticaAvanzada('6M')">6M</button>
+            <button type="button" [appButton]="presetActivo === 'YTD' && analiticaAvanzada ? 'primary' : 'secondary'" size="sm" (click)="cargarAnaliticaAvanzada('YTD')">YTD</button>
+            <button type="button" [appButton]="presetActivo === '1A' && analiticaAvanzada ? 'primary' : 'secondary'" size="sm" (click)="cargarAnaliticaAvanzada('1A')">1A</button>
+            <button type="button" [appButton]="soloGastoPropio ? 'primary' : 'ghost'" size="sm" (click)="alternarSoloGastoPropio()">Solo mis gastos propios</button>
+            <button type="button" [appButton]="incluirTransferenciasInternas ? 'primary' : 'ghost'" size="sm" (click)="alternarTransferenciasInternas()">Incluir transferencias internas</button>
+          </div>
+        </div>
+
+        <ng-container *ngIf="analiticaAvanzada as aa">
+          <div class="graficos" style="margin-top: 16px">
+            <app-card>
+              <h3 class="erp-card-title">Curva de Flujo &amp; Promedio Móvil</h3>
+              <div class="grafico"><canvas baseChart [data]="curvaData" [options]="curvaOpciones" type="line" role="img" aria-label="Curva de ingresos, gastos propios y promedio móvil"></canvas></div>
+            </app-card>
+
+            <app-card *ngIf="aa.distribucionCategorias.length > 0">
+              <h3 class="erp-card-title">Categorías y Top Comercios (Multi-Anillo)</h3>
+              <div class="grafico"><canvas baseChart [data]="donutMultiData" [options]="donutMultiOpciones" type="doughnut" role="img" aria-label="Donut multi-anillo de categorías y comercios"></canvas></div>
+              <div class="erp-actions" style="margin-top: 10px; flex-wrap: wrap">
+                <button type="button" appButton="ghost" size="sm" *ngFor="let cat of aa.distribucionCategorias" (click)="seleccionarCategoriaDrilldown(cat)">
+                  {{ cat.categoria }} ({{ cat.porcentaje }}%)
+                  <span *ngIf="cat.variacionPct !== null" [class.erp-loss]="cat.variacionPct > 0" [class.erp-gain]="cat.variacionPct < 0">
+                    {{ cat.variacionPct > 0 ? '+' : '' }}{{ cat.variacionPct }}%
+                  </span>
+                </button>
+              </div>
+              <ul class="erp-list" *ngIf="categoriaActiva as ca" style="margin-top: 8px">
+                <li *ngFor="let co of ca.comercios">
+                  <span>{{ co.comercio }} <small class="erp-muted">({{ co.porcentaje }}%)</small></span>
+                  <strong class="erp-num">{{ co.monto | moneda }}</strong>
+                </li>
+              </ul>
+            </app-card>
+
+            <app-card>
+              <h3 class="erp-card-title">Horizonte 12M de Desendeudamiento de Tarjetas</h3>
+              <div class="grafico"><canvas baseChart [data]="horizonteTarjetasData" [options]="horizonteTarjetasOpciones" type="bar" role="img" aria-label="Proyección de cuotas de tarjetas a 12 meses"></canvas></div>
+            </app-card>
+          </div>
+        </ng-container>
+      </app-card>
     </ng-container>
   </ng-container>
 </section>

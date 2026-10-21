@@ -20,9 +20,12 @@ import {
   EstadoFiltros,
   FiltroSeleccion,
   OpcionFiltro,
+  PresetRangoFechas,
   RangoFechas,
   SegmentoFiltro,
   ValorFiltro,
+  VistaFiltroGuardada,
+  calcularRangoPreset,
   estadoVacio,
   resumenValor,
   tieneValor
@@ -33,12 +36,12 @@ interface GrupoOpciones {
   opciones: OpcionFiltro[];
 }
 
+const PREFIJO_STORAGE = 'erp_vistas_filtros_';
+
 /**
  * Barra de filtros inteligente: buscador en vivo (con espera de 300 ms), estados rápidos como control segmentado y filtros en «chips»
- * que abren un panel pequeño (selección con buscador, rango de fechas, interruptor, número). Muestra cuántos filtros hay activos y
- * permite limpiarlos todos de una vez. En móvil los paneles suben como hoja inferior.
- *
- *   <app-filter-bar [segmentos]="estados" [filtros]="filtros" [estado]="estado" (estadoChange)="alFiltrar($event)"></app-filter-bar>
+ * que abren un panel pequeño (selección con buscador, rango de fechas con presets rápidos, interruptor, número), además de vistas
+ * rápidas guardadas en `localStorage` (Iteración 2 — Fase 6).
  */
 @Component({
   selector: 'app-filter-bar',
@@ -54,12 +57,24 @@ export class FilterBarComponent implements OnInit, OnChanges, OnDestroy {
   /** Espera tras dejar de escribir antes de avisar (ms). */
   @Input({ transform: numberAttribute }) retardoBusqueda = 300;
   @Input() etiquetaSegmentos = 'Estado';
+  /** Clave opcional para persistir vistas rápidas en `localStorage` (Iteración 2 — Fase 6). */
+  @Input() claveGuardado: string | null = null;
   @Output() estadoChange = new EventEmitter<EstadoFiltros>();
+
+  readonly presetsFechas: Array<{ id: PresetRangoFechas; etiqueta: string }> = [
+    { id: '7D', etiqueta: '7D' },
+    { id: 'ESTE_MES', etiqueta: 'Este Mes' },
+    { id: '3M', etiqueta: '3M' },
+    { id: '6M', etiqueta: '6M' },
+    { id: 'YTD', etiqueta: 'YTD' },
+    { id: '1A', etiqueta: '1A' },
+  ];
 
   /** Texto del buscador mientras se escribe (el estado se actualiza al terminar la espera). */
   textoBusqueda = '';
   abierto: string | null = null;
   busquedaOpciones = '';
+  vistasGuardadas: VistaFiltroGuardada[] = [];
 
   private escritura$ = new Subject<string>();
   private sub = new Subscription();
@@ -70,6 +85,7 @@ export class FilterBarComponent implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.cargarVistasGuardadas();
     this.sub.add(
       this.escritura$.pipe(debounceTime(this.retardoBusqueda), distinctUntilChanged()).subscribe((texto) => {
         if (texto === this.estado.busqueda) return;
@@ -83,6 +99,9 @@ export class FilterBarComponent implements OnInit, OnChanges, OnDestroy {
       // un cambio hecho desde fuera (p. ej. «Limpiar filtros» de otra parte) también se refleja en el buscador
       if (this.textoBusqueda !== this.estado.busqueda) this.textoBusqueda = this.estado.busqueda;
       if (!this.estado.segmento && this.segmentos[0]) this.estado = { ...this.estado, segmento: this.segmentos[0].valor };
+    }
+    if (cambios['claveGuardado']) {
+      this.cargarVistasGuardadas();
     }
   }
 
@@ -197,9 +216,79 @@ export class FilterBarComponent implements OnInit, OnChanges, OnDestroy {
     this.fijar(def, { ...this.rango(def), [lado]: valor || null });
   }
 
+  aplicarPresetFechas(def: DefinicionFiltro, preset: PresetRangoFechas, hoy: Date = new Date()): void {
+    this.fijar(def, calcularRangoPreset(preset, hoy));
+  }
+
   // número
   cambiarNumero(def: DefinicionFiltro, valor: string): void {
     this.fijar(def, valor === '' ? null : Number(valor));
+  }
+
+  // ── Iteración 2 — Fase 6: Vistas Rápidas / Filtros Guardados en localStorage ──
+
+  private get storageKey(): string | null {
+    return this.claveGuardado ? `${PREFIJO_STORAGE}${this.claveGuardado}` : null;
+  }
+
+  cargarVistasGuardadas(): void {
+    const k = this.storageKey;
+    if (!k || typeof localStorage === 'undefined') {
+      this.vistasGuardadas = [];
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(k);
+      this.vistasGuardadas = raw ? (JSON.parse(raw) as VistaFiltroGuardada[]) : [];
+    } catch {
+      this.vistasGuardadas = [];
+    }
+  }
+
+  guardarVistaRapida(nombre: string): VistaFiltroGuardada | null {
+    const limpio = (nombre ?? '').trim();
+    const k = this.storageKey;
+    if (!limpio || !k) return null;
+    const nueva: VistaFiltroGuardada = {
+      id: `v_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      nombre: limpio,
+      estado: {
+        busqueda: this.estado.busqueda,
+        segmento: this.estado.segmento,
+        valores: { ...this.estado.valores },
+      },
+    };
+    this.vistasGuardadas = [...this.vistasGuardadas.filter((v) => v.nombre.toLowerCase() !== limpio.toLowerCase()), nueva];
+    this.persistirVistas();
+    this.cdr.markForCheck();
+    return nueva;
+  }
+
+  aplicarVistaRapida(vista: VistaFiltroGuardada): void {
+    this.textoBusqueda = vista.estado.busqueda ?? '';
+    this.abierto = null;
+    this.emitir({
+      busqueda: vista.estado.busqueda ?? '',
+      segmento: vista.estado.segmento ?? (this.segmentos[0]?.valor ?? ''),
+      valores: { ...(vista.estado.valores ?? {}) },
+    });
+  }
+
+  eliminarVistaRapida(id: string, evento?: Event): void {
+    evento?.stopPropagation();
+    this.vistasGuardadas = this.vistasGuardadas.filter((v) => v.id !== id);
+    this.persistirVistas();
+    this.cdr.markForCheck();
+  }
+
+  private persistirVistas(): void {
+    const k = this.storageKey;
+    if (!k || typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(k, JSON.stringify(this.vistasGuardadas));
+    } catch {
+      // ignora errores de cuota en storage
+    }
   }
 
   // ── resumen ──
@@ -230,6 +319,6 @@ export class FilterBarComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private normalizar(t: string): string {
-    return (t ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+    return (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   }
 }

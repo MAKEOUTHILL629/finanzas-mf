@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { MovimientoDashboard, ResumenDashboard, TarjetaDashboard, VencimientoDashboard } from '../modelos/dashboard';
+import { AnaliticaAvanzadaDashboard, MovimientoDashboard, ResumenDashboard, TarjetaDashboard, VencimientoDashboard } from '../modelos/dashboard';
 import { DashboardService } from '../services/dashboard.service';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../shared/periodo.helper';
+import { PresetRangoFechas, calcularRangoPreset } from '../shared/ui/filter-bar/filter-bar.types';
 import { iniciales } from '../personas/personas.constants';
 import { barrasFlujo, diaDeMovimiento, esEntrada, fechaLarga, fraseEjecutiva, iconoMovimiento, porcentaje, primerNombre, saludoSegunHora, textoDias, tonoVencimiento } from './home.constants';
 
@@ -34,6 +35,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly ahora = new Date();
   readonly saludo = saludoSegunHora(this.ahora);
   readonly fecha = fechaLarga(this.ahora);
+
+  /** Iteración 2 — Fase 6: Analítica Avanzada Multi-Dimensión en Home */
+  analiticaAvanzada: AnaliticaAvanzadaDashboard | null = null;
+  cargandoAnalitica = false;
+  presetAnalitica: PresetRangoFechas = '6M';
+  soloGastoPropioAnalitica = false;
 
   private destroy$ = new Subject<void>();
   private pedido$ = new Subject<void>();
@@ -74,6 +81,26 @@ export class HomeComponent implements OnInit, OnDestroy {
           if (!reciente) this.datos = null;
           this.error = mensajeDeError(err, 'No se pudo cargar el resumen.');
         }
+      });
+  }
+
+  cargarAnaliticaAvanzada(preset: PresetRangoFechas = this.presetAnalitica): void {
+    this.presetAnalitica = preset;
+    const rango = calcularRangoPreset(preset);
+    this.cargandoAnalitica = true;
+    this.dashboard
+      .getAnaliticaAvanzada({
+        fechaInicio: rango.desde ?? undefined,
+        fechaFin: rango.hasta ?? undefined,
+        granularidad: preset === '7D' || preset === 'ESTE_MES' ? 'DIA' : 'MES',
+        soloGastoPropio: this.soloGastoPropioAnalitica,
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.cargandoAnalitica = false)),
+      )
+      .subscribe({
+        next: (res) => (this.analiticaAvanzada = res),
       });
   }
 

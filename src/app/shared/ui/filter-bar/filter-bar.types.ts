@@ -12,6 +12,39 @@ export interface RangoFechas {
   hasta: string | null;
 }
 
+export type PresetRangoFechas = '7D' | 'ESTE_MES' | '3M' | '6M' | 'YTD' | '1A';
+
+/** Vista guardada en `localStorage` para reutilizar combinaciones de filtros con un clic (Iteración 2 — Fase 6). */
+export interface VistaFiltroGuardada {
+  id: string;
+  nombre: string;
+  estado: EstadoFiltros;
+}
+
+/** Calcula el rango `desde/hasta` (`YYYY-MM-DD`) de un preset rápido respecto a `hoy`. */
+export function calcularRangoPreset(preset: PresetRangoFechas, hoy: Date = new Date()): RangoFechas {
+  const y = hoy.getFullYear();
+  const m = hoy.getMonth();
+  const d = hoy.getDate();
+  const fmt = (dt: Date) =>
+    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  const hasta = fmt(hoy);
+  switch (preset) {
+    case '7D':
+      return { desde: fmt(new Date(y, m, d - 6)), hasta };
+    case 'ESTE_MES':
+      return { desde: fmt(new Date(y, m, 1)), hasta: fmt(new Date(y, m + 1, 0)) };
+    case '3M':
+      return { desde: fmt(new Date(y, m - 2, 1)), hasta };
+    case '6M':
+      return { desde: fmt(new Date(y, m - 5, 1)), hasta };
+    case 'YTD':
+      return { desde: `${y}-01-01`, hasta };
+    case '1A':
+      return { desde: fmt(new Date(y - 1, m, d)), hasta };
+  }
+}
+
 interface FiltroBase {
   id: string;
   etiqueta: string;

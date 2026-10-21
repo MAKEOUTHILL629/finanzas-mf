@@ -5,6 +5,7 @@ import { API, configurarTestBed, errorHttp, http, verificarHttp } from '../testi
 import { limpiarCachesDeSesion } from '../core/cache-sesion';
 import { DashboardService } from '../services/dashboard.service';
 import { HomeComponent } from './home.component';
+import { construirCascadaDistribucionMensual, construirCurvaFlujoYPatrimonio, construirDonutMultiAnilloCategorias, construirHorizonteDesendeudamientoTarjetas } from '../shared/charts';
 import { barrasFlujo, diaDeMovimiento, esEntrada, fraseEjecutiva, iconoMovimiento, porcentaje, primerNombre, saludoSegunHora, textoDias, tonoVencimiento } from './home.constants';
 
 const resumen = (extra: Partial<ResumenDashboard> = {}): ResumenDashboard => ({
@@ -225,6 +226,40 @@ describe('HomeComponent', () => {
     http().expectOne((r) => r.url === `${API}/dashboard/summary`).flush(resumen());
     expect(f.componentInstance.error).toBeNull();
     expect(f.componentInstance.datos).not.toBeNull();
+  });
+
+  it('Iteración 2 Fase 6: construye los 4 gráficos avanzados y carga analítica avanzada bajo demanda', () => {
+    const f = iniciar(resumen());
+    const c = f.componentInstance;
+    c.cargarAnaliticaAvanzada('6M');
+    const req = http().expectOne((r) => r.url === `${API}/dashboard/analitica-avanzada`);
+    expect(req.request.params.get('granularidad')).toBe('MES');
+    const mockAnalitica = {
+      filtrosAplicados: {
+        fechaInicio: '2026-05-01',
+        fechaFin: '2026-10-31',
+        granularidad: 'MES' as const,
+        cuentaIds: [],
+        tarjetaIds: [],
+        categoriaIds: [],
+        personaIds: [],
+        soloGastoPropio: false,
+        incluirTransferenciasInternas: false,
+      },
+      serieTemporal: [{ periodo: '2026-10', ingresos: 5000000, gastosPropios: 1200000, gastosTerceros: 300000, ahorroNeto: 3800000, transferenciasInternas: 200000, promedioMovilGastos: 1200000 }],
+      distribucionCategorias: [{ categoriaId: 1, categoria: 'Alimentación', color: '#34C759', monto: 600000, porcentaje: 50, variacionPct: 12.5, comercios: [{ comercio: 'Éxito', monto: 400000, porcentaje: 66.7 }] }],
+      proyeccionCuotasTarjetas: [{ periodo: '2026-10', partePropia: 50000, parteTerceros: 150000, total: 200000, porTarjeta: [] }],
+      mapaCalorHabitos: [{ diaSemana: 5, nombreDia: 'Vie', semanaMes: 2, monto: 200000, cantidad: 3 }],
+      balanceDeudasYPrestamos: { meDebenPrestamos: 400000, meDebenTercerosTarjetasYCruces: 500000, totalMeDeben: 900000, deboTarjetasPropias: 800000, deboPrestamosPasivos: 0, totalDebo: 800000, posicionNeta: 100000 },
+      cascadaMensual: { ingresos: 5000000, gastosFijosRecurrentes: 400000, cuotasTarjetasPropias: 50000, gastosVariablesDirectos: 200000, prestamosNeto: 0, flujoLibreReal: 4350000 },
+    };
+    req.flush(mockAnalitica);
+    expect(c.analiticaAvanzada?.balanceDeudasYPrestamos.posicionNeta).toBe(100000);
+
+    expect(construirCurvaFlujoYPatrimonio(mockAnalitica.serieTemporal).data.datasets.length).toBe(4);
+    expect(construirDonutMultiAnilloCategorias(mockAnalitica.distribucionCategorias).data.datasets.length).toBe(2);
+    expect(construirHorizonteDesendeudamientoTarjetas(mockAnalitica.proyeccionCuotasTarjetas).data.datasets.length).toBe(2);
+    expect(construirCascadaDistribucionMensual(mockAnalitica.cascadaMensual).data.labels?.length).toBe(5);
   });
 
   it('cambiar de mes vuelve a pedir ese periodo; un valor inválido se ignora', () => {

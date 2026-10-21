@@ -4,7 +4,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
 import { COMPONENTES_UI, DIRECTIVAS_UI } from '../../../testing/erp-testing';
 import { AccionUI } from '../acciones/acciones.component';
-import { DefinicionFiltro, EstadoFiltros, estadoVacio, resumenValor, tieneValor } from './filter-bar.types';
+import { DefinicionFiltro, EstadoFiltros, calcularRangoPreset, estadoVacio, resumenValor, tieneValor } from './filter-bar.types';
 
 const FILTROS: DefinicionFiltro[] = [
   {
@@ -191,6 +191,13 @@ describe('FilterBarComponent', () => {
 });
 
 describe('tipos de filtro', () => {
+  it('Iteración 2 Fase 6: calcularRangoPreset devuelve rangos exactos para 7D, ESTE_MES, YTD y 1A', () => {
+    const ref = new Date(2026, 9, 20); // 20 oct 2026
+    expect(calcularRangoPreset('7D', ref)).toEqual({ desde: '2026-10-14', hasta: '2026-10-20' });
+    expect(calcularRangoPreset('ESTE_MES', ref)).toEqual({ desde: '2026-10-01', hasta: '2026-10-31' });
+    expect(calcularRangoPreset('YTD', ref)).toEqual({ desde: '2026-01-01', hasta: '2026-10-20' });
+    expect(calcularRangoPreset('1A', ref)).toEqual({ desde: '2025-10-20', hasta: '2026-10-20' });
+  });
   it('tieneValor y resumenValor', () => {
     const sel = FILTROS[0];
     expect(tieneValor(sel, [])).toBeFalse();

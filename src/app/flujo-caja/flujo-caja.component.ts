@@ -1,16 +1,25 @@
 import { token } from '../shared/design-tokens';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ChartConfiguration } from 'chart.js';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
+import { AnaliticaAvanzadaDashboard, CategoriaDistribuida, FiltroAnaliticaAvanzada } from '../modelos/dashboard';
 import { FlujoCaja, Periodo } from '../modelos/erp';
 import { AnalyticsFlujoCajaService } from '../services/analytics-flujo-caja.service';
+import { DashboardService } from '../services/dashboard.service';
 import { ThemeService } from '../services/theme.service';
+import {
+  construirCascadaDistribucionMensual,
+  construirCurvaFlujoYPatrimonio,
+  construirDonutMultiAnilloCategorias,
+  construirHorizonteDesendeudamientoTarjetas,
+} from '../shared/charts';
 import { aCentavos } from '../shared/dinero.helper';
 import { mensajeDeError } from '../shared/http-error.helper';
 import { moneda } from '../shared/moneda.util';
 import { desplazarPeriodo, esPeriodoValido, nombrePeriodo, periodoActual } from '../shared/periodo.helper';
 import { ACCION_MES_ACTUAL, AccionUI, ListaAcciones } from '../shared/ui/acciones/acciones.component';
+import { PresetRangoFechas, calcularRangoPreset } from '../shared/ui/filter-bar/filter-bar.types';
 
 export interface PiezaDesembolso {
   clave: 'egresos' | 'tarjetas' | 'recurrentes';
@@ -74,10 +83,29 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
   donaOpciones: ChartConfiguration<'doughnut'>['options'] = {};
   barrasData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [{ data: [] }] };
   barrasOpciones: ChartConfiguration<'bar'>['options'] = {};
+  cascadaData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [{ data: [] }] };
+  cascadaOpciones: ChartConfiguration<'bar'>['options'] = {};
 
+  // ── Iteración 2 — Fase 6: Analítica Avanzada Multi-Filtro ──
+  analiticaAvanzada: AnaliticaAvanzadaDashboard | null = null;
+  cargandoAnalitica = false;
+  presetActivo: PresetRangoFechas = '6M';
+  soloGastoPropio = false;
+  incluirTransferenciasInternas = false;
+  categoriaActiva: CategoriaDistribuida | null = null;
+
+  curvaData: ChartConfiguration<'line'>['data'] = { labels: [], datasets: [] };
+  curvaOpciones: ChartConfiguration<'line'>['options'] = {};
+  donutMultiData: ChartConfiguration<'doughnut'>['data'] = { labels: [], datasets: [] };
+  donutMultiOpciones: ChartConfiguration<'doughnut'>['options'] = {};
+  horizonteTarjetasData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
+  horizonteTarjetasOpciones: ChartConfiguration<'bar'>['options'] = {};
+
+  private modoOscuro = false;
   private colorTexto = token('--text-secondary', '#86868B');
   private colorRejilla = token('--divider', 'rgba(0,0,0,0.08)');
   private destroy$ = new Subject<void>();
+  private dashboardService = inject(DashboardService, { optional: true });
 
   constructor(
     private flujoService: AnalyticsFlujoCajaService,
@@ -86,10 +114,11 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.themeService.isDarkMode$.pipe(takeUntil(this.destroy$)).subscribe((oscuro) => {
-      // el servicio de tema publica el cambio cuando ya aplicó las variables: se leen los colores del tema nuevo
+      this.modoOscuro = oscuro;
       this.colorTexto = token('--text-secondary', oscuro ? '#A1A1A6' : '#86868B');
       this.colorRejilla = token('--divider', oscuro ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)');
       if (this.flujo) this.construirGraficos(this.flujo);
+      if (this.analiticaAvanzada) this.construirGraficosAvanzados(this.analiticaAvanzada);
     });
     this.cargar();
   }
@@ -120,6 +149,47 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
           this.error = mensajeDeError(err, 'No se pudo calcular el flujo de caja.');
         }
       });
+  }
+
+  cargarAnaliticaAvanzada(preset: PresetRangoFechas = this.presetActivo): void {
+    if (!this.dashboardService) return;
+    this.presetActivo = preset;
+    const rango = calcularRangoPreset(preset);
+    const filtros: FiltroAnaliticaAvanzada = {
+      fechaInicio: rango.desde ?? undefined,
+      fechaFin: rango.hasta ?? undefined,
+      granularidad: preset === '7D' || preset === 'ESTE_MES' ? 'DIA' : 'MES',
+      soloGastoPropio: this.soloGastoPropio,
+      incluirTransferenciasInternas: this.incluirTransferenciasInternas,
+    };
+    this.cargandoAnalitica = true;
+    this.dashboardService
+      .getAnaliticaAvanzada(filtros)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.cargandoAnalitica = false))
+      )
+      .subscribe({
+        next: (datos) => {
+          this.analiticaAvanzada = datos;
+          this.categoriaActiva = datos.distribucionCategorias[0] ?? null;
+          this.construirGraficosAvanzados(datos);
+        },
+      });
+  }
+
+  alternarSoloGastoPropio(): void {
+    this.soloGastoPropio = !this.soloGastoPropio;
+    this.cargarAnaliticaAvanzada(this.presetActivo);
+  }
+
+  alternarTransferenciasInternas(): void {
+    this.incluirTransferenciasInternas = !this.incluirTransferenciasInternas;
+    this.cargarAnaliticaAvanzada(this.presetActivo);
+  }
+
+  seleccionarCategoriaDrilldown(cat: CategoriaDistribuida): void {
+    this.categoriaActiva = this.categoriaActiva?.categoria === cat.categoria ? null : cat;
   }
 
   onPeriodoChange(valor: string): void {
@@ -186,5 +256,33 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
         y: { ticks: { color: this.colorTexto, callback: (v) => moneda(Number(v), 'compacto') }, grid: { color: this.colorRejilla } },
       },
     };
+
+    const wf = construirCascadaDistribucionMensual(
+      {
+        ingresos: Number(f.total_ingresos),
+        gastosFijosRecurrentes: Number(f.total_esperado_recurrentes),
+        cuotasTarjetasPropias: Math.max(0, Number(f.total_tarjetas) - Number(f.total_por_cobrar_terceros)),
+        gastosVariablesDirectos: Number(f.total_egresos_directos),
+        prestamosNeto: 0,
+        flujoLibreReal: Number(f.flujo_caja_libre_estimado),
+      },
+      this.modoOscuro,
+    );
+    this.cascadaData = wf.data;
+    this.cascadaOpciones = wf.options;
+  }
+
+  private construirGraficosAvanzados(a: AnaliticaAvanzadaDashboard): void {
+    const curva = construirCurvaFlujoYPatrimonio(a.serieTemporal, this.modoOscuro);
+    this.curvaData = curva.data;
+    this.curvaOpciones = curva.options;
+
+    const donut = construirDonutMultiAnilloCategorias(a.distribucionCategorias, this.modoOscuro);
+    this.donutMultiData = donut.data;
+    this.donutMultiOpciones = donut.options;
+
+    const horizonte = construirHorizonteDesendeudamientoTarjetas(a.proyeccionCuotasTarjetas, this.modoOscuro);
+    this.horizonteTarjetasData = horizonte.data;
+    this.horizonteTarjetasOpciones = horizonte.options;
   }
 }

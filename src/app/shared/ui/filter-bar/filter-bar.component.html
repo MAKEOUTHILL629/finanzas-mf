@@ -79,6 +79,9 @@
           </ng-container>
 
           <div class="fb-panel__fechas" *ngSwitchCase="'fechas'">
+            <div class="erp-actions" style="margin-bottom: 8px; flex-wrap: wrap" aria-label="Rangos rápidos">
+              <button type="button" class="fb-panel__accion" *ngFor="let p of presetsFechas" (click)="aplicarPresetFechas(f, p.id)">{{ p.etiqueta }}</button>
+            </div>
             <label>Desde<input type="date" [value]="rango(f).desde ?? ''" (change)="cambiarFecha(f, 'desde', $any($event.target).value)" /></label>
             <label>Hasta<input type="date" [value]="rango(f).hasta ?? ''" (change)="cambiarFecha(f, 'hasta', $any($event.target).value)" /></label>
           </div>
@@ -98,6 +101,19 @@
           <button type="button" class="fb-panel__accion fb-panel__accion--primaria" (click)="cerrarPanel()">Listo</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Vistas rápidas guardadas (cuando se provee claveGuardado) -->
+  <div class="fb-chips" *ngIf="claveGuardado && vistasGuardadas.length > 0" aria-label="Vistas rápidas guardadas">
+    <div class="fb-chip-envoltorio" *ngFor="let v of vistasGuardadas; trackBy: trackId">
+      <button type="button" class="fb-chip" (click)="aplicarVistaRapida(v)">
+        <i class="material-icons fb-chip__icono" aria-hidden="true">bookmark</i>
+        <span class="fb-chip__texto">{{ v.nombre }}</span>
+      </button>
+      <button type="button" class="fb-chip__quitar" (click)="eliminarVistaRapida(v.id, $event)" [attr.aria-label]="'Eliminar vista ' + v.nombre">
+        <i class="material-icons" aria-hidden="true">close</i>
+      </button>
     </div>
   </div>
 

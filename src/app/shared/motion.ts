@@ -19,6 +19,8 @@ export const CURVA = {
   salida: 'cubic-bezier(0.16, 1, 0.3, 1)',
   /** Resorte con un pequeño rebote (diálogos, acordeones, indicadores). */
   resorte: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+  /** Curva Apple iOS/macOS para gráficos y tarjetas analíticas (Iteración 2 — Fase 6). */
+  appleSpring: 'cubic-bezier(0.22, 1, 0.36, 1)',
   /** Hoja de iOS: sin rebote. */
   hoja: 'cubic-bezier(0.32, 0.72, 0, 1)',
   estandar: 'cubic-bezier(0.4, 0, 0.2, 1)',
@@ -37,4 +39,12 @@ export const EXPANDIR = trigger('expandir', [
     animate(`${duracion(480)} ${RESORTE_SUAVE}`, style({ height: '*', opacity: 1 })),
   ]),
   transition(':leave', [style({ height: '*', overflow: 'hidden' }), animate(`${duracion(240)} ${CURVA.estandar}`, style({ height: 0, opacity: 0 }))]),
+]);
+
+/** Entrada escalonada estilo Apple iOS/macOS para widgets y gráficos interactivos (Iteración 2 — Fase 6). */
+export const ENTRADA_ESCALONADA = trigger('entradaEscalonada', [
+  transition(':enter', [
+    style({ opacity: 0, transform: 'translateY(12px) scale(0.985)' }),
+    animate(`${duracion(420)} ${CURVA.appleSpring}`, style({ opacity: 1, transform: 'translateY(0) scale(1)' })),
+  ]),
 ]);
