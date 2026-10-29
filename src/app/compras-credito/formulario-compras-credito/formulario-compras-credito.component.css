@@ -1,809 +1,202 @@
-/* ============================================
-   FORMULARIO COMPRAS CRÉDITO - LIQUID TRUST
-   Filosofía: Precisión Suiza + Cristal Líquido
-   Basado en STYLE_APP.txt
-   ============================================ */
+/* ==============================================================
+   FORMULARIO «NUEVA COMPRA A CRÉDITO»
+   Campos, botones, alertas, lista y barra de progreso salen del sistema de diseño (`erp-*`, `appInput`, `appButton`);
+   aquí solo vive lo propio de esta pantalla. Solo tokens: nada de colores, radios ni sombras propios.
+   ============================================================== */
 
 :host {
-  /* === TOKENS DE MARCA (no cambian con el tema) === */
-  /* Alias locales que apuntan a tokens globales del tema */
-  --bg-section: var(--bg-surface);
-  --input-bg: var(--bg-input);
-  --input-bg-hover: var(--bg-input-hover);
-
-  /* === ESPACIADO 8PT GRID === */
-
-  /* === BORDER RADIUS === */
-
   display: block;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  font-family: var(--font-main);
   color: var(--text-primary);
 }
 
-/* ============================================
-   CONTENEDOR PRINCIPAL
-   ============================================ */
-.form-container {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
+/* Más aire entre secciones que entre campos (los campos de una sección los separa `erp-form`) */
+.compra { gap: var(--space-3); }
 
-/* ============================================
-   FORMULARIO
-   ============================================ */
-form {
-  width: 100%;
-}
-
-/* ============================================
-   TÍTULO DEL FORMULARIO
-   ============================================ */
-.form-title {
-  font-size: clamp(24px, 5vw, 32px);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  margin: 0 0 var(--space-4) 0;
-  text-align: center;
-}
-
-/* ============================================
-   TÍTULOS DE SECCIÓN
-   ============================================ */
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--blue-brand);
-  margin: var(--space-4) 0 var(--space-3) 0;
-  padding-bottom: var(--space-2);
-  border-bottom: 2px solid var(--blue-brand);
+.compra__seccion {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-2);
-}
-
-.section-title-icon {
-  font-size: 1.3em;
-}
-
-/* ============================================
-   GRUPOS DE FORMULARIO
-   ============================================ */
-.form-group {
-  margin-bottom: var(--space-3);
-}
-
-.form-row {
-  display: grid;
-  gap: var(--space-3);
-  margin-bottom: 0;
-}
-
-/* Desktop: 2 columnas */
-@media (min-width: 768px) {
-  .form-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .form-row-thirds {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .form-group-full {
-    grid-column: 1 / -1;
-  }
-}
-
-/* ============================================
-   ETIQUETAS (LABELS)
-   ============================================ */
-label {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--text-primary);
-  letter-spacing: 0.01em;
-}
-
-.required-indicator {
-  color: var(--red-danger);
-  margin-left: 3px;
-  font-weight: bold;
-}
-
-/* ============================================
-   INPUTS, SELECTS, TEXTAREA (CRISTAL)
-   ============================================ */
-.form-control {
-  display: block;
-  width: 100%;
-  min-height: 48px;
-  padding: 12px 16px;
-  font-size: 16px; /* Mínimo 16px para evitar zoom en mobile */
-  font-family: inherit;
-  line-height: 1.5;
-  color: var(--text-primary);
-  background: var(--input-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-sizing: border-box;
-}
-
-.form-control:hover {
-  background: var(--input-bg-hover);
-  border-color: var(--border-glass);
-}
-
-/* FOCUS STATE - Ring Style según STYLE_APP.txt */
-.form-control:focus {
-  outline: none;
-  background: var(--input-bg-hover);
-  border-color: var(--blue-brand);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-blue) 20%, transparent);
-}
-
-.form-control::placeholder {
-  color: var(--text-muted);
-  opacity: 0.7;
-}
-
-/* Input Numbers - Sin spinners */
-input[type="number"] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
+  min-width: 0;
   margin: 0;
-}
-
-/* Select personalizado */
-select.form-control {
-  appearance: none;
-  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230071E3"><path d="M7 10l5 5 5-5z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 20px;
-  padding-right: 40px;
-  cursor: pointer;
-}
-
-select.form-control option {
-  background: var(--select-option-bg, var(--slate-800));
-  color: var(--select-option-text, var(--text-primary));
-  padding: 10px;
-}
-
-select.form-control option[disabled] {
-  color: var(--text-disabled, var(--text-muted));
-}
-
-/* Textarea */
-textarea.form-control {
-  resize: vertical;
-  min-height: 100px;
-  font-family: inherit;
-  padding: 14px 16px;
-}
-
-/* ============================================
-   INPUT GROUPS ($ y %)
-   ============================================ */
-.input-group {
-  display: flex;
-  align-items: stretch;
-  width: 100%;
-}
-
-.input-group-text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  padding: 12px 16px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--blue-brand);
-  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
-  border: 1px solid var(--border-glass);
-  white-space: nowrap;
-}
-
-.input-group > .input-group-text:first-child {
-  border-right: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-}
-
-.input-group > .form-control:not(:first-child) {
-  border-left: 0;
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-
-.input-group > .input-group-text:last-child {
-  border-left: 0;
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-
-.input-group > .form-control:not(:last-child) {
-  border-right: 0;
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
-}
-
-/* ============================================
-   NÚMEROS FINANCIEROS (TABULAR)
-   CRÍTICO: Usar tabular-nums para evitar "baile"
-   ============================================ */
-.text-right,
-.form-control[type="number"],
-.form-control[type="text"][id*="Value"],
-.form-control[id*="Price"],
-.form-control[id*="Amount"] {
-  text-align: right;
-  font-feature-settings: "tnum" on, "zero" on;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-
-/* ============================================
-   ESTADOS DE VALIDACIÓN
-   ============================================ */
-.form-control.is-invalid {
-  border-color: var(--red-danger);
-  background: color-mix(in srgb, var(--red-danger) 5%, transparent);
-}
-
-.form-control.is-invalid:focus {
-  border-color: var(--red-danger);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--red-danger) 20%, transparent);
-}
-
-.invalid-feedback {
-  display: none;
-  width: 100%;
-  margin-top: var(--space-1);
-  font-size: 14px;
-  color: var(--red-danger);
-  font-weight: 500;
-}
-
-.form-control.is-invalid + .invalid-feedback,
-.is-invalid ~ .invalid-feedback {
-  display: block;
-}
-
-/* ============================================
-   HINTS Y MENSAJES
-   ============================================ */
-.hint-new {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-top: var(--space-1);
-  font-size: 14px;
-  color: var(--green-success);
-  font-style: italic;
-}
-
-/* Hint de tasa auto-importada desde la tarjeta */
-.hint-autofill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--brand-blue) 25%, transparent);
-  font-size: 13px;
-  color: var(--text-link);
-  line-height: 1.4;
-  animation: fadeSlideIn 0.25s ease;
-}
-
-.hint-autofill .material-icons {
-  font-size: 15px;
-  flex-shrink: 0;
-  color: var(--brand-blue);
-}
-
-.hint-autofill strong {
-  color: var(--text-link);
-  font-weight: 600;
-}
-
-@keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.hint-icon {
-  font-size: 1.2em;
-}
-
-.info-text {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin-top: var(--space-1);
-}
-
-/* ============================================
-   AUTOCOMPLETE DE MATERIAL (clases legacy v14-)
-   Para AM18 MDC los estilos globales están en styles.css
-   ============================================ */
-::ng-deep .mat-mdc-autocomplete-panel {
-  background: var(--bg-surface-solid) !important;
-  border: 1px solid var(--border-glass);
-  border-radius: 16px;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-  max-height: 300px;
-}
-
-::ng-deep .mat-mdc-option {
-  padding: 0 16px;
-  min-height: 48px;
-  font-size: 15px;
-  color: var(--text-primary, #FFFFFF);
-  transition: background-color 0.18s ease;
-}
-
-::ng-deep .mat-mdc-option:hover,
-::ng-deep .mat-mdc-option.mat-mdc-option-active {
-  background: color-mix(in srgb, var(--brand-blue) 12%, transparent);
-}
-
-::ng-deep .mat-mdc-option mat-spinner {
-  display: inline-block;
-  margin-right: 10px;
-  vertical-align: middle;
-}
-
-/* ============================================
-   BOTONES (LIQUID TRUST)
-   ============================================ */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 48px;
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-  border: none;
-  border-radius: var(--radius-pill);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-sizing: border-box;
-}
-
-/* Botón Primario - Electric Blue */
-.btn-primary {
-  background: var(--blue-brand);
-  color: var(--text-on-accent);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-blue) 30%, transparent);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--brand-blue-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--brand-blue) 40%, transparent);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-}
-
-/* Botón Secundario - Transparente */
-.btn-secondary {
-  background: var(--bg-input);
-  color: var(--text-primary);
-  border: 1px solid var(--border-glass);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--bg-input-hover);
-  border-color: var(--border-glass);
-}
-
-/* Botón Success - Mint Neon */
-.btn-success {
-  background: var(--green-success);
-  color: var(--text-on-accent);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--green-success) 30%, transparent);
-}
-
-.btn-success:hover:not(:disabled) {
-  background: var(--green-success);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--green-success) 40%, transparent);
-}
-
-/* Botón Danger - Apple Red */
-.btn-danger {
-  background: var(--red-danger);
-  color: var(--text-on-accent);
-  padding: 8px 16px;
-  font-size: 14px;
-  min-height: 40px;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--red-danger) 30%, transparent);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: var(--red-danger);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--red-danger) 40%, transparent);
-}
-
-/* Botón Toggle (Responsables) */
-.btn-toggle {
-  width: 100%;
-  margin-bottom: var(--space-3);
-  background: var(--bg-section);
-  color: var(--blue-brand);
-  border: 1px solid var(--border-glass);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.btn-toggle:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
-  border-color: var(--blue-brand);
-}
-
-/* Estado Disabled */
-.btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.btn-icon {
-  font-size: 1.2em;
-}
-
-.btn mat-spinner {
-  display: inline-block;
-  margin-right: var(--space-1);
-  vertical-align: middle;
-}
-
-/* ============================================
-   FORM ACTIONS (BOTONES DE ACCIÓN)
-   ============================================ */
-.form-actions {
-  margin-top: var(--space-5);
-  text-align: center;
-}
-
-/* ============================================
-   SECCIÓN DE RESPONSABLES (GLASS)
-   ============================================ */
-.responsables-section {
-  background: var(--bg-section);
-  backdrop-filter: blur(15px) saturate(180%);
-  -webkit-backdrop-filter: blur(15px) saturate(180%);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  margin-top: var(--space-4);
-  box-shadow:
-    0 4px 24px -1px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 var(--specular-light);
-}
-
-.responsables-list {
-  margin-bottom: var(--space-4);
-}
-
-/* ============================================
-   TABLA RESPONSABLES (GLASS TABLE)
-   ============================================ */
-.table-responsive {
-  overflow-x: auto;
-  margin-top: var(--space-3);
-  border-radius: var(--radius-md);
-}
-
-.responsables-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--bg-surface-solid, var(--bg-surface-solid));
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.responsables-table th,
-.responsables-table td {
-  padding: 14px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-glass);
-}
-
-.responsables-table th {
-  background: color-mix(in srgb, var(--brand-blue) 15%, transparent);
-  color: var(--blue-brand);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  /* Sticky header con blur */
-  position: sticky;
-  top: 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.responsables-table tbody tr {
-  transition: background-color 0.2s ease;
-}
-
-.responsables-table tbody tr:hover {
-  background: var(--bg-input);
-}
-
-.responsables-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* ============================================
-   EMPTY STATE
-   ============================================ */
-.empty-state {
-  text-align: center;
-  padding: var(--space-5);
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.empty-state-icon {
-  font-size: 3em;
-  opacity: 0.3;
-  margin-bottom: var(--space-2);
-}
-
-/* ============================================
-   BADGES Y INDICADORES
-   ============================================ */
-.percentage-badge {
-  display: inline-block;
-  background: linear-gradient(135deg, var(--blue-brand), var(--brand-blue-hover));
-  color: var(--text-on-accent);
-  padding: 4px 12px;
-  border-radius: var(--radius-pill);
-  font-size: 14px;
-  font-weight: 600;
-  font-feature-settings: "tnum" on;
-  font-variant-numeric: tabular-nums;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-blue) 30%, transparent);
-}
-
-.percentage-remaining {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 12px 16px;
-  background: color-mix(in srgb, var(--brand-blue) 10%, transparent);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  margin-bottom: var(--space-3);
-}
-
-/* ============================================
-   UTILIDADES
-   ============================================ */
-.text-center {
-  text-align: center;
-}
-
-.mt-2 {
-  margin-top: var(--space-2);
-}
-
-.mt-3 {
-  margin-top: var(--space-3);
-}
-
-.mb-3 {
-  margin-bottom: var(--space-3);
-}
-
-.action-buttons {
-  display: flex;
-  gap: var(--space-2);
-  justify-content: flex-end;
-  align-items: center;
-}
-
-/* ============================================
-   RESPONSIVE - FORMULARIO RESPONSABLES
-   ============================================ */
-@media (min-width: 768px) {
-  .responsables-form .form-row {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .responsables-table th,
-  .responsables-table td {
-    padding: 16px 20px;
-  }
-}
-
-/* ============================================
-   RESPONSIVE - MÓVIL (<768px)
-   ============================================ */
-@media (max-width: 767px) {
-  .form-title {
-    font-size: 24px;
-    margin-bottom: var(--space-3);
-  }
-
-  .section-title {
-    font-size: 16px;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .btn {
-    width: 100%;
-    padding: 14px 20px;
-  }
-
-  .btn-danger {
-    width: auto;
-    padding: 10px 16px;
-  }
-
-  /* Tabla responsiva - Card Style en móvil */
-  .responsables-table {
-    border: 0;
-  }
-
-  .responsables-table thead {
-    display: none;
-  }
-
-  .responsables-table tbody,
-  .responsables-table tr,
-  .responsables-table td {
-    display: block;
-    width: 100%;
-  }
-
-  .responsables-table tr {
-    margin-bottom: var(--space-3);
-    background: var(--bg-surface-solid, var(--bg-surface-solid));
-    border: 1px solid var(--border-glass);
-    border-radius: var(--radius-md);
-    padding: var(--space-2);
-  }
-
-  .responsables-table td {
-    text-align: left !important;
-    padding: 10px 0;
-    border: 0;
-    position: relative;
-    padding-left: 50%;
-  }
-
-  .responsables-table td:before {
-    content: attr(data-label);
-    position: absolute;
-    left: 0;
-    width: 45%;
-    padding-right: 10px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 12px;
-    text-transform: uppercase;
-  }
-
-  .responsables-table td:last-child {
-    padding-left: 0;
-    text-align: center !important;
-  }
-
-  .responsables-table td:last-child:before {
-    display: none;
-  }
-
-  .action-buttons {
-    justify-content: center;
-  }
-
-  .responsables-section {
-    padding: var(--space-3);
-  }
-
-  .percentage-remaining {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .responsables-form .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================================
-   ANIMACIONES
-   ============================================ */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.responsables-section {
-  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ============================================
-   ACCESIBILIDAD
-   ============================================ */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
   padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
   border: 0;
 }
+/* Título de sección: texto principal (el `--text-tertiary` del sistema da ≈2,2:1 sobre blanco; el mínimo para texto pequeño es 4,5:1) */
+.compra__titulo-seccion { margin: 0; color: var(--text-primary); }
 
-:focus-visible {
-  outline: 2px solid var(--blue-brand);
-  outline-offset: 2px;
+/* Cuotas lleva más ancho que el interés: los 6 plazos frecuentes caben en una sola fila */
+.compra__fila-pago { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-2); }
+@media (max-width: 640px) { .compra__fila-pago { grid-template-columns: minmax(0, 1fr); } }
+
+/* La etiqueta se lee como texto principal (la del sistema es secundaria y de 12 px, con poco contraste sobre blanco) */
+.etiqueta {
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 
-/* Reducir movimiento para usuarios con preferencias de accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+/* Mensajes bajo un campo: qué se rellenó solo, qué falta */
+.compra__nota,
+.compra__aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  color: var(--text-primary); /* dicen qué se rellenó solo o qué falta: se leen, no se adivinan (4,5:1) */
+}
+.compra__nota .material-icons,
+.compra__aviso .material-icons { flex-shrink: 0; font-size: 16px; margin-top: 1px; color: var(--text-secondary); }
+.compra__nota strong { font-weight: var(--weight-semibold); }
+.compra__aviso { font-size: var(--text-body-sm); }
+
+/* En pantallas táctiles el texto de los campos mide 16 px: con menos, iOS Safari acerca la pantalla al enfocarlos */
+@media (pointer: coarse) {
+  .compra .erp-input,
+  .compra .erp-textarea { font-size: var(--text-body); }
 }
 
-/* ============================================
-   SCROLLBAR PERSONALIZADO
-   ============================================ */
-.table-responsive::-webkit-scrollbar {
-  height: 8px;
-}
+/* ───────── Valor: la cifra protagonista ───────── */
+.monto,
+.campo-sufijo { position: relative; display: flex; align-items: center; }
 
-.table-responsive::-webkit-scrollbar-track {
+.monto__input {
+  min-height: 56px;
+  padding-left: 36px;
+  padding-right: 64px;
+  font-size: var(--text-h3);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+}
+.monto__prefijo,
+.monto__sufijo,
+.campo-sufijo__texto {
+  position: absolute;
+  pointer-events: none;
+  color: var(--text-primary);
+  font-weight: var(--weight-regular);
+}
+.monto__prefijo { left: var(--space-2); font-size: var(--text-h3); }
+.monto__sufijo { right: var(--space-2); font-size: var(--text-body-sm); }
+.campo-sufijo .erp-input { padding-right: 40px; }
+.campo-sufijo__texto { right: var(--space-2); font-size: var(--text-body-sm); }
+
+/* ───────── Plazos frecuentes (se eligen con un toque) ───────── */
+.atajos { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.atajo {
+  min-width: 40px;
+  min-height: 36px;
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
   background: var(--bg-input);
-  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-medium);
+  font-feature-settings: var(--num-features);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out), border-color var(--duration-fast) var(--ease-in-out);
+}
+.atajo:hover { background: var(--bg-input-hover); }
+.atajo:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.atajo--activo,
+.atajo--activo:hover {
+  background: var(--brand-blue-light);
+  border-color: var(--brand-blue);
+  font-weight: var(--weight-semibold);
+}
+@media (pointer: coarse), (max-width: 640px) {
+  .atajo { min-width: var(--touch-target); min-height: var(--touch-target); }
 }
 
-.table-responsive::-webkit-scrollbar-thumb {
-  background: var(--bg-input-hover);
-  border-radius: var(--radius-sm);
+/* ───────── Resumen estimado ───────── */
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
 }
+.resumen__principal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+.resumen__etiqueta { font-size: var(--text-body-sm); font-weight: var(--weight-medium); color: var(--text-primary); }
+.resumen__cifra {
+  font-size: var(--text-h2);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.resumen__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--divider);
+}
+.resumen__datos dt { font-size: var(--text-caption); color: var(--text-primary); }
+.resumen__datos dd { margin: 2px 0 0; font-size: var(--text-body-sm); font-weight: var(--weight-semibold); white-space: nowrap; }
 
-.table-responsive::-webkit-scrollbar-thumb:hover {
-  background: var(--blue-brand);
+/* ───────── Secciones opcionales plegables ───────── */
+.compra__opcional > summary { color: var(--text-primary); }
+.opcional__titulo { font-weight: var(--weight-semibold); }
+.opcional__linea {
+  margin-left: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-regular);
+  color: var(--text-primary);
+}
+.compra__opcional-cuerpo { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-1) 0; }
+
+/* Estado: control segmentado a todo el ancho */
+.estado { display: grid; width: 100%; }
+.estado .erp-segmented__item { font-size: var(--text-body-sm); }
+
+/* ───────── Responsables ───────── */
+.resp-lista { margin: 0; }
+.resp-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-blue-light);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+}
+.resp-texto { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.resp-nombre { font-size: var(--text-body-sm); font-weight: var(--weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* son datos (cuánto paga cada quien y cuánto falta asignar), no adorno: texto principal para llegar a 4,5:1 */
+.resp-detalle { font-size: var(--text-caption); color: var(--text-primary); }
+
+.resp-medidor { display: flex; flex-direction: column; gap: 6px; }
+.resp-medidor__texto { font-size: var(--text-caption); color: var(--text-primary); }
+
+.resp-agregar { display: flex; flex-direction: column; gap: var(--space-2); }
+.resp-lista + .resp-medidor + .resp-agregar,
+.resp-medidor + .resp-agregar { padding-top: var(--space-2); border-top: 1px solid var(--divider); }
+/* porcentaje y cuotas son campos cortos: van lado a lado también en el móvil */
+.resp-par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.resp-equivale { margin: 0; font-size: var(--text-caption); color: var(--text-primary); }
+.resp-agregar__acciones { display: flex; justify-content: flex-end; }
+
+/* ───────── Pie: lo que falta y las acciones ───────── */
+.compra__pie { display: flex; flex-direction: column; gap: var(--space-1); }
+.compra__pie .erp-form-actions { margin-top: 0; }
+
+@media (max-width: 640px) {
+  .resp-agregar__acciones .erp-btn { flex: 1; }
 }
