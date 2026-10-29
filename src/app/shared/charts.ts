@@ -36,7 +36,7 @@ export const PROVEEDOR_GRAFICAS = provideCharts({
 
 function paletaTema(oscuro = false) {
   return {
-    texto: token('--text-secondary', oscuro ? '#A1A1A6' : '#86868B'),
+    texto: token('--text-secondary', oscuro ? '#A1A1A6' : '#6E6E73'),
     rejilla: token('--divider', oscuro ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
     ingresos: token('--chart-6', '#34C759'),
     gastosPropios: token('--chart-4', '#FF3B30'),

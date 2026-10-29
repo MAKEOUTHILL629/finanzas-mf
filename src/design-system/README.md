@@ -24,7 +24,7 @@ en escritorio y móvil. Todo sale de **una sola fuente de verdad**.
 | Fondo | `#F5F5F7` | `#000000` / `#09090B` |
 | Superficie | `#FFFFFF` | `#1C1C1E` / `#2C2C2E` (elevada) |
 | Borde | `rgba(0,0,0,.06)` | `rgba(255,255,255,.08)` |
-| Texto | `#1D1D1F` · secundario `#86868B` | `#F5F5F7` · secundario `#A1A1A6` |
+| Texto | `#1D1D1F` · secundario `#6E6E73` | `#F5F5F7` · secundario `#A1A1A6` |
 | Azul / Verde / Rojo / Naranja | `#007AFF` `#34C759` `#FF3B30` `#FF9500` | `#0A84FF` `#30D158` `#FF453A` `#FF9F0A` |
 
 Tipografía: `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", …`. Radios 16–20 px. Vidrio: `blur(20px) saturate(180%)`.

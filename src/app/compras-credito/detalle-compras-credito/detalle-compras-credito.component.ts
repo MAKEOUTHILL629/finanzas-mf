@@ -208,7 +208,7 @@ export class DetalleComprasCreditoComponent implements OnInit, OnDestroy {
           color: token('--divider', 'rgba(0,0,0,0.08)'),
         },
         ticks: {
-          color: token('--text-secondary', '#86868B'),
+          color: token('--text-secondary', '#6E6E73'),
         },
       },
     },

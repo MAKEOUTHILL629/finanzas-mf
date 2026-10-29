@@ -102,7 +102,7 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
   horizonteTarjetasOpciones: ChartConfiguration<'bar'>['options'] = {};
 
   private modoOscuro = false;
-  private colorTexto = token('--text-secondary', '#86868B');
+  private colorTexto = token('--text-secondary', '#6E6E73');
   private colorRejilla = token('--divider', 'rgba(0,0,0,0.08)');
   private destroy$ = new Subject<void>();
   private dashboardService = inject(DashboardService, { optional: true });
@@ -115,7 +115,7 @@ export class FlujoCajaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.themeService.isDarkMode$.pipe(takeUntil(this.destroy$)).subscribe((oscuro) => {
       this.modoOscuro = oscuro;
-      this.colorTexto = token('--text-secondary', oscuro ? '#A1A1A6' : '#86868B');
+      this.colorTexto = token('--text-secondary', oscuro ? '#A1A1A6' : '#6E6E73');
       this.colorRejilla = token('--divider', oscuro ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)');
       if (this.flujo) this.construirGraficos(this.flujo);
       if (this.analiticaAvanzada) this.construirGraficosAvanzados(this.analiticaAvanzada);

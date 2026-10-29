@@ -158,7 +158,7 @@
 }
 
 .st-sugerencia-nombre {
-  color: var(--text-secondary, #86868b);
+  color: var(--text-secondary, #6E6E73);
   font-size: var(--text-caption, 12px);
   margin-left: auto;
 }
@@ -167,6 +167,6 @@
   padding: 1px 6px;
   border-radius: var(--radius-pill, 999px);
   background: var(--bg-input, rgba(118, 118, 128, 0.12));
-  color: var(--text-secondary, #86868b);
+  color: var(--text-secondary, #6E6E73);
   font-size: 11px;
 }
