@@ -58,7 +58,7 @@
 
     <div class="erp-field">
       <label class="erp-label" for="tx-monto">Monto<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="tx-monto" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="montoOriginal" placeholder="0.00" [attr.aria-invalid]="campoInvalido('montoOriginal')" />
+      <input id="tx-monto" appInput appMoneda min="0.01" formControlName="montoOriginal" placeholder="$ 0" [attr.aria-invalid]="campoInvalido('montoOriginal')" />
       <p class="erp-field-error" *ngIf="campoInvalido('montoOriginal')">Mayor a 0 con máximo 2 decimales.</p>
     </div>
 
@@ -69,14 +69,14 @@
 
     <div class="erp-field" *ngIf="esMonedaExtranjera">
       <label class="erp-label" for="tx-tasa">Tasa de cambio a COP<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="tx-tasa" appInput type="number" inputmode="decimal" min="0.0001" step="0.0001" formControlName="tasaCambio" [attr.aria-invalid]="mostrarErrorRegla('tasa')" aria-describedby="tx-tasa-ayuda" />
+      <input id="tx-tasa" appInput appMoneda decimales="4" prefijo="" min="0.0001" formControlName="tasaCambio" [attr.aria-invalid]="mostrarErrorRegla('tasa')" aria-describedby="tx-tasa-ayuda" />
       <p id="tx-tasa-ayuda" class="erp-field-hint" *ngIf="equivalenteCop !== null">Equivale a ≈ <span class="erp-num">{{ equivalenteCop | moneda }}</span> COP.</p>
       <p class="erp-field-error" *ngIf="mostrarErrorRegla('tasa')">Indica la tasa (mayor a 0, máximo 4 decimales).</p>
     </div>
 
     <div class="erp-field" *ngIf="!esEdicion && form.controls.tipoTransaccion.value === 'TRANSFERENCIA'">
       <label class="erp-label" for="tx-gmf">Comisión / 4x1000 (opcional)</label>
-      <input id="tx-gmf" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="comisionGMF" placeholder="0.00" />
+      <input id="tx-gmf" appInput appMoneda min="0" formControlName="comisionGMF" placeholder="$ 0" />
       <p class="erp-field-hint">Si usas el registro par entre cuentas propias, se crea como gasto bancario separado.</p>
     </div>
 

@@ -231,7 +231,8 @@ a.erp-btn, a.erp-btn:hover { text-decoration: none; }
 .erp-input.ng-invalid.ng-touched, .erp-select.ng-invalid.ng-touched, .erp-textarea.ng-invalid.ng-touched { border-color: var(--border-error); }
 .erp-input:disabled, .erp-select:disabled, .erp-textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 .erp-input.erp-input--invalid, .erp-select.erp-input--invalid, .erp-textarea.erp-input--invalid { border-color: var(--border-error); }
-.erp-input[type="number"] { font-feature-settings: var(--num-features); font-variant-numeric: tabular-nums; }
+.erp-input[type="number"],
+.erp-input--moneda { font-feature-settings: var(--num-features); font-variant-numeric: tabular-nums; }
 .erp-field-error { margin: 0; font-size: var(--text-caption); color: var(--red-danger); }
 .erp-field-hint { margin: 0; font-size: var(--text-caption); color: var(--text-tertiary); }
 .erp-form-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; margin-top: var(--space-1); }

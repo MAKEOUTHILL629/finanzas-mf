@@ -16,6 +16,7 @@ import { ContadorComponent } from './ui/contador/contador.component';
 import { EmptyStateComponent } from './ui/empty-state/empty-state.component';
 import { FieldComponent, InputDirective } from './ui/field/field.component';
 import { LogoComponent } from './ui/logo/logo.component';
+import { MonedaDirective } from './ui/moneda/moneda.directive';
 import { PageHeaderComponent } from './ui/page-header/page-header.component';
 import { SearchableSelectComponent } from './ui/searchable-select/searchable-select.component';
 import { SelectComponent } from './ui/select/select.component';
@@ -38,6 +39,7 @@ const UI = [
   InputDirective,
   LogoComponent,
   ModalComponent,
+  MonedaDirective,
   PageHeaderComponent,
   SearchableSelectComponent,
   SelectComponent,

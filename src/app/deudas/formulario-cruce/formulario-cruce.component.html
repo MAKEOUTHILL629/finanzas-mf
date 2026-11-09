@@ -24,7 +24,7 @@
 
     <div class="erp-field">
       <label class="erp-label" for="cr-monto">Monto<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="cr-monto" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="monto" [attr.aria-invalid]="campoInvalido('monto')" />
+      <input id="cr-monto" appInput appMoneda min="0.01" formControlName="monto" [attr.aria-invalid]="campoInvalido('monto')" />
       <p class="erp-field-error" *ngIf="campoInvalido('monto')">Mayor a 0 con máximo 2 decimales.</p>
     </div>
 

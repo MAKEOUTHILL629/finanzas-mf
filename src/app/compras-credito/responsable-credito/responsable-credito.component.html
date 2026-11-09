@@ -89,13 +89,13 @@
                 <div class="input-group-inline" *ngIf="estaEditando(responsable, 'cantidadPago')">
                   <span class="currency-symbol">$</span>
                   <input
-                    type="number"
+                    appMoneda
+                    prefijo=""
                     class="edit-input-table financial-input"
                     [(ngModel)]="responsableEditando[responsable.id || 0].cantidadPago"
                     (blur)="guardarEdicionResponsable(responsable, 'cantidadPago')"
                     (keydown.enter)="guardarEdicionResponsable(responsable, 'cantidadPago')"
                     (keydown.escape)="cancelarEdicionResponsable(responsable, 'cantidadPago')"
-                    step="1"
                     min="0"
                     autofocus
                   />
@@ -231,14 +231,14 @@
           <div class="input-with-icon">
             <span class="input-icon-prefix">$</span>
             <input
-              type="number"
+              appMoneda
+              prefijo=""
               id="cantidadPago"
               formControlName="cantidadPago"
               class="form-control text-right financial-input with-prefix"
               [class.is-invalid]="responsableForm.get('cantidadPago')?.invalid && responsableForm.get('cantidadPago')?.touched"
               [max]="(compra.valorCompra || 0) * (porcentajeRestante / 100)"
               min="0"
-              step="1"
               placeholder="0"
             >
           </div>
@@ -273,8 +273,9 @@
   </div>
 
   <!-- Modal Confirmación Eliminación -->
-  <div class="modal-overlay" *ngIf="mostrarModalEliminacion" (click)="cancelarEliminacion()">
-    <div class="modal-content modal-delete" (click)="$event.stopPropagation()">
+  <!-- Un clic en el velo no cancela: se decide con «Cancelar» o «Eliminar». -->
+  <div class="modal-overlay" *ngIf="mostrarModalEliminacion">
+    <div class="modal-content modal-delete">
       <div class="modal-header">
         <div class="modal-icon modal-icon-danger">
           <i class="material-icons">warning</i>

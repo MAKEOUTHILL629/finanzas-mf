@@ -25,7 +25,7 @@
 
     <div class="erp-field">
       <label class="erp-label" for="pe-saldo">Saldo pendiente</label>
-      <input id="pe-saldo" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="saldoPendiente" [attr.aria-invalid]="campoInvalido('saldoPendiente')" />
+      <input id="pe-saldo" appInput appMoneda min="0" formControlName="saldoPendiente" [attr.aria-invalid]="campoInvalido('saldoPendiente')" />
       <p class="erp-field-error" *ngIf="campoInvalido('saldoPendiente')">Indica un valor de 0 o más con máximo 2 decimales.</p>
     </div>
 

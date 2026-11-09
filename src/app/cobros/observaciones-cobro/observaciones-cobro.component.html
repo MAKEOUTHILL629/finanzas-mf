@@ -55,7 +55,7 @@
 
       <div class="erp-field" *ngIf="pideMonto">
         <label class="erp-label" [for]="'obs-monto-' + o.id">{{ borrador.accion === 'AJUSTAR' ? 'Monto nuevo a cobrar por este rubro' : '¿Cuánto le descuentas?' }}</label>
-        <input [id]="'obs-monto-' + o.id" appInput type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="borrador.monto" name="monto" placeholder="0.00" />
+        <input [id]="'obs-monto-' + o.id" appInput appMoneda min="0" [(ngModel)]="borrador.monto" name="monto" placeholder="$ 0" />
         <p class="erp-field-hint" *ngIf="borrador.accion === 'AJUSTAR' && o.monto !== null">Hoy le cobras {{ o.monto | moneda }} por esto.</p>
       </div>
 

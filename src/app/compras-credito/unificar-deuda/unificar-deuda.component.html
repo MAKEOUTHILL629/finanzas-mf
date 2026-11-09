@@ -29,7 +29,7 @@
         <input appInput id="uni-fecha-corte" type="date" [formControl]="form.controls.fechaCorte" />
       </app-field>
       <app-field label="Valor total unificado por el banco ($X)" for="uni-monto-banco" [required]="true" hint="El saldo exacto que fijó el banco, sin detallar compras">
-        <input appInput id="uni-monto-banco" type="number" inputmode="decimal" min="0" step="0.01" [formControl]="form.controls.montoUnificadoBanco" placeholder="Ej: 12500000" />
+        <input appInput appMoneda id="uni-monto-banco" min="0" [formControl]="form.controls.montoUnificadoBanco" placeholder="Ej: $ 12.500.000" />
       </app-field>
       <p class="uni-vacio">No necesitas saber qué compras incluyó el banco: se absorberán automáticamente las vigentes a esa fecha.</p>
     </ng-container>
@@ -126,7 +126,7 @@
 
       <app-field label="Cuota mensual" for="uni-cuota" [error]="erroresCampo['cuotaMensual'] || null" [hint]="cuotaAMano ? 'La que escribiste manda sobre la calculada.' : 'Se calcula sola con la fórmula francesa (cuota fija). Cámbiala si el banco te dio otra, con seguros.'">
         <div class="uni-cuota-fila">
-          <input appInput id="uni-cuota" type="number" inputmode="decimal" min="0" step="0.01" formControlName="cuotaMensual" placeholder="Se calcula con la tasa" [invalid]="!!erroresCampo['cuotaMensual']" />
+          <input appInput appMoneda id="uni-cuota" min="0" formControlName="cuotaMensual" placeholder="Se calcula con la tasa" [invalid]="!!erroresCampo['cuotaMensual']" />
           <button type="button" appButton="ghost" size="sm" *ngIf="cuotaAMano" (click)="usarCuotaCalculada()">Usar la calculada</button>
         </div>
       </app-field>

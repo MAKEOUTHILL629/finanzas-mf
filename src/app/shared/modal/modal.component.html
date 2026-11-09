@@ -1,4 +1,5 @@
-<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()" [@fadeIn]>
+<!-- Un clic en el velo NO cierra el diálogo: un toque suelto no debe tirar lo que se estaba escribiendo. Se cierra con la X, Escape o el botón de la propia pantalla. -->
+<div class="modal-overlay" *ngIf="isOpen" [@fadeIn]>
   <div class="modal-content" [class.modal-content--amplio]="ancho === 'amplio'" role="dialog" aria-modal="true" [attr.aria-label]="titulo" (click)="$event.stopPropagation()" [@slideUp]="entrada">
     <button type="button" class="close-button" (click)="closeModal()" aria-label="Cerrar">
       <i class="material-icons" aria-hidden="true">close</i>

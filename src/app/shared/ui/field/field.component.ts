@@ -6,8 +6,8 @@ let siguienteId = 0;
  * Campo de formulario: etiqueta + control + ayuda + error, con la separación y los colores del sistema.
  * El control proyectado debe llevar `appInput` (o el `<app-select>`); `for` enlaza la etiqueta con su `id`.
  *
- *   <app-field label="Monto" for="monto" [required]="true" [error]="errorMonto" hint="Sin puntos ni comas">
- *     <input appInput id="monto" formControlName="monto" />
+ *   <app-field label="Monto" for="monto" [required]="true" [error]="errorMonto" hint="Los miles se ponen solos">
+ *     <input appInput appMoneda id="monto" formControlName="monto" min="0.01" />   <!-- dinero: nunca type="number" -->
  *   </app-field>
  */
 @Component({

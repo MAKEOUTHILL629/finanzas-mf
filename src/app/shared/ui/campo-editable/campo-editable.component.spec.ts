@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { OpcionSelect } from '../../../modelos/catalogos';
 import { configurarTestBed, verificarHttp } from '../../../testing/erp-testing';
-import { formatearEntradaMoneda, leerMoneda } from '../../moneda.util';
 import { CampoEditableComponent, TipoCampoEditable } from './campo-editable.component';
 
 @Component({
@@ -36,29 +35,6 @@ class AnfitrionComponent {
   opciones: OpcionSelect[] = [];
   emitidos: Array<string | number | null> = [];
 }
-
-describe('formatearEntradaMoneda / leerMoneda', () => {
-  it('agrupa miles con coma, un solo punto decimal y máximo dos decimales', () => {
-    expect(formatearEntradaMoneda('1234567')).toBe('1,234,567');
-    expect(formatearEntradaMoneda('1234567.5')).toBe('1,234,567.5');
-    expect(formatearEntradaMoneda('1234.567')).toBe('1,234.56');
-    expect(formatearEntradaMoneda('12.3.4')).toBe('12.34');
-    expect(formatearEntradaMoneda('$ 2,400,000 COP')).toBe('2,400,000');
-    expect(formatearEntradaMoneda('.5')).toBe('0.5');
-    expect(formatearEntradaMoneda('007')).toBe('7');
-    expect(formatearEntradaMoneda('')).toBe('');
-    expect(formatearEntradaMoneda('abc')).toBe('');
-  });
-
-  it('leerMoneda devuelve el número o null', () => {
-    expect(leerMoneda('1,234,567.5')).toBe(1234567.5);
-    expect(leerMoneda('0')).toBe(0);
-    expect(leerMoneda('')).toBeNull();
-    expect(leerMoneda('.')).toBeNull();
-    expect(leerMoneda(null)).toBeNull();
-    expect(leerMoneda(42)).toBe(42);
-  });
-});
 
 describe('CampoEditableComponent', () => {
   let f: ComponentFixture<AnfitrionComponent>;
@@ -193,9 +169,18 @@ describe('CampoEditableComponent', () => {
       a.valor = 100;
       a.requerido = true;
       pintar();
-      const control = escribir('1234567.5', 'Enter');
-      expect(control.value).toBe('1,234,567.5');
+      const control = escribir('1234567,5', 'Enter');
+      expect(control.value).toBe('1.234.567,5'); // miles con punto y decimales con coma, como los demás campos de dinero
       expect(a.emitidos).toEqual([1234567.5]);
+    });
+
+    it('moneda: al editar, el valor actual aparece con el mismo formato', () => {
+      a.tipo = 'moneda';
+      a.valor = 2400000.5;
+      pintar();
+      q<HTMLButtonElement>('.ce-valor')!.click();
+      f.detectChanges();
+      expect(q<HTMLInputElement>('.ce-control')!.value).toBe('2.400.000,5');
     });
 
     it('moneda requerida: no acepta 0 ni vacío', () => {

@@ -27,7 +27,7 @@
       </div>
       <div class="erp-field">
         <label class="erp-label" [for]="'ap-monto-' + c.cuotaDetalleId">Valor del aporte</label>
-        <input [id]="'ap-monto-' + c.cuotaDetalleId" appInput type="number" min="1" [(ngModel)]="nuevoMonto[c.cuotaDetalleId]" />
+        <input [id]="'ap-monto-' + c.cuotaDetalleId" appInput appMoneda min="1" [(ngModel)]="nuevoMonto[c.cuotaDetalleId]" />
       </div>
       <div class="erp-field">
         <label class="erp-label" [for]="'ap-modalidad-' + c.cuotaDetalleId">¿Cómo se entrega?</label>

@@ -33,7 +33,7 @@
 
       <div class="erp-field">
         <label class="erp-label" [for]="'ap-valor-' + i">Valor</label>
-        <input [id]="'ap-valor-' + i" appInput type="number" inputmode="decimal" min="0.01" step="0.01" formControlName="valor" placeholder="0.00" [attr.aria-invalid]="campoInvalido(fila, 'valor')" />
+        <input [id]="'ap-valor-' + i" appInput appMoneda min="0.01" formControlName="valor" placeholder="$ 0" [attr.aria-invalid]="campoInvalido(fila, 'valor')" />
       </div>
 
       <div class="erp-field">

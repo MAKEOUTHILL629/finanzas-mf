@@ -12,7 +12,7 @@
   <ng-container *ngIf="saldo > 0; else sinDeuda">
     <app-field label="¿Cuánto le descuentas?" for="dto-monto" [required]="true" [error]="intentado && previa.error ? previa.error : null">
       <div class="dto-monto">
-        <input appInput id="dto-monto" type="number" inputmode="decimal" min="0" step="0.01" [(ngModel)]="monto" name="monto" placeholder="0.00" />
+        <input appInput appMoneda id="dto-monto" min="0" [(ngModel)]="monto" name="monto" placeholder="$ 0" />
         <button type="button" appButton="ghost" size="sm" (click)="descontarTodo()">Todo</button>
       </div>
     </app-field>

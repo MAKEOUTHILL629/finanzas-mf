@@ -29,7 +29,7 @@
 
     <div class="erp-field">
       <label class="erp-label" for="cb-total">Costó en total<span class="erp-req" aria-hidden="true">*</span></label>
-      <input id="cb-total" appInput type="number" inputmode="decimal" min="0" step="0.01" formControlName="montoTotal" placeholder="0.00" [attr.aria-invalid]="intentado && totalInvalido" />
+      <input id="cb-total" appInput appMoneda min="0" formControlName="montoTotal" placeholder="$ 0" [attr.aria-invalid]="intentado && totalInvalido" />
       <p class="erp-field-error" *ngIf="intentado && totalInvalido">Un valor mayor a 0 con máximo 2 decimales.</p>
     </div>
 
@@ -81,7 +81,10 @@
         <div class="valor-fila" *ngFor="let id of seleccion">
           <label [for]="'cb-valor-' + id">{{ nombre(id) }}</label>
           <div class="valor-input">
-            <input [id]="'cb-valor-' + id" appInput type="number" inputmode="decimal" min="0" [max]="modo === 'PORCENTAJE' ? 100 : null" step="any" [formControl]="valores.controls['' + id]" [placeholder]="modo === 'PORCENTAJE' ? '0' : '0.00'" />
+            <input *ngIf="modo === 'PORCENTAJE'; else valorEnPesos" [id]="'cb-valor-' + id" appInput type="number" inputmode="decimal" min="0" max="100" step="any" [formControl]="valores.controls['' + id]" placeholder="0" />
+            <ng-template #valorEnPesos>
+              <input [id]="'cb-valor-' + id" appInput appMoneda prefijo="" min="0" [formControl]="valores.controls['' + id]" placeholder="0" />
+            </ng-template>
             <span class="sufijo">{{ modo === 'PORCENTAJE' ? '%' : '$' }}</span>
           </div>
         </div>

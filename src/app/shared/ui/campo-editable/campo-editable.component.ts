@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { OpcionSelect, TipoCatalogo } from '../../../modelos/catalogos';
-import { formatearEntradaMoneda, leerMoneda, moneda } from '../../moneda.util';
+import { formatearMonedaConCursor, leerMoneda, moneda, textoDeMoneda } from '../../moneda.util';
 
 export type TipoCampoEditable = 'texto' | 'textarea' | 'moneda' | 'fecha' | 'entero' | 'decimal' | 'seleccion';
 export type ValorCampoEditable = string | number | null;
@@ -119,7 +119,7 @@ export class CampoEditableComponent implements OnChanges {
     this.errorLocal = null;
     this.cancelando = false;
     const v = this.valor;
-    if (this.tipo === 'moneda') this.borrador = v === null || v === undefined || v === '' ? '' : formatearEntradaMoneda(String(v));
+    if (this.tipo === 'moneda') this.borrador = textoDeMoneda(v);
     else this.borrador = v === null || v === undefined ? '' : String(v);
     this.editando = true;
     this.cdr.detectChanges();
@@ -131,9 +131,11 @@ export class CampoEditableComponent implements OnChanges {
   alEscribir(evento: Event): void {
     const control = evento.target as HTMLInputElement;
     if (this.tipo === 'moneda') {
-      const formateado = formatearEntradaMoneda(control.value);
-      this.borrador = formateado;
-      control.value = formateado;
+      // miles con punto y decimales con coma (como los demás campos de dinero), sin que el cursor salte al final
+      const r = formatearMonedaConCursor(control.value, control.selectionStart ?? control.value.length);
+      this.borrador = r.texto;
+      control.value = r.texto;
+      if (document.activeElement === control) control.setSelectionRange(r.cursor, r.cursor);
     } else {
       this.borrador = control.value;
     }
